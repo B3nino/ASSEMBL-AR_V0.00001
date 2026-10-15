@@ -32,8 +32,7 @@ import java.util.List;
  * RecognitionResult.SpatialAnchor} initializes Shi-Tomasi features on the planar board surface;
  * subsequent frames use forward/backward pyramidal LK and a RANSAC homography to carry that
  * anchor for at most {@value #MAX_TRACKING_AGE_MILLIS} ms. Failure, implausible camera motion, a
- * changed frame size, or expiry clears all state and returns {@code null} rather than freezing the
- * previous pose.</p>
+ * changed frame size or expiry clears optical flow. A short, bounded visual hold bridges blur.</p>
  *
  * <p>Features are collected inside the board perimeter while excluding the two side motor zones.
  * This prevents the moving, non-planar gear motors from becoming accidental anchor evidence.
@@ -53,17 +52,21 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
     private static final int MINIMUM_TRACKED_FEATURES = 12;
     private static final int MINIMUM_COVERAGE_CELLS = 4;
     private static final double MINIMUM_COVERAGE_SPAN = 0.24;
-    private static final double MINIMUM_INLIER_RATIO = 0.60;
-    private static final double MAXIMUM_LK_ERROR = 35.0;
-    private static final double MAXIMUM_FORWARD_BACKWARD_ERROR_PX = 1.75;
+    private static final double MINIMUM_INLIER_RATIO = 0.50;
+    private static final double MAXIMUM_LK_ERROR = 55.0;
+    private static final double MAXIMUM_FORWARD_BACKWARD_ERROR_PX = 2.75;
     private static final double MINIMUM_BOARD_AREA_RATIO = 0.004;
     private static final double MAXIMUM_BOARD_AREA_RATIO = 0.90;
-    private static final double MAXIMUM_CENTER_MOTION_RATIO = 0.18;
-    private static final double MAXIMUM_CORNER_MOTION_RATIO = 0.26;
-    private static final double MINIMUM_FRAME_AREA_SCALE = 0.60;
-    private static final double MAXIMUM_FRAME_AREA_SCALE = 1.65;
-    private static final double MAXIMUM_FRAME_ROTATION_DEGREES = 28.0;
-    private static final double MAXIMUM_REPROJECTION_ERROR_PX = 8.0;
+    private static final double MAXIMUM_CENTER_MOTION_RATIO = 0.24;
+    private static final double MAXIMUM_CORNER_MOTION_RATIO = 0.32;
+    private static final double MINIMUM_FRAME_AREA_SCALE = 0.50;
+    private static final double MAXIMUM_FRAME_AREA_SCALE = 1.90;
+    private static final double MAXIMUM_FRAME_ROTATION_DEGREES = 35.0;
+    private static final double MAXIMUM_REPROJECTION_ERROR_PX = 10.0;
+    private static final int LK_PYRAMID_LEVEL = 4;
+    private static final int MAX_POSE_HOLD_FRAMES = 10;
+    private static final long MAX_POSE_HOLD_NANOS = 500_000_000L;
+    private static final double SMOOTHING_TIME_CONSTANT_NANOS = 38_000_000.0;
     private static final Size LK_WINDOW = new Size(21.0, 21.0);
     private static final TermCriteria LK_CRITERIA = new TermCriteria(
             TermCriteria.COUNT | TermCriteria.EPS, 30, 0.01);
@@ -85,6 +88,11 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
     private double effectiveWidth;
     private double effectiveHeight;
     private boolean mostRecentResultTracked;
+    private boolean mostRecentResultHeld;
+    private RecognitionResult.SpatialAnchor guidanceAnchor;
+    private long guidanceTimestampNanos = Long.MIN_VALUE;
+    private long lastOutputTimestampNanos = Long.MIN_VALUE;
+    private int heldFrames;
     private boolean closed;
     // Temporary, opt-in diagnostics. The frame timestamp joins these details to analyzer logs.
     private int diagnosticInitialFeatures;
@@ -128,6 +136,7 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
         ensureOpen();
         validateFrame(gray);
         mostRecentResultTracked = false;
+        mostRecentResultHeld = false;
         diagnosticInitialFeatures = 0;
         diagnosticGoodFlowPoints = 0;
         diagnosticInliers = 0;
@@ -151,24 +160,27 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
                         ? "frame_size_changed"
                         : timestampNanos - lastDetectionTimestampNanos > MAX_TRACKING_AGE_NANOS
                         ? "tracking_expired" : "invalid_timestamp";
-                resetInternal();
-                return null;
+                if (gray.rows() != frameRows && frameRows != 0
+                        || gray.cols() != frameColumns && frameColumns != 0
+                        || timestampNanos <= lastOutputTimestampNanos) {
+                    resetInternal();
+                    return null;
+                }
+                return holdOrReset(timestampNanos);
             }
             try {
                 RecognitionResult.SpatialAnchor tracked = track(gray, timestampNanos, calibration);
                 if (tracked == null) {
-                    resetInternal();
-                    return null;
+                    return holdOrReset(timestampNanos);
                 }
                 mostRecentResultTracked = true;
                 diagnosticReason = "flow_accepted";
-                return tracked;
+                return smooth(tracked, timestampNanos);
             } catch (RuntimeException unsafeFlow) {
                 // OpenCV rejects degenerate pyramids/homographies with RuntimeException. Treat
                 // every such case as lost tracking; callers must reacquire with the detector.
                 diagnosticReason = "flow_exception_" + unsafeFlow.getClass().getSimpleName();
-                resetInternal();
-                return null;
+                return holdOrReset(timestampNanos);
             }
         } finally {
             if (Log.isLoggable(DIAGNOSTIC_TAG, Log.DEBUG)) {
@@ -190,6 +202,9 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
         return mostRecentResultTracked;
     }
 
+    /** A held anchor is visual continuity only, never fresh recognition evidence. */
+    public synchronized boolean isHeld() { return mostRecentResultHeld; }
+
     /** Drops all retained images, features, identity, dimensions, and timestamps. */
     public synchronized void reset() {
         resetInternal();
@@ -208,26 +223,41 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
             long timestampNanos,
             RecognitionResult.SpatialAnchor detected,
             CameraCalibration calibration) {
+        RecognitionResult.SpatialAnchor previousGuidance = guidanceAnchor;
+        long previousGuidanceTimestamp = guidanceTimestampNanos;
+        long previousOutputTimestamp = lastOutputTimestampNanos;
         resetInternal();
+        if (previousGuidance != null && timestampNanos > previousOutputTimestamp
+                && detected.getReferenceId().equals(previousGuidance.getReferenceId())
+                && detected.getComponentId().equals(previousGuidance.getComponentId())
+                && timestampNanos - previousGuidanceTimestamp <= MAX_POSE_HOLD_NANOS) {
+            guidanceAnchor = previousGuidance;
+            guidanceTimestampNanos = previousGuidanceTimestamp;
+            lastOutputTimestampNanos = previousOutputTimestamp;
+        }
         List<VisionPoint> corners = detected.getProjectedCorners();
         if (!validCorners(corners, gray.cols(), gray.rows())) {
             // Flow propagation requires a fully visible, well-sized perimeter. The recognizer
             // has already validated this fresh observation using its own detection geometry;
             // inability to seed optical flow must never erase a valid detector result.
             diagnosticReason = "fresh_detection_unseedable_corners";
+            guidanceAnchor = detected;
+            guidanceTimestampNanos = timestampNanos;
+            lastOutputTimestampNanos = timestampNanos;
             return detected;
         }
+        RecognitionResult.SpatialAnchor display = smooth(detected, timestampNanos);
         if (calibration == null) {
             // The supplied detector pose is still authoritative, but without matching frame
             // intrinsics we cannot safely recompute it on a later optical-flow frame.
             diagnosticReason = "fresh_detection_no_calibration";
-            return detected;
+            return display;
         }
 
         double[] detectedDimensions = detectedPlaneDimensions(corners, detected.getPose(), calibration);
         if (detectedDimensions == null) {
             diagnosticReason = "fresh_detection_unseedable_plane";
-            return detected;
+            return display;
         }
 
         MatOfPoint2f features = detectBoardFeatures(gray, corners);
@@ -237,7 +267,7 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
                 features.release();
             }
             diagnosticReason = "fresh_detection_insufficient_distributed_features";
-            return detected;
+            return display;
         }
 
         previousGray = gray.clone();
@@ -252,7 +282,7 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
         effectiveWidth = detectedDimensions[0];
         effectiveHeight = detectedDimensions[1];
         diagnosticReason = "fresh_detection_seeded";
-        return detected;
+        return display;
     }
 
     private RecognitionResult.SpatialAnchor track(
@@ -270,14 +300,14 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
         try {
             Video.calcOpticalFlowPyrLK(
                     previousGray, gray, previousPoints, forwardPoints,
-                    forwardStatus, forwardError, LK_WINDOW, 3, LK_CRITERIA, 0, 1e-4);
+                    forwardStatus, forwardError, LK_WINDOW, LK_PYRAMID_LEVEL, LK_CRITERIA, 0, 1e-4);
             if (forwardPoints.empty()) {
                 diagnosticReason = "empty_forward_flow";
                 return null;
             }
             Video.calcOpticalFlowPyrLK(
                     gray, previousGray, forwardPoints, backwardPoints,
-                    backwardStatus, backwardError, LK_WINDOW, 3, LK_CRITERIA, 0, 1e-4);
+                    backwardStatus, backwardError, LK_WINDOW, LK_PYRAMID_LEVEL, LK_CRITERIA, 0, 1e-4);
 
             Point[] previous = previousPoints.toArray();
             Point[] forward = forwardPoints.toArray();
@@ -314,7 +344,7 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
             source.fromList(sourcePoints);
             destination.fromList(destinationPoints);
             double diagonal = Math.hypot(gray.cols(), gray.rows());
-            double ransacThreshold = Math.max(2.0, Math.min(4.0, diagonal * 0.003));
+            double ransacThreshold = Math.max(3.0, Math.min(6.0, diagonal * 0.004));
             homography = Calib3d.findHomography(
                     source, destination, Calib3d.RANSAC, ransacThreshold,
                     inlierMask, 2_000, 0.995);
@@ -827,7 +857,82 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
                 && referenceId != null && componentId != null;
     }
 
-    private void resetInternal() {
+    private RecognitionResult.SpatialAnchor holdOrReset(long timestampNanos) {
+        clearFlowState();
+        if (guidanceAnchor == null || timestampNanos <= lastOutputTimestampNanos
+                || timestampNanos - guidanceTimestampNanos > MAX_POSE_HOLD_NANOS
+                || heldFrames >= MAX_POSE_HOLD_FRAMES) {
+            resetInternal();
+            return null;
+        }
+        heldFrames++;
+        lastOutputTimestampNanos = timestampNanos;
+        mostRecentResultHeld = true;
+        diagnosticReason = "pose_hold_" + heldFrames;
+        return guidanceAnchor;
+    }
+
+    /** Smooth display geometry using capture timestamps, without feeding it back into LK. */
+    private RecognitionResult.SpatialAnchor smooth(RecognitionResult.SpatialAnchor raw,
+                                                   long timestampNanos) {
+        RecognitionResult.SpatialAnchor prior = guidanceAnchor;
+        RecognitionResult.SpatialAnchor output = raw;
+        if (prior != null && timestampNanos > guidanceTimestampNanos
+                && raw.getReferenceId().equals(prior.getReferenceId())
+                && raw.getComponentId().equals(prior.getComponentId())) {
+            double alpha = 1.0 - Math.exp(-(timestampNanos - guidanceTimestampNanos)
+                    / SMOOTHING_TIME_CONSTANT_NANOS);
+            alpha = Math.max(0.65, Math.min(1.0, alpha));
+            RecognitionResult.Pose oldPose = prior.getPose();
+            RecognitionResult.Pose newPose = raw.getPose();
+            double[] oldRotation = oldPose.getRotationVector();
+            double[] newRotation = newPose.getRotationVector();
+            double[] oldTranslation = oldPose.getTranslationVector();
+            double[] newTranslation = newPose.getTranslationVector();
+            double rotationJump = Math.hypot(Math.hypot(
+                    newRotation[0] - oldRotation[0], newRotation[1] - oldRotation[1]),
+                    newRotation[2] - oldRotation[2]);
+            // Rodrigues vectors can change branches around pi; do not average across that seam.
+            if (rotationJump > 0.75) alpha = 1.0;
+            List<VisionPoint> corners = new ArrayList<>(4);
+            for (int index = 0; index < 4; index++) {
+                VisionPoint before = prior.getProjectedCorners().get(index);
+                VisionPoint after = raw.getProjectedCorners().get(index);
+                corners.add(new VisionPoint(before.getX() + alpha * (after.getX() - before.getX()),
+                        before.getY() + alpha * (after.getY() - before.getY())));
+            }
+            double[] rvec = new double[3];
+            double[] tvec = new double[3];
+            for (int index = 0; index < 3; index++) {
+                rvec[index] = oldRotation[index] + alpha * (newRotation[index] - oldRotation[index]);
+                tvec[index] = oldTranslation[index]
+                        + alpha * (newTranslation[index] - oldTranslation[index]);
+            }
+            Mat rotationVector = new Mat(3, 1, CvType.CV_64FC1);
+            Mat rotationMatrix = new Mat();
+            try {
+                rotationVector.put(0, 0, rvec);
+                Calib3d.Rodrigues(rotationVector, rotationMatrix);
+                double[] matrix = new double[9];
+                rotationMatrix.get(0, 0, matrix);
+                output = new RecognitionResult.SpatialAnchor(raw.getReferenceId(),
+                        raw.getComponentId(), corners,
+                        new RecognitionResult.Pose(rvec, tvec,
+                                toOpenGlModelView(matrix, tvec),
+                                newPose.getReprojectionErrorPx()));
+            } finally {
+                rotationMatrix.release();
+                rotationVector.release();
+            }
+        }
+        guidanceAnchor = output;
+        guidanceTimestampNanos = timestampNanos;
+        lastOutputTimestampNanos = timestampNanos;
+        heldFrames = 0;
+        return output;
+    }
+
+    private void clearFlowState() {
         if (previousGray != null) {
             previousGray.release();
             previousGray = null;
@@ -846,6 +951,15 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
         effectiveWidth = nominalWidthMeters;
         effectiveHeight = nominalHeightMeters;
         mostRecentResultTracked = false;
+    }
+
+    private void resetInternal() {
+        clearFlowState();
+        guidanceAnchor = null;
+        guidanceTimestampNanos = Long.MIN_VALUE;
+        lastOutputTimestampNanos = Long.MIN_VALUE;
+        heldFrames = 0;
+        mostRecentResultHeld = false;
     }
 
     private void ensureOpen() {

@@ -41,6 +41,7 @@
     <string name="workspace_body">Use a flat, clean, non-metal table in a well-lit indoor space. Keep the NEOBOT kit and a Phillips screwdriver within reach.</string>
     <string name="ar_live">AR LIVE</string>
     <string name="ar_live_badge">●  AR LIVE</string>
+    <string name="dev_badge">DEV</string>
     <string name="explore">Explore</string>
     <string name="scanning">Looking for the required component…</string>
     <string name="align_hint">Keep the part and main board inside the guide</string>

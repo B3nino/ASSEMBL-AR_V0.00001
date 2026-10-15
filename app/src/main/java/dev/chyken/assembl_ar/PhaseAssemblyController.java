@@ -166,6 +166,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     @Nullable private TargetResult lastCorrection;
     @Nullable private List<VisualTarget> correctionOverlayTargets;
     private boolean savingPhase;
+    private boolean devNavigationActive;
     @Nullable private AlertDialog checklistDialog;
     private Chapter shownChapter;
     /** A one-time success message shown instead of the mode banner, e.g. "Parts found". */
@@ -228,6 +229,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void load(List<AssemblyStep> manualSteps, ProjectProgress progressRecord) {
         steps = manualSteps;
+        devNavigationActive = false;
         currentSection = sectionNumber(progressRecord.getCurrentStepId());
         AssemblyPhase resumed = PhaseProgress.resume(currentSection,
                 PhaseProgressStore.records(activity, NeobotSeedData.PROJECT_ID));
@@ -303,6 +305,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     private void onPhaseSaved(AssemblyPhase finished, List<String> stepIds, ProjectProgress saved) {
         savingPhase = false;
+        devNavigationActive = false;
         if (activity.isGone()) return;
         for (String stepId : stepIds) {
             GuidedStepProgressStore.clearStep(activity, NeobotSeedData.PROJECT_ID, stepId);
@@ -379,6 +382,40 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         resetGates();
         activity.resetAnalyzerTracking();
         enterMode();
+    }
+
+    /** Debug navigation changes the live guide only; saved learner progress stays sequential. */
+    void devJumpToPhase(AssemblyPhase target) {
+        if (target == null || steps == null || savingPhase) return;
+        devNavigationActive = true;
+        currentSection = target.getFirstSection();
+        startPhase(target);
+    }
+
+    void devJumpToSection(int section) {
+        if (section < 1 || section > 18) return;
+        for (AssemblyPhase candidate : AssemblyPhaseCatalog.phases()) {
+            if (candidate.getSections().contains(section)) {
+                devJumpToPhase(candidate);
+                return;
+            }
+        }
+    }
+
+    void devForceCompleteCurrentPhase() {
+        if (phase == null || savingPhase) return;
+        if (!devNavigationActive) {
+            // The current real phase uses the ordinary persistence path.
+            completePhase();
+            return;
+        }
+        List<AssemblyPhase> catalog = AssemblyPhaseCatalog.phases();
+        int nextIndex = catalog.indexOf(phase) + 1;
+        if (nextIndex > 0 && nextIndex < catalog.size()) {
+            devJumpToPhase(catalog.get(nextIndex));
+        } else {
+            activity.setBanner("DEV: final phase reached", false, R.drawable.bg_success);
+        }
     }
 
     private void chooseRedoPhase() {

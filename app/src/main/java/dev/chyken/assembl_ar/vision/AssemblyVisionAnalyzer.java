@@ -105,8 +105,14 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             // A demonstration or assembly screen needs no camera evidence; skip the frame entirely.
             if (requestProvider.isAnalysisSuspended()) return;
             long now = SystemClock.elapsedRealtimeNanos();
+            long captureTimestampNanos = CaptureTimebase.toElapsedRealtimeNanos(
+                    image.getImageInfo().getTimestamp());
             long last = lastAcceptedFrameNanos.get();
-            if (last != Long.MIN_VALUE && now - last < minimumFrameIntervalNanos) {
+            if (last != Long.MIN_VALUE && captureTimestampNanos <= last) {
+                return;
+            }
+            if (last != Long.MIN_VALUE
+                    && captureTimestampNanos - last < minimumFrameIntervalNanos) {
                 return;
             }
             if (!processing.compareAndSet(false, true)) {
@@ -114,7 +120,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             }
             acquired = true;
             if (closed.get()) return;
-            lastAcceptedFrameNanos.set(now);
+            lastAcceptedFrameNanos.set(captureTimestampNanos);
 
             if (image.getFormat() != ImageFormat.YUV_420_888) {
                 throw new IllegalArgumentException(
@@ -133,7 +139,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             }
 
             FrameMetadata metadata = new FrameMetadata(
-                    CaptureTimebase.toElapsedRealtimeNanos(image.getImageInfo().getTimestamp()),
+                    captureTimestampNanos,
                     image.getWidth(),
                     image.getHeight(),
                     crop.left,
@@ -182,7 +188,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                         metadata.getTimestampNanos(), detected, request.getCameraCalibration());
                 previousBoardAnchor = anchor;
                 board = new RecognitionResult.BoardObservation(
-                        boardDetection, anchor, boardTracker.isTracked());
+                        boardDetection, anchor, boardTracker.isTracked(), boardTracker.isHeld());
             }
             boolean inspectMotors = request != null && request.inspectsInstalledMotors();
             boolean motorInspection = request != null && request.requestsInstalledMotorInspection();
@@ -196,7 +202,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             RecognitionResult result = validateBoardOrientation
                     ? recognizer.validateBoardOrientation(boardDetection, request) : boardDetection;
             if (!boardOnly) {
-                if (request != null && request.getGuidedBracketSlot() != 0 && board != null && board.getAnchor() != null) {
+                if (request != null && request.getGuidedBracketSlot() != 0 && board != null
+                        && !board.isHeld() && board.getAnchor() != null) {
                     request = request.withGuidedBracketWorkplane(board.getAnchor().getProjectedCorners());
                 }
                 // Component preprocessing and repeated-instance masks own a separate buffer.
@@ -212,7 +219,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                 }
                 // An installed driver/Nano is too small for whole-frame ORB in this frame size.
                 // With the board localized, inspect its authored slot instead.
-                if (board != null && InstalledModuleInspector.shouldAttempt(
+                if (board != null && !board.isHeld() && InstalledModuleInspector.shouldAttempt(
                         request, result, board.getAnchor())) {
                     try {
                         if (rgb == null) {
@@ -245,7 +252,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             }
             Predicate<List<VisionPoint>> bracketPlacement = null;
             if (bracketSlot != 0) {
-                List<VisionPoint> boardCorners = board == null || board.getAnchor() == null ? null
+                List<VisionPoint> boardCorners = board == null || board.isHeld()
+                        || board.getAnchor() == null ? null
                         : board.getAnchor().getProjectedCorners();
                 ChassisRelativePlacementGate slotGate = ChassisRelativePlacementGate.forMotorBracketSlot(bracketSlot);
                 bracketPlacement = corners -> slotGate.evaluateSingle(boardCorners, corners).isAccepted();
@@ -322,7 +330,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             RecognitionResult.SpatialAnchor workplane = boardOnly ? null : result.getSpatialAnchor();
             boolean workplaneTracked = false;
             if (board != null && "main_board".equals(request.getSpatialAnchorComponentId())) {
-                workplane = board.getAnchor();
+                workplane = board.isHeld() ? null : board.getAnchor();
                 workplaneTracked = board.isTracked();
             }
             MotorAssemblyObservation motorObservation = null;

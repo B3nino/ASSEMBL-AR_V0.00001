@@ -336,17 +336,25 @@ public final class RecognitionResult {
         private final RecognitionResult detection;
         private final SpatialAnchor anchor;
         private final boolean tracked;
+        private final boolean held;
 
         BoardObservation(RecognitionResult detection, SpatialAnchor anchor, boolean tracked) {
+            this(detection, anchor, tracked, false);
+        }
+
+        BoardObservation(RecognitionResult detection, SpatialAnchor anchor,
+                         boolean tracked, boolean held) {
             this.detection = Objects.requireNonNull(detection, "detection");
             this.anchor = anchor;
             this.tracked = tracked;
+            this.held = held;
         }
 
         /** Fresh detector evidence only; optical flow does not invent ORB matches/confidence. */
         public RecognitionResult getDetection() { return detection; }
         public SpatialAnchor getAnchor() { return anchor; }
         public boolean isTracked() { return tracked; }
+        public boolean isHeld() { return held; }
         public boolean isDetected() {
             return anchor != null || ("main_board".equals(detection.getComponentId())
                     && detection.getDetectionMethod() == DetectionMethod.ORB_HOMOGRAPHY

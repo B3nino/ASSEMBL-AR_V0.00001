@@ -156,7 +156,7 @@ public final class VisionConfig {
         private int houghMinimumRadiusPx = 4;
         private int houghMaximumRadiusPx = 80;
         private int minimumFallbackCircles = 1;
-        private long minimumFrameIntervalMs = 120L;
+        private long minimumFrameIntervalMs = 33L;
         private boolean latencyLoggingEnabled = true;
 
         public Builder orb(int featureCount, float scaleFactor, int pyramidLevels,

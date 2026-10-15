@@ -145,17 +145,22 @@ public final class AssemblyAnchorTrackerInstrumentedTest {
     }
 
     @Test
-    public void blankFrameFailsClosedWithoutFreezingPreviousPose() {
+    public void blankFrameHoldsVisualPoseForTenFramesThenExpires() {
         RecognitionResult.SpatialAnchor detection = anchor(INITIAL_CORNERS);
         assertNotNull(tracker.update(board, START_NANOS, detection, calibration));
 
         Mat blank = new Mat(HEIGHT, WIDTH, CvType.CV_8UC1, new Scalar(28.0));
         try {
-            assertNull(tracker.update(
-                    blank, START_NANOS + 120_000_000L, null, calibration));
-            assertFalse(tracker.isTracked());
-            assertNull("Lost flow must not return a frozen anchor on the next frame",
-                    tracker.update(blank, START_NANOS + 240_000_000L, null, calibration));
+            for (int frame = 1; frame <= 10; frame++) {
+                RecognitionResult.SpatialAnchor held = tracker.update(
+                        blank, START_NANOS + frame * 30_000_000L, null, calibration);
+                assertNotNull("Visual guidance should survive a brief blur", held);
+                assertTrue(tracker.isHeld());
+                assertFalse("Held geometry is not fresh tracking evidence", tracker.isTracked());
+            }
+            assertNull(tracker.update(blank, START_NANOS + 330_000_000L,
+                    null, calibration));
+            assertFalse(tracker.isHeld());
         } finally {
             blank.release();
         }
@@ -171,8 +176,9 @@ public final class AssemblyAnchorTrackerInstrumentedTest {
 
         assertSame(detection, tracker.update(board, START_NANOS, detection, calibration));
         assertFalse(tracker.isTracked());
-        assertNull("Unseedable fresh corners must not authorize later optical-flow poses",
+        assertNotNull("A fresh pose may be shown briefly during a detector dropout",
                 tracker.update(board, START_NANOS + 120_000_000L, null, calibration));
+        assertTrue(tracker.isHeld());
     }
 
     @Test
@@ -186,11 +192,13 @@ public final class AssemblyAnchorTrackerInstrumentedTest {
                         new VisionPoint(620.0, 475.0), new VisionPoint(20.0, 475.0)));
         long timestamp = START_NANOS;
         for (List<VisionPoint> corners : detectorCorners) {
+            tracker.reset();
             RecognitionResult.SpatialAnchor detection = anchor(corners);
             assertSame(detection, tracker.update(board, timestamp, detection, calibration));
             assertFalse(tracker.isTracked());
-            assertNull("No valid flow seed exists for the next detector dropout",
+            assertNotNull("An unseedable detector pose still gets a bounded visual hold",
                     tracker.update(board, timestamp + 120_000_000L, null, calibration));
+            assertTrue(tracker.isHeld());
             timestamp += 240_000_000L;
         }
     }

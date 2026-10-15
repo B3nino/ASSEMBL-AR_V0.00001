@@ -185,6 +185,9 @@ public final class AssemblyActivity extends AppCompatActivity {
     private final Map<Long, CameraFrameState> calibrationByFrame = new ConcurrentHashMap<>();
     private int unrecognizedFrames;
     private boolean diagnosticsVisible;
+    private long lastDiagnosticCaptureNanos = Long.MIN_VALUE;
+    private double diagnosticFps;
+    private long lastHandledCaptureNanos = Long.MIN_VALUE;
     private boolean visionInitializationStarted;
     private volatile boolean destroyed;
     private volatile int visionGeneration;
@@ -407,10 +410,12 @@ public final class AssemblyActivity extends AppCompatActivity {
         findViewById(R.id.backButton).setOnClickListener(view ->
                 getOnBackPressedDispatcher().onBackPressed());
         findViewById(R.id.livePill).setOnLongClickListener(view -> {
-            diagnosticsVisible = !diagnosticsVisible;
-            diagnosticsPanel.setVisibility(diagnosticsVisible ? View.VISIBLE : View.GONE);
+            setDiagnosticsVisible(!diagnosticsVisible);
             return true;
         });
+        findViewById(R.id.devButton).setOnClickListener(view ->
+                DevStepSkipDialog.show(this, phaseController,
+                        diagnosticsVisible, this::setDiagnosticsVisible));
         findViewById(R.id.viewReferenceButton).setOnClickListener(view -> showManualReference());
         manualThumbnail.setOnClickListener(view -> showManualReference());
         findViewById(R.id.requiredPartReference).setOnClickListener(view -> {
@@ -898,6 +903,8 @@ public final class AssemblyActivity extends AppCompatActivity {
         if (destroyed || !activityResumed || currentStep == null
                 || result.getAssemblyStepNumber() != currentStep.getStepNumber()
                 || result.getFrameTimestampNanos() < acceptRecognitionAfterNanos) return;
+        if (result.getFrameTimestampNanos() <= lastHandledCaptureNanos) return;
+        lastHandledCaptureNanos = result.getFrameTimestampNanos();
         if (frame != null) {
             latestCalibration = frame.calibration;
             analyzedWidth = frame.width;
@@ -911,6 +918,7 @@ public final class AssemblyActivity extends AppCompatActivity {
             arHudView.setBoardCorners(normalizeCorners(phaseBoard == null || !phaseBoard.isDetected() ? null
                     : phaseBoard.getAnchor() != null ? phaseBoard.getAnchor().getProjectedCorners()
                     : phaseBoard.getDetection().getProjectedCorners()));
+            if (phaseBoard != null && phaseBoard.isHeld()) return;
             phases.onResult(result, frameEvidenceNanos);
             logTrialFrame(result, completedAtNanos);
             return;
@@ -920,6 +928,12 @@ public final class AssemblyActivity extends AppCompatActivity {
         GuidedCheckpoint frameCheckpoint = activeCheckpoint;
         int frameGuidedIndex = currentGuidedStepIndex;
         updateDiagnostics(result);
+        RecognitionResult.BoardObservation heldBoard = result.getBoardObservation();
+        if (heldBoard != null && heldBoard.isHeld()) {
+            arHudView.setBoardCorners(normalizeCorners(
+                    heldBoard.getAnchor().getProjectedCorners()));
+            return;
+        }
         handleComponentRecognition(result);
         if (currentStep != frameStep || activeCheckpoint != frameCheckpoint
                 || currentGuidedStepIndex != frameGuidedIndex) return;
@@ -1985,6 +1999,14 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private void updateDiagnostics(RecognitionResult result) {
+        long captureNanos = result.getFrameTimestampNanos();
+        if (lastDiagnosticCaptureNanos != Long.MIN_VALUE
+                && captureNanos > lastDiagnosticCaptureNanos) {
+            double currentFps = 1_000_000_000.0 / (captureNanos - lastDiagnosticCaptureNanos);
+            diagnosticFps = diagnosticFps == 0.0 ? currentFps
+                    : diagnosticFps * 0.75 + currentFps * 0.25;
+        }
+        lastDiagnosticCaptureNanos = captureNanos;
         RecognitionResult.Latency latency = result.getLatency();
         CameraCalibration frameCalibration = latestCalibration;
         String calibrationSource = frameCalibration == null ? "UNAVAILABLE"
@@ -2004,9 +2026,12 @@ public final class AssemblyActivity extends AppCompatActivity {
                 + "\nbuild: " + BuildStamp.shortLabel());
         RecognitionResult.BoardObservation board = result.getBoardObservation();
         if (board != null) diagnosticsText.append(String.format(Locale.US,
-                "\nstep: %d\nboardDetected: %s\nboard source: %s\nboard good/inliers: %d/%d",
+                "\nFPS: %.1f\nORB keypoints: %d\ntracking: %s\nstep: %d"
+                        + "\nboardDetected: %s\nboard good/inliers: %d/%d",
+                diagnosticFps, board.getDetection().getFrameKeypointCount(),
+                board.isHeld() ? "pose hold" : board.isTracked() ? "LK tracking"
+                        : board.isDetected() ? "ORB detection" : "lost",
                 result.getAssemblyStepNumber(), board.isDetected(),
-                board.isTracked() ? "tracking" : "detection",
                 board.getDetection().getGoodMatchCount(), board.getDetection().getInlierCount()));
         if (diagnosticsVisible) {
             RecognitionResult.SpatialAnchor boardAnchor = board == null ? null : board.getAnchor();
@@ -2033,6 +2058,43 @@ public final class AssemblyActivity extends AppCompatActivity {
                     + " boardTvec=" + (boardPose == null ? "[]"
                     : Arrays.toString(boardPose.getTranslationVector())));
         }
+    }
+
+    private void setDiagnosticsVisible(boolean visible) {
+        diagnosticsVisible = visible;
+        diagnosticsPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    void devForceCompleteCurrentStep() {
+        if (currentStep == null || steps == null || completionInFlight) return;
+        completionInFlight = true;
+        AssemblyStep bypassed = currentStep;
+        databaseExecutor.execute(() -> {
+            try {
+                ProjectProgress saved = repository.confirmAndCompleteStep(bypassed.getId());
+                runOnUiThread(() -> {
+                    if (destroyed || isFinishing() || isDestroyed()) return;
+                    GuidedStepProgressStore.clearStep(this,
+                            bypassed.getProjectId(), bypassed.getId());
+                    completionInFlight = false;
+                    if (saved.isComplete()) {
+                        openCompletion();
+                    } else {
+                        currentStepIndex = findStepIndex(saved.getCurrentStepId());
+                        currentStep = steps.get(currentStepIndex);
+                        stateMachine = new AssemblyStateMachine(steps.size(), currentStepIndex);
+                        renderStep();
+                    }
+                });
+            } catch (RuntimeException failure) {
+                Log.e("AssemblyActivity", "DEV step bypass failed", failure);
+                runOnUiThread(() -> {
+                    completionInFlight = false;
+                    setBanner(getString(R.string.progress_save_failed), false,
+                            R.drawable.bg_camera_warning);
+                });
+            }
+        });
     }
 
     @Nullable
