@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp"
+        android:text="@string/model_prototype_note"
+        android:textColor="@color/ink_soft"
+        android:textSize="13sp" />
+
+    <FrameLayout
+        android:id="@+id/componentModelViewport"
+        android:layout_width="match_parent"
+        android:layout_height="320dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:text="@string/model_gesture_hint"
+        android:textColor="@color/ink_soft"
+        android:textSize="13sp" />
+
+    <RadioGroup
+        android:id="@+id/modelFaces"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/modelFrontFace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="100dp"
+            android:minHeight="48dp"
+            android:text="@string/model_front"
+            android:textColor="@color/ink" />
+
+        <RadioButton
+            android:id="@+id/modelBackFace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="100dp"
+            android:minHeight="48dp"
+            android:text="@string/model_back"
+            android:textColor="@color/ink" />
+    </RadioGroup>
+</LinearLayout>
+</ScrollView>

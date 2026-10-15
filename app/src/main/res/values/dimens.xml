@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_padding">20dp</dimen>
+    <dimen name="space_xs">6dp</dimen>
+    <dimen name="space_sm">10dp</dimen>
+    <dimen name="space_md">16dp</dimen>
+    <dimen name="space_lg">24dp</dimen>
+    <dimen name="space_xl">32dp</dimen>
+    <dimen name="corner_sm">10dp</dimen>
+    <dimen name="corner_md">18dp</dimen>
+    <dimen name="corner_lg">26dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="toolbar_height">64dp</dimen>
+    <dimen name="content_max_width">900dp</dimen>
+    <dimen name="reading_max_width">760dp</dimen>
+    <dimen name="form_max_width">560dp</dimen>
+    <dimen name="home_content_max_width">1200dp</dimen>
+    <dimen name="navigation_max_width">640dp</dimen>
+    <dimen name="tablet_component_media_width">220dp</dimen>
+    <dimen name="tablet_component_media_height">220dp</dimen>
+    <dimen name="tablet_project_media_width">260dp</dimen>
+    <dimen name="tablet_project_media_height">250dp</dimen>
+    <dimen name="tablet_camera_panel_width">520dp</dimen>
+    <dimen name="tablet_admin_capture_width">520dp</dimen>
+    <dimen name="tablet_home_model_height">360dp</dimen>
+
+    <!-- Assembly typography remains legible over a visually busy live camera feed. -->
+    <dimen name="assembly_info_panel_height">600dp</dimen>
+    <dimen name="assembly_demo_height">156dp</dimen>
+    <dimen name="assembly_toolbar_text_size">18sp</dimen>
+    <dimen name="assembly_badge_text_size">12sp</dimen>
+    <dimen name="assembly_banner_text_size">14sp</dimen>
+    <dimen name="assembly_meta_text_size">13sp</dimen>
+    <dimen name="assembly_progress_text_size">12sp</dimen>
+    <dimen name="assembly_title_text_size">22sp</dimen>
+    <dimen name="assembly_body_text_size">16sp</dimen>
+    <dimen name="assembly_section_text_size">11sp</dimen>
+    <dimen name="assembly_material_text_size">14sp</dimen>
+    <dimen name="assembly_caption_text_size">12sp</dimen>
+    <dimen name="assembly_action_text_size">14sp</dimen>
+    <dimen name="assembly_diagnostics_text_size">11sp</dimen>
+</resources>

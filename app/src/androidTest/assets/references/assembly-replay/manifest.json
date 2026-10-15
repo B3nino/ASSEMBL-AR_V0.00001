@@ -1,0 +1,483 @@
+{
+  "longEdge": 1280,
+  "jpegQuality": 90,
+  "fixtures": [
+    {
+      "source": "motor bracket inserted/20260927_132927.jpg",
+      "fixture": "brackets-1-132927.jpg",
+      "installedBrackets": 1,
+      "width": 960,
+      "height": 1280,
+      "bytes": 253241,
+      "sha256": "19181a3bf30a3b9307ebd416e38226ef7eb04bf6199f5a3cf538edfb2d04c659"
+    },
+    {
+      "source": "motor bracket inserted/20260927_132944.jpg",
+      "fixture": "brackets-1-132944.jpg",
+      "installedBrackets": 1,
+      "width": 960,
+      "height": 1280,
+      "bytes": 205712,
+      "sha256": "cf6b32a7db4f4ca180930b39b99e3604567dce7b0ee2832cbafd73e8969604b2"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133355.jpg",
+      "fixture": "brackets-2-133355.jpg",
+      "installedBrackets": 2,
+      "width": 960,
+      "height": 1280,
+      "bytes": 214005,
+      "sha256": "037ff360a091c88980b1d8bb119981ac9e28131aa3ebd76d41bb098851073a54"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133359.jpg",
+      "fixture": "brackets-2-133359.jpg",
+      "installedBrackets": 2,
+      "width": 960,
+      "height": 1280,
+      "bytes": 196099,
+      "sha256": "52bb3227c26c56925c5d34f2a80377f02a8c802c88927147a876c18dcfc8cbf5"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133508.jpg",
+      "fixture": "brackets-3-133508.jpg",
+      "installedBrackets": 3,
+      "width": 960,
+      "height": 1280,
+      "bytes": 202582,
+      "sha256": "6587c598d8e23a9be0959dce5d4622224efe8c54e3d39a53636d564cf4cbbb2f"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133541.jpg",
+      "fixture": "brackets-3-133541.jpg",
+      "installedBrackets": 3,
+      "width": 960,
+      "height": 1280,
+      "bytes": 181202,
+      "sha256": "7b73c040b8b55b894c3bd9ca36598c78a6600e78367e595b2165d540a45fba02"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133630.jpg",
+      "fixture": "brackets-4-133630.jpg",
+      "installedBrackets": 4,
+      "width": 960,
+      "height": 1280,
+      "bytes": 198490,
+      "sha256": "3e19704a640b12b0f8478f9ae4eaa642615370eaae780207ca5c47b85c400659"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133652.jpg",
+      "fixture": "brackets-4-133652.jpg",
+      "installedBrackets": 4,
+      "width": 960,
+      "height": 1280,
+      "bytes": 191293,
+      "sha256": "738bfe322d5129ce3b3942228f11aaaa0747c9733a4780580fa4173008d8fdd5"
+    },
+    {
+      "source": "motor bracket inserted/20260927_132921.jpg",
+      "fixture": "brackets-1-132921.jpg",
+      "installedBrackets": 1,
+      "width": 1280,
+      "height": 960,
+      "bytes": 243114,
+      "sha256": "a3ba1506b2398f7b3680ce6c66cf2ce7d5779709dd0eb05f38b40c6f8ef033f5"
+    },
+    {
+      "source": "motor bracket inserted/20260927_132932.jpg",
+      "fixture": "brackets-1-132932.jpg",
+      "installedBrackets": 1,
+      "width": 960,
+      "height": 1280,
+      "bytes": 216003,
+      "sha256": "8e0b7f4965968b11fa09716f146f6bc83f204260585d5c6f8f75276716000884"
+    },
+    {
+      "source": "motor bracket inserted/20260927_132950.jpg",
+      "fixture": "brackets-1-132950.jpg",
+      "installedBrackets": 1,
+      "width": 960,
+      "height": 1280,
+      "bytes": 214379,
+      "sha256": "d73e6979651bc6cbe0622d453757af641717e2780a383dee542f3354a3499c01"
+    },
+    {
+      "source": "motor bracket inserted/20260927_132955.jpg",
+      "fixture": "brackets-1-132955.jpg",
+      "installedBrackets": 1,
+      "width": 1280,
+      "height": 960,
+      "bytes": 225693,
+      "sha256": "66c13f262aac812c64a481c2df0014109cad4bd166c121a1674e5f9a00e925ef"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133337.jpg",
+      "fixture": "brackets-2-133337.jpg",
+      "installedBrackets": 2,
+      "width": 960,
+      "height": 1280,
+      "bytes": 204859,
+      "sha256": "1fe98a626d5d44776ee333aa9ef96efb05db04529f582082d66205448885eab6"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133341.jpg",
+      "fixture": "brackets-2-133341.jpg",
+      "installedBrackets": 2,
+      "width": 1280,
+      "height": 960,
+      "bytes": 203982,
+      "sha256": "d0b86366d2847fe3c74b49bcb5f89e0465e81114319de3478989cae87a4362bc"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133345.jpg",
+      "fixture": "brackets-2-133345.jpg",
+      "installedBrackets": 2,
+      "width": 1280,
+      "height": 960,
+      "bytes": 214263,
+      "sha256": "01959f8b4641dda168eda59a618d822a4aaa3a91a2943fca8112f45d641c871b"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133349.jpg",
+      "fixture": "brackets-2-133349.jpg",
+      "installedBrackets": 2,
+      "width": 960,
+      "height": 1280,
+      "bytes": 201554,
+      "sha256": "c861553e31f2455a0f8b8f01be60053297ec6e42f984a9a3ec00d00c8bbe8452"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133409.jpg",
+      "fixture": "brackets-2-133409.jpg",
+      "installedBrackets": 2,
+      "width": 960,
+      "height": 1280,
+      "bytes": 198972,
+      "sha256": "dbca4e23e8785d95f43c7aaec2914e82dac72107c033018dbacb34aae4ed7cc4"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133413.jpg",
+      "fixture": "brackets-2-133413.jpg",
+      "installedBrackets": 2,
+      "width": 960,
+      "height": 1280,
+      "bytes": 206442,
+      "sha256": "59f74751ab0cf50c28dedba40638f48648d79f4031f94a3bce8c812ef7c5ed0b"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133417.jpg",
+      "fixture": "brackets-2-133417.jpg",
+      "installedBrackets": 2,
+      "width": 1280,
+      "height": 960,
+      "bytes": 182032,
+      "sha256": "ffdf336f712070206c8829520b4143ad90201c8a7e61629f42bb10b35b2f651c"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133419.jpg",
+      "fixture": "brackets-2-133419.jpg",
+      "installedBrackets": 2,
+      "width": 1280,
+      "height": 960,
+      "bytes": 189486,
+      "sha256": "21e1d3ca3a0ce4fd134fd638b650ab8582648b9162df04aabf1d6f9d4da464b9"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133512.jpg",
+      "fixture": "brackets-3-133512.jpg",
+      "installedBrackets": 3,
+      "width": 1280,
+      "height": 960,
+      "bytes": 208543,
+      "sha256": "10236ec0fffc4ab4609b814a197c57b4ee759b526a93672ea46bcb14ba780fe9"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133517.jpg",
+      "fixture": "brackets-3-133517.jpg",
+      "installedBrackets": 3,
+      "width": 960,
+      "height": 1280,
+      "bytes": 205118,
+      "sha256": "06a8575fe4be13a27e974b09bf56f5b53ea953614cfceed0158e0afcc499b65f"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133521.jpg",
+      "fixture": "brackets-3-133521.jpg",
+      "installedBrackets": 3,
+      "width": 1280,
+      "height": 960,
+      "bytes": 180655,
+      "sha256": "dcc0492baa9d3062ffb879cbeb7c5cbe935e1a6438253096b98a3ffe923fd296"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133525.jpg",
+      "fixture": "brackets-3-133525.jpg",
+      "installedBrackets": 3,
+      "width": 1280,
+      "height": 960,
+      "bytes": 158360,
+      "sha256": "2102cc8fb131f26df555b8bca32aa486c7ae93656aa030713b3debb052098f23"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133537.jpg",
+      "fixture": "brackets-3-133537.jpg",
+      "installedBrackets": 3,
+      "width": 1280,
+      "height": 960,
+      "bytes": 196813,
+      "sha256": "29d0b0b06703da29ea45348d66ff0ef3cfdd4d84bf239270917015d8b9ea5cbe"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133543.jpg",
+      "fixture": "brackets-3-133543.jpg",
+      "installedBrackets": 3,
+      "width": 960,
+      "height": 1280,
+      "bytes": 204298,
+      "sha256": "f61df7144ee80f33dcd10b545ebde077d4d9bf4347cca9edb78a948dea304204"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133548.jpg",
+      "fixture": "brackets-3-133548.jpg",
+      "installedBrackets": 3,
+      "width": 960,
+      "height": 1280,
+      "bytes": 200911,
+      "sha256": "167a1bf5f9534c18573dc47560397ef50ee80733e7848c6bf501091bbbdfe4ce"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133552.jpg",
+      "fixture": "brackets-3-133552.jpg",
+      "installedBrackets": 3,
+      "width": 960,
+      "height": 1280,
+      "bytes": 187360,
+      "sha256": "de934713a394b2dae5ea4f69348d7a9b7edf0d2ba468b9986bf59cf78c9a7d8c"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133634.jpg",
+      "fixture": "brackets-4-133634.jpg",
+      "installedBrackets": 4,
+      "width": 1280,
+      "height": 960,
+      "bytes": 193366,
+      "sha256": "d9d1b878b7dd65988d4310aa5ca6e8bb36070565504101c0db3e113e4724b807"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133637.jpg",
+      "fixture": "brackets-4-133637.jpg",
+      "installedBrackets": 4,
+      "width": 1280,
+      "height": 960,
+      "bytes": 173938,
+      "sha256": "86d1fdafb638f7d51bce9443ca72dc423aebdf18df1a1c6367e1e17518983b89"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133641.jpg",
+      "fixture": "brackets-4-133641.jpg",
+      "installedBrackets": 4,
+      "width": 1280,
+      "height": 960,
+      "bytes": 194832,
+      "sha256": "20543abbcb4cd13f0f71b8fa3cd32132dda80df512e5a557a2aafc11c4b4bb40"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133656.jpg",
+      "fixture": "brackets-4-133656.jpg",
+      "installedBrackets": 4,
+      "width": 960,
+      "height": 1280,
+      "bytes": 210881,
+      "sha256": "8e89ae82a1b05cb71e8b23b5ac8f3830318b900c8f2ae48fcbff88a774bfaed9"
+    },
+    {
+      "source": "motor bracket inserted/20260927_133703.jpg",
+      "fixture": "brackets-4-133703.jpg",
+      "installedBrackets": 4,
+      "width": 960,
+      "height": 1280,
+      "bytes": 177959,
+      "sha256": "4e87c016f341759ce20d1f97230b0b5cb1108cbfce6fb9c3f5333211b1d9e64f"
+    },
+    {
+      "source": "individual new/20260927_095135.jpg",
+      "fixture": "loose-nano-095135.jpg",
+      "component": "nano",
+      "width": 960,
+      "height": 1280,
+      "bytes": 137762,
+      "sha256": "346573bb72bcb4b5d6f137dfbed6dab5dc8b3725e80379b697685cfb0e7e937b"
+    },
+    {
+      "source": "individual new/20260927_095402.jpg",
+      "fixture": "loose-nano-095402.jpg",
+      "component": "nano",
+      "width": 960,
+      "height": 1280,
+      "bytes": 146044,
+      "sha256": "a8c31f59c0d68118bace203082dc4883c5a8a18ce4dda3b7ab50de192d7387d7"
+    },
+    {
+      "source": "individual new/20260927_095424.jpg",
+      "fixture": "loose-nano-095424.jpg",
+      "component": "nano",
+      "width": 1280,
+      "height": 960,
+      "bytes": 138494,
+      "sha256": "37750c4e71bcee2b6b74ebb5b7854ec1f85d8b3ca0af6d423654978bb11da9c3"
+    },
+    {
+      "source": "individual new/20260927_095449.jpg",
+      "fixture": "loose-nano-095449.jpg",
+      "component": "nano",
+      "width": 960,
+      "height": 1280,
+      "bytes": 154865,
+      "sha256": "9c29ab6a70ac4ac88a22b8655a44b4a4d714741ed91e00efddc5ecc805ecb225"
+    },
+    {
+      "source": "individual new/20260927_095507.jpg",
+      "fixture": "loose-line-tracker-095507.jpg",
+      "component": "line-tracker",
+      "width": 960,
+      "height": 1280,
+      "bytes": 141237,
+      "sha256": "218ba0122975a6e1d915c22aae2bd38f4138c1051a25f690fe8402e638d56c4d"
+    },
+    {
+      "source": "individual new/20260927_095513.jpg",
+      "fixture": "loose-line-tracker-095513.jpg",
+      "component": "line-tracker",
+      "width": 960,
+      "height": 1280,
+      "bytes": 124429,
+      "sha256": "9d991e994a7a1c1c3fce03cc131411688204f7c55dc2c0714b41e8522f8d278c"
+    },
+    {
+      "source": "individual new/20260927_095519.jpg",
+      "fixture": "loose-line-tracker-095519.jpg",
+      "component": "line-tracker",
+      "width": 960,
+      "height": 1280,
+      "bytes": 139188,
+      "sha256": "de3abc55cd93ac3b6cc50b33d29b8dc59ae503472879bc4fb08cdffce6a28128"
+    },
+    {
+      "source": "individual new/20260927_095522.jpg",
+      "fixture": "loose-line-tracker-095522.jpg",
+      "component": "line-tracker",
+      "width": 960,
+      "height": 1280,
+      "bytes": 137055,
+      "sha256": "bfd66fb07286f844c4d64ab99fa70384b44515381406a1572f9c55fb0b5688c4"
+    },
+    {
+      "source": "individual new/20260927_095548.jpg",
+      "fixture": "loose-ultrasonic-sensor-095548.jpg",
+      "component": "ultrasonic-sensor",
+      "width": 960,
+      "height": 1280,
+      "bytes": 170912,
+      "sha256": "71c51669a0a14281c86ef16b4694caa3bf73738b5fbfed1f11b8e0762efa9a53"
+    },
+    {
+      "source": "individual new/20260927_095553.jpg",
+      "fixture": "loose-ultrasonic-sensor-095553.jpg",
+      "component": "ultrasonic-sensor",
+      "width": 960,
+      "height": 1280,
+      "bytes": 161889,
+      "sha256": "7840a50a6ed6a9437493c13bbd53b9c205be94fced85aefa1a3e92aae173d69d"
+    },
+    {
+      "source": "individual new/20260927_095602.jpg",
+      "fixture": "loose-ultrasonic-sensor-095602.jpg",
+      "component": "ultrasonic-sensor",
+      "width": 960,
+      "height": 1280,
+      "bytes": 152866,
+      "sha256": "c9b5c2886f1431790d1934d564c1f25ef990089f906e1b0719d6fcb9afce1b60"
+    },
+    {
+      "source": "individual new/20260927_095636.jpg",
+      "fixture": "loose-ultrasonic-sensor-095636.jpg",
+      "component": "ultrasonic-sensor",
+      "width": 960,
+      "height": 1280,
+      "bytes": 163133,
+      "sha256": "a28d84a798d968aa4c20680a1b17d17826cbae7c749ad4819663f3bc13ec86c4"
+    },
+    {
+      "source": "individual new/20260927_095653.jpg",
+      "fixture": "loose-caster-095653.jpg",
+      "component": "caster",
+      "width": 960,
+      "height": 1280,
+      "bytes": 135271,
+      "sha256": "1cb1c07800c1b55016032f2089f3acef9469a6888326008be71d977a4887080f"
+    },
+    {
+      "source": "individual new/20260927_095658.jpg",
+      "fixture": "loose-caster-095658.jpg",
+      "component": "caster",
+      "width": 960,
+      "height": 1280,
+      "bytes": 123481,
+      "sha256": "6c0b2823d3a9d592cc71e1c418e4dceae99017283e819be9ad7979a1095fe417"
+    },
+    {
+      "source": "individual new/20260927_095707.jpg",
+      "fixture": "loose-caster-095707.jpg",
+      "component": "caster",
+      "width": 1280,
+      "height": 960,
+      "bytes": 121644,
+      "sha256": "e4c80a0dd499be8d18a73c4037e8dfc968feb4df7115d6150b4ba337e1ee18c5"
+    },
+    {
+      "source": "individual new/20260927_095713.jpg",
+      "fixture": "loose-caster-095713.jpg",
+      "component": "caster",
+      "width": 1280,
+      "height": 960,
+      "bytes": 110022,
+      "sha256": "835aac2aa3b7573db3cc0f7d59937dbf23f629417b2db24406fef86b6b9d6ac8"
+    },
+    {
+      "source": "individual new/20260927_100026.jpg",
+      "fixture": "loose-motor-bracket-half-100026.jpg",
+      "component": "motor-bracket-half",
+      "width": 1280,
+      "height": 960,
+      "bytes": 143542,
+      "sha256": "7b838cea171a8c8261061acd3d22075af9597eb13f0d7a84fb76c34b08154e94"
+    },
+    {
+      "source": "individual new/20260927_100038.jpg",
+      "fixture": "loose-motor-bracket-half-100038.jpg",
+      "component": "motor-bracket-half",
+      "width": 1280,
+      "height": 960,
+      "bytes": 186015,
+      "sha256": "ed6db9add991ecfc94b1040ea2e937426cc073e49a9f304f4913e9f2d6fb4765"
+    },
+    {
+      "source": "individual new/20260927_100105.jpg",
+      "fixture": "loose-motor-bracket-half-100105.jpg",
+      "component": "motor-bracket-half",
+      "width": 1280,
+      "height": 960,
+      "bytes": 163440,
+      "sha256": "7eedd0d09b04f3322dea7f3360b2ee440714cb1fd80b1d1e1f64e04c5649b357"
+    },
+    {
+      "source": "individual new/20260927_100111.jpg",
+      "fixture": "loose-motor-bracket-half-100111.jpg",
+      "component": "motor-bracket-half",
+      "width": 960,
+      "height": 1280,
+      "bytes": 175300,
+      "sha256": "6956fe1a436177c8b53cc5d5f654d033244428d75429916d3940981d2c2b3205"
+    }
+  ]
+}

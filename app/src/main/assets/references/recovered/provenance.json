@@ -1,0 +1,135 @@
+{
+  "reviewedOn": "2026-09-20",
+  "description": "User-provided original kit photographs recovered with foreground-only descriptor registration. Packaged JPEG bytes are identical to the supplied files; no cropping, retouching, rendering, or re-encoding was performed. Registration metadata restricts feature extraction, not source image contents.",
+  "registrationSource": "android-app/app/src/main/java/dev/chyken/assembl_ar/camera/SalvagedPhysicalReferenceCatalog.java",
+  "dimensionsAreMeasured": false,
+  "limitations": [
+    "Nominal dimensions support provisional pose only; these photos do not establish physical calibration.",
+    "Identity and visible face geometry do not establish attachment, shaft engagement, capacity, voltage suitability, wiring continuity, or polarity.",
+    "A same-source recognition check is registration regression coverage, not independent accuracy evidence.",
+    "Feature-region boundaries restrict descriptor centers; ORB patches can extend beyond a boundary. Background-only negatives therefore remain necessary."
+  ],
+  "images": [
+    {
+      "file": "battery-label.jpg",
+      "source": "references/new/4f3b0b70-5f5d-41e7-9e55-f02f0485ea94.jpg",
+      "sha256": "ef116af731dcffcd035c834f9964bd886469fca4331cb8a1c12aa68fc41e9723",
+      "bytes": 366286,
+      "width": 3024,
+      "height": 4032,
+      "role": "production-reference",
+      "componentId": "battery_pack_7v_12v",
+      "nominalPlaneMillimeters": [
+        26.5,
+        48.5
+      ],
+      "canonicalCornersNormalized": [
+        [
+          0.263,
+          0.47
+        ],
+        [
+          0.45,
+          0.405
+        ],
+        [
+          0.629,
+          0.631
+        ],
+        [
+          0.463,
+          0.709
+        ]
+      ],
+      "featureRegionsNormalized": [
+        [
+          [
+            0.278,
+            0.478
+          ],
+          [
+            0.446,
+            0.425
+          ],
+          [
+            0.608,
+            0.622
+          ],
+          [
+            0.467,
+            0.688
+          ]
+        ]
+      ],
+      "review": "The broad printed battery face is visible. The inset label polygon excludes the adjacent multicolor jumper bundle, terminal clip, leads, barrel plug, and desk. The 9 V example does not cover every permitted battery package."
+    },
+    {
+      "file": "battery-label-opposite.jpg",
+      "source": "references/new/531354bb-0cd8-4c72-b6e1-bfce7ee9f821.jpg",
+      "sha256": "91c6ebc0823ac524a1445dd5b0f7a257819ec17938677c3dfdf0241ba765106e",
+      "bytes": 320754,
+      "width": 3024,
+      "height": 4032,
+      "role": "production-reference",
+      "review": "Separate opposite printed label face. Promoted from evaluation to training after first-face-only failed to identify this different label. This is source registration coverage, not a held-out accuracy measurement.",
+      "componentId": "battery_pack_7v_12v",
+      "nominalPlaneMillimeters": [
+        26.5,
+        48.5
+      ],
+      "canonicalCornersNormalized": [
+        [
+          0.306,
+          0.366
+        ],
+        [
+          0.495,
+          0.322
+        ],
+        [
+          0.612,
+          0.553
+        ],
+        [
+          0.438,
+          0.604
+        ]
+      ]
+    },
+    {
+      "file": "wheel-five-spoke.jpg",
+      "source": "references/new/f0a49bbd-7b6d-42ef-848a-a5070da996db.jpg",
+      "sha256": "f1fa3651af3c254848f7979121ea0636e531501c8cf8c39f0927cb1fa9e8e0d9",
+      "bytes": 253085,
+      "width": 3024,
+      "height": 4032,
+      "role": "production-reference",
+      "componentId": "drive_wheel",
+      "nominalPlaneMillimeters": [
+        65.0,
+        65.0
+      ],
+      "canonicalCornersNormalized": [
+        [
+          0.185,
+          0.368
+        ],
+        [
+          0.756,
+          0.368
+        ],
+        [
+          0.756,
+          0.792
+        ],
+        [
+          0.185,
+          0.792
+        ]
+      ],
+      "featureMask": "32 narrow rubber annulus segments, an inset central hub ellipse, and five inset solid spoke polygons; exact vertices are authored in SalvagedPhysicalReferenceCatalog.",
+      "review": "The complete yellow five-spoke wheel and rubber ring are visible. Desk texture through the five apertures is excluded. Its rotational symmetry cannot establish motor shaft direction or mechanical engagement. No distinct held-out photograph of this wheel is available."
+    }
+  ],
+  "evaluationImages": []
+}

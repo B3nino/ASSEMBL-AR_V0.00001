@@ -1,0 +1,15 @@
+# Simplified NEOBOT board / microcontroller ghost mesh (meters in a normalized local frame)
+v -0.70 -0.48 -0.05
+v  0.70 -0.48 -0.05
+v  0.70  0.48 -0.05
+v -0.70  0.48 -0.05
+v -0.70 -0.48  0.05
+v  0.70 -0.48  0.05
+v  0.70  0.48  0.05
+v -0.70  0.48  0.05
+f 1 2 3 4
+f 5 8 7 6
+f 1 5 6 2
+f 2 6 7 3
+f 3 7 8 4
+f 5 1 4 8

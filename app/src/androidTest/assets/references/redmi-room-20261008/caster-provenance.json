@@ -1,0 +1,263 @@
+{
+  "dataset": "REDMI-20261008",
+  "protocol": "Odd scan POOL only; gap>1.6s or expected change. Derived compressed analysis-sized captures, no light or colour correction.",
+  "fixtures": [
+    {
+      "file": "caster-scan-1-pool.jpg",
+      "actual": "caster_wheel",
+      "split": "POOL",
+      "scan": 1,
+      "capture": "20261008-112435/104923128545000.jpg",
+      "sourcePath": "tmp\\testing-session-20261007\\frames\\20261008-112435\\104923128545000.jpg",
+      "sourceSha256": "88cae84901c5673c9d9dd9656d0c20e9901ee522277034c541a0c6384f601bec",
+      "sourceBytes": 25459,
+      "bytes": 9032,
+      "sha256": "5e4d331ea5dc5a1f64ad90422dd8e38f33caecf3b61dad4f6b2676d8311a5627",
+      "transform": {
+        "sourceSize": [
+          720,
+          500
+        ],
+        "outputSize": [
+          720,
+          500
+        ],
+        "cropXYWH": null,
+        "resize": "none",
+        "jpegQuality": 72,
+        "subsampling": 2
+      },
+      "expectedLooseCandidates": [
+        "caster_wheel"
+      ],
+      "hostDetection": {
+        "corners": [
+          [
+            230.84999990463257,
+            183.22500872612
+          ],
+          [
+            448.35000467300415,
+            171.22500109672546
+          ],
+          [
+            454.3500084877014,
+            279.97500348091125
+          ],
+          [
+            236.85000371932983,
+            291.9750111103058
+          ]
+        ],
+        "confidence": 0.8935623383987139
+      },
+      "boreCenters": [
+        [
+          255.60000228881836,
+          236.40000915527344
+        ],
+        [
+          429.6000061035156,
+          226.8000030517578
+        ]
+      ],
+      "boreAblationRejected": [
+        true,
+        true
+      ]
+    },
+    {
+      "file": "caster-scan-3-pool.jpg",
+      "actual": "caster_wheel",
+      "split": "POOL",
+      "scan": 3,
+      "capture": "20261008-112435/104962531174000.jpg",
+      "sourcePath": "tmp\\testing-session-20261007\\frames\\20261008-112435\\104962531174000.jpg",
+      "sourceSha256": "a985c7d4b47142df04e2203a7603bce4e020bb594c1debcc004099bceff2e7ba",
+      "sourceBytes": 29963,
+      "bytes": 10900,
+      "sha256": "386633f75dc3e312e1465b8a4fa775578e4a14545f3c54c7b05e2e14851edc53",
+      "transform": {
+        "sourceSize": [
+          720,
+          500
+        ],
+        "outputSize": [
+          720,
+          500
+        ],
+        "cropXYWH": null,
+        "resize": "none",
+        "jpegQuality": 72,
+        "subsampling": 2
+      },
+      "expectedLooseCandidates": [
+        "caster_wheel"
+      ],
+      "hostDetection": {
+        "corners": [
+          [
+            296.77500772476196,
+            347.8750066757202
+          ],
+          [
+            304.27500772476196,
+            136.37500095367432
+          ],
+          [
+            410.0250105857849,
+            140.12500095367432
+          ],
+          [
+            402.5250105857849,
+            351.6250066757202
+          ]
+        ],
+        "confidence": 0.8926625672653395
+      },
+      "boreCenters": [
+        [
+          350.40000915527344,
+          328.6000061035156
+        ],
+        [
+          356.40000915527344,
+          159.4000015258789
+        ]
+      ],
+      "boreAblationRejected": [
+        true,
+        true
+      ]
+    },
+    {
+      "file": "caster-scan-5-pool.jpg",
+      "actual": "caster_wheel",
+      "split": "POOL",
+      "scan": 5,
+      "capture": "20261008-112435/105017675573000.jpg",
+      "sourcePath": "tmp\\testing-session-20261007\\frames\\20261008-112435\\105017675573000.jpg",
+      "sourceSha256": "03e38a0751b111031044e943c4a7c0727730c75396dcec8aac37984ae95a7a42",
+      "sourceBytes": 49647,
+      "bytes": 43538,
+      "sha256": "9cd05babecdf871ed9476701f5ad12fd9d41a9174d098ed7bf6566625c25b3ce",
+      "transform": {
+        "sourceSize": [
+          720,
+          500
+        ],
+        "outputSize": [
+          720,
+          500
+        ],
+        "cropXYWH": null,
+        "resize": "none",
+        "jpegQuality": 88,
+        "subsampling": 2
+      },
+      "expectedLooseCandidates": [
+        "caster_wheel"
+      ],
+      "hostDetection": {
+        "corners": [
+          [
+            211.99999713897705,
+            129.47501230239868
+          ],
+          [
+            498.50000286102295,
+            150.47499704360962
+          ],
+          [
+            488.0000104904175,
+            293.72499990463257
+          ],
+          [
+            201.50000476837158,
+            272.72501516342163
+          ]
+        ],
+        "confidence": 0.8918837076526216
+      },
+      "boreCenters": [
+        [
+          235.4000015258789,
+          203.20001220703125
+        ],
+        [
+          464.6000061035156,
+          220.0
+        ]
+      ],
+      "boreAblationRejected": [
+        true,
+        true
+      ]
+    },
+    {
+      "file": "caster-scan-7-pool.jpg",
+      "actual": "caster_wheel",
+      "split": "POOL",
+      "scan": 7,
+      "capture": "20261008-112435/105052285070000.jpg",
+      "sourcePath": "tmp\\testing-session-20261007\\frames\\20261008-112435\\105052285070000.jpg",
+      "sourceSha256": "9c56242369769a02ec0703471bcb04b0a3186dbfda3c2ce778f60a6d719be349",
+      "sourceBytes": 30397,
+      "bytes": 36461,
+      "sha256": "70d39d517edd2d1ed6fbc8a420defc0b0ce1081e25e4390d9270266f66b79f5b",
+      "transform": {
+        "sourceSize": [
+          720,
+          500
+        ],
+        "outputSize": [
+          720,
+          500
+        ],
+        "cropXYWH": null,
+        "resize": "none",
+        "jpegQuality": 95,
+        "subsampling": 2
+      },
+      "expectedLooseCandidates": [
+        "caster_wheel"
+      ],
+      "hostDetection": {
+        "corners": [
+          [
+            305.07499599456787,
+            339.35002613067627
+          ],
+          [
+            311.07499980926514,
+            94.84999942779541
+          ],
+          [
+            433.32501316070557,
+            97.85000133514404
+          ],
+          [
+            427.3250093460083,
+            342.3500280380249
+          ]
+        ],
+        "confidence": 0.8976544656603898
+      },
+      "boreCenters": [
+        [
+          366.8000030517578,
+          316.4000244140625
+        ],
+        [
+          371.6000061035156,
+          120.80000305175781
+        ]
+      ],
+      "boreAblationRejected": [
+        false,
+        true
+      ]
+    }
+  ],
+  "jpegBytes": 99931
+}

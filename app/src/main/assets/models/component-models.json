@@ -1,0 +1,1055 @@
+{
+  "schemaVersion": 1,
+  "description": "All 33 NEOBOT catalog entries; separate authored visualization meshes. Not calibrated manufacturing models.",
+  "components": [
+    {
+      "componentId": "main_board",
+      "name": "Personal Robot Kit main board",
+      "assetPath": "models/main_board.obj",
+      "dependencies": [
+        "models/main_board.mtl",
+        "models/textures/main-board-top.jpg",
+        "models/textures/main-board-underside.jpg"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "existing_project_generator",
+      "units": "existing nominal local units",
+      "vertices": 11646,
+      "triangles": 15782,
+      "bounds": {
+        "min": [
+          -0.85,
+          -1,
+          -0.0106667
+        ],
+        "max": [
+          0.85,
+          1,
+          0.13
+        ]
+      },
+      "sha256": "1cab2a6b3c84e64ac65b569ed5763f9c467df43013fed4e4fad13b0b9272ae40",
+      "sources": [
+        "references/new/main_board_1.jpg",
+        "references/new/main_board_2.jpg"
+      ],
+      "notes": "Retained photo-backed board prototype. Nominal dimensions and connector/aperture positions; see tools/board-models.json."
+    },
+    {
+      "componentId": "motor_bracket",
+      "name": "Gear-motor bracket",
+      "assetPath": "models/motor_bracket.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1520,
+      "triangles": 760,
+      "bounds": {
+        "min": [
+          -0.6666667,
+          -1,
+          -0.0541667
+        ],
+        "max": [
+          0.6666667,
+          1,
+          0.0541667
+        ]
+      },
+      "sha256": "958f07091660a373220d04444ccc15d73289f6b1d4ab543578cae192b473309b",
+      "sources": [
+        "references/new/individual/motor bracket/20260906_131614.jpg",
+        "references/new/individual/motor bracket/20260906_131502.jpg"
+      ],
+      "notes": "One flat T-shaped bracket half from the recent physical kit revision, with three rounded through-slots and one crossbar hole. Four instances are used in the kit. All extents and aperture positions are inferred, unmeasured."
+    },
+    {
+      "componentId": "gear_motor_6v",
+      "name": "6 V DC gear motor",
+      "assetPath": "models/motor_ghost.obj",
+      "dependencies": [
+        "models/mechanical.mtl"
+      ],
+      "status": "catalog_dimensions_photo_estimated_details",
+      "geometrySource": "tools/generate-mechanical-models.mjs",
+      "units": "25 millimeters per local unit; published envelope with photo-estimated details",
+      "productReference": {
+        "product": "Makerlab PH 6V DC Geared Motor (yellow with wire)",
+        "url": "https://makerlab.ph/products/3-6v-dc-geared-motor-130-dual-shaft-with-yellow-gear-box-6v-l-shape-dc-geared-motor-bracket-for-dc-geared-motor-6v-yellow",
+        "imageUrls": [
+          "https://makerlab.ph/cdn/shop/files/6VDCGEAREDMOTORWITHWIRE.jpg"
+        ],
+        "publishedDimensionsMm": [
+          69,
+          37,
+          23
+        ],
+        "publishedFeatures": [
+          "Yellow housing with wire",
+          "Double-sided output shaft",
+          "1:120 gear ratio"
+        ],
+        "modelMillimetersPerUnit": 25,
+        "axisInterpretation": "37 mm along shaft X; 69 mm rigid body length Y; 23 mm height Z. Shaft origin at X=Y=Z=0; body extends toward -Y. Leads are excluded from the rigid-body dimensions.",
+        "estimatedDetails": "The listing has no dimensioned drawing. Shaft profile/diameter, center offsets, mounting holes, can/endcap, strap, seam, vents and lead length/routing are estimated from photos. Leads are illustrative loose leads, not installation guidance. No encoder disc is included in the selected catalog product.",
+        "status": "catalog_dimensions_photo_estimated_details"
+      },
+      "referenceReviewedOn": "2026-09-12",
+      "vertices": 6948,
+      "triangles": 7264,
+      "bounds": {
+        "min": [
+          -0.74,
+          -2.406543,
+          -0.46
+        ],
+        "max": [
+          0.74,
+          0.42,
+          0.722869
+        ]
+      },
+      "sha256": "2cbf4e1dd7f22cc21166075c65903278ae32497df634048ae65eb948d501ae68",
+      "sources": [
+        "references/new/gear_motor_1.jpg",
+        "references/new/gear_motor_2.jpg",
+        "tools/mechanical/product-references.json",
+        "https://makerlab.ph/products/3-6v-dc-geared-motor-130-dual-shaft-with-yellow-gear-box-6v-l-shape-dc-geared-motor-bracket-for-dc-geared-motor-6v-yellow"
+      ],
+      "notes": "Makerlab yellow wired 6V DC Geared Motor: elongated split gearbox, mounting apertures, flattened 130 can, retaining strap, two pale shafts and red/black loose leads. Selected catalog variant has no encoder disc. Rigid envelope uses published 69 x 37 x 23 mm; subdimensions and lead routing are photo estimates."
+    },
+    {
+      "componentId": "dual_motor_driver",
+      "name": "Dual DC motor driver module",
+      "assetPath": "models/dual_motor_driver.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 5144,
+      "triangles": 5900,
+      "bounds": {
+        "min": [
+          -0.8532423,
+          -1,
+          -0.3617747
+        ],
+        "max": [
+          0.8532423,
+          1,
+          0.3617747
+        ]
+      },
+      "sha256": "c1a73478794dd091f68f1f813bedd589a40986d6fe1159853cb0e790f8771042",
+      "sources": [
+        "references/new/motor_driver.jpg",
+        "references/Personal Robot Kit Manual Assembly and Wiring-18_1.png"
+      ],
+      "notes": "Blue dual H-bridge module with four mounting apertures, two eight-lead packages, four green screw terminals and six signal/power pins. Nominal proportions from the supplied photograph; pin legends and fit are not certified."
+    },
+    {
+      "componentId": "arduino_nano_microcontroller",
+      "name": "Arduino Nano-compatible microcontroller board",
+      "assetPath": "models/arduino_nano_microcontroller.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 7748,
+      "triangles": 8576,
+      "bounds": {
+        "min": [
+          -0.4070556,
+          -1,
+          -0.2442334
+        ],
+        "max": [
+          0.4070556,
+          1,
+          0.2442334
+        ]
+      },
+      "sha256": "647e95146cb41666779341695ac51f1742155069b251133c55ddba986bba8506",
+      "sources": [
+        "references/new/7fba0127-6f85-4e80-8b68-02fada2ba057.jpg",
+        "references/new/e878f631-701a-46dc-847d-0d978003e1f3.jpg"
+      ],
+      "notes": "Nominal Nano-form-factor board with thirty underside pins, diagonal controller package, reset actuator, open Mini USB shell and six-pin header. Blue PCB appearance follows the supplied kit; fine circuit layout and connector measurements are approximate."
+    },
+    {
+      "componentId": "caster_wheel",
+      "name": "Ball caster wheel",
+      "assetPath": "models/caster_ghost.obj",
+      "dependencies": [
+        "models/mechanical.mtl"
+      ],
+      "status": "catalog_dimensions_photo_estimated_details",
+      "geometrySource": "tools/generate-mechanical-models.mjs",
+      "units": "25 millimeters per local unit; published envelope with photo-estimated details",
+      "productReference": {
+        "product": "BC Robotics Large Ball Caster Wheel (ROB-231)",
+        "url": "https://bc-robotics.com/shop/large-ball-caster-wheel/",
+        "imageUrls": [
+          "https://bc-robotics.com/wp-content/uploads/2022/08/large-caster.jpg",
+          "https://bc-robotics.com/wp-content/uploads/2022/08/large-caster-1.jpg",
+          "https://bc-robotics.com/wp-content/uploads/2022/08/large-caster-2.jpg"
+        ],
+        "publishedDimensionsMm": [
+          50,
+          25,
+          20
+        ],
+        "publishedMountingHoleSpacingMm": 40,
+        "publishedMountingHardware": "M3",
+        "modelMillimetersPerUnit": 25,
+        "axisInterpretation": "50 mm along X, 25 mm along Y, 20 mm tall along Z. Mounting surface Z=0; ball toward -Z. Mounting centers X=+/-20 mm, Y=0.",
+        "estimatedDetails": "White molded base and four retaining fingers follow the product photos. Ball diameter, clip profile, plate thickness, underside ribs/recesses and M3 clearance bore diameter are photo estimates; the listing specifies compatible hardware but not a bore diameter.",
+        "status": "catalog_dimensions_photo_estimated_details"
+      },
+      "referenceReviewedOn": "2026-09-12",
+      "vertices": 11364,
+      "triangles": 7804,
+      "bounds": {
+        "min": [
+          -1,
+          -0.5,
+          -0.8
+        ],
+        "max": [
+          1,
+          0.5,
+          0
+        ]
+      },
+      "sha256": "3aa67b24fc4f9fe118146e0c0c371475955551a66c1f810af8cd1a0ac5ad113a",
+      "sources": [
+        "references/new/0556e663-b5f5-44f0-93d1-aaaee88079c4.jpg",
+        "tools/mechanical/product-references.json",
+        "https://bc-robotics.com/shop/large-ball-caster-wheel/"
+      ],
+      "notes": "BC Robotics ROB-231 large ball caster: white tapered mounting base with recessed through-holes and four separate retaining fingers around the metal ball. Published 50 x 25 x 20 mm, 40 mm hole centers, M3-compatible. Ball and housing details are photo estimates; ball hangs toward -Z."
+    },
+    {
+      "componentId": "line_tracker_module",
+      "name": "Infrared line tracker module",
+      "assetPath": "models/line_tracker_module.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 2416,
+      "triangles": 2592,
+      "bounds": {
+        "min": [
+          -0.2692308,
+          -1,
+          -0.1961538
+        ],
+        "max": [
+          0.2692308,
+          1,
+          0.1961538
+        ]
+      },
+      "sha256": "0130637af42c40be139f3a1199be53cda839714e1807dec83a38fe5f9707f5e2",
+      "sources": [
+        "references/Personal Robot Kit Manual Assembly and Wiring-18_1.png",
+        "android-app/app/src/main/assets/manuals/assembly/page-17.jpg"
+      ],
+      "notes": "Narrow reflectance module with two circular mounting holes, emitter/receiver pair, trim adjustment and three-pin header. Manual-derived nominal visualization; hidden-side electronics and sensor pin order are not measured."
+    },
+    {
+      "componentId": "ultrasonic_distance_sensor",
+      "name": "Ultrasonic distance sensor",
+      "assetPath": "models/ultrasonic_distance_sensor.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 5284,
+      "triangles": 6588,
+      "bounds": {
+        "min": [
+          -1,
+          -0.4444444,
+          -0.3102222
+        ],
+        "max": [
+          1,
+          0.4444444,
+          0.3102222
+        ]
+      },
+      "sha256": "0d5921a5dccbc4a47cd627b379124b86d540567cca9f86f32c6087bb3c6f4ebc",
+      "sources": [
+        "references/Personal Robot Kit Manual Assembly and Wiring-18_1.png",
+        "android-app/app/src/main/assets/manuals/assembly/page-18.jpg"
+      ],
+      "notes": "Twin cylindrical ultrasonic transducers with hollow metal rims and recessed mesh diaphragms, four board holes, crystal can and four connector pins. Nominal HC-SR04-style proportions inferred from the supplied manual."
+    },
+    {
+      "componentId": "onboard_led",
+      "name": "On-board LED",
+      "assetPath": "models/onboard_led.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 336,
+      "triangles": 536,
+      "bounds": {
+        "min": [
+          -0.4392971,
+          -0.4392971,
+          -1
+        ],
+        "max": [
+          0.4392971,
+          0.4392971,
+          1
+        ]
+      },
+      "sha256": "cffe1f1c2c7406100b8684a0c758735577ef30e0ec073e764c8cb4b75754e437",
+      "sources": [
+        "references/new/main_board_1.jpg",
+        "references/Personal Robot Kit Manual Assembly and Wiring-18_1.png"
+      ],
+      "notes": "Standalone nominal red domed through-hole LED with flange and two leads, corresponding to the main-board population. Lens shape and trimmed lead lengths are illustrative; use PCB markings for electrical polarity."
+    },
+    {
+      "componentId": "onboard_speaker",
+      "name": "On-board speaker/buzzer",
+      "assetPath": "models/onboard_speaker.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 448,
+      "triangles": 624,
+      "bounds": {
+        "min": [
+          -0.9445277,
+          -0.9445277,
+          -1
+        ],
+        "max": [
+          0.9445277,
+          0.9445277,
+          1
+        ]
+      },
+      "sha256": "b75cae87a73cddbfec76c982e68a94d0655307b472350c3ab303bc90297bc4ad",
+      "sources": [
+        "references/new/main_board_1.jpg",
+        "references/Personal Robot Kit Manual Assembly and Wiring-18_1.png"
+      ],
+      "notes": "Round black through-hole sounder with molded rim, recessed acoustic port and two terminals. The transport sticker visible in the supplied photograph is omitted to expose the nominal port geometry."
+    },
+    {
+      "componentId": "center_standoff",
+      "name": "Center circuit-board standoff",
+      "assetPath": "models/center_standoff.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 2536,
+      "triangles": 3164,
+      "bounds": {
+        "min": [
+          -0.1848524,
+          -0.1600869,
+          -1
+        ],
+        "max": [
+          0.1848524,
+          0.1600869,
+          1
+        ]
+      },
+      "sha256": "013460d2d4fdb5081989df375859f8a478be99b697434ecff1348e011ac68036",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-047.png"
+      ],
+      "notes": "Illustrative hexagonal metal standoff with lower threaded stud, lower nut, and removable upper Phillips screw. The manual confirms the assembly, but does not resolve its cross-section or dimensions."
+    },
+    {
+      "componentId": "drive_wheel",
+      "name": "Drive wheel",
+      "assetPath": "models/wheel_ghost.obj",
+      "dependencies": [
+        "models/mechanical.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "existing_project_generator",
+      "units": "existing nominal local units",
+      "vertices": 1020,
+      "triangles": 1892,
+      "bounds": {
+        "min": [
+          -0.999636,
+          -0.999636,
+          -0.46
+        ],
+        "max": [
+          0.999636,
+          0.999636,
+          0.46
+        ]
+      },
+      "sha256": "db71f0742fb9db5bd0484fdde2d91918364757ef3b103cb91fe8386485ca0375",
+      "sources": [
+        "references/new/f0a49bbd-7b6d-42ef-848a-a5070da996db.jpg"
+      ],
+      "notes": "Retained authored yellow five-spoke wheel and rubber tread. Axle along Z."
+    },
+    {
+      "componentId": "oled_protector",
+      "name": "OLED protector",
+      "assetPath": "models/oled_protector.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 856,
+      "triangles": 468,
+      "bounds": {
+        "min": [
+          -1,
+          -0.9411765,
+          -0.3235294
+        ],
+        "max": [
+          1,
+          0.9411765,
+          0.3235294
+        ]
+      },
+      "sha256": "c1bda8e8a5b15ec2b36186d6a82a5e7dfc39644b6acbbf5a8e8efbcf5de2fb12",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-061.png"
+      ],
+      "notes": "Nominal black raised protective frame with mounting apertures and open cable edge; obscured details and dimensions are inferred from installed photographs."
+    },
+    {
+      "componentId": "extension_data_cable",
+      "name": "Extension ribbon data cable",
+      "assetPath": "models/extension_data_cable.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 3904,
+      "triangles": 6784,
+      "bounds": {
+        "min": [
+          -0.3066095,
+          -1,
+          -0.1483871
+        ],
+        "max": [
+          0.3066095,
+          1,
+          0.1483871
+        ]
+      },
+      "sha256": "b445d13c7fbe0e51b4c8acb63eea1a8b7eb452a7c372d10f5afb0ae0c7e5b587",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-057.png"
+      ],
+      "notes": "Illustrative ten-conductor gray ribbon with red edge stripe and two keyed female IDC connector housings. The authored bend and connector interiors are visual approximations; not a verified pinout."
+    },
+    {
+      "componentId": "extension_circuit_board",
+      "name": "Extension circuit board",
+      "assetPath": "models/extension_board.obj",
+      "dependencies": [
+        "models/extension_board.mtl",
+        "references/physical/extension-board-white-top.jpg",
+        "references/physical/extension-board-white-underside.jpg"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "existing_project_generator",
+      "units": "existing nominal local units",
+      "vertices": 11601,
+      "triangles": 15770,
+      "bounds": {
+        "min": [
+          -0.85,
+          -1,
+          -0.0106667
+        ],
+        "max": [
+          0.85,
+          1,
+          0.093
+        ]
+      },
+      "sha256": "a84ab1f697cbf79ee07479f031a4d9d467ac4f1a94fe57f737797c9d0436c826",
+      "sources": [
+        "references/new/61e7782d-b162-42f8-8cc4-5d27cd77543f.jpg",
+        "references/new/959600f3-4a69-4ab3-b686-be1c01e11bc1.jpg"
+      ],
+      "notes": "Retained five-button photo-backed board prototype; independent face textures."
+    },
+    {
+      "componentId": "oled_096_i2c",
+      "name": "0.96-inch I2C OLED display",
+      "assetPath": "models/oled_096_i2c.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 3400,
+      "triangles": 3572,
+      "bounds": {
+        "min": [
+          -1,
+          -1,
+          -0.2481481
+        ],
+        "max": [
+          1,
+          1,
+          0.2481481
+        ]
+      },
+      "sha256": "00c88c89af7587484a2b7987f6cce9055b30ee646a4242bed75dbb791af5412e",
+      "sources": [
+        "references/Personal Robot Kit Manual 2026-6_2.png",
+        "android-app/app/src/main/assets/manuals/learning/page-06.jpg"
+      ],
+      "notes": "Nominal 0.96-inch four-pin OLED module with four PCB mounting apertures, unlit glass display, flex-tail detail and underside connector/electronics. Display pixels are deliberately unlit and do not represent live data."
+    },
+    {
+      "componentId": "battery_pack_7v_12v",
+      "name": "7 V to 12 V battery pack",
+      "assetPath": "models/battery_pack_7v_12v.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1370,
+      "triangles": 2508,
+      "bounds": {
+        "min": [
+          -0.7559894,
+          -1,
+          -0.2802553
+        ],
+        "max": [
+          0.7559894,
+          1,
+          0.2802553
+        ]
+      },
+      "sha256": "9755d7e55df10a139fba7bd49ac7fee092948db8e55ff0609e73cb8868438ba4",
+      "sources": [
+        "references/new/4f3b0b70-5f5d-41e7-9e55-f02f0485ea94.jpg",
+        "android-app/app/src/main/assets/references/assembly/image-065.png"
+      ],
+      "notes": "Illustrates the photographed rectangular 9 V pack variant with snap lead and barrel plug. Other allowed 7–12 V packs can differ in shape. Connector dimensions and electrical polarity are not certified by this model."
+    },
+    {
+      "componentId": "jumper_wire",
+      "name": "Jumper wire",
+      "assetPath": "models/jumper_wire.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 650,
+      "triangles": 1088,
+      "bounds": {
+        "min": [
+          -0.6512846,
+          -1,
+          -0.047651
+        ],
+        "max": [
+          0.6512846,
+          1,
+          0.047651
+        ]
+      },
+      "sha256": "7bb534521377e460f847a85b893aff4d4b70755eb4fe49fc66322b7955a52fa6",
+      "sources": [
+        "references/new/531354bb-0cd8-4c72-b6e1-bfce7ee9f821.jpg",
+        "android-app/app/src/main/assets/references/assembly/image-030.png"
+      ],
+      "notes": "One red female-to-female jumper lead with open socket ends. Color and bend are illustrative; this model does not encode an electrical connection."
+    },
+    {
+      "componentId": "momentary_button",
+      "name": "Momentary push button",
+      "assetPath": "models/momentary_button.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 424,
+      "triangles": 520,
+      "bounds": {
+        "min": [
+          -1,
+          -0.7760814,
+          -0.8715013
+        ],
+        "max": [
+          1,
+          0.7760814,
+          0.8715013
+        ]
+      },
+      "sha256": "2a3a80c4f57f5389858f448bcdadee99ad84e7550212458654de96cb2d87a559",
+      "sources": [
+        "references/Personal Robot Kit Manual 2026-1_2.png",
+        "android-app/app/src/main/assets/manuals/learning/page-01.jpg"
+      ],
+      "notes": "Four-terminal momentary tactile switch with metal cover, four staking details and raised black actuator. Package dimensions and lead bends are nominal; this is one of the five identical extension-board switches."
+    },
+    {
+      "componentId": "ir_receiver_38khz",
+      "name": "38 kHz infrared receiver module",
+      "assetPath": "models/ir_receiver_38khz.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1952,
+      "triangles": 2104,
+      "bounds": {
+        "min": [
+          -0.88,
+          -1,
+          -0.426
+        ],
+        "max": [
+          0.88,
+          1,
+          0.426
+        ]
+      },
+      "sha256": "65e3c463ada241262d2fec97d8d1bee850286793afb53d33fa85ac2a27027b7b",
+      "sources": [
+        "references/Personal Robot Kit Manual 2026-14_2.png",
+        "android-app/app/src/main/assets/manuals/learning/page-14.jpg"
+      ],
+      "notes": "White two-hole receiver PCB with three header pins, shielded optical receiver and small passives. The housing follows the manual photo; exact hidden package construction and all electrical pin ordering require kit verification."
+    },
+    {
+      "componentId": "ir_remote_transmitter",
+      "name": "Infrared remote-control transmitter",
+      "assetPath": "models/ir_remote_transmitter.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 3360,
+      "triangles": 4564,
+      "bounds": {
+        "min": [
+          -0.4541336,
+          -1,
+          -0.0898471
+        ],
+        "max": [
+          0.4541336,
+          1,
+          0.0898471
+        ]
+      },
+      "sha256": "966d69a2258078b6547e36bd265dc4df2a5a3dfd7847a1691630dfa6ff2af541",
+      "sources": [
+        "references/Personal Robot Kit Manual 2026-14_1.png",
+        "android-app/app/src/main/assets/manuals/learning/page-15.jpg"
+      ],
+      "notes": "Nominal 17-key infrared handset following the manual photograph, with twelve numbered/function keys, a five-key direction pad, perimeter seam, emitter and underside coin-cell tray. Key symbols are visual geometry, not asserted command codes."
+    },
+    {
+      "componentId": "cr2025_battery",
+      "name": "CR2025 coin-cell battery",
+      "assetPath": "models/cr2025_battery.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 688,
+      "triangles": 984,
+      "bounds": {
+        "min": [
+          -1,
+          -1,
+          -0.1295
+        ],
+        "max": [
+          1,
+          1,
+          0.1295
+        ]
+      },
+      "sha256": "76cc055be3924c910cbb1eec09810d59f8dc82876b12d1ec16db5f068855aab4",
+      "sources": [
+        "android-app/app/src/main/assets/references/learning/image-048.png"
+      ],
+      "notes": "Nominal 20:2.5 diameter-to-thickness coin-cell form, plus-face marking and perimeter rim; unmeasured representation of the CR2025 cell."
+    },
+    {
+      "componentId": "screw_30mm",
+      "name": "30 mm screw",
+      "assetPath": "models/screw_30mm.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 3865,
+      "triangles": 6890,
+      "bounds": {
+        "min": [
+          -0.1815336,
+          -0.1815336,
+          -1
+        ],
+        "max": [
+          0.1815336,
+          0.1815336,
+          1
+        ]
+      },
+      "sha256": "c196134290535eb8e32ef2d765eed41ed38ba46f2507756369f4e83c23623776",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-007.png"
+      ],
+      "notes": "30 mm named shank length represented proportionally; illustrative 2.6 mm core diameter, thread pitch and Phillips head are not measured hardware specifications."
+    },
+    {
+      "componentId": "short_screw",
+      "name": "Short screw",
+      "assetPath": "models/short_screw.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1305,
+      "triangles": 1770,
+      "bounds": {
+        "min": [
+          -0.7295597,
+          -0.7295597,
+          -1
+        ],
+        "max": [
+          0.7295597,
+          0.7295597,
+          1
+        ]
+      },
+      "sha256": "7fbb4ca9c407c8c6e25daaa9fc1dac360b80b6d6bc65aaa420e48e11e0247de0",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-015.png"
+      ],
+      "notes": "Illustrative short motor-driver screw. The 6-unit shank used for visual differentiation is a nominal authoring choice; the manual does not specify its length or diameter."
+    },
+    {
+      "componentId": "screw_20mm",
+      "name": "20 mm screw",
+      "assetPath": "models/screw_20mm.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 2800,
+      "triangles": 4760,
+      "bounds": {
+        "min": [
+          -0.2642369,
+          -0.2642369,
+          -1
+        ],
+        "max": [
+          0.2642369,
+          0.2642369,
+          1
+        ]
+      },
+      "sha256": "3e890e07f0d2d7fceff8d13a1e870b8c2f66960b6366201fd3b69ac6e17efb72",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-040.png"
+      ],
+      "notes": "20 mm named shank length represented proportionally; illustrative 2.6 mm core diameter, thread pitch and Phillips head are not measured hardware specifications."
+    },
+    {
+      "componentId": "mounting_screw",
+      "name": "Component mounting screw",
+      "assetPath": "models/mounting_screw.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1730,
+      "triangles": 2620,
+      "bounds": {
+        "min": [
+          -0.4853556,
+          -0.4853556,
+          -1
+        ],
+        "max": [
+          0.4853556,
+          0.4853556,
+          1
+        ]
+      },
+      "sha256": "bc7e6e57ef7f7d8ac2d70282a5305d9e79daaf2fd221b74cfabaa62711f8561e",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-053.png"
+      ],
+      "notes": "Generic component mounting screw. The 10-unit shank is an illustrative authoring choice, not a kit requirement; actual mounting screw length and diameter remain unspecified."
+    },
+    {
+      "componentId": "hex_nut",
+      "name": "Hex nut",
+      "assetPath": "models/hex_nut.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 968,
+      "triangles": 1444,
+      "bounds": {
+        "min": [
+          -1,
+          -0.8660254,
+          -0.4
+        ],
+        "max": [
+          1,
+          0.8660254,
+          0.4
+        ]
+      },
+      "sha256": "b5dbcdbb41e2207eb351282dfdaac31526f8e9c401500bf864e7a311130aa46c",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-011.png"
+      ],
+      "notes": "Nominal hex nut with actual central through-bore and simplified internal thread ridges; dimensions and thread compatibility are unverified."
+    },
+    {
+      "componentId": "plastic_spacer",
+      "name": "Plastic spacer",
+      "assetPath": "models/plastic_spacer.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 192,
+      "triangles": 384,
+      "bounds": {
+        "min": [
+          -1,
+          -1,
+          -0.8823529
+        ],
+        "max": [
+          1,
+          1,
+          0.8823529
+        ]
+      },
+      "sha256": "ec603d41ca54fbd12f8e9b385ca62a295bd9de6545dd0f22a63d7920d7fbfede",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-038.png"
+      ],
+      "notes": "Nominal white cylindrical sensor spacer with a true central through-bore; proportions inferred from the installed side view."
+    },
+    {
+      "componentId": "threadlocker",
+      "name": "Threadlocker",
+      "assetPath": "models/threadlocker.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 552,
+      "triangles": 732,
+      "bounds": {
+        "min": [
+          -0.3571429,
+          -0.3591071,
+          -1
+        ],
+        "max": [
+          0.3571429,
+          0.3591071,
+          1
+        ]
+      },
+      "sha256": "93b3668fb9996a4d5cb05962d3f9fc66eabcc7bc16b6a1e637e81471c425d561",
+      "sources": [],
+      "notes": "Illustrative generic design from the catalog description; the manuals provide no isolated product photograph. Nominal proportions, not a measured kit replica. Presented as a red squeeze bottle with narrow capped nozzle."
+    },
+    {
+      "componentId": "nail_polish_optional",
+      "name": "Nail polish (optional substitute)",
+      "assetPath": "models/nail_polish_optional.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 304,
+      "triangles": 404,
+      "bounds": {
+        "min": [
+          -0.4255319,
+          -0.3006383,
+          -1
+        ],
+        "max": [
+          0.4255319,
+          0.3006383,
+          1
+        ]
+      },
+      "sha256": "d25a3d317078748c1b61d8979c9317aa937fe84278468137fc57e1e98f661852",
+      "sources": [],
+      "notes": "Illustrative generic design from the catalog description; the manuals provide no isolated product photograph. Nominal proportions, not a measured kit replica. Presented as a purple bottle with a tall brush cap."
+    },
+    {
+      "componentId": "double_sided_tape",
+      "name": "Double-sided tape",
+      "assetPath": "models/double_sided_tape.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1168,
+      "triangles": 2328,
+      "bounds": {
+        "min": [
+          -1,
+          -0.8571429,
+          -0.215
+        ],
+        "max": [
+          1,
+          0.8571429,
+          0.215
+        ]
+      },
+      "sha256": "fd89a676f375c0f79625f82f79174f23c8393467594d50165dbc25a5f09c6996",
+      "sources": [],
+      "notes": "Illustrative generic design from the catalog description; the manuals provide no isolated product photograph. Nominal proportions, not a measured kit replica. Presented as a hollow adhesive roll with a short backing tail."
+    },
+    {
+      "componentId": "battery_holder_3d_printed_optional",
+      "name": "3D-printed battery holder (optional)",
+      "assetPath": "models/battery_holder_3d_printed_optional.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 1152,
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -0.6071429,
+          -1,
+          -0.2321429
+        ],
+        "max": [
+          0.6071429,
+          1,
+          0.2321429
+        ]
+      },
+      "sha256": "d70c78869844561152c30fd7c45f6e116790eb77daa3c03920b1d8bcfed8883c",
+      "sources": [],
+      "notes": "Illustrative generic design from the catalog description; the manuals provide no isolated product photograph. Nominal proportions, not a measured kit replica. Open cradle with retention lips, cable gap and screw apertures; it is not a printable or fit-tested battery-holder design."
+    },
+    {
+      "componentId": "phillips_screwdriver",
+      "name": "Phillips screwdriver",
+      "assetPath": "models/phillips_screwdriver.obj",
+      "dependencies": [
+        "models/components.mtl"
+      ],
+      "status": "nominal_visualization_unmeasured",
+      "geometrySource": "tools/generate-component-models.mjs",
+      "units": "centered local units; longest extent 2",
+      "vertices": 488,
+      "triangles": 624,
+      "bounds": {
+        "min": [
+          -0.1556604,
+          -0.1556604,
+          -1
+        ],
+        "max": [
+          0.1556604,
+          0.1556604,
+          1
+        ]
+      },
+      "sha256": "c27e385828ed766777b98c38f493d7a3c227df7234a60dba28106f3c8f02c227",
+      "sources": [
+        "android-app/app/src/main/assets/references/assembly/image-008.png"
+      ],
+      "notes": "Nominal black ribbed handle, metal shaft and four-blade Phillips point. Driver size and proportions are inferred from the assembly image, not measured."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keep image surfaces compact on tablets instead of stretching them to the viewport. -->
+    <style name="Widget.ASSEMBLAR.ComponentCardMedia" parent="">
+        <item name="android:layout_width">@dimen/tablet_component_media_width</item>
+        <item name="android:layout_height">@dimen/tablet_component_media_height</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:adjustViewBounds">false</item>
+        <item name="android:background">@color/surface_muted</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="Widget.ASSEMBLAR.ProjectCardMedia" parent="">
+        <item name="android:layout_width">@dimen/tablet_project_media_width</item>
+        <item name="android:layout_height">@dimen/tablet_project_media_height</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:background">@color/surface_muted</item>
+    </style>
+
+    <style name="Widget.ASSEMBLAR.ProjectDetailMedia" parent="">
+        <item name="android:layout_width">420dp</item>
+        <item name="android:layout_height">360dp</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:adjustViewBounds">false</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="Widget.ASSEMBLAR.LearningDetailMedia" parent="">
+        <item name="android:layout_width">420dp</item>
+        <item name="android:layout_height">360dp</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:adjustViewBounds">false</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+</resources>

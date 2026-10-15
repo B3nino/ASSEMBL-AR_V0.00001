@@ -1,0 +1,497 @@
+{
+  "scope": "POOL-only iPhone still-photo native regression inputs. Expected candidates measured after JPEG decode with frozen host replicas; native pose/acceptance is not established by this manifest.",
+  "encoder": "Pillow RGB JPEG per-fixture quality75 or88, subsampling2 optimizeTrue progressiveFalse; no metadata, exposure or white-balance alteration",
+  "jpegBytes": 242405,
+  "fixtures": [
+    {
+      "file": "nano-dim-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5590.HEIC",
+      "sourceSha256": "6af85ebd7c0cdc99e76ce519ff743c929eb3eb15b131fcd660230f4e506f5421",
+      "sourceBytes": 1757522,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:13:24",
+      "iso": 200,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5590.jpg",
+      "workingSha256": "7aa62105fb6ec8f6cb7d005e16392d37d11ee6a342f1b4c41074acdfbc8fa381",
+      "split": "POOL",
+      "actual": "arduino_nano_microcontroller",
+      "kitComponentId": "arduino_nano_microcontroller",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 16650,
+      "sha256": "4a62bcd493a6b496e2bd08dae3168873ec53f9a35a0a4fe1f1ec6427761e16de",
+      "expectedLooseCandidates": [
+        "arduino_nano_microcontroller"
+      ]
+    },
+    {
+      "file": "ultrasonic-dim-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5585.HEIC",
+      "sourceSha256": "45ef564f0d5467c6fb78a19d9bcda65782bf956f54c6fdb49f20858f593b472c",
+      "sourceBytes": 1672119,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:12:31",
+      "iso": 160,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5585.jpg",
+      "workingSha256": "284af88437dedcbe1ab24325bd76af0658a36791ad0c5c0a44c49a00e3a017e9",
+      "split": "POOL",
+      "actual": "ultrasonic_distance_sensor",
+      "kitComponentId": "ultrasonic_distance_sensor",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 13479,
+      "sha256": "7b2861447fabda6bd8fad29ea10ebba494cef17a4f434bde622c559dcee8d26d",
+      "expectedLooseCandidates": [
+        "ultrasonic_distance_sensor"
+      ]
+    },
+    {
+      "file": "tracker-dim-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5579.HEIC",
+      "sourceSha256": "d297d435c5ad32b4030f07493dc4a12ef6a746fea2a25f11d02b7fd39a40a6da",
+      "sourceBytes": 1403324,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:10:24",
+      "iso": 320,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5579.jpg",
+      "workingSha256": "53ea4701f7899f071eb4fbcae948446bbef8002d21baf4d24584ac220238e7de",
+      "split": "POOL",
+      "actual": "line_tracker_module",
+      "kitComponentId": "line_tracker_module",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 39268,
+      "sha256": "3e0e7e3001cb8ada4055122ccf18090606b283de23103e494df9c172ab03d9e5",
+      "expectedLooseCandidates": [
+        "line_tracker_module"
+      ]
+    },
+    {
+      "file": "caster-dim-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5617.HEIC",
+      "sourceSha256": "b7ad1fdf94c64110597a6fe1a11526cfd43f2aefe985653a0f6d880f03b2fa51",
+      "sourceBytes": 1589412,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:21:19",
+      "iso": 160,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5617.jpg",
+      "workingSha256": "be46940bb78862ebb7fa986880e69fd65ff953438702ccf8c47e27ea5d443be9",
+      "split": "POOL",
+      "actual": "caster_wheel",
+      "kitComponentId": "caster_wheel",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 9055,
+      "sha256": "c771af812f660796a4d87d44e4c25ef2766bec6cd1acbb2621dc5a3f236d4932",
+      "expectedLooseCandidates": [
+        "caster_wheel"
+      ]
+    },
+    {
+      "file": "caster-angled-dim-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5619.HEIC",
+      "sourceSha256": "d544c32f1c87786b6128bf414f042ae311700175560d98d1d90d670acdab2ff4",
+      "sourceBytes": 1435340,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:21:24",
+      "iso": 125,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5619.jpg",
+      "workingSha256": "ae6cb4301a50bb504d3704907508ebe03eb038675a14c947b12dec0bde13ce09",
+      "split": "POOL",
+      "actual": "caster_wheel",
+      "kitComponentId": "caster_wheel",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "720x500",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          306,
+          960,
+          667
+        ],
+        "outputSize": [
+          720,
+          500
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 88,
+      "bytes": 22827,
+      "sha256": "519c189655d4caf978f256cf352509eae60473c1d906c3842522dfa65a1095ce",
+      "expectedLooseCandidates": [
+        "caster_wheel"
+      ]
+    },
+    {
+      "file": "board-flashlight-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5574.HEIC",
+      "sourceSha256": "f80f6058f1ac0fbb60d9b1817718e4a049936f1ea16a7ad7a69c4030908471b2",
+      "sourceBytes": 2077685,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:09:10",
+      "iso": 100,
+      "exposureSeconds": 0.008264462809917356,
+      "cameraFlash": 16,
+      "workingName": "IMG_5574.jpg",
+      "workingSha256": "2308b96fc3324786d4d577bc239fe7ba72b7eb4139a7e8f1895865166f8fd4fc",
+      "split": "POOL",
+      "actual": "main_board",
+      "kitComponentId": "main_board",
+      "lighting": "flashlight",
+      "lightingReason": "Visible localized bright pool/specular hotspot and directional shadow; lower ISO/shorter exposure than neighbouring dim frames supports point light.",
+      "framing": "720x500",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          306,
+          960,
+          667
+        ],
+        "outputSize": [
+          720,
+          500
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 62103,
+      "sha256": "4abc63d1c91bcb35a352c36653382e48077044be84957ad8110bd3b23a67183e",
+      "expectedLooseCandidates": []
+    },
+    {
+      "file": "oled-flashlight-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5601.HEIC",
+      "sourceSha256": "e3063642d0be67a2d9491780dc77e411908f402c710e41567e8b11466d7c04cc",
+      "sourceBytes": 974118,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:17:34",
+      "iso": 50,
+      "exposureSeconds": 0.008264462809917356,
+      "cameraFlash": 16,
+      "workingName": "IMG_5601.jpg",
+      "workingSha256": "30b8c5c4788947a0014769d256c745840b1920ae4768b67c63cfea22258df25f",
+      "split": "POOL",
+      "actual": "not_a_tracked_part",
+      "kitComponentId": "oled_096_i2c",
+      "lighting": "flashlight",
+      "lightingReason": "Visible localized bright pool/specular hotspot and directional shadow; lower ISO/shorter exposure than neighbouring dim frames supports point light.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 10625,
+      "sha256": "6f7dd70ad0456c1e99df64c1815236f4a027641767d7e3464f729604cc7954cd",
+      "expectedLooseCandidates": []
+    },
+    {
+      "file": "wheel-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5605.HEIC",
+      "sourceSha256": "b9dc46beedac2e42058daab62dcdebb71be7e6865f76a688452dd60dcc6c8963",
+      "sourceBytes": 1130131,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:18:33",
+      "iso": 320,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5605.jpg",
+      "workingSha256": "0dfb7f54f5518fc9527bd8da6476cc74e1eb557693a16a1cbdc44ff62372d44a",
+      "split": "POOL",
+      "actual": "not_a_tracked_part",
+      "kitComponentId": "drive_wheel",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          1280,
+          960
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          1280,
+          960
+        ],
+        "outputSize": [
+          640,
+          480
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 18084,
+      "sha256": "54f07ca639f772262ad013c2e521e04633a086c55479bfe15d8303950a645ec4",
+      "expectedLooseCandidates": []
+    },
+    {
+      "file": "oled-protector-flashlight-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5611.HEIC",
+      "sourceSha256": "33673302da9563441c3667b448263dc27933a19c194a3916b66b9be866ebee94",
+      "sourceBytes": 926262,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:19:28",
+      "iso": 50,
+      "exposureSeconds": 0.008264462809917356,
+      "cameraFlash": 16,
+      "workingName": "IMG_5611.jpg",
+      "workingSha256": "586ca95d7529191bb8286ddff4b7635ff34a7b5ad0ae526880c17052e455efc8",
+      "split": "POOL",
+      "actual": "not_a_tracked_part",
+      "kitComponentId": "oled_protector",
+      "lighting": "flashlight",
+      "lightingReason": "Visible localized bright pool/specular hotspot and directional shadow; lower ISO/shorter exposure than neighbouring dim frames supports point light.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 13593,
+      "sha256": "eeddd60190f4bef110e3b3bed340a405a9ac055df53bb419564f570938a89ac0",
+      "expectedLooseCandidates": []
+    },
+    {
+      "file": "battery-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5621.HEIC",
+      "sourceSha256": "7729bd2c2f16275d16e7a2e38fc6c336e9b30b89d49a3f6e281f5edb64be23a4",
+      "sourceBytes": 1853315,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:22:21",
+      "iso": 200,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5621.jpg",
+      "workingSha256": "3b8f2b4038ed0868f5f7646b89e34d5bd01fb086c8c09cdd2d525df3ff7dcd23",
+      "split": "POOL",
+      "actual": "not_a_tracked_part",
+      "kitComponentId": "battery_pack_7v_12v",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          1280,
+          960
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          1280,
+          960
+        ],
+        "outputSize": [
+          640,
+          480
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 16028,
+      "sha256": "0525350f3e8648002a878826cb1caf67af1d4155c6793f380817b72a5f9befb1",
+      "expectedLooseCandidates": []
+    },
+    {
+      "file": "ribbon-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5625.HEIC",
+      "sourceSha256": "37c8f97791a22488e52ca09a2fdf626119c14d62296324a866f7deb725640201",
+      "sourceBytes": 1650608,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:22:38",
+      "iso": 200,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5625.jpg",
+      "workingSha256": "ee15008f5f6f47d573bf64559981caaae77aeb39cbf1dc6b56bb532c3c3bff64",
+      "split": "POOL",
+      "actual": "not_a_tracked_part",
+      "kitComponentId": "extension_data_cable",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 12464,
+      "sha256": "a183e248db242e5c335f46a6f107ea834134036466ca3506dcaee255c21026f3",
+      "expectedLooseCandidates": []
+    },
+    {
+      "file": "jumper-negative-pool.jpg",
+      "sourceOriginal": "more indiv pics/IMG_5628.HEIC",
+      "sourceSha256": "939852b23ccb351fd2a97c7edf95d8e3fb83028844cae3da4e2cce86c5819e5a",
+      "sourceBytes": 1542295,
+      "sourceCamera": "iPhone 12 Pro Max",
+      "exifTime": "2026:10:08 08:22:51",
+      "iso": 160,
+      "exposureSeconds": 0.016666666666666666,
+      "cameraFlash": 16,
+      "workingName": "IMG_5628.jpg",
+      "workingSha256": "bb83337f7105bc0851966ffb2c88f29eb66c40fa68a42353482eaef0b67f1fa8",
+      "split": "POOL",
+      "actual": "not_a_tracked_part",
+      "kitComponentId": "jumper_wire",
+      "lighting": "dim",
+      "lightingReason": "No localized beam/hotspot visible on background; subdued broad illumination. ISO/exposure consistent with dim sequence; small metal reflections alone do not establish a flashlight.",
+      "framing": "640",
+      "transform": {
+        "sourceSize": [
+          960,
+          1280
+        ],
+        "cropXYWH": [
+          0,
+          0,
+          960,
+          1280
+        ],
+        "outputSize": [
+          480,
+          640
+        ],
+        "interpolation": "INTER_AREA"
+      },
+      "jpegQuality": 75,
+      "bytes": 8229,
+      "sha256": "ea27753b98c5f1e1cedd6b7719c6a94c0ce9d3c5a42ad0aa7c8efe20840fac3f",
+      "expectedLooseCandidates": []
+    }
+  ]
+}

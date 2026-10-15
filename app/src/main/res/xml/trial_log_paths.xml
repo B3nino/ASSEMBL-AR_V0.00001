@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only trial logs are shareable; no other app file is exposed. -->
+<paths>
+    <external-files-path name="trials" path="trials/" />
+    <files-path name="trials_internal" path="trials/" />
+</paths>

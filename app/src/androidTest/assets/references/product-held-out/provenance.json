@@ -1,0 +1,18 @@
+{
+  "description": "Evaluation fixtures excluded from the production catalog. The kit caster photo was used while developing the shape fallback; it is separate from the descriptor references, not an unbiased unseen benchmark. Original files are unedited.",
+  "images": [
+    {
+      "file": "caster-kit-original.jpg",
+      "sourcePath": "references/new/0556e663-b5f5-44f0-93d1-aaaee88079c4.jpg",
+      "sha256": "e55e6ca53f71352fe6b108ab426a156be86fdcdca370c99369466a77739a500b",
+      "purpose": "Kit photo regression for full production recognition and controlled mounting-hole occlusion tests"
+    },
+    {
+      "file": "bc-robotics-caster-oblique.jpg",
+      "sourceUrl": "https://bc-robotics.com/wp-content/uploads/2022/08/large-caster-1.jpg",
+      "sha256": "24f062596bb7e987339b758a271d3c6b50ddbb17c0dfdb9591482cf7527ffe22",
+      "bytes": 194589,
+      "retrievedOn": "2026-09-13"
+    }
+  ]
+}

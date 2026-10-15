@@ -1,0 +1,19 @@
+{
+  "purpose": "Unchanged owner phone POOL fixtures for native parity. No online image.",
+  "fixtures": [
+    {
+      "asset": "nano-pool-1.jpg",
+      "source": "20261007-235323/62889221971000.jpg",
+      "split": "POOL",
+      "sha256": "8ba65e5928fab30f20b2bfc5a924a36b5ebe72c65b1516369b9e2e869726c85a",
+      "bytes": 47526
+    },
+    {
+      "asset": "nano-pool-9.jpg",
+      "source": "20261007-235323/63026802999000.jpg",
+      "split": "POOL",
+      "sha256": "5a1dff277d26e4a2de3a170feb0533fad2fe2b84ef2f2a092ba0a3df56dea5ed",
+      "bytes": 40847
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "purpose": "Development/evaluation fixtures only, never production descriptor references.",
+  "split": "The four kit photos are distinct originals from the same supplied capture session as production references. These are regression fixtures used during development, not an independent accuracy benchmark.",
+  "processing": "The instrumentation test decodes kit photos to maximum dimension 1280. The 532x360 user photo remains at original scale; four rectangular subregions are tested without resizing. Controlled exposure transforms are synthetic robustness checks generated in memory only, not real-camera evidence or recognition references.",
+  "rights": "User-supplied photographs; no public-domain or third-party license claim.",
+  "files": [
+    {
+      "file": "20260906_131457.jpg",
+      "source": "references/new/individual/motor bracket/20260906_131457.jpg",
+      "sha256": "4b5c14d1e1ce59a9391d03636902c647bbbc200a700e0d88c5dfbdd447fdddb1",
+      "description": "Broad reflective highlight across lower bracket face.",
+      "transform": "None; original image bytes copied unchanged."
+    },
+    {
+      "file": "20260906_131444.jpg",
+      "source": "references/new/individual/motor bracket/20260906_131444.jpg",
+      "sha256": "9748389e50d9faafa763828d35acc8b81e91b1b2fe579053cfda76b140bfe3de",
+      "description": "Solid-black appearance with oblique perspective.",
+      "transform": "None; original image bytes copied unchanged."
+    },
+    {
+      "file": "20260906_131614.jpg",
+      "source": "references/new/individual/motor bracket/20260906_131614.jpg",
+      "sha256": "a48e4ea61cdf2231c2cc850e32d5e255bb07e1258acc298b6e7e6f9c07e1413f",
+      "description": "Dark standing/oblique opposite face with cast shadow.",
+      "transform": "None; original image bytes copied unchanged."
+    },
+    {
+      "file": "20260906_131506.jpg",
+      "source": "references/new/individual/motor bracket/20260906_131506.jpg",
+      "sha256": "27a6fc1692e678f31071bdae2c47822118f748490ef8f28b06669b957b092d9d",
+      "description": "Black face with a reflective crossbar.",
+      "transform": "None; original image bytes copied unchanged."
+    },
+    {
+      "file": "user-bracket-lighting.webp",
+      "source": "User attachment codex-clipboard-4252c811-4afa-49d4-914d-db143b05afac.webp",
+      "sha256": "1a873da834855d1a01732db011e3c588d15aed214e54b2ee34e954a476422f13",
+      "description": "Four photographed brackets, including strongly reflective and solid-black faces.",
+      "transform": "None; original image bytes copied unchanged."
+    }
+  ]
+}

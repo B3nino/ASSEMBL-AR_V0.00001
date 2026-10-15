@@ -1,0 +1,29 @@
+{
+  "description": "Original seller product photographs used as offline recognition references; no generative edits or re-encoding. Copyright remains with respective source owners; no public-domain license asserted.",
+  "images": [
+    {
+      "file": "makerlab-yellow-6v-motor.jpg",
+      "sourceUrl": "https://makerlab.ph/cdn/shop/files/6VDCGEAREDMOTORWITHWIRE.jpg",
+      "sha256": "48c9272ec2ef9fe5e8f5c5eda5439f7d7c970a2afe520dd1c30b318ae641f211",
+      "bytes": 88975,
+      "retrievedOn": "2026-09-13",
+      "productUrl": "https://makerlab.ph/products/3-6v-dc-geared-motor-130-dual-shaft-with-yellow-gear-box-6v-l-shape-dc-geared-motor-bracket-for-dc-geared-motor-6v-yellow"
+    },
+    {
+      "file": "bc-robotics-caster-ball.jpg",
+      "sourceUrl": "https://bc-robotics.com/wp-content/uploads/2022/08/large-caster.jpg",
+      "sha256": "2b7c68d02ec0212aa4f22fb12eb09c7d83bf7afe048cf5be7f782790184cac71",
+      "bytes": 182561,
+      "retrievedOn": "2026-09-13",
+      "productUrl": "https://bc-robotics.com/shop/large-ball-caster-wheel/"
+    },
+    {
+      "file": "bc-robotics-caster-mount.jpg",
+      "sourceUrl": "https://bc-robotics.com/wp-content/uploads/2022/08/large-caster-2.jpg",
+      "sha256": "e56d4e169ed687678d1cff063bf00c358c74527405808003b5a94a58d37ee203",
+      "bytes": 163107,
+      "retrievedOn": "2026-09-13",
+      "productUrl": "https://bc-robotics.com/shop/large-ball-caster-wheel/"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_padding">48dp</dimen>
+    <dimen name="content_max_width">1040dp</dimen>
+    <dimen name="reading_max_width">840dp</dimen>
+    <dimen name="home_content_max_width">1280dp</dimen>
+    <dimen name="navigation_max_width">720dp</dimen>
+    <dimen name="tablet_component_media_width">280dp</dimen>
+    <dimen name="tablet_component_media_height">240dp</dimen>
+    <dimen name="tablet_project_media_width">320dp</dimen>
+    <dimen name="tablet_project_media_height">280dp</dimen>
+    <dimen name="tablet_camera_panel_width">560dp</dimen>
+    <dimen name="tablet_admin_capture_width">640dp</dimen>
+    <dimen name="tablet_home_model_height">420dp</dimen>
+</resources>

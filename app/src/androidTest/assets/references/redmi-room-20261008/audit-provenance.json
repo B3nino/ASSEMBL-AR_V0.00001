@@ -1,0 +1,62 @@
+{
+  "jpegBytes": 50364,
+  "fixtures": [
+    {
+      "file": "nano-gold-usb-horizontal-pool.jpg",
+      "capture": "20261008-112435/104375736608000.jpg",
+      "sourceSha256": "717a4297447c2684afaab59851e4a936a505703e3406d805ff40de2a6730dcd0",
+      "sourceBytes": 30460,
+      "sha256": "f923675042cdefd870da034e6b61a65d6e333291232ac89bb80ecc79eb5d617b",
+      "bytes": 16087,
+      "actual": "arduino_nano_microcontroller",
+      "expected": "arduino_nano_microcontroller",
+      "scan": 1,
+      "split": "POOL",
+      "lighting": "room",
+      "outputSize": [
+        720,
+        500
+      ],
+      "transform": "Full analyzed frame, JPEG quality=80 optimize; no crop/resize",
+      "expectedMotorCandidate": false
+    },
+    {
+      "file": "nano-gold-usb-vertical-pool.jpg",
+      "capture": "20261008-112435/104421620615000.jpg",
+      "sourceSha256": "62a30f6210126643534309057e03223bb2d91b6b0e1ed30fb1d5d6fb1a5d8a7f",
+      "sourceBytes": 34111,
+      "sha256": "702b68a78dc58c9d6afb1dee3f311597d65f3de7757f36f1a83d244da4c155eb",
+      "bytes": 18237,
+      "actual": "arduino_nano_microcontroller",
+      "expected": "arduino_nano_microcontroller",
+      "scan": 3,
+      "split": "POOL",
+      "lighting": "room",
+      "outputSize": [
+        720,
+        500
+      ],
+      "transform": "Full analyzed frame, JPEG quality=80 optimize; no crop/resize",
+      "expectedMotorCandidate": false
+    },
+    {
+      "file": "motor-room-pool.jpg",
+      "capture": "20261008-112435/105455216321000.jpg",
+      "sourceSha256": "e4c30f7ed4a7b3778a4b28d72d117187c06efce5e039714c95a38c5b4cd717ed",
+      "sourceBytes": 31241,
+      "sha256": "c243fdea353f35949ee25b23c867a7ee431999fa90f09fc363c1f8fa04a47be8",
+      "bytes": 16040,
+      "actual": "gear_motor_6v",
+      "expected": "gear_motor_6v",
+      "scan": 1,
+      "split": "POOL",
+      "lighting": "room",
+      "outputSize": [
+        720,
+        500
+      ],
+      "transform": "Full analyzed frame, JPEG quality=80 optimize; no crop/resize",
+      "expectedMotorCandidate": true
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "asset": "references/installed-brackets-20260927/motor-bracket-132938-first-textured.jpg",
+    "crop": [
+      0,
+      0,
+      4080,
+      3060
+    ],
+    "sourceWidth": 4080,
+    "sourceHeight": 3060,
+    "sourceFocalPx": 3182.592375842252
+  },
+  {
+    "asset": "references/installed-brackets-20260927/motor-bracket-133425-outer-textured.jpg",
+    "crop": [
+      0,
+      0,
+      4080,
+      3060
+    ],
+    "sourceWidth": 4080,
+    "sourceHeight": 3060,
+    "sourceFocalPx": 3182.592375842252
+  },
+  {
+    "asset": "references/installed-brackets-20260927/motor-bracket-133533-inner-textured.jpg",
+    "crop": [
+      0,
+      0,
+      4080,
+      3060
+    ],
+    "sourceWidth": 4080,
+    "sourceHeight": 3060,
+    "sourceFocalPx": 3182.592375842252
+  },
+  {
+    "asset": "references/installed-brackets-20260927/motor-bracket-133646-four-textured.jpg",
+    "crop": [
+      0,
+      0,
+      4080,
+      3060
+    ],
+    "sourceWidth": 4080,
+    "sourceHeight": 3060,
+    "sourceFocalPx": 3182.592375842252
+  }
+]

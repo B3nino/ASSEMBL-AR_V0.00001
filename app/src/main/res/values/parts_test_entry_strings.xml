@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="parts_test_standalone_app_name">ASSEMBL-AR Parts Test</string>
+    <string name="test_individual_parts">Test individual parts</string>
+    <string name="individual_parts_test_hint">Check one part at a time with the camera and compare recognition results before testing an assembly.</string>
+</resources>

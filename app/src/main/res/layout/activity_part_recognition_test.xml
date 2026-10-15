@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/canvas">
+
+    <include layout="@layout/view_toolbar" />
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingStart="16dp" android:paddingEnd="16dp"
+        android:text="@string/part_test_instructions" android:textColor="@color/ink_soft"
+        android:textSize="13sp" />
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:paddingStart="8dp" android:paddingEnd="8dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/partTestPreviousButton" android:layout_width="52dp"
+            android:layout_height="52dp" android:text="‹" android:textSize="24sp"
+            android:contentDescription="@string/part_test_previous" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/partTestSelectButton" android:layout_width="0dp"
+            android:layout_weight="1" android:layout_height="wrap_content"
+            android:minHeight="52dp" android:maxLines="2"
+            style="@style/Widget.ASSEMBLAR.Button.Secondary"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/partTestNextButton" android:layout_width="52dp"
+            android:layout_height="52dp" android:text="›" android:textSize="24sp"
+            android:contentDescription="@string/part_test_next" />
+    </LinearLayout>
+
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:background="@color/black">
+        <androidx.camera.view.PreviewView android:id="@+id/partTestPreview"
+            android:layout_width="match_parent" android:layout_height="match_parent" />
+        <dev.chyken.assembl_ar.render.ArGlSurfaceView android:id="@+id/partTestArView"
+            android:layout_width="match_parent" android:layout_height="match_parent" />
+        <dev.chyken.assembl_ar.ui.ArHudView android:id="@+id/partTestHud"
+            android:layout_width="match_parent" android:layout_height="match_parent" />
+        <TextView android:id="@+id/partTestStatus" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_gravity="bottom"
+            android:padding="12dp" android:background="@color/camera_scrim"
+            android:textColor="@color/white" android:textSize="14sp"
+            android:accessibilityLiveRegion="polite" />
+    </FrameLayout>
+
+    <androidx.core.widget.NestedScrollView android:layout_width="match_parent"
+        android:layout_height="176dp" android:fillViewport="true">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="12dp">
+            <TextView android:id="@+id/partTestReferenceStatus" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="12sp" android:textColor="@color/ink_soft" />
+            <TextView android:id="@+id/partTestLiveMetrics" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:textSize="13sp" android:fontFamily="monospace" android:textColor="@color/ink" />
+            <TextView android:id="@+id/partTestTotals" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:textSize="13sp" android:textColor="@color/ink" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingStart="12dp" android:paddingEnd="12dp" android:orientation="horizontal">
+        <com.google.android.material.button.MaterialButton android:id="@+id/partTestStartButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/part_test_start" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/partTestResetButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="8dp" android:text="@string/part_test_reset"
+            style="@style/Widget.ASSEMBLAR.Button.Secondary" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingBottom="8dp"
+        android:orientation="horizontal">
+        <com.google.android.material.button.MaterialButton android:id="@+id/partTestResultsButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/part_test_results" style="@style/Widget.ASSEMBLAR.Button.Secondary" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/partTestExportButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="8dp" android:text="@string/part_test_export"
+            style="@style/Widget.ASSEMBLAR.Button.Secondary" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingBottom="8dp"
+        android:orientation="horizontal">
+        <com.google.android.material.button.MaterialButton android:id="@+id/partTestCaptureButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/part_test_capture" android:enabled="false"
+            style="@style/Widget.ASSEMBLAR.Button.Secondary" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/partTestReplayButton"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="8dp" android:text="@string/part_test_replay"
+            style="@style/Widget.ASSEMBLAR.Button.Secondary" />
+    </LinearLayout>
+</LinearLayout>

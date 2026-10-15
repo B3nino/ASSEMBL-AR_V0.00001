@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand colors sampled from the approved ASSEMBL-AR logo. -->
+    <color name="brand_green">#68B828</color>
+    <color name="brand_green_dark">#3F7D14</color>
+    <color name="brand_green_soft">#EEF7E9</color>
+    <color name="brand_charcoal">#303030</color>
+
+    <!-- Accessible application surfaces and content colors. -->
+    <color name="ink">@color/brand_charcoal</color>
+    <color name="ink_soft">#606060</color>
+    <color name="canvas">#F7F8F6</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface_muted">#F2F3F1</color>
+    <color name="line">#D8DED4</color>
+    <color name="control_outline">#8A9185</color>
+    <color name="primary">@color/brand_green_dark</color>
+    <color name="primary_dark">#315F10</color>
+    <color name="primary_soft">@color/brand_green_soft</color>
+
+    <!-- Camera UI uses the same green/charcoal identity as the rest of the application. -->
+    <color name="hud_tracking">@color/brand_green</color>
+    <color name="hud_warning">#FFB236</color>
+    <color name="hud_danger">#FF5C5C</color>
+    <color name="hud_label_background">#161616</color>
+    <color name="hud_contrast_outline">#B3000000</color>
+    <!-- Do not alias validation states to brand colors. -->
+    <color name="warning">#D98B00</color>
+    <color name="warning_soft">#FFF1CD</color>
+    <color name="danger">#C93838</color>
+    <color name="danger_soft">#FFE4E4</color>
+    <color name="success">@color/brand_green</color>
+    <color name="camera_scrim">#CC000000</color>
+    <color name="camera_panel">#E6161616</color>
+    <color name="camera_toolbar">#D9161616</color>
+    <color name="camera_panel_border">#3FFFFFFF</color>
+    <color name="camera_control_border">#66FFFFFF</color>
+    <color name="white_secondary">#DFFFFFFF</color>
+    <color name="white_tertiary">#BFFFFFFF</color>
+    <color name="white_track">#33FFFFFF</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

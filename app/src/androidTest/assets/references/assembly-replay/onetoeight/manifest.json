@@ -1,0 +1,1988 @@
+{
+  "schemaVersion": 1,
+  "split": "heldout",
+  "selection": "checkpoint-pose-framing-v1",
+  "count": 56,
+  "totalBytes": 13434792,
+  "groupCounts": {
+    "s1-board": 1,
+    "s2-brackets-1": 3,
+    "s2-brackets-2": 4,
+    "s2-brackets-3": 4,
+    "s2-brackets-4": 4,
+    "s2-left-motor": 4,
+    "s2-both-motors": 12,
+    "s3-driver": 8,
+    "s6-nano": 6,
+    "later-wiring": 10
+  },
+  "labelGaps": {
+    "s2-brackets-1": {
+      "required": 4,
+      "selected": 3
+    }
+  },
+  "hardCases": 2,
+  "fixtures": [
+    {
+      "fixture": "20261005_214055.jpg",
+      "source": "onetoeight/20261005_214055.jpg",
+      "sha256": "B2980B3DF0B747FEA3F40145CA7408F274C30928CD6CBDD9C3045FE159BD5FC9",
+      "bytes": 242530,
+      "width": 960,
+      "height": 1280,
+      "section": 1,
+      "checkpoint": "s1-board",
+      "components": {
+        "bracketSlots": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.26
+      }
+    },
+    {
+      "fixture": "20261005_214148.jpg",
+      "source": "onetoeight/20261005_214148.jpg",
+      "sha256": "45B7D98A1485C06603BA3DA9041AF3582DCF57773C53EE10656C842F98456B86",
+      "bytes": 262436,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-1",
+      "components": {
+        "bracketSlots": [
+          true,
+          false,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.36
+      }
+    },
+    {
+      "fixture": "20261005_214154.jpg",
+      "source": "onetoeight/20261005_214154.jpg",
+      "sha256": "A8E62C28CC8650A55DAFF37D95AE546E1F38AFC080C08AF5B84F209D6B2E4877",
+      "bytes": 205486,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-1",
+      "components": {
+        "bracketSlots": [
+          true,
+          false,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.28
+      }
+    },
+    {
+      "fixture": "20261005_214233.jpg",
+      "source": "onetoeight/20261005_214233.jpg",
+      "sha256": "7FBFA576579C861A9C21998D5D5470557E28E0F48FC983FBFFCFE7CF921C8B77",
+      "bytes": 255153,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-1",
+      "components": {
+        "bracketSlots": [
+          true,
+          false,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.39
+      }
+    },
+    {
+      "fixture": "20261005_214300.jpg",
+      "source": "onetoeight/20261005_214300.jpg",
+      "sha256": "708FC05DB49226C8F6931C79AF2C8CE0E9B08450A27B2314254EA1A517B1B995",
+      "bytes": 283859,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-brackets-2",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.36
+      }
+    },
+    {
+      "fixture": "20261005_214325.jpg",
+      "source": "onetoeight/20261005_214325.jpg",
+      "sha256": "F0CCA6A9729B59E263B4012EFD444E50C428D197B80A5FC8D61C88FFA11F305C",
+      "bytes": 234519,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-2",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.21
+      }
+    },
+    {
+      "fixture": "20261005_214328.jpg",
+      "source": "onetoeight/20261005_214328.jpg",
+      "sha256": "73F97B9A86E6B37583BE62229CEF40AC33C67B779D897DF4AC332A6BCFACD0F8",
+      "bytes": 280851,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-2",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.27
+      }
+    },
+    {
+      "fixture": "20261005_214332.jpg",
+      "source": "onetoeight/20261005_214332.jpg",
+      "sha256": "2733688064F62E00096C2B140911ECA8120615D8D72332E162AAA1F30D47ADE5",
+      "bytes": 276555,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-2",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          false,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.24
+      }
+    },
+    {
+      "fixture": "20261005_214440.jpg",
+      "source": "onetoeight/20261005_214440.jpg",
+      "sha256": "6072E109C60D8CF3321C1C4607D6A3CDD8D2215E681322F8DE149F3657E95A89",
+      "bytes": 276654,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-brackets-3",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.4
+      }
+    },
+    {
+      "fixture": "20261005_214446.jpg",
+      "source": "onetoeight/20261005_214446.jpg",
+      "sha256": "AC8D60FF4EA429830B1F852435015B76057A3DBF779B2A89A22786662B571666",
+      "bytes": 236167,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-3",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.3
+      }
+    },
+    {
+      "fixture": "20261005_214453.jpg",
+      "source": "onetoeight/20261005_214453.jpg",
+      "sha256": "F56E45A003AD4EDD8DD6B2B0E88311A7082F2BBA42B6D3F118CDFF669FAA6FBF",
+      "bytes": 185989,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-3",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.28
+      }
+    },
+    {
+      "fixture": "20261005_214459.jpg",
+      "source": "onetoeight/20261005_214459.jpg",
+      "sha256": "DFD59BB4F2AC3589394CD003DA8F0D7C3F1D15DDBB036193B22B63578F7E245D",
+      "bytes": 205046,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-brackets-3",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          false
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.27
+      }
+    },
+    {
+      "fixture": "20261005_214625.jpg",
+      "source": "onetoeight/20261005_214625.jpg",
+      "sha256": "DAB3AC73EDF73596B0A3F653A46609DDDDBD8A08979FD203FDB6CE6FC71E6E91",
+      "bytes": 197853,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-4",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.22
+      }
+    },
+    {
+      "fixture": "20261005_214628.jpg",
+      "source": "onetoeight/20261005_214628.jpg",
+      "sha256": "FB903BDE9738DDD8D55E9C6D6714967D91126CD2626C4319CD013E59566CCB01",
+      "bytes": 221509,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-4",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.2
+      }
+    },
+    {
+      "fixture": "20261005_214631.jpg",
+      "source": "onetoeight/20261005_214631.jpg",
+      "sha256": "7B4590CFF61A420C58226FC2AF7178D2920368CBAC49D3410354A714F9B3D19D",
+      "bytes": 214753,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-4",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.24
+      }
+    },
+    {
+      "fixture": "20261005_214704.jpg",
+      "source": "onetoeight/20261005_214704.jpg",
+      "sha256": "9857C926EE231F846F3A20623C8E7B626B47399C932EA6AC8969F7307F9D460D",
+      "bytes": 245527,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-brackets-4",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "absent",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.24
+      }
+    },
+    {
+      "fixture": "20261005_214859.jpg",
+      "source": "onetoeight/20261005_214859.jpg",
+      "sha256": "ED8DA0A2476A399E4A79CBD35F8FAAC065606C7EB530D4604DAF9D8D7A2FCAA7",
+      "bytes": 264640,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-left-motor",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.22
+      }
+    },
+    {
+      "fixture": "20261005_214904.jpg",
+      "source": "onetoeight/20261005_214904.jpg",
+      "sha256": "1558243458B0F657028608E7CE6446AD1E74ADD5D336A1003FA3C067FA67A9EF",
+      "bytes": 234101,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-left-motor",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.23
+      }
+    },
+    {
+      "fixture": "20261005_214915.jpg",
+      "source": "onetoeight/20261005_214915.jpg",
+      "sha256": "9F0F980F54016276E2B7AAD5F61144F7E49E6FFEE3651D0A393DF97FFDE7557D",
+      "bytes": 234834,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-left-motor",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.43
+      }
+    },
+    {
+      "fixture": "20261005_214926.jpg",
+      "source": "onetoeight/20261005_214926.jpg",
+      "sha256": "1F3506244F1AF12E3FE82536DDA1C0451F72BD557EBA3611E15AAF51FC87EE8B",
+      "bytes": 190088,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-left-motor",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "absent",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.22
+      }
+    },
+    {
+      "fixture": "20261005_215038.jpg",
+      "source": "onetoeight/20261005_215038.jpg",
+      "sha256": "007798038AE0219AE87D92A328D85662AE6F1853D6DB156171D0718BE320498B",
+      "bytes": 220352,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.24
+      }
+    },
+    {
+      "fixture": "20261005_215041.jpg",
+      "source": "onetoeight/20261005_215041.jpg",
+      "sha256": "0C578160A7726DB026073E5FA0C4A383CABBDB51F8E391349AF11A34C1FD2030",
+      "bytes": 189418,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.23
+      }
+    },
+    {
+      "fixture": "20261005_215051.jpg",
+      "source": "onetoeight/20261005_215051.jpg",
+      "sha256": "D77421634E34AFE7B666C8695E38424677188C9C5C532AC1D01A3826F2F0EC9F",
+      "bytes": 187679,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.3
+      }
+    },
+    {
+      "fixture": "20261005_215054.jpg",
+      "source": "onetoeight/20261005_215054.jpg",
+      "sha256": "9539394041B4A264D20E8EFF4CD066FE8F888C1200809A911877B532E81DB551",
+      "bytes": 201448,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.22
+      }
+    },
+    {
+      "fixture": "20261005_215110.jpg",
+      "source": "onetoeight/20261005_215110.jpg",
+      "sha256": "813E5A03A0A31190DFBB07E724A09564AE4C0610374F220D3DA68D6C19AA9C87",
+      "bytes": 237491,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.35
+      }
+    },
+    {
+      "fixture": "20261005_215114.jpg",
+      "source": "onetoeight/20261005_215114.jpg",
+      "sha256": "A0113C6F220AB2FCFF504DD2B69EDAD914C980FDD418F5BF4FE674608A6D1C34",
+      "bytes": 201905,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.29
+      }
+    },
+    {
+      "fixture": "20261005_215116.jpg",
+      "source": "onetoeight/20261005_215116.jpg",
+      "sha256": "654BAEBF5B289396194A05AC17366066C615C5542403CDAFC096AF9DA6ECDE41",
+      "bytes": 210206,
+      "width": 1280,
+      "height": 960,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "placed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.23
+      }
+    },
+    {
+      "fixture": "20261005_215435.jpg",
+      "source": "onetoeight/20261005_215435.jpg",
+      "sha256": "A96818CF5923F68990949DAF6204A6EF6A57315B0AA64A9A74F664F808918E53",
+      "bytes": 219105,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.3
+      }
+    },
+    {
+      "fixture": "20261005_215439.jpg",
+      "source": "onetoeight/20261005_215439.jpg",
+      "sha256": "AA7C4DE057882E8AE48B47DF750981A3FB160F24BBB0E2D8A672CABB1D9D3660",
+      "bytes": 244943,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.25
+      }
+    },
+    {
+      "fixture": "20261005_215517.jpg",
+      "source": "onetoeight/20261005_215517.jpg",
+      "sha256": "930E88FA54F78788A5545DA08A31961BB1654F8AB6C905BC16B10E8070CA61B3",
+      "bytes": 193382,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.33
+      }
+    },
+    {
+      "fixture": "20261005_215519.jpg",
+      "source": "onetoeight/20261005_215519.jpg",
+      "sha256": "C2CBFFF424E03D6DC7747FD6D141CD49B0C8D7118DF41F2E04FB995DBC2407A1",
+      "bytes": 235258,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.34
+      }
+    },
+    {
+      "fixture": "20261005_215527.jpg",
+      "source": "onetoeight/20261005_215527.jpg",
+      "sha256": "E054A57B5541EE4476AD1B1AB16E333FAC8CEE78B5ED2194883E2D02EA300617",
+      "bytes": 244855,
+      "width": 960,
+      "height": 1280,
+      "section": 2,
+      "checkpoint": "s2-both-motors",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "placed",
+        "motorDriver": "absent",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.43
+      }
+    },
+    {
+      "fixture": "20261005_221055.jpg",
+      "source": "onetoeight/20261005_221055.jpg",
+      "sha256": "0C8BF0EBD2D7B73AC80DA1C5B39C685D20B0330DCD08CA7856885FDECE7201D0",
+      "bytes": 283616,
+      "width": 960,
+      "height": 1280,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.28
+      }
+    },
+    {
+      "fixture": "20261005_221058.jpg",
+      "source": "onetoeight/20261005_221058.jpg",
+      "sha256": "60D9C3E48B7F61F5876FB70BA569FB07F5829AC1EECB19315932CEA3F29E50A2",
+      "bytes": 232183,
+      "width": 960,
+      "height": 1280,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.31
+      }
+    },
+    {
+      "fixture": "20261005_221101.jpg",
+      "source": "onetoeight/20261005_221101.jpg",
+      "sha256": "0B1D7FA29F1C35984C8F8A5C5CC6B85E503AED715C1BF0158545C72C77479A72",
+      "bytes": 242583,
+      "width": 960,
+      "height": 1280,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.33
+      }
+    },
+    {
+      "fixture": "20261005_221107.jpg",
+      "source": "onetoeight/20261005_221107.jpg",
+      "sha256": "B77A6555067AC372B27483BCE213E9088AFAB2F99A6F786DB25DAC55BE806256",
+      "bytes": 273809,
+      "width": 960,
+      "height": 1280,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.41
+      }
+    },
+    {
+      "fixture": "20261005_221115.jpg",
+      "source": "onetoeight/20261005_221115.jpg",
+      "sha256": "E6B29423C3FE00B5086B9E4776144938CACBC80B8CD7A265E14E76F40CFF905E",
+      "bytes": 255670,
+      "width": 1280,
+      "height": 960,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.39
+      }
+    },
+    {
+      "fixture": "20261005_221119.jpg",
+      "source": "onetoeight/20261005_221119.jpg",
+      "sha256": "EF85564F9B6B5001E530D3F1607B4361E674B7EA1D6F50953BCA2F28A73587B5",
+      "bytes": 245202,
+      "width": 1280,
+      "height": 960,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "oblique",
+        "side": "front"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.45
+      }
+    },
+    {
+      "fixture": "20261005_221309.jpg",
+      "source": "onetoeight/20261005_221309.jpg",
+      "sha256": "0A6B60202646F29AEDB75CC653461D99C2CA4EFCAD159C3B6F1A4FDC1DB9F170",
+      "bytes": 260208,
+      "width": 960,
+      "height": 1280,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.33
+      }
+    },
+    {
+      "fixture": "20261005_221335.jpg",
+      "source": "onetoeight/20261005_221335.jpg",
+      "sha256": "4F6EE2C838696AD79B83C805E8F178267B970209699B524D9F717566B5DD5E8C",
+      "bytes": 269118,
+      "width": 960,
+      "height": 1280,
+      "section": 3,
+      "checkpoint": "s3-driver",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 0,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.36
+      }
+    },
+    {
+      "fixture": "20261005_222138.jpg",
+      "source": "onetoeight/20261005_222138.jpg",
+      "sha256": "3738A6AB7C4DD28504955D49645DDE6B1E9947D76A449744E28C93E63B419171",
+      "bytes": 268962,
+      "width": 960,
+      "height": 1280,
+      "section": 5,
+      "checkpoint": "s5-leads-1",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 1,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.35
+      }
+    },
+    {
+      "fixture": "20261005_222150.jpg",
+      "source": "onetoeight/20261005_222150.jpg",
+      "sha256": "A07856C28C4793C5BEBBE8C2F775DDA7A5A22EBA99F185DBD64CA233AC1BB5BD",
+      "bytes": 247707,
+      "width": 960,
+      "height": 1280,
+      "section": 5,
+      "checkpoint": "s5-leads-1",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 1,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.45
+      }
+    },
+    {
+      "fixture": "20261005_222332.jpg",
+      "source": "onetoeight/20261005_222332.jpg",
+      "sha256": "094638DC1CF710BBB417108B16E9D3BFCE13F3948166CCC10ABE77DAA82B0E96",
+      "bytes": 230736,
+      "width": 960,
+      "height": 1280,
+      "section": 5,
+      "checkpoint": "s5-leads-2",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 2,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.32
+      }
+    },
+    {
+      "fixture": "20261005_222336.jpg",
+      "source": "onetoeight/20261005_222336.jpg",
+      "sha256": "4ACDAABB3CAD513587B0685CF50A5B800C64241DE44C40BDE64EF87EE3C7D76A",
+      "bytes": 248413,
+      "width": 960,
+      "height": 1280,
+      "section": 5,
+      "checkpoint": "s5-leads-2",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 2,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.35
+      }
+    },
+    {
+      "fixture": "20261005_222536.jpg",
+      "source": "onetoeight/20261005_222536.jpg",
+      "sha256": "43B54F65AC30FE9D97DAA75E650D399460E32EDAA3478CCEDD68F74B0B43E9D9",
+      "bytes": 281639,
+      "width": 960,
+      "height": 1280,
+      "section": 5,
+      "checkpoint": "s5-leads-3",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 3,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.45
+      }
+    },
+    {
+      "fixture": "20261005_222657.jpg",
+      "source": "onetoeight/20261005_222657.jpg",
+      "sha256": "E888294BC1436F759FB40D86FBB5A72FE238BCFDEC69C4D83F1FF5643224CEC3",
+      "bytes": 263427,
+      "width": 960,
+      "height": 1280,
+      "section": 5,
+      "checkpoint": "s5-leads-4",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          null
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "absent",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.39
+      }
+    },
+    {
+      "fixture": "20261005_222912.jpg",
+      "source": "onetoeight/20261005_222912.jpg",
+      "sha256": "43B857C4FE3B972DC8E842C3D656F4ECB73E3FF5F7D51E6866BFDDBE9BA11050",
+      "bytes": 254076,
+      "width": 960,
+      "height": 1280,
+      "section": 6,
+      "checkpoint": "s6-nano",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.29
+      }
+    },
+    {
+      "fixture": "20261005_222916.jpg",
+      "source": "onetoeight/20261005_222916.jpg",
+      "sha256": "30038E89E3ED4042494B2D2F5924D6A25B4CED8A85BDEFD7F92DF73F68D2CFBC",
+      "bytes": 228872,
+      "width": 960,
+      "height": 1280,
+      "section": 6,
+      "checkpoint": "s6-nano",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.26
+      }
+    },
+    {
+      "fixture": "20261005_222919.jpg",
+      "source": "onetoeight/20261005_222919.jpg",
+      "sha256": "66A6C03CA122857D0DF889E9B41D4A693D3E006EAF3C5B8095B01B73FA4D55AC",
+      "bytes": 214961,
+      "width": 960,
+      "height": 1280,
+      "section": 6,
+      "checkpoint": "s6-nano",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.24
+      }
+    },
+    {
+      "fixture": "20261005_222927.jpg",
+      "source": "onetoeight/20261005_222927.jpg",
+      "sha256": "0769E953F63522E7F9D78385D163DE9572F4A5AD124B427113AFF891F7708B34",
+      "bytes": 232562,
+      "width": 1280,
+      "height": 960,
+      "section": 6,
+      "checkpoint": "s6-nano",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.35
+      }
+    },
+    {
+      "fixture": "20261005_222934.jpg",
+      "source": "onetoeight/20261005_222934.jpg",
+      "sha256": "0999A25AD05FD9ADF239F016F20B0611B14AD4ABE0F0E92A6E4C49499F33A7F2",
+      "bytes": 228128,
+      "width": 1280,
+      "height": 960,
+      "section": 6,
+      "checkpoint": "s6-nano",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.45
+      }
+    },
+    {
+      "fixture": "20261005_223329.jpg",
+      "source": "onetoeight/20261005_223329.jpg",
+      "sha256": "A7286613B2377118161070642D76DD45089F93E0D15DD1014AEC826345586E83",
+      "bytes": 270016,
+      "width": 1280,
+      "height": 960,
+      "section": 6,
+      "checkpoint": "s6-nano",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 0,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.3
+      }
+    },
+    {
+      "fixture": "20261005_223422.jpg",
+      "source": "onetoeight/20261005_223422.jpg",
+      "sha256": "741C53EC3809B722BC18B5D8E5052C0CD251F5FB57E26CDCE89115270D8FC6F9",
+      "bytes": 265429,
+      "width": 960,
+      "height": 1280,
+      "section": 7,
+      "checkpoint": "s7-power-1",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 1,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.39
+      }
+    },
+    {
+      "fixture": "20261005_223515.jpg",
+      "source": "onetoeight/20261005_223515.jpg",
+      "sha256": "587C13A55D17669CFFD7532C8D3B71198ADE5BA085DD4FEB59D560D943AE16BA",
+      "bytes": 250176,
+      "width": 960,
+      "height": 1280,
+      "section": 7,
+      "checkpoint": "s7-power-2",
+      "components": {
+        "bracketSlots": [
+          null,
+          true,
+          true,
+          null
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 2,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.6
+      }
+    },
+    {
+      "fixture": "20261005_223517.jpg",
+      "source": "onetoeight/20261005_223517.jpg",
+      "sha256": "14AFD20E691E42E1E427145AFC7656464AB46AB7C465F9CB57286FE621C510E2",
+      "bytes": 254832,
+      "width": 960,
+      "height": 1280,
+      "section": 7,
+      "checkpoint": "s7-power-2",
+      "components": {
+        "bracketSlots": [
+          null,
+          true,
+          true,
+          null
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 2,
+        "signalJumpers": 0
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.59
+      }
+    },
+    {
+      "fixture": "20261005_223911.jpg",
+      "source": "onetoeight/20261005_223911.jpg",
+      "sha256": "B77779B85AB73EAC8D96F7901EA0ED4D7E644B41EA1B4575FD2661FA941AE2DB",
+      "bytes": 297875,
+      "width": 960,
+      "height": 1280,
+      "section": 8,
+      "checkpoint": "s8-signal-4",
+      "components": {
+        "bracketSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "leftMotor": "screwed",
+        "rightMotor": "screwed",
+        "motorDriver": "present",
+        "motorLeadsInTerminals": 4,
+        "microcontroller": "present",
+        "powerJumpers": 2,
+        "signalJumpers": 4
+      },
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.4
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "purpose": "Native parity fixtures copied unchanged from owner phone POOL scans. No online images. HELD-OUT was never used for calibration.",
+  "fixtures": [
+    {
+      "asset": "ultrasonic-pool-1.jpg",
+      "source": "20261007-235323/63069827868000.jpg",
+      "split": "POOL",
+      "part": "ultrasonic_distance_sensor",
+      "sha256": "0c7f1ade8152262d43c03374acb638d4aa15d361e9c0f3fc7c5aebde53343fd6",
+      "bytes": 38162
+    },
+    {
+      "asset": "ultrasonic-pool-3.jpg",
+      "source": "20261007-235323/63122634729000.jpg",
+      "split": "POOL",
+      "part": "ultrasonic_distance_sensor",
+      "sha256": "89d0b92944bc7bb0096e53bd674cf7807cafed18f2066dc4c8e326cf917bdc48",
+      "bytes": 40763
+    },
+    {
+      "asset": "line-pool-1.jpg",
+      "source": "20261007-235323/63416624678000.jpg",
+      "split": "POOL",
+      "part": "line_tracker_module",
+      "sha256": "6fc32fd677c115c0125f38410b4edfcc53a5a4e3b376876440fa45686b7e486e",
+      "bytes": 41648
+    },
+    {
+      "asset": "line-pool-5.jpg",
+      "source": "20261007-235323/63456253670000.jpg",
+      "split": "POOL",
+      "part": "line_tracker_module",
+      "sha256": "089449c4f895014a8a7b9b8c7b7a521a65c9c79a62611ad41ee5967d7f43030b",
+      "bytes": 48978
+    }
+  ]
+}

@@ -1,0 +1,2589 @@
+{
+  "schemaVersion": 1,
+  "split": "heldout",
+  "selection": "stage-face-view-target-budget-v1",
+  "maxBytes": 8000000,
+  "count": 34,
+  "totalBytes": 7887817,
+  "analysisLongEdge": 640,
+  "canonicalFrame": "Top-face anatomical axes retained; underside observations are horizontally mirrored by registered board correspondences. Physical underside visibility is not a negative board label.",
+  "bboxConvention": "Approximate physical target extent in EXIF-applied working-image axes; normalized [x0,y0,x1,y1]. Not authored gate geometry or a calibrated measurement.",
+  "stateCounts": {
+    "boardIdentity": {
+      "present": 34
+    },
+    "caster": {
+      "not_visible": 5,
+      "absent": 5,
+      "present": 24
+    },
+    "leftTracker": {
+      "not_visible": 6,
+      "absent": 27,
+      "present": 1
+    },
+    "rightTracker": {
+      "not_visible": 5,
+      "absent": 25,
+      "present": 4
+    }
+  },
+  "stageCounts": {
+    "both-trackers": 1,
+    "caster-fitted": 20,
+    "posts-only": 10,
+    "right-tracker": 3
+  },
+  "faceCounts": {
+    "top": 5,
+    "underside": 29
+  },
+  "viewCounts": {
+    "low/front": 2,
+    "low/right": 2,
+    "oblique/front": 3,
+    "oblique/left": 3,
+    "oblique/rear": 2,
+    "oblique/right": 1,
+    "overhead/centre": 21
+  },
+  "overheadCount": 21,
+  "heldoutAvailable": 39,
+  "availableCoverageFeatures": 40,
+  "selectedCoverageFeatures": 40,
+  "coverageGaps": [
+    {
+      "kind": "unobserved-stage",
+      "value": "left-tracker"
+    },
+    {
+      "kind": "no-heldout-crosscheck",
+      "value": "right-card-on-left-only"
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "both-trackers",
+        "underside",
+        "oblique",
+        "left"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "both-trackers",
+        "underside",
+        "oblique",
+        "right"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "caster-fitted",
+        "underside",
+        "low",
+        "right"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "posts-only",
+        "top",
+        "oblique",
+        "rear"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "posts-only",
+        "underside",
+        "oblique",
+        "front"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "posts-only",
+        "underside",
+        "oblique",
+        "rear"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "posts-only",
+        "underside",
+        "oblique",
+        "right"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "right-tracker",
+        "underside",
+        "oblique",
+        "left"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "right-tracker",
+        "underside",
+        "oblique",
+        "rear"
+      ]
+    },
+    {
+      "kind": "observed-only-outside-heldout",
+      "feature": [
+        "stage-face-view",
+        "right-tracker",
+        "underside",
+        "oblique",
+        "right"
+      ]
+    },
+    {
+      "kind": "no-scorable-target-state",
+      "target": "boardIdentity",
+      "state": "absent"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture": "20261006_021810.jpg",
+      "source": "ninetoten/20261006_021810.jpg",
+      "sha256": "ABB7858D56600384AF27D5C8D2092295CA173E35A462C4FCE7F5832B324FDC7C",
+      "bytes": 250357,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "top",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.35
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c1",
+      "notes": "Top face hides underside mounting surfaces: caster and tracker states are not visible, never absent. Two caster-mount screw heads visible; shaft length and nut locking are not certified. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.195,
+            0.248,
+            0.875,
+            0.844
+          ],
+          "approxAnalysisPixels": {
+            "width": 326.4,
+            "height": 381.44
+          }
+        },
+        "caster": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_021813.jpg",
+      "source": "ninetoten/20261006_021813.jpg",
+      "sha256": "CE190A44C470CD92E3ACCA19645C876DC40FAE6035B1376B061D2ED85FA785EC",
+      "bytes": 228922,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "top",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.37
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c1",
+      "notes": "Top face hides underside mounting surfaces: caster and tracker states are not visible, never absent. Two caster-mount screw heads visible; shaft length and nut locking are not certified. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.17,
+            0.241,
+            0.833,
+            0.905
+          ],
+          "approxAnalysisPixels": {
+            "width": 318.24,
+            "height": 424.96
+          }
+        },
+        "caster": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_021817.jpg",
+      "source": "ninetoten/20261006_021817.jpg",
+      "sha256": "C1A68FD5AA5354316B38B94CF99FF721441E28AB7AEE677AE466A015885F9343",
+      "bytes": 235786,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "top",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.34
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c1",
+      "notes": "Top face hides underside mounting surfaces: caster and tracker states are not visible, never absent. Two caster-mount screw heads visible; shaft length and nut locking are not certified. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.156,
+            0.303,
+            0.763,
+            0.914
+          ],
+          "approxAnalysisPixels": {
+            "width": 291.36,
+            "height": 391.04
+          }
+        },
+        "caster": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_021844.jpg",
+      "source": "ninetoten/20261006_021844.jpg",
+      "sha256": "1F2259CC3CF2982933CE34B66577415A8D6A40D28DFEABA0FB440530BB762273",
+      "bytes": 258130,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "top",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.35
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c1",
+      "notes": "Top face hides underside mounting surfaces: caster and tracker states are not visible, never absent. Two caster-mount screw heads visible; shaft length and nut locking are not certified. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.208,
+            0.272,
+            0.837,
+            0.832
+          ],
+          "approxAnalysisPixels": {
+            "width": 301.92,
+            "height": 358.4
+          }
+        },
+        "caster": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_021847.jpg",
+      "source": "ninetoten/20261006_021847.jpg",
+      "sha256": "F416493DFD232DF9334D0D87F981CD93C2CED4F94A24AB2E134E4794F521618F",
+      "bytes": 238553,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "top",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.32
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c1",
+      "notes": "Top face hides underside mounting surfaces: caster and tracker states are not visible, never absent. Two caster-mount screw heads visible; shaft length and nut locking are not certified. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.154,
+            0.333,
+            0.734,
+            0.906
+          ],
+          "approxAnalysisPixels": {
+            "width": 278.4,
+            "height": 366.72
+          }
+        },
+        "caster": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_021928.jpg",
+      "source": "ninetoten/20261006_021928.jpg",
+      "sha256": "8B398A48D9244CE31B676519F3CDDF2D6FD91678A4316B5EC4D1EB4440ACCBEE",
+      "bytes": 297199,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.4
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c3",
+      "notes": "Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.078,
+            0.083,
+            0.763,
+            0.679
+          ],
+          "approxAnalysisPixels": {
+            "width": 328.8,
+            "height": 381.44
+          }
+        },
+        "caster": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_022020.jpg",
+      "source": "ninetoten/20261006_022020.jpg",
+      "sha256": "ADFCE5B2BBB093944D407BF437D285A479337E9069F1185E4BAF8DFA3CFDF8A3",
+      "bytes": 251625,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.45
+      },
+      "quality": {
+        "blur": "none",
+        "glare": true,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c3",
+      "notes": "Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.075,
+            0.104,
+            0.875,
+            0.78
+          ],
+          "approxAnalysisPixels": {
+            "width": 384.0,
+            "height": 432.64
+          }
+        },
+        "caster": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_022031.jpg",
+      "source": "ninetoten/20261006_022031.jpg",
+      "sha256": "087AAF7C82E57CF4E87FB3BEF0868310658858F3BDF66E93F81D3AC04A8A49D4",
+      "bytes": 186365,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "low",
+        "side": "front"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 3,
+        "boardFractionOfFrame": 0.27
+      },
+      "quality": {
+        "blur": "mild",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c6",
+      "notes": "Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.195,
+            0.369,
+            1,
+            0.675
+          ],
+          "approxAnalysisPixels": {
+            "width": 386.4,
+            "height": 195.84
+          }
+        },
+        "caster": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_022033.jpg",
+      "source": "ninetoten/20261006_022033.jpg",
+      "sha256": "7C2632698CF9917BE4FE31DD501CBB0D3219DD6A571086C9E76A0CC51CEE2900",
+      "bytes": 187811,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "low",
+        "side": "front"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 3,
+        "boardFractionOfFrame": 0.38
+      },
+      "quality": {
+        "blur": "mild",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b1-c6",
+      "notes": "Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0,
+            0.341,
+            0.86,
+            0.777
+          ],
+          "approxAnalysisPixels": {
+            "width": 412.8,
+            "height": 279.04
+          }
+        },
+        "caster": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_022443.jpg",
+      "source": "ninetoten/20261006_022443.jpg",
+      "sha256": "4D1A4D79E6A452DD75F9F5B1E4C578E71E198C4CB80437E0F16F08B0EB2A57F9",
+      "bytes": 199237,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-posts",
+      "subStage": "posts-only",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "low",
+        "side": "right"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.23
+      },
+      "quality": {
+        "blur": "mild",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b2-c3",
+      "notes": "Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.24,
+            0.44,
+            0.815,
+            0.95
+          ],
+          "approxAnalysisPixels": {
+            "width": 276.0,
+            "height": 326.4
+          }
+        },
+        "caster": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_022942.jpg",
+      "source": "ninetoten/20261006_022942.jpg",
+      "sha256": "BE24A108472B4B6381ED895650B0568174F79DFED47C682D8BCD236D9E36704E",
+      "bytes": 278408,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.43
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c1",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.188,
+            0.34,
+            0.954,
+            0.91
+          ],
+          "approxAnalysisPixels": {
+            "width": 367.68,
+            "height": 364.8
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.38,
+            0.34,
+            0.69,
+            0.47
+          ],
+          "approxAnalysisPixels": {
+            "width": 148.8,
+            "height": 83.2
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_022958.jpg",
+      "source": "ninetoten/20261006_022958.jpg",
+      "sha256": "38BB6BEBB2FB58C71298E15B85BB917667B60AA2EBCE0F424C6D67A9D5295753",
+      "bytes": 217370,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 3,
+        "boardFractionOfFrame": 0.33
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c3",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.05,
+            0.351,
+            0.808,
+            1
+          ],
+          "approxAnalysisPixels": {
+            "width": 485.12,
+            "height": 311.52
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.54,
+            0.4,
+            0.69,
+            0.66
+          ],
+          "approxAnalysisPixels": {
+            "width": 96.0,
+            "height": 124.8
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023003.jpg",
+      "source": "ninetoten/20261006_023003.jpg",
+      "sha256": "B1FB69EBB64975E1BC7658EFFE0A8EBE970B157AE68D1EFEAC43F7203B319F55",
+      "bytes": 189456,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.4
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c4",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0,
+            0.298,
+            0.667,
+            0.993
+          ],
+          "approxAnalysisPixels": {
+            "width": 426.88,
+            "height": 333.6
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.44,
+            0.39,
+            0.59,
+            0.71
+          ],
+          "approxAnalysisPixels": {
+            "width": 96.0,
+            "height": 153.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023008.jpg",
+      "source": "ninetoten/20261006_023008.jpg",
+      "sha256": "6D7415119ECB951390ABB3678B2708F739321F0598FB300DF25939EE6618F642",
+      "bytes": 227856,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.55
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c5",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.16,
+            0.554,
+            1,
+            1
+          ],
+          "approxAnalysisPixels": {
+            "width": 403.2,
+            "height": 285.44
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.39,
+            0.6,
+            0.74,
+            0.74
+          ],
+          "approxAnalysisPixels": {
+            "width": 168.0,
+            "height": 89.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023010.jpg",
+      "source": "ninetoten/20261006_023010.jpg",
+      "sha256": "7E1CEDB36F5F00AF96B855D8175C6811D727C6CB6F4DFD801A3E836C533B4DCF",
+      "bytes": 265952,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.6
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c5",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.15,
+            0.582,
+            0.926,
+            1
+          ],
+          "approxAnalysisPixels": {
+            "width": 372.48,
+            "height": 267.52
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.34,
+            0.64,
+            0.72,
+            0.79
+          ],
+          "approxAnalysisPixels": {
+            "width": 182.4,
+            "height": 96.0
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023016.jpg",
+      "source": "ninetoten/20261006_023016.jpg",
+      "sha256": "3E6D22D4DE7FFB921033F6F2CD687327B4B7760284F64B25C78807FA1F56AF5E",
+      "bytes": 224627,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.52
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c6",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.063,
+            0,
+            0.918,
+            0.395
+          ],
+          "approxAnalysisPixels": {
+            "width": 410.4,
+            "height": 252.8
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.28,
+            0.16,
+            0.71,
+            0.33
+          ],
+          "approxAnalysisPixels": {
+            "width": 206.4,
+            "height": 108.8
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023018.jpg",
+      "source": "ninetoten/20261006_023018.jpg",
+      "sha256": "66C91C280E152EB540F83D04F570CF81A018DF64D3F4FC53BF3D9E5D7A332708",
+      "bytes": 230543,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.52
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c6",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.06,
+            0,
+            0.87,
+            0.399
+          ],
+          "approxAnalysisPixels": {
+            "width": 388.8,
+            "height": 255.36
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.28,
+            0.18,
+            0.72,
+            0.34
+          ],
+          "approxAnalysisPixels": {
+            "width": 211.2,
+            "height": 102.4
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023045.jpg",
+      "source": "ninetoten/20261006_023045.jpg",
+      "sha256": "0F537BA301F8F218D789E5DBD87371273BE1F5525ECCC435C3D706856049DBE0",
+      "bytes": 242666,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.34
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c6",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.199,
+            0.041,
+            0.852,
+            0.571
+          ],
+          "approxAnalysisPixels": {
+            "width": 313.44,
+            "height": 339.2
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.38,
+            0.43,
+            0.66,
+            0.57
+          ],
+          "approxAnalysisPixels": {
+            "width": 134.4,
+            "height": 89.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023055.jpg",
+      "source": "ninetoten/20261006_023055.jpg",
+      "sha256": "A8C085A37CD048BCA0439FB6C2D465B86BF6FE4C38E23CDEC456674A39FC5D00",
+      "bytes": 226804,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.5
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c6",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.033,
+            0,
+            0.831,
+            0.485
+          ],
+          "approxAnalysisPixels": {
+            "width": 383.04,
+            "height": 310.4
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.24,
+            0.3,
+            0.64,
+            0.44
+          ],
+          "approxAnalysisPixels": {
+            "width": 192.0,
+            "height": 89.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023101.jpg",
+      "source": "ninetoten/20261006_023101.jpg",
+      "sha256": "0CBD5D7F5ACD9A2D2DBEE8D6F1AF1F933D2024D61405537DB154E91FFC580997",
+      "bytes": 209918,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.4
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c3",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0,
+            0.237,
+            0.567,
+            0.874
+          ],
+          "approxAnalysisPixels": {
+            "width": 362.88,
+            "height": 305.76
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.34,
+            0.34,
+            0.49,
+            0.66
+          ],
+          "approxAnalysisPixels": {
+            "width": 96.0,
+            "height": 153.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023103.jpg",
+      "source": "ninetoten/20261006_023103.jpg",
+      "sha256": "C0D472ACF97ACB4D8DA4A3A757E2FD88E23F9DFA2467C06F488E96B43BA35CFA",
+      "bytes": 209606,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.4
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c4",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0,
+            0.249,
+            0.531,
+            0.828
+          ],
+          "approxAnalysisPixels": {
+            "width": 339.84,
+            "height": 277.92
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.37,
+            0.41,
+            0.5,
+            0.65
+          ],
+          "approxAnalysisPixels": {
+            "width": 83.2,
+            "height": 115.2
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023105.jpg",
+      "source": "ninetoten/20261006_023105.jpg",
+      "sha256": "7AF633D7EE5B528431D065D720A30765195250D3294246EBB1C99B7EC0EFD28E",
+      "bytes": 212822,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.4
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c7",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry. Compared with 023103 at native size: same near-normal physical viewpoint with phone roll approximately 180 degrees and minor reframing; held in the same independent split unit.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.476,
+            0.184,
+            1,
+            0.762
+          ],
+          "approxAnalysisPixels": {
+            "width": 335.36,
+            "height": 277.44
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.52,
+            0.38,
+            0.63,
+            0.63
+          ],
+          "approxAnalysisPixels": {
+            "width": 70.4,
+            "height": 120.0
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023108.jpg",
+      "source": "ninetoten/20261006_023108.jpg",
+      "sha256": "8CEEBCC6DB8E6261A4FA32AA9D234CCBBAC5BDF5EB2EC17BC339A9BF6AE84F97",
+      "bytes": 234630,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.36
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c4",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.026,
+            0.203,
+            0.625,
+            0.819
+          ],
+          "approxAnalysisPixels": {
+            "width": 383.36,
+            "height": 295.68
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.45,
+            0.34,
+            0.57,
+            0.61
+          ],
+          "approxAnalysisPixels": {
+            "width": 76.8,
+            "height": 129.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023118.jpg",
+      "source": "ninetoten/20261006_023118.jpg",
+      "sha256": "2E7E53FB77FD6759D8D0B1390C2E4F6CD32FD0C673CA391EA746A2B9AB47C77A",
+      "bytes": 227300,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "oblique",
+        "side": "rear"
+      },
+      "framing": {
+        "category": "whole-board",
+        "boardFullyInFrame": true,
+        "boardCornersVisible": 4,
+        "boardFractionOfFrame": 0.36
+      },
+      "quality": {
+        "blur": "none",
+        "glare": true,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b5-c1",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.195,
+            0.331,
+            0.948,
+            0.884
+          ],
+          "approxAnalysisPixels": {
+            "width": 361.44,
+            "height": 353.92
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.38,
+            0.36,
+            0.66,
+            0.48
+          ],
+          "approxAnalysisPixels": {
+            "width": 134.4,
+            "height": 76.8
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023247.jpg",
+      "source": "ninetoten/20261006_023247.jpg",
+      "sha256": "2A5EFC12D153F8A8F89974B8F5DB37A86CD83BF217C5FA4B5010363D254120AF",
+      "bytes": 231433,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "oblique",
+        "side": "left"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 3,
+        "boardFractionOfFrame": 0.36
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b6-c2",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.006,
+            0.321,
+            0.668,
+            1
+          ],
+          "approxAnalysisPixels": {
+            "width": 423.68,
+            "height": 325.92
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.44,
+            0.42,
+            0.61,
+            0.7
+          ],
+          "approxAnalysisPixels": {
+            "width": 108.8,
+            "height": 134.4
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023250.jpg",
+      "source": "ninetoten/20261006_023250.jpg",
+      "sha256": "F9718843606C1CD19CA8E9ADA3CB4C9BB3B3492710D10B01861C775AD31D5D31",
+      "bytes": 233239,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "oblique",
+        "side": "right"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.45
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b6-c3",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.485,
+            0.052,
+            1,
+            0.735
+          ],
+          "approxAnalysisPixels": {
+            "width": 329.6,
+            "height": 327.84
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.54,
+            0.28,
+            0.68,
+            0.53
+          ],
+          "approxAnalysisPixels": {
+            "width": 89.6,
+            "height": 120.0
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023253.jpg",
+      "source": "ninetoten/20261006_023253.jpg",
+      "sha256": "89AAA9E5354838980C4F04F876B5211D6834F4126B8F8E65EB2446F568A0FF16",
+      "bytes": 252373,
+      "width": 1280,
+      "height": 960,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.4
+      },
+      "quality": {
+        "blur": "none",
+        "glare": true,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b6-c4",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.541,
+            0.122,
+            1,
+            0.9
+          ],
+          "approxAnalysisPixels": {
+            "width": 293.76,
+            "height": 373.44
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.59,
+            0.33,
+            0.72,
+            0.69
+          ],
+          "approxAnalysisPixels": {
+            "width": 83.2,
+            "height": 172.8
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023256.jpg",
+      "source": "ninetoten/20261006_023256.jpg",
+      "sha256": "FC1507762FFCF0EA1018F05F77F3C23486D9C3CDFDF034E901F87913C7D934C1",
+      "bytes": 228457,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "oblique",
+        "side": "front"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.43
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b6-c5",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.164,
+            0,
+            0.897,
+            0.47
+          ],
+          "approxAnalysisPixels": {
+            "width": 351.84,
+            "height": 300.8
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.29,
+            0.22,
+            0.68,
+            0.34
+          ],
+          "approxAnalysisPixels": {
+            "width": 187.2,
+            "height": 76.8
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023259.jpg",
+      "source": "ninetoten/20261006_023259.jpg",
+      "sha256": "0A4A9A3F467A54D2792E7D3BC52B27AEF71D7A5049B432B6D4D685516B4A142B",
+      "bytes": 228768,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "oblique",
+        "side": "front"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.5
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b6-c5",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.081,
+            0,
+            0.796,
+            0.439
+          ],
+          "approxAnalysisPixels": {
+            "width": 343.2,
+            "height": 280.96
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.23,
+            0.16,
+            0.57,
+            0.3
+          ],
+          "approxAnalysisPixels": {
+            "width": 163.2,
+            "height": 89.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023301.jpg",
+      "source": "ninetoten/20261006_023301.jpg",
+      "sha256": "C8CE2CDD66CD9ACB60C6428488CE45438943112BE13C3AE9BADD2359C8A3F4EB",
+      "bytes": 228097,
+      "width": 960,
+      "height": 1280,
+      "section": 9,
+      "checkpoint": "s9-caster",
+      "subStage": "caster-fitted",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "oblique",
+        "side": "front"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.5
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b6-c5",
+      "notes": "Bare screws/spacers at tracker positions are mounting hardware, not line-tracker circuit boards. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.046,
+            0,
+            0.757,
+            0.446
+          ],
+          "approxAnalysisPixels": {
+            "width": 341.28,
+            "height": 285.44
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.19,
+            0.17,
+            0.52,
+            0.33
+          ],
+          "approxAnalysisPixels": {
+            "width": 158.4,
+            "height": 102.4
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023439.jpg",
+      "source": "ninetoten/20261006_023439.jpg",
+      "sha256": "41057A3AD0FB7C7DDE8D35EAF2E32ABA6FAA7E8A6F440683640C391644CE086D",
+      "bytes": 208590,
+      "width": 1280,
+      "height": 960,
+      "section": 10,
+      "checkpoint": "s10-right-tracker",
+      "subStage": "right-tracker",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 270,
+        "elevation": "low",
+        "side": "right"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 3,
+        "boardFractionOfFrame": 0.3
+      },
+      "quality": {
+        "blur": "mild",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b7-c2",
+      "notes": "Tracker names follow top-face anatomical axes; underside image-left is anatomical right with LED edge up. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.305,
+            0.256,
+            1,
+            0.706
+          ],
+          "approxAnalysisPixels": {
+            "width": 444.8,
+            "height": 216.0
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.4,
+            0.32,
+            0.52,
+            0.54
+          ],
+          "approxAnalysisPixels": {
+            "width": 76.8,
+            "height": 105.6
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "present",
+          "bboxNormalized": [
+            0.36,
+            0.54,
+            0.63,
+            0.64
+          ],
+          "approxAnalysisPixels": {
+            "width": 172.8,
+            "height": 48.0
+          }
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023449.jpg",
+      "source": "ninetoten/20261006_023449.jpg",
+      "sha256": "538F0F94CC6C4B5A5EF0CB83642E1D6F26166E27094D1B087520A3C3626A8802",
+      "bytes": 220541,
+      "width": 960,
+      "height": 1280,
+      "section": 10,
+      "checkpoint": "s10-right-tracker",
+      "subStage": "right-tracker",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 0,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 1,
+        "boardFractionOfFrame": 0.55
+      },
+      "quality": {
+        "blur": "none",
+        "glare": true,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b7-c4",
+      "notes": "Anatomical left tracker mounting area is outside the crop; no absence is inferred there. One target is partially cropped; its bounding box describes the visible extent only, so estimated pixels underestimate complete part size. Tracker names follow top-face anatomical axes; underside image-left is anatomical right with LED edge up. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0.36,
+            0.368,
+            1,
+            1
+          ],
+          "approxAnalysisPixels": {
+            "width": 307.2,
+            "height": 404.48
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.59,
+            0.43,
+            0.93,
+            0.56
+          ],
+          "approxAnalysisPixels": {
+            "width": 163.2,
+            "height": 83.2
+          }
+        },
+        "leftTracker": {
+          "state": "not_visible",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "present",
+          "bboxNormalized": [
+            0.37,
+            0.41,
+            0.46,
+            0.71
+          ],
+          "approxAnalysisPixels": {
+            "width": 43.2,
+            "height": 192.0
+          }
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023501.jpg",
+      "source": "ninetoten/20261006_023501.jpg",
+      "sha256": "2C4A9D8359F30BAEE2CE49E2B84803035A137BBEA757610308397292D2024525",
+      "bytes": 240775,
+      "width": 1280,
+      "height": 960,
+      "section": 10,
+      "checkpoint": "s10-right-tracker",
+      "subStage": "right-tracker",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 90,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "board-cropped",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.45
+      },
+      "quality": {
+        "blur": "none",
+        "glare": true,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b7-c7",
+      "notes": "Tracker names follow top-face anatomical axes; underside image-left is anatomical right with LED edge up. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 640,
+      "analysisHeight": 480,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0,
+            0.122,
+            0.611,
+            1
+          ],
+          "approxAnalysisPixels": {
+            "width": 391.04,
+            "height": 421.44
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.44,
+            0.41,
+            0.59,
+            0.76
+          ],
+          "approxAnalysisPixels": {
+            "width": 96.0,
+            "height": 168.0
+          }
+        },
+        "leftTracker": {
+          "state": "absent",
+          "bboxNormalized": null,
+          "approxAnalysisPixels": null
+        },
+        "rightTracker": {
+          "state": "present",
+          "bboxNormalized": [
+            0.35,
+            0.19,
+            0.6,
+            0.28
+          ],
+          "approxAnalysisPixels": {
+            "width": 160.0,
+            "height": 43.2
+          }
+        }
+      }
+    },
+    {
+      "fixture": "20261006_023659.jpg",
+      "source": "ninetoten/20261006_023659.jpg",
+      "sha256": "DCC9D5C1A023D235133C55014BBEF58D24A2E8CC203C48780BEAAFC908C9F9E3",
+      "bytes": 283601,
+      "width": 960,
+      "height": 1280,
+      "section": 10,
+      "checkpoint": "s10-both-trackers",
+      "subStage": "both-trackers",
+      "boardFace": "underside",
+      "casterPosts": 2,
+      "viewpoint": {
+        "rotation": 180,
+        "elevation": "overhead",
+        "side": "centre"
+      },
+      "framing": {
+        "category": "close-up",
+        "boardFullyInFrame": false,
+        "boardCornersVisible": 2,
+        "boardFractionOfFrame": 0.5
+      },
+      "quality": {
+        "blur": "none",
+        "glare": false,
+        "hand": false,
+        "occlusion": null
+      },
+      "cluster": "b8-c4",
+      "notes": "Tracker names follow top-face anatomical axes; underside image-left is anatomical right with LED edge up. Normalized target boxes and board area are approximate visual annotations, not calibrated gate geometry.",
+      "analysisWidth": 480,
+      "analysisHeight": 640,
+      "targets": {
+        "boardIdentity": {
+          "state": "present",
+          "bboxNormalized": [
+            0,
+            0,
+            0.935,
+            0.602
+          ],
+          "approxAnalysisPixels": {
+            "width": 448.8,
+            "height": 385.28
+          }
+        },
+        "caster": {
+          "state": "present",
+          "bboxNormalized": [
+            0.29,
+            0.39,
+            0.71,
+            0.52
+          ],
+          "approxAnalysisPixels": {
+            "width": 201.6,
+            "height": 83.2
+          }
+        },
+        "leftTracker": {
+          "state": "present",
+          "bboxNormalized": [
+            0.1,
+            0.42,
+            0.25,
+            0.62
+          ],
+          "approxAnalysisPixels": {
+            "width": 72.0,
+            "height": 128.0
+          }
+        },
+        "rightTracker": {
+          "state": "present",
+          "bboxNormalized": [
+            0.79,
+            0.25,
+            0.91,
+            0.49
+          ],
+          "approxAnalysisPixels": {
+            "width": 57.6,
+            "height": 153.6
+          }
+        }
+      }
+    }
+  ],
+  "inputHashes": {
+    "labels": "78285c1a9d92a69f7f2e1948f8039d9b21ffd7bc7679dea4b6cf3e5c040e196f",
+    "workingManifest": "93bfb7ce253ad01e5ebd32df6a25ab874bd6311a73f09626d496990c3942c6dc",
+    "sourceInventory": "db62eb38b26fa62428f7f5529246e63c4d6ab76b29efe6b583b71716b9ea183a"
+  },
+  "byteBudget": {
+    "scope": "Entire fixture directory including manifest.json",
+    "maxJpegBytes": 7900000,
+    "manifestReserveBytes": 100000
+  }
+}

@@ -1,0 +1,167 @@
+{
+ "note": "Pool photos (never held-out) with production board anchors from BoardAnchorDumpInstrumentedTest, card 3/1, 6 October 2026.",
+ "photos": [
+  {
+   "photo": "20261005_221042.jpg",
+   "analysisWidth": 480,
+   "analysisHeight": 640,
+   "boardCorners": [
+    [
+     92.49577331542969,
+     151.02200317382812
+    ],
+    [
+     389.32476806640625,
+     153.6077423095703
+    ],
+    [
+     404.0491943359375,
+     508.2303771972656
+    ],
+    [
+     89.4394302368164,
+     514.2230224609375
+    ]
+   ],
+   "driverInstalled": true,
+   "nanoInstalled": false,
+   "prototypeDriverAccepted": true,
+   "prototypeNanoAccepted": false
+  },
+  {
+   "photo": "20261005_221240.jpg",
+   "analysisWidth": 480,
+   "analysisHeight": 640,
+   "boardCorners": [
+    [
+     388.89031982421875,
+     491.82806396484375
+    ],
+    [
+     80.93660736083984,
+     495.89935302734375
+    ],
+    [
+     73.4613037109375,
+     109.77534484863281
+    ],
+    [
+     394.9787292480469,
+     110.52410125732422
+    ]
+   ],
+   "driverInstalled": true,
+   "nanoInstalled": false,
+   "prototypeDriverAccepted": true,
+   "prototypeNanoAccepted": false
+  },
+  {
+   "photo": "20261005_215033.jpg",
+   "analysisWidth": 640,
+   "analysisHeight": 480,
+   "boardCorners": [
+    [
+     452.5951843261719,
+     113.07290649414062
+    ],
+    [
+     478.4252014160156,
+     399.8695068359375
+    ],
+    [
+     114.64965057373047,
+     408.2373962402344
+    ],
+    [
+     120.3046646118164,
+     111.39736938476562
+    ]
+   ],
+   "driverInstalled": false,
+   "nanoInstalled": false,
+   "prototypeDriverAccepted": false,
+   "prototypeNanoAccepted": false
+  },
+  {
+   "photo": "20261005_222909.jpg",
+   "analysisWidth": 480,
+   "analysisHeight": 640,
+   "boardCorners": [
+    [
+     73.07962036132812,
+     94.69232940673828
+    ],
+    [
+     377.6192932128906,
+     86.22708892822266
+    ],
+    [
+     391.1592712402344,
+     437.02496337890625
+    ],
+    [
+     98.87613677978516,
+     468.5459899902344
+    ]
+   ],
+   "driverInstalled": true,
+   "nanoInstalled": true,
+   "prototypeDriverAccepted": true,
+   "prototypeNanoAccepted": true
+  },
+  {
+   "photo": "20261005_223418.jpg",
+   "analysisWidth": 640,
+   "analysisHeight": 480,
+   "boardCorners": [
+    [
+     150.23028564453125,
+     407.512451171875
+    ],
+    [
+     137.7731170654297,
+     115.0591812133789
+    ],
+    [
+     494.73681640625,
+     97.74612426757812
+    ],
+    [
+     503.2358703613281,
+     405.2008972167969
+    ]
+   ],
+   "driverInstalled": true,
+   "nanoInstalled": true,
+   "prototypeDriverAccepted": true,
+   "prototypeNanoAccepted": true
+  },
+  {
+   "photo": "20261005_222228.jpg",
+   "analysisWidth": 480,
+   "analysisHeight": 640,
+   "boardCorners": [
+    [
+     88.45915222167969,
+     168.57110595703125
+    ],
+    [
+     373.5635986328125,
+     201.51531982421875
+    ],
+    [
+     395.1052551269531,
+     542.7963256835938
+    ],
+    [
+     80.84717559814453,
+     554.349853515625
+    ]
+   ],
+   "driverInstalled": true,
+   "nanoInstalled": false,
+   "prototypeDriverAccepted": true,
+   "prototypeNanoAccepted": false
+  }
+ ]
+}

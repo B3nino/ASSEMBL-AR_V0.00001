@@ -1,0 +1,17 @@
+# Photo colors are preserved. Geometry and dimensions are provisional.
+newmtl top
+Kd 1 1 1
+map_Kd ../references/physical/extension-board-white-top.jpg
+newmtl bottom
+Kd 1 1 1
+map_Kd ../references/physical/extension-board-white-underside.jpg
+newmtl substrate
+Kd 0.62 0.64 0.58
+newmtl connector
+Kd 0.09 0.10 0.10
+newmtl socket
+Kd 0.018 0.02 0.023
+newmtl metal
+Kd 0.66 0.69 0.70
+newmtl red
+Kd 0.70 0.025 0.04
