@@ -13,6 +13,26 @@ import static org.junit.Assert.assertTrue;
 
 /** Engine-independent coverage of pending-card, mute and lifecycle cancellation races. */
 public final class AssemblyVoiceGuideTest {
+    @Test public void instructionTextStartsOnlyForTheCurrentSpokenUtterance() {
+        FakeEngine engine=new FakeEngine();
+        List<String> displayed=new ArrayList<>();
+        AssemblyVoiceGuide guide=new AssemblyVoiceGuide(engine,new AssemblyVoiceGuide.Callback() {
+            @Override public void onStatusChanged(AssemblyVoiceGuide.Status status) { }
+            @Override public void onSpeechStarted(String key,String text) { displayed.add(key+":"+text); }
+        });
+        engine.initialize(true);
+        guide.speak("Bring out the Main Board.","bring");
+        assertTrue("Queued speech has not started yet",displayed.isEmpty());
+        guide.speak("Place the board front-side up.","place");
+        engine.listener.onStart(engine.ids.get(0));
+        assertTrue("A flushed utterance cannot replace the current instruction",displayed.isEmpty());
+        engine.listener.onStart(engine.ids.get(1));
+        assertEquals(Collections.singletonList("place:Place the board front-side up."),displayed);
+        guide.stop();
+        engine.listener.onStart(engine.ids.get(1));
+        assertEquals("A cancelled utterance cannot restore old text",1,displayed.size());
+    }
+
     @Test public void initializationKeepsOnlyTheLatestCardAndDoesNotClaimPlayback() {
         FakeEngine engine = new FakeEngine();
         List<AssemblyVoiceGuide.Status> states = new ArrayList<>();

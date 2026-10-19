@@ -33,6 +33,7 @@ public final class PhaseDemoPlayer {
     public interface Listener {
         void onChapterStarted(Chapter chapter, int position, int count);
         void onFinished();
+        default void onChapterReady(int position) { }
     }
 
     private static final long PAUSE_BETWEEN_CHAPTERS_MILLIS = 700L;
@@ -61,6 +62,22 @@ public final class PhaseDemoPlayer {
     @Nullable private Uri clipUri;
     @Nullable private MediaPlayer clipPlayer;
     private long clipEndMillis;
+    private boolean manualAdvance;
+    private boolean chapterReady;
+    private int pendingClipChapter;
+    private boolean clipSeekPending;
+    private boolean lifecyclePaused;
+
+    public void setManualAdvance(boolean manual) { manualAdvance=manual; }
+    public boolean isChapterReady() { return chapterReady; }
+    public void confirmChapter() {
+        if (!playing || !chapterReady) return;
+        chapterReady=false;
+        if (clip!=null) {
+            if(position+1<chapters.size()) seekClipTo(position+1);
+            else finishClip();
+        } else advance();
+    }
 
     public PhaseDemoPlayer(AssemblyDemoView demoView, AssemblyVoiceGuide voice,
                            @Nullable VideoView videoView, Listener listener) {
@@ -78,6 +95,9 @@ public final class PhaseDemoPlayer {
     public void play(List<Chapter> chapters, @Nullable String leadIn, String keyPrefix,
                      @Nullable PhaseMediaCatalog.Clip clip, @Nullable Uri clipUri) {
         stopTimers();
+        if(videoView!=null && clipPlayer!=null) videoView.stopPlayback();
+        clipPlayer=null;
+        clipSeekPending=false;
         this.chapters = Collections.unmodifiableList(new ArrayList<>(chapters));
         this.leadIn = leadIn;
         this.keyPrefix = keyPrefix;
@@ -86,6 +106,8 @@ public final class PhaseDemoPlayer {
         playCount++;
         playing = !this.chapters.isEmpty();
         position = -1;
+        chapterReady=false;
+        pendingClipChapter=0;
         if (!playing) {
             listener.onFinished();
             return;
@@ -109,6 +131,7 @@ public final class PhaseDemoPlayer {
 
     /** Lifecycle pause: silence and freeze, keeping the current chapter on screen. */
     public void pause() {
+        lifecyclePaused=true;
         stopTimers();
         voice.stop();
         demoView.pause();
@@ -117,6 +140,8 @@ public final class PhaseDemoPlayer {
 
     /** Restarts the current chapter after a pause, if the demo was still playing. */
     public void resume() {
+        lifecyclePaused=false;
+        if (manualAdvance && chapterReady) return;
         if (!playing || position < 0) {
             demoView.resume();
             return;
@@ -182,6 +207,7 @@ public final class PhaseDemoPlayer {
     private void startChapter(int index) {
         stopTimers();
         position = index;
+        chapterReady=false;
         Chapter chapter = chapters.get(index);
         demoView.setVisibility(View.VISIBLE);
         if (videoView != null) videoView.setVisibility(View.GONE);
@@ -208,6 +234,10 @@ public final class PhaseDemoPlayer {
     private void maybeAdvance() {
         if (!playing || !animationFinished || !speechFinished) return;
         handler.removeCallbacks(silentDone);
+        if (manualAdvance) {
+            if (!chapterReady) { chapterReady=true; listener.onChapterReady(position); }
+            return;
+        }
         handler.postDelayed(advance, PAUSE_BETWEEN_CHAPTERS_MILLIS);
     }
 
@@ -235,13 +265,15 @@ public final class PhaseDemoPlayer {
         int last = chapters.get(chapters.size() - 1).getIndex();
         clipEndMillis = clip.chapterEndMillis(last);
         videoView.setOnPreparedListener(player -> {
+            if(!playing || clip==null) return;
             clipPlayer = player;
             applyClipVolume();
-            player.seekTo((int) clip.getChapterStartMillis().get(first).longValue());
-            videoView.start();
-            handler.post(pollClip);
+            seekClipTo(pendingClipChapter);
         });
-        videoView.setOnCompletionListener(player -> finishClip());
+        videoView.setOnCompletionListener(player -> {
+            if(manualAdvance) { chapterReady=true; listener.onChapterReady(position); }
+            else finishClip();
+        });
         videoView.setOnErrorListener((player, what, extra) -> {
             // A damaged clip falls back to the narrated schematic chapters.
             clip = null;
@@ -254,15 +286,32 @@ public final class PhaseDemoPlayer {
     }
 
     private void seekClipTo(int target) {
+        pendingClipChapter=target;
+        chapterReady=false;
         if (videoView == null || clip == null || clipPlayer == null) return;
+        position=target;
+        listener.onChapterStarted(chapters.get(target),target,chapters.size());
+        clipSeekPending=true;
+        clipPlayer.setOnSeekCompleteListener(player->{
+            if(player!=clipPlayer || !playing) return;
+            clipSeekPending=false;
+            if(lifecyclePaused) return;
+            videoView.start();
+            handler.removeCallbacks(pollClip);
+            handler.post(pollClip);
+        });
+        videoView.pause();
         videoView.seekTo((int) clip.getChapterStartMillis().get(chapters.get(target).getIndex()).longValue());
-        videoView.start();
-        handler.post(pollClip);
     }
 
     private void pollClip() {
         if (!playing || clip == null || videoView == null) return;
+        if(clipSeekPending || lifecyclePaused) return;
         long now = videoView.getCurrentPosition();
+        if(manualAdvance && position>=0
+                && now >= clip.chapterEndMillis(chapters.get(position).getIndex())) {
+            videoView.pause(); chapterReady=true; listener.onChapterReady(position); return;
+        }
         if (now >= clipEndMillis) {
             finishClip();
             return;

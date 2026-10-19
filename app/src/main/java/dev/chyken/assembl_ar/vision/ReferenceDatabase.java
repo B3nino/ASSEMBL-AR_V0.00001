@@ -229,6 +229,9 @@ public final class ReferenceDatabase implements AutoCloseable {
         String sourceLabel = spec.getJpegAssetPath() != null
                 ? spec.getJpegAssetPath() : spec.getLocalImageFilePath();
         File cacheFile = cacheFile(descriptorCacheDirectory, spec, imageBytes);
+        if (spec.isAutomaticBoardGeometry()) {
+            spec = BoardPhotoGeometry.resolve(spec, imageBytes, cacheFile);
+        }
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
                 return preparedFromBlob(spec, readFully(input), config);
@@ -397,6 +400,8 @@ public final class ReferenceDatabase implements AutoCloseable {
                 + "_installedBracket" + (spec.isInstalledBracketView() ? 1 : 0)
                 + "_size" + spec.getMaximumImageDimension()
                 + "_roi" + (spec.isDescriptorRegionNormalizationEnabled() ? 1 : 0)
+                + "_raw" + (spec.isAutomaticBoardGeometry() ? 1 : 0)
+                + "_bottom" + (spec.isBottomFace() ? 1 : 0)
                 + "_prep" + REFERENCE_PREPARATION_VERSION;
         return new File(directory, safeId + "_" + assetFingerprint + ".asor");
     }

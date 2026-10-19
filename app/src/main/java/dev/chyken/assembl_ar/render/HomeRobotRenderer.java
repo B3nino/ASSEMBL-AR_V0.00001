@@ -80,7 +80,8 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(1f, 1f, 1f, 1f);
+        if (previewComponentId == null) GLES20.glClearColor(1f, 1f, 1f, 1f);
+        else GLES20.glClearColor(0.085f, 0.12f, 0.13f, 1f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glDepthFunc(GLES20.GL_LEQUAL);
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -196,7 +197,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
     /** Fits any component in the initial 38-degree camera frustum, with room to orbit it. */
     static float previewScale(ObjModel mesh) {
         float radius = mesh.boundingRadius();
-        return Float.isFinite(radius) && radius > 0f ? 1.75f / radius : 1f;
+        return Float.isFinite(radius) && radius > 0f ? 1.95f / radius : 1f;
     }
 
     private void drawHorizontal(@Nullable ObjModel mesh, float[] color,

@@ -29,6 +29,11 @@ public final class VisionReferenceFactory {
     }
 
     public static List<ComponentReferenceSpec> build(AssemblArRepository repository) {
+        return build(repository, null);
+    }
+
+    public static List<ComponentReferenceSpec> build(AssemblArRepository repository,
+            android.content.res.AssetManager assets) {
         List<ComponentReferenceSpec> result = new ArrayList<>();
         Set<String> referenceIds = new HashSet<>();
         for (Component component : repository.getComponents()) {
@@ -75,8 +80,14 @@ public final class VisionReferenceFactory {
             // Reviewed camera photographs retain the physical pixels and their own canonical
             // geometry. The same exact registrations are admitted by the independent Parts Test.
             for (ComponentReferenceSpec reviewed : ReviewedIndividualReferenceCatalog.forComponent(
-                    component.getId())) {
+                    component.getId(), assets)) {
                 if (referenceIds.add(reviewed.getReferenceId())) result.add(reviewed);
+            }
+            // Every versioned front and underside photograph participates in the same offline
+            // descriptor preparation and candidate batches as the original board views.
+            for (ComponentReferenceSpec perspective :
+                    MainboardPerspectiveReferenceCatalog.forComponent(component)) {
+                if (referenceIds.add(perspective.getReferenceId())) result.add(perspective);
             }
             // Versioned exact-product references belong to production, independently of saved
             // library paths. Existing installations receive them without resetting app data.

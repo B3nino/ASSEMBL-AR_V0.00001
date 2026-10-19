@@ -333,7 +333,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 if (!OpenCVLoader.initLocal()) throw new IllegalStateException("OpenCV could not start");
                 VisionConfig config = IndividualPartTestCatalog.visionConfig();
                 List<ComponentReferenceSpec> specs = IndividualPartTestCatalog.withLegacyBaselines(
-                        VisionReferenceFactory.build(AssemblArRepository.getInstance(this)));
+                        VisionReferenceFactory.build(AssemblArRepository.getInstance(this), getAssets()));
                 database = ReferenceDatabase.load(getAssets(), specs, config,
                         new File(getNoBackupFilesDir(), "individual_part_test_orb_v1"));
                 loadedRecognizer = new ComponentRecognizer(config, database);

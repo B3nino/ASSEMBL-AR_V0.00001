@@ -3,6 +3,7 @@ package dev.chyken.assembl_ar.ui;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -22,6 +23,8 @@ public final class StepInfoPanelController {
     private static final String STATE_EXPANDED = "step_info_expanded";
     private static final String STATE_STEP = "step_info_step";
     private static final String STATE_SCROLL = "step_info_scroll";
+    private static final String STATE_PREVIEW_WIDTH = "component_preview_width";
+    private static final String STATE_PREVIEW_HEIGHT = "component_preview_height";
 
     private final Activity activity;
     private final View root;
@@ -33,14 +36,17 @@ public final class StepInfoPanelController {
     private final View header;
     private final ScrollView scroll;
     private final TextView toggle;
-    private final View guidedStepNavigation;
-    private final View confirmation;
+    private final ComponentPreviewWindow preview;
+    private final PhaseOneGuideView phaseOneGuide;
+    private boolean phaseOneActive;
     private final ViewTreeObserver.OnGlobalLayoutListener layoutListener = this::updateLayout;
     private boolean expanded;
     private boolean contentReady;
     private boolean restoreScroll = true;
     private int savedScrollY;
     @Nullable private String stepId;
+    private float dragStartX, dragStartY, panelStartX, panelStartY;
+    private int previewWidth, previewHeight;
 
     public StepInfoPanelController(Activity activity, @Nullable Bundle state) {
         this.activity = activity;
@@ -53,11 +59,25 @@ public final class StepInfoPanelController {
         header = activity.findViewById(R.id.instructionHeader);
         scroll = activity.findViewById(R.id.stepInfoScroll);
         toggle = activity.findViewById(R.id.toggleStepInfoButton);
-        guidedStepNavigation = activity.findViewById(R.id.guidedStepNavigationRow);
-        confirmation = activity.findViewById(R.id.confirmPlacementButton);
+        preview = activity.findViewById(R.id.componentPreviewWindow);
+        phaseOneGuide = activity.findViewById(R.id.phaseOneGuide);
         expanded = state == null || state.getBoolean(STATE_EXPANDED, true);
         stepId = state == null ? null : state.getString(STATE_STEP);
         savedScrollY = state == null ? 0 : state.getInt(STATE_SCROLL, 0);
+        previewWidth = state == null ? 0 : state.getInt(STATE_PREVIEW_WIDTH, 0);
+        previewHeight = state == null ? 0 : state.getInt(STATE_PREVIEW_HEIGHT, 0);
+        preview.setResizeListener((width, height) -> {
+            previewWidth = width;
+            previewHeight = height;
+            updateLayout();
+        });
+        panel.setTranslationX(state==null ? 0 : state.getFloat("info_window_x",0));
+        panel.setTranslationY(state==null ? 0 : state.getFloat("info_window_y",0));
+        header.setContentDescription(activity.getString(R.string.drag_info_window));
+        header.setOnTouchListener((view,event) -> drag(panel,view,event));
+        phaseOneGuide.getDragHandle().setOnTouchListener((view,event) -> drag(phaseOneGuide,view,event));
+        phaseOneGuide.setTranslationX(state==null ? 0 : state.getFloat("phase_one_window_x",0));
+        phaseOneGuide.setTranslationY(state==null ? 0 : state.getFloat("phase_one_window_y",0));
         // Project content loads asynchronously, after normal view-state restoration.
         scroll.setSaveEnabled(false);
         toggle.setOnClickListener(view -> {
@@ -71,6 +91,29 @@ public final class StepInfoPanelController {
         root.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
     }
 
+    private boolean drag(View target,View view,MotionEvent event) {
+            switch(event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    dragStartX=event.getRawX(); dragStartY=event.getRawY();
+                    panelStartX=target.getTranslationX(); panelStartY=target.getTranslationY(); return true;
+                case MotionEvent.ACTION_MOVE:
+                    target.setTranslationX(panelStartX+event.getRawX()-dragStartX);
+                    target.setTranslationY(panelStartY+event.getRawY()-dragStartY);
+                    clampPanel(); return true;
+                case MotionEvent.ACTION_UP:
+                    view.performClick(); return true;
+                case MotionEvent.ACTION_CANCEL: return true;
+                default: return false;
+            }
+    }
+
+    public void setPhaseOneActive(boolean active) {
+        phaseOneActive=active;
+        panel.setVisibility(active ? View.GONE : contentReady ? View.VISIBLE : View.INVISIBLE);
+        phaseOneGuide.setVisibility(active ? View.VISIBLE : View.GONE);
+        updateLayout();
+    }
+
     public void onStepChanged(String newStepId) {
         if (!newStepId.equals(stepId)) {
             savedScrollY = 0;
@@ -78,10 +121,17 @@ public final class StepInfoPanelController {
         }
         stepId = newStepId;
         contentReady = true;
+        if(!phaseOneActive) panel.setVisibility(View.VISIBLE);
         scroll.requestLayout();
     }
 
     public void saveState(Bundle state) {
+        state.putFloat("info_window_x",panel.getTranslationX());
+        state.putFloat("info_window_y",panel.getTranslationY());
+        state.putFloat("phase_one_window_x",phaseOneGuide.getTranslationX());
+        state.putFloat("phase_one_window_y",phaseOneGuide.getTranslationY());
+        state.putInt(STATE_PREVIEW_WIDTH, preview.getWidth());
+        state.putInt(STATE_PREVIEW_HEIGHT, preview.getHeight());
         state.putBoolean(STATE_EXPANDED, expanded);
         state.putString(STATE_STEP, stepId);
         state.putInt(STATE_SCROLL,
@@ -121,15 +171,39 @@ public final class StepInfoPanelController {
         int edge = dp(tablet ? 20 : 12);
         int preferredWidth = tablet ? activity.getResources().getDimensionPixelSize(
                 R.dimen.tablet_camera_panel_width) : dp(340);
-        int panelWidth = sidebar ? Math.min(preferredWidth, Math.round(safeWidth * 0.48f))
-                : safeWidth - 2 * edge;
+        int panelWidth = Math.min(tablet ? Math.max(preferredWidth, dp(620)) : preferredWidth,
+                Math.round(safeWidth * (sidebar ? .48f : .88f)));
+        FrameLayout.LayoutParams previewParams=(FrameLayout.LayoutParams) preview.getLayoutParams();
+        int defaultPreviewWidth=Math.min(dp(tablet ? 340 : 220), Math.round(safeWidth*(tablet ? .27f : .38f)));
+        int defaultPreviewHeight=Math.min(dp(tablet ? 290 : 220), Math.round(safeHeight*(tablet ? .34f : .28f)));
+        int maxPreviewWidth=Math.min(Math.round(safeWidth*.42f), dp(tablet ? 520 : 300));
+        int maxPreviewHeight=Math.min(Math.round(safeHeight*.48f), dp(tablet ? 460 : 330));
+        int targetPreviewWidth=Math.max(Math.min(dp(200), maxPreviewWidth),
+                Math.min(maxPreviewWidth, previewWidth == 0 ? defaultPreviewWidth : previewWidth));
+        int targetPreviewHeight=Math.max(Math.min(dp(190), maxPreviewHeight),
+                Math.min(maxPreviewHeight, previewHeight == 0 ? defaultPreviewHeight : previewHeight));
+        // The model is a movable aid, so keep its largest size below a quarter of the camera.
+        double areaLimit=safeWidth*(double)safeHeight*.22;
+        if(targetPreviewWidth*(double)targetPreviewHeight>areaLimit) {
+            targetPreviewHeight=(int)Math.max(dp(150),areaLimit/targetPreviewWidth);
+        }
+        previewWidth=targetPreviewWidth;
+        previewHeight=targetPreviewHeight;
+        int previewTop=toolbar.getBottom()+dp(8);
+        if(sidebar) panelWidth=Math.min(panelWidth,safeWidth-targetPreviewWidth-3*edge);
+        if(previewParams.width!=targetPreviewWidth || previewParams.height!=targetPreviewHeight
+                || previewParams.topMargin!=previewTop
+                || previewParams.getMarginEnd()!=endInset+edge) {
+            previewParams.width=targetPreviewWidth; previewParams.height=targetPreviewHeight;
+            previewParams.topMargin=previewTop; previewParams.setMarginEnd(endInset+edge);
+            preview.setLayoutParams(previewParams);
+        }
 
         // Place status below the inset-aware toolbar, not at a hard-coded screen offset.
         FrameLayout.LayoutParams bannerParams = (FrameLayout.LayoutParams) banner.getLayoutParams();
         int bannerTop = toolbar.getBottom() + dp(8);
-        int bannerGravity = Gravity.TOP
-                | (sidebar ? GravityCompat.START : Gravity.CENTER_HORIZONTAL);
-        int bannerSpace = sidebar ? safeWidth - panelWidth - 3 * edge : safeWidth - 2 * edge;
+        int bannerGravity = Gravity.TOP | GravityCompat.START;
+        int bannerSpace = safeWidth-targetPreviewWidth-3*edge;
         int maxTextWidth = Math.max(dp(48), bannerSpace - dp(55));
         if (bannerText.getMaxWidth() != maxTextWidth) bannerText.setMaxWidth(maxTextWidth);
         if (bannerParams.topMargin != bannerTop || bannerParams.gravity != bannerGravity
@@ -143,57 +217,41 @@ public final class StepInfoPanelController {
         }
 
         int reservedTop = sidebar ? toolbar.getBottom() + dp(8)
-                : bannerTop + banner.getHeight() + dp(12);
+                : Math.max(bannerTop + banner.getHeight(),previewTop+targetPreviewHeight) + dp(12);
         int availableHeight = root.getHeight() - bars.bottom - edge - reservedTop;
         int preferredHeight = activity.getResources().getDimensionPixelSize(
                 R.dimen.assembly_info_panel_height);
-        int expandedHeight = Math.min(preferredHeight,
-                Math.min(Math.round(safeHeight * (sidebar ? 0.86f : 0.62f)), availableHeight));
+        int expandedHeight = Math.min(tablet ? Math.max(preferredHeight,dp(760)) : preferredHeight,
+                Math.min(Math.round(safeHeight * (tablet ? .70f : .64f)), availableHeight));
         int minimumExpandedHeight = dp(160);
         if (availableHeight >= minimumExpandedHeight) {
             expandedHeight = Math.max(minimumExpandedHeight, expandedHeight);
         }
-        int collapsedHeight = panel.getPaddingTop() + panel.getPaddingBottom()
-                + Math.max(header.getMeasuredHeight(), dp(48));
-        View partReference = activity.findViewById(R.id.requiredPartReference);
-        if (partReference.getVisibility() == View.VISIBLE) {
-            collapsedHeight += dp(4) + Math.max(partReference.getMeasuredHeight(), dp(56));
-        }
-        View motorStatus = activity.findViewById(R.id.motorInspectionRow);
-        if (motorStatus.getVisibility() == View.VISIBLE) {
-            collapsedHeight += Math.max(motorStatus.getMeasuredHeight(), dp(48));
-        }
-        if (guidedStepNavigation.getVisibility() == View.VISIBLE) {
-            android.view.ViewGroup.MarginLayoutParams navigationParams =
-                    (android.view.ViewGroup.MarginLayoutParams) guidedStepNavigation.getLayoutParams();
-            collapsedHeight += navigationParams.topMargin
-                    + Math.max(guidedStepNavigation.getMeasuredHeight(), dp(48));
-        }
-        if (confirmation.getVisibility() == View.VISIBLE) {
-            android.view.ViewGroup.MarginLayoutParams confirmationParams =
-                    (android.view.ViewGroup.MarginLayoutParams) confirmation.getLayoutParams();
-            collapsedHeight += confirmationParams.topMargin
-                    + Math.max(confirmation.getMeasuredHeight(), dp(48));
-        }
+        int collapsedHeight = panel.getPaddingTop()
+                + Math.max(header.getMeasuredHeight(), dp(68)) + dp(2);
         // Even with very large text or a short split-screen window, the compact state must not
         // climb over the toolbar/status banner.
         int height = expanded ? Math.max(1, expandedHeight)
                 : Math.max(1, Math.min(collapsedHeight, availableHeight));
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) panel.getLayoutParams();
-        int gravity = Gravity.BOTTOM | GravityCompat.END;
-        if (params.width != panelWidth || params.height != height || params.gravity != gravity
+        View target=phaseOneActive ? phaseOneGuide : panel;
+        if(phaseOneActive) phaseOneGuide.setMaximumHeight(Math.max(1,availableHeight));
+        int targetHeight=phaseOneActive ? FrameLayout.LayoutParams.WRAP_CONTENT : height;
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) target.getLayoutParams();
+        int gravity = Gravity.BOTTOM | GravityCompat.START;
+        if (params.width != panelWidth || params.height != targetHeight || params.gravity != gravity
                 || params.getMarginStart() != startInset + edge
                 || params.getMarginEnd() != endInset + edge
-                || params.bottomMargin != edge) {
+                || params.bottomMargin != bars.bottom + edge) {
             params.width = panelWidth;
-            params.height = height;
+            params.height = targetHeight;
             params.gravity = gravity;
             params.setMarginStart(startInset + edge);
             params.setMarginEnd(endInset + edge);
-            params.bottomMargin = edge;
-            panel.setLayoutParams(params);
+            params.bottomMargin = bars.bottom + edge;
+            target.setLayoutParams(params);
         }
-        // configureCameraWindow already offsets this panel above the bottom system inset.
+        panel.post(this::clampPanel);
+        // Keep the instructions clear of the navigation bar while restoring the scroll position.
         if (restoreScroll && contentReady && expanded && scroll.getHeight() > 0
                 && !scroll.isLayoutRequested()) {
             scroll.scrollTo(0, savedScrollY);
@@ -203,5 +261,32 @@ public final class StepInfoPanelController {
 
     private int dp(int value) {
         return UiUtils.dp(activity, value);
+    }
+
+    private void clampPanel() {
+        View panel=phaseOneActive ? phaseOneGuide : this.panel;
+        if(panel.getWidth()==0 || root.getWidth()==0) return;
+        WindowInsetsCompat windowInsets=ViewCompat.getRootWindowInsets(root);
+        Insets bars=windowInsets==null ? Insets.NONE : windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+        float minimumX=bars.left+dp(8)-panel.getLeft();
+        float maximumX=root.getWidth()-bars.right-dp(8)-panel.getRight();
+        float minimumY=toolbar.getBottom()+dp(8)-panel.getTop();
+        float maximumY=root.getHeight()-bars.bottom-dp(8)-panel.getBottom();
+        panel.setTranslationX(Math.max(minimumX,Math.min(maximumX,panel.getTranslationX())));
+        panel.setTranslationY(Math.max(minimumY,Math.min(maximumY,panel.getTranslationY())));
+        // A SurfaceView can cover sibling text even when the card has a higher elevation.
+        // Reserve real space for the model instead of relying on drawing order.
+        if(preview.getVisibility()==View.VISIBLE && preview.getWidth()>0) {
+            float gap=dp(12);
+            float left=panel.getX(), top=panel.getY();
+            float previewLeft=preview.getX(), previewBottom=preview.getY()+preview.getHeight();
+            if(left+panel.getWidth()>previewLeft-gap && left<previewLeft+preview.getWidth()
+                    && top<previewBottom+gap && top+panel.getHeight()>preview.getY()) {
+                float beside=previewLeft-gap-panel.getWidth();
+                if(beside>=bars.left+dp(8)) panel.setTranslationX(beside-panel.getLeft());
+                else panel.setTranslationY(previewBottom+gap-panel.getTop());
+            }
+        }
     }
 }

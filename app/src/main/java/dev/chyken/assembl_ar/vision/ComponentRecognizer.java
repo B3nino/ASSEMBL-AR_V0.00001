@@ -76,6 +76,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     private String lastPoseFailure;
     private double lastPoseErrorPx = Double.NaN;
     private boolean recognizingBoard;
+    private boolean quickBoardReferencePass;
 
     /** OpenCV and the supplied reference database must already be initialized. */
     public ComponentRecognizer(VisionConfig config, ReferenceDatabase database) {
@@ -90,8 +91,9 @@ public final class ComponentRecognizer implements AutoCloseable {
      * The constant step-zero request tries the baseline references used in Step 1 first.
      * Installed-board references are a fixed fallback tier in every step; they cannot replace
      * an already successful baseline match merely because the assembly step changes.
-     * Recognition still checks the entire catalog for conflicting identities; a non-board
-     * result must not be interpreted as a detected board. The UI step is diagnostic context only.
+     * A small set of representative front/back views is tried first in Phase 1. Its result is
+     * accepted only with strong spatial consensus; otherwise the complete catalog, including
+     * competing identities and every perspective, runs on the cached frame descriptors.
      */
     public synchronized RecognitionResult recognizeBoard(Mat grayscale,
                                                          long frameTimestampNanos,
@@ -99,7 +101,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                                                          int currentStep) {
         RecognitionRequest boardRequest = new RecognitionRequest(
                 RecognitionRequest.AssemblyExpectation.component(MAIN_BOARD_COMPONENT_ID),
-                calibration, null, MAIN_BOARD_COMPONENT_ID, 1, 0);
+                calibration, null, MAIN_BOARD_COMPONENT_ID, 1, currentStep == 1 ? 1 : 0);
         boolean diagnostics = Log.isLoggable(BOARD_DIAGNOSTIC_TAG, Log.DEBUG);
         try {
             recognizingBoard = true;
@@ -107,7 +109,17 @@ public final class ComponentRecognizer implements AutoCloseable {
                 boardDiagnosticPrefix = "frame=" + frameTimestampNanos + " step=" + currentStep;
                 logBoardConfiguration(grayscale);
             }
-            RecognitionResult result = recognize(grayscale, frameTimestampNanos, boardRequest);
+            RecognitionResult result;
+            if (currentStep == 1) {
+                quickBoardReferencePass = true;
+                result = recognize(grayscale, frameTimestampNanos, boardRequest);
+                quickBoardReferencePass = false;
+                if (!hasStrongQuickBoardEvidence(result)) {
+                    result = recognize(grayscale, frameTimestampNanos, boardRequest);
+                }
+            } else {
+                result = recognize(grayscale, frameTimestampNanos, boardRequest);
+            }
             if (diagnostics) {
                 boolean boardDetected = MAIN_BOARD_COMPONENT_ID.equals(result.getComponentId())
                         && result.getProjectedCorners().size() == 4;
@@ -130,13 +142,21 @@ public final class ComponentRecognizer implements AutoCloseable {
             throw failure;
         } finally {
             boardDiagnosticPrefix = null;
+            quickBoardReferencePass = false;
             recognizingBoard = false;
         }
     }
 
+    private static boolean hasStrongQuickBoardEvidence(RecognitionResult result) {
+        return MAIN_BOARD_COMPONENT_ID.equals(result.getComponentId())
+                && result.getDetectionMethod() == RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY
+                && result.hasLocatedComponent() && result.getPose() != null
+                && result.getInlierCount() >= 24 && result.getInlierRatio() >= 0.65
+                && result.getPose().getReprojectionErrorPx() <= 4.5;
+    }
+
     /**
-     * Step 1 validates the already detected board's orientation; it must not run a second
-     * expensive recognition pass and push the four-frame lock beyond its 750 ms frame gap.
+     * Step 1 validates the already detected board's orientation without another component pass.
      * Polarity/repeated-instance requests still require the component pipeline.
      */
     RecognitionResult validateBoardOrientation(RecognitionResult board, RecognitionRequest request) {
@@ -249,6 +269,8 @@ public final class ComponentRecognizer implements AutoCloseable {
             stageStart = SystemClock.elapsedRealtimeNanos();
             addSpatialCandidates(rawCandidates, spatialCandidates,
                     grayscale.cols(), grayscale.rows(), rejectionTracker);
+            if (recognizingBoard) discardBoardCandidatesWithoutPose(
+                    spatialCandidates, safeRequest.getCameraCalibration());
             spatialNanos = SystemClock.elapsedRealtimeNanos() - stageStart;
 
             // Descriptor-only reporting is a diagnostic output policy, not a photometric
@@ -258,6 +280,12 @@ public final class ComponentRecognizer implements AutoCloseable {
             if (!frameDescriptors.empty()) {
                 Set<String> invertedFallbackIds = missingPhotometricComponentIds(
                         spatialCandidates, safeRequest);
+                // A weak normal-light board homography must not suppress its inverted ORB
+                // alternatives. Side-lit, rotated white boards often retain a few matches on
+                // one face while the opposite photometric variant has the stronger consensus.
+                if (recognizingBoard && !hasStrongBoardCandidate(spatialCandidates)) {
+                    invertedFallbackIds.add(MAIN_BOARD_COMPONENT_ID);
+                }
                 boolean fallbackAll = invertedFallbackIds.isEmpty()
                         && spatialCandidates.isEmpty()
                         && safeRequest.getExpectation() == null
@@ -293,7 +321,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             // locations remain exposed between/above/below the motor housings. Matching and
             // homography thresholds remain unchanged, and distributed inliers are required
             // before the partial evidence is allowed to project the complete board outline.
-            if (!frameDescriptors.empty()
+            if (!quickBoardReferencePass && !frameDescriptors.empty()
                     && requestsExposedBoardAnchorFallback(safeRequest)
                     && !containsComponentCandidate(
                     spatialCandidates, MAIN_BOARD_COMPONENT_ID)) {
@@ -330,7 +358,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             // component/anchor passes.
             if (recognizingBoard) discardBoardCandidatesWithoutPose(spatialCandidates,
                     safeRequest.getCameraCalibration());
-            if (recognizingBoard && !frameDescriptors.empty()
+            if (recognizingBoard && !quickBoardReferencePass && !frameDescriptors.empty()
                     && !containsComponentCandidate(spatialCandidates, MAIN_BOARD_COMPONENT_ID)) {
                 for (ReferenceDatabase.PhotometricVariant variant : ReferenceDatabase.PhotometricVariant.values()) {
                     stageStart = SystemClock.elapsedRealtimeNanos();
@@ -838,6 +866,8 @@ public final class ComponentRecognizer implements AutoCloseable {
                     photometricVariant, assemblyReferencesOnly, installedBracketViewsOnly);
         }
         for (ReferenceDatabase.PreparedReference reference : database.preparedReferences()) {
+            if (quickBoardReferencePass && !reference.spec.isFastAcquisitionView()
+                    && !"extension_circuit_board".equals(reference.spec.getComponentId())) continue;
             boolean referenceEligible = assemblyReferencesOnly
                     ? isAssemblyReferenceEligibleForBoardFallback(reference.spec)
                     : isReferenceEligibleForRequest(reference.spec, request);
@@ -901,6 +931,8 @@ public final class ComponentRecognizer implements AutoCloseable {
             boolean assemblyReferencesOnly, boolean installedBracketViewsOnly) {
         List<ReferenceDatabase.PreparedOrbVariant> missing = new ArrayList<>();
         for (ReferenceDatabase.PreparedReference reference : database.preparedReferences()) {
+            if (quickBoardReferencePass && !reference.spec.isFastAcquisitionView()
+                    && !"extension_circuit_board".equals(reference.spec.getComponentId())) continue;
             boolean eligible = assemblyReferencesOnly
                     ? isAssemblyReferenceEligibleForBoardFallback(reference.spec)
                     : isReferenceEligibleForRequest(reference.spec, request);
@@ -1141,6 +1173,14 @@ public final class ComponentRecognizer implements AutoCloseable {
             if (componentId.equals(candidate.reference.spec.getComponentId())) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private static boolean hasStrongBoardCandidate(List<SpatialCandidate> candidates) {
+        for (SpatialCandidate candidate : candidates) {
+            if (MAIN_BOARD_COMPONENT_ID.equals(candidate.reference.spec.getComponentId())
+                    && candidate.inlierCount >= 24 && candidate.inlierRatio >= 0.65) return true;
         }
         return false;
     }
@@ -1510,6 +1550,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     /** Scoped main-board milestones form the board detector's fixed fallback tier. */
     static boolean isAssemblyReferenceEligibleForBoardFallback(ComponentReferenceSpec spec) {
         return spec != null && MAIN_BOARD_COMPONENT_ID.equals(spec.getComponentId())
+                && !spec.isAutomaticBoardGeometry()
                 && spec.getAssemblyStepNumber() > 0;
     }
 
@@ -1694,7 +1735,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     }
 
     private static boolean usesAssemblyInlierPose(ComponentReferenceSpec spec) {
-        return spec.getAssemblyStepNumber() > 0
+        return (spec.getAssemblyStepNumber() > 0 || spec.isPlanarInlierPoseEnabled())
                 && MAIN_BOARD_COMPONENT_ID.equals(spec.getComponentId());
     }
 

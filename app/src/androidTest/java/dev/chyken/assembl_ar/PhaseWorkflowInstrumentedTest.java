@@ -72,13 +72,109 @@ public final class PhaseWorkflowInstrumentedTest {
     }
 
     @Test
+    public void phaseOneStartsCompactAndKeepsScanSuccessUntilNextIsTapped() {
+        positionAt(1);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            scenario.onActivity(activity -> {
+                dev.chyken.assembl_ar.ui.PhaseOneGuideView guide=activity.findViewById(R.id.phaseOneGuide);
+                assertEquals(View.VISIBLE,guide.getVisibility());
+                assertEquals(View.GONE,activity.findViewById(R.id.instructionPanel).getVisibility());
+                assertFalse(guide.isExpanded());
+                assertFalse(guide.isNextEnabled());
+                Frames frames=new Frames(activity,controller);
+                for(int i=0;i<4;i++) frames.deliver(frames.component(NeobotSeedData.MAIN_BOARD,
+                        frames.board,Collections.emptyList(),1,null,null),null);
+                assertEquals(Mode.COMPLETE,controller.getFlow().getMode());
+                assertTrue(guide.isNextEnabled());
+                assertFalse("Phase 1 stays open until explicit Next",PhaseProgressStore.records(activity,
+                        NeobotSeedData.PROJECT_ID).isPhaseComplete(AssemblyPhaseCatalog.BOARD_PREPARATION));
+            });
+            scenario.recreate();
+            PhaseAssemblyController restored=awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            scenario.onActivity(activity -> {
+                dev.chyken.assembl_ar.ui.PhaseOneGuideView guide=activity.findViewById(R.id.phaseOneGuide);
+                assertEquals(Mode.COMPLETE,restored.getFlow().getMode());
+                assertTrue("Recreation keeps the confirmed scan",guide.isNextEnabled());
+                ((View)getField(guide,"learn")).performClick();
+                assertTrue(guide.isExpanded());
+            });
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity -> {
+                View guide=activity.findViewById(R.id.phaseOneGuide);
+                View preview=activity.findViewById(R.id.componentPreviewWindow);
+                android.graphics.RectF card=new android.graphics.RectF(guide.getX(),guide.getY(),
+                        guide.getX()+guide.getWidth(),guide.getY()+guide.getHeight());
+                android.graphics.RectF model=new android.graphics.RectF(preview.getX(),preview.getY(),
+                        preview.getX()+preview.getWidth(),preview.getY()+preview.getHeight());
+                assertFalse("Expanded facts must stay clear of the 3D SurfaceView",
+                        android.graphics.RectF.intersects(card,model));
+                activity.findViewById(R.id.nextGuidedStepButton).performClick();
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+        }
+    }
+
+    @Test
+    public void splittingDriverWiringPreservesBothOldCompletionAndInventory() {
+        Context context=ApplicationProvider.getApplicationContext();
+        String prefix=NeobotSeedData.PROJECT_ID+"\u001F";
+        context.getSharedPreferences("assembly_phase_progress",Context.MODE_PRIVATE).edit()
+                .putInt("schema_version",1)
+                .putBoolean(prefix+"phase\u001F"+AssemblyPhaseCatalog.DRIVER_WIRING,true)
+                .putBoolean(prefix+"inventory\u001F"+AssemblyPhaseCatalog.DRIVER_WIRING,true).commit();
+        assertTrue(PhaseProgressStore.records(context,NeobotSeedData.PROJECT_ID)
+                .isPhaseComplete(AssemblyPhaseCatalog.DRIVER_WIRING));
+        assertTrue(PhaseProgressStore.records(context,NeobotSeedData.PROJECT_ID)
+                .isPhaseComplete(AssemblyPhaseCatalog.DRIVER_CONTROL));
+        assertTrue(PhaseProgressStore.isInventoryComplete(context,NeobotSeedData.PROJECT_ID,
+                AssemblyPhaseCatalog.DRIVER_CONTROL));
+    }
+
+    @Test
+    public void lookingBackKeepsTheActivePhaseAndResumesItsScanner() {
+        positionAt(2);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                PhaseFlow active=controller.getFlow();
+                activity.findViewById(R.id.previousGuidedStepButton).performClick();
+                assertEquals(active,controller.getFlow());
+                assertEquals(Mode.SCAN_PARTS,active.getMode());
+                assertTrue(controller.isAnalysisSuspended());
+                activity.findViewById(R.id.nextGuidedStepButton).performClick();
+                assertEquals(active,controller.getFlow());
+                assertFalse(controller.isAnalysisSuspended());
+                assertEquals(2,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getAssemblyStepNumber());
+            });
+        }
+    }
+
+    @Test
+    public void developerCompletionStaysSelectedAndCanReturnToPhaseOneScanning() {
+        positionAt(4);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);
+            scenario.onActivity(activity->{
+                controller.devForceCompleteCurrentPhase();
+                assertEquals(Mode.COMPLETE,controller.getFlow().getMode());
+                assertEquals(AssemblyPhaseCatalog.MOTOR_LEADS,controller.getFlow().getPhase().getId());
+                controller.devJumpToPhase(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.BOARD_PREPARATION));
+                assertEquals(Mode.SCAN_PARTS,controller.getFlow().getMode());
+                assertFalse(controller.isAnalysisSuspended());
+                assertEquals(1,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getAssemblyStepNumber());
+            });
+        }
+    }
+
+    @Test
     public void motorPhaseStartsWithTheWholeGroupAndHonestInventoryLabels() {
         positionAt(2);
         try (ActivityScenario<AssemblyActivity> scenario = launch()) {
             PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
             scenario.onActivity(activity -> {
                 assertEquals(Mode.SCAN_PARTS, controller.getFlow().getMode());
-                assertEquals("Phase 2 of 17", text(activity, R.id.stepCounter));
+                assertEquals("Phase 2 of 18", text(activity, R.id.stepCounter));
                 String inventory = text(activity, R.id.phaseInventory);
                 assertTrue(inventory, inventory.contains("◉ 4 × Gear-motor bracket — scanning"));
                 assertTrue(inventory.contains("○ 2 × 6 V DC gear motor — camera scan next"));
@@ -291,7 +387,7 @@ public final class PhaseWorkflowInstrumentedTest {
             assertEquals(StepStatus.COMPLETED, statusOf(5));
             assertEquals(StepStatus.IN_PROGRESS, statusOf(6));
             scenario.onActivity(activity ->
-                    assertEquals("Phase 5 of 17", text(activity, R.id.stepCounter)));
+                    assertEquals("Phase 5 of 18", text(activity, R.id.stepCounter)));
         }
     }
 
@@ -304,7 +400,7 @@ public final class PhaseWorkflowInstrumentedTest {
         try (ActivityScenario<AssemblyActivity> scenario = launch()) {
             awaitPhase(scenario, AssemblyPhaseCatalog.SENSOR_WIRING);
             scenario.onActivity(activity ->
-                    assertEquals("Phase 10 of 17", text(activity, R.id.stepCounter)));
+                    assertEquals("Phase 11 of 18", text(activity, R.id.stepCounter)));
         }
     }
 

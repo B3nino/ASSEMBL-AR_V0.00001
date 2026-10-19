@@ -248,6 +248,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private TextView diagnosticsText;
     private LinearLayout instructionPanel;
     private StepInfoPanelController stepInfoPanel;
+    private dev.chyken.assembl_ar.ui.ComponentPreviewWindow componentPreview;
     private TextView stepCounter;
     private TextView progressLabel;
     private LinearProgressIndicator assemblyProgress;
@@ -307,11 +308,21 @@ public final class AssemblyActivity extends AppCompatActivity {
                     if (phases != null && !destroyed) phases.onSpeechFinished(key);
                 });
             }
+
+            @Override public void onSpeechStarted(String key, String text) {
+                runOnUiThread(() -> {
+                    PhaseAssemblyController phases=phaseController;
+                    if(phases!=null && !destroyed) phases.onSpeechStarted(key,text);
+                });
+            }
         });
         voiceGuide.setMuted(getPreferences(MODE_PRIVATE).getBoolean("voice_guide_muted", false));
         configureTabletPanels();
-        UiUtils.configureCameraWindow(this, cameraToolbar, instructionPanel);
+        UiUtils.configureCameraWindow(this, cameraToolbar, null);
         stepInfoPanel = new StepInfoPanelController(this, savedInstanceState);
+        componentPreview=findViewById(R.id.componentPreviewWindow);
+        componentPreview.showComponent(NeobotSeedData.MAIN_BOARD,"Main Board");
+        arHudView.setStateListener(componentPreview::onHudState);
         repository = AssemblArRepository.getInstance(this);
         sessionStartedAt = savedInstanceState == null
                 ? System.currentTimeMillis()
@@ -573,7 +584,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                         throw new IllegalStateException("OpenCV native runtime is unavailable");
                     }
                     VisionConfig loadedConfig = VisionConfig.defaults();
-                    List<ComponentReferenceSpec> specs = VisionReferenceFactory.build(repository);
+                    List<ComponentReferenceSpec> specs = VisionReferenceFactory.build(repository, getAssets());
                     File descriptorCache = new File(
                             getNoBackupFilesDir(), "orb_reference_cache_v3");
                     loadedDatabase = ReferenceDatabase.load(
@@ -900,9 +911,14 @@ public final class AssemblyActivity extends AppCompatActivity {
     private void handleRecognition(RecognitionResult result, long completedAtNanos) {
         if (result == null) return;
         CameraFrameState frame = calibrationByFrame.remove(result.getFrameTimestampNanos());
+        PhaseAssemblyController phases = phaseController;
         if (destroyed || !activityResumed || currentStep == null
-                || result.getAssemblyStepNumber() != currentStep.getStepNumber()
+                || (phases == null
+                && result.getAssemblyStepNumber() != currentStep.getStepNumber())
                 || result.getFrameTimestampNanos() < acceptRecognitionAfterNanos) return;
+        // Debug phase navigation can show a phase other than the database's current manual step.
+        // The phase tag, rather than currentStep, identifies its live analyzer request.
+        if (phases != null && !phases.isFrameForCurrentPhase(result)) return;
         if (result.getFrameTimestampNanos() <= lastHandledCaptureNanos) return;
         lastHandledCaptureNanos = result.getFrameTimestampNanos();
         if (frame != null) {
@@ -911,7 +927,6 @@ public final class AssemblyActivity extends AppCompatActivity {
             analyzedHeight = frame.height;
         }
         frameEvidenceNanos = evidenceClock.observe(result.getFrameTimestampNanos(), completedAtNanos);
-        PhaseAssemblyController phases = phaseController;
         if (phases != null) {
             updateDiagnostics(result);
             RecognitionResult.BoardObservation phaseBoard = result.getBoardObservation();
@@ -2283,6 +2298,9 @@ public final class AssemblyActivity extends AppCompatActivity {
                     : getString(R.string.complete_previous_actions), false, R.drawable.bg_live_pill);
         }
         stepInfoPanel.onStepChanged(currentStep.getId() + ":" + currentGuidedStepIndex);
+        String previewId=activeCheckpoint==null ? primaryComponentId(currentStep) : activeCheckpoint.getComponentId();
+        Component previewPart=componentById.get(previewId);
+        if(previewPart!=null) showComponentPreview(previewPart.getId(),previewPart.getName());
         if (awaitingPartScan || activeCheckpoint != null
                 && activeCheckpoint.getKind() == GuidedCheckpoint.Kind.IDENTITY && !currentCheckpointComplete) {
             demoStage.setText(R.string.demo_stage_scan);
@@ -2856,6 +2874,10 @@ public final class AssemblyActivity extends AppCompatActivity {
     boolean isGone() { return destroyed || isFinishing() || isDestroyed(); }
     @Nullable TrialLog trialLog() { return trialLog; }
     void stepInfoChanged(String key) { stepInfoPanel.onStepChanged(key); }
+    void setPhaseOneGuideActive(boolean active) { stepInfoPanel.setPhaseOneActive(active); }
+    void showComponentPreview(String id, String name) {
+        if(componentPreview!=null) componentPreview.showComponent(id,name);
+    }
     void hideGuidance() { arGlView.hideGuidance(); }
     void showGuidance(ArGuidance guidance) { arGlView.showGuidance(guidance, cameraProjection()); }
 
@@ -2894,6 +2916,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         super.onResume();
         assemblyVisibilityGeneration++;
         activityResumed = true;
+        if(componentPreview!=null) componentPreview.resume();
         if (assemblyDemo != null && !awaitingPartScan
                 && !(activeCheckpoint != null && activeCheckpoint.getKind() == GuidedCheckpoint.Kind.IDENTITY
                 && !currentCheckpointComplete)) assemblyDemo.resume();
@@ -2915,6 +2938,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         activityResumed = false;
+        if(componentPreview!=null) componentPreview.pause();
         calibrationByFrame.clear();
         PhaseAssemblyController phases = phaseController;
         if (phases != null) phases.onPause();
@@ -2945,6 +2969,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         destroyed = true;
+        if(componentPreview!=null) componentPreview.dispose();
         boundCamera = null;
         PhaseAssemblyController phases = phaseController;
         if (phases != null) phases.onDestroy();

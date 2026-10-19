@@ -1,33 +1,41 @@
 package dev.chyken.assembl_ar.workflow;
 
 /**
- * Counts accepted camera frames while tolerating one short recognition dropout.
+ * Counts accepted camera frames while tolerating a configured number of short dropouts.
  *
- * <p>A single rejected frame preserves the accepted-frame count when it arrives within the
- * configured interval after the last accepted frame. A second consecutive rejection, or an
- * accepted frame arriving after that interval, starts a new streak. Rejected frames never make
- * the gate ready by themselves.</p>
+ * <p>The two-argument constructor preserves the original one-miss behavior. Rejected frames
+ * never make the gate ready by themselves, and the time window still bounds every streak.</p>
  */
 public final class TransientFrameStreakGate {
     private final int requiredFrames;
     private final long maximumTransientGapNanos;
+    private final int maximumConsecutiveMisses;
 
     private int acceptedFrames;
-    private boolean transientMissPending;
+    private int consecutiveMisses;
     private boolean hasAcceptedFrame;
     private boolean hasObservedFrame;
     private long lastAcceptedTimestampNanos;
     private long lastObservedTimestampNanos;
 
     public TransientFrameStreakGate(int requiredFrames, long maximumTransientGapNanos) {
+        this(requiredFrames, maximumTransientGapNanos, 1);
+    }
+
+    public TransientFrameStreakGate(int requiredFrames, long maximumTransientGapNanos,
+                                    int maximumConsecutiveMisses) {
         if (requiredFrames < 1) {
             throw new IllegalArgumentException("requiredFrames must be positive");
         }
         if (maximumTransientGapNanos < 0L) {
             throw new IllegalArgumentException("maximumTransientGapNanos cannot be negative");
         }
+        if (maximumConsecutiveMisses < 0) {
+            throw new IllegalArgumentException("maximumConsecutiveMisses cannot be negative");
+        }
         this.requiredFrames = requiredFrames;
         this.maximumTransientGapNanos = maximumTransientGapNanos;
+        this.maximumConsecutiveMisses = maximumConsecutiveMisses;
     }
 
     /**
@@ -47,10 +55,9 @@ public final class TransientFrameStreakGate {
                 return false;
             }
             long gap = frameTimestampNanos - lastAcceptedTimestampNanos;
-            if (transientMissPending || gap > maximumTransientGapNanos) {
+            if (++consecutiveMisses > maximumConsecutiveMisses
+                    || gap > maximumTransientGapNanos) {
                 clearStreak();
-            } else {
-                transientMissPending = true;
             }
             return false;
         }
@@ -63,7 +70,7 @@ public final class TransientFrameStreakGate {
         acceptedFrames = Math.min(requiredFrames, acceptedFrames + 1);
         lastAcceptedTimestampNanos = frameTimestampNanos;
         hasAcceptedFrame = true;
-        transientMissPending = false;
+        consecutiveMisses = 0;
         return acceptedFrames >= requiredFrames;
     }
 
@@ -83,7 +90,7 @@ public final class TransientFrameStreakGate {
 
     private void clearStreak() {
         acceptedFrames = 0;
-        transientMissPending = false;
+        consecutiveMisses = 0;
         hasAcceptedFrame = false;
         lastAcceptedTimestampNanos = 0L;
     }

@@ -37,6 +37,16 @@ public final class ReviewedIndividualReferenceCatalog {
         return Collections.unmodifiableList(result);
     }
 
+    /** Raw Phase-1 directories are discovered on the background vision loader. */
+    public static List<ComponentReferenceSpec> forComponent(String componentId,
+            android.content.res.AssetManager assets) {
+        List<ComponentReferenceSpec> result = new ArrayList<>(forComponent(componentId));
+        if ("main_board".equals(componentId) && assets != null) {
+            result.addAll(RawBoardReferenceCatalog.scan(assets));
+        }
+        return Collections.unmodifiableList(result);
+    }
+
     static boolean isReviewedReference(ComponentReferenceSpec candidate) {
         if (candidate == null || candidate.getJpegAssetPath() == null) return false;
         for (ComponentReferenceSpec authored : REFERENCES) {

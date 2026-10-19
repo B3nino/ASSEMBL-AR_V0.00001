@@ -31,6 +31,8 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
 
         /** The utterance requested with {@code key} finished speaking (not cancelled or failed). */
         default void onSpeechFinished(String key) { }
+        /** Called on the main thread when the engine actually begins the current utterance. */
+        default void onSpeechStarted(String key, String text) { }
     }
 
     private final Engine engine;
@@ -57,6 +59,10 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
         publishStatus();
         try {
             engine.start(new Engine.Listener() {
+                @Override public void onStart(String utteranceId) {
+                    if(closed || utteranceId==null || !utteranceId.equals(activeUtterance)) return;
+                    if(callback!=null && currentKey!=null) callback.onSpeechStarted(currentKey,currentText);
+                }
                 @Override public void onInitialized(boolean ready) {
                     if (closed) return;
                     initialized = true;
@@ -173,6 +179,7 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
 
     interface Engine {
         interface Listener {
+            default void onStart(String utteranceId) { }
             void onInitialized(boolean available);
             void onError(String utteranceId);
             void onDone(String utteranceId);
@@ -217,7 +224,9 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
                     ready = tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                        @Override public void onStart(String id) { }
+                        @Override public void onStart(String id) {
+                            main.post(() -> { if(!closed) listener.onStart(id); });
+                        }
                         @Override public void onDone(String id) { reportDone(id); }
                         @Override public void onError(String id) { reportError(id); }
                         @Override public void onError(String id, int errorCode) { reportError(id); }

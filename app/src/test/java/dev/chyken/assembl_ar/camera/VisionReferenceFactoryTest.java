@@ -2,6 +2,7 @@ package dev.chyken.assembl_ar.camera;
 
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -52,11 +53,52 @@ public final class VisionReferenceFactoryTest {
         references.addAll(InstalledBracketReferenceCatalog.forComponent(board));
         references.addAll(AssemblyStateReferenceCatalog.forComponent(board));
         references.addAll(AssemblyProgressReferenceCatalog.all());
+        references.addAll(MainboardPerspectiveReferenceCatalog.forComponent(board));
         for (ComponentReferenceSpec reference : references) {
             if (!NeobotSeedData.MAIN_BOARD.equals(reference.getComponentId())) continue;
             // Source image aspect and staged/active scope never change the physical kit size.
             assertEquals(reference.getReferenceId(), 100.0, reference.getPhysicalWidthMm(), 0.0);
             assertEquals(reference.getReferenceId(), 120.0, reference.getPhysicalHeightMm(), 0.0);
+        }
+    }
+
+    @Test
+    public void everyPerspectivePhotoHasOneRegisteredFaceAndPhysicalBoardGeometry() {
+        Component board = component(NeobotSeedData.MAIN_BOARD);
+        List<ComponentReferenceSpec> photos = MainboardPerspectiveReferenceCatalog.forComponent(board);
+        File directory = new File("src/main/assets/references/Mainboard_perspectives");
+        File[] assets = directory.listFiles((parent, name) -> name.endsWith(".jpg"));
+        assertTrue("Perspective assets must be present", assets != null);
+        assertEquals(assets.length, photos.size());
+        Set<String> paths = new HashSet<>();
+        Set<String> ids = new HashSet<>();
+        int frontCount = 0;
+        int backCount = 0;
+        int quickFrontCount = 0;
+        int quickBackCount = 0;
+        for (ComponentReferenceSpec photo : photos) {
+            assertTrue(photo.getReferenceId(), ids.add(photo.getReferenceId()));
+            assertTrue(photo.getJpegAssetPath(), paths.add(photo.getJpegAssetPath()));
+            assertTrue(photo.getJpegAssetPath(),
+                    new File("src/main/assets", photo.getJpegAssetPath()).isFile());
+            assertEquals(100.0, photo.getPhysicalWidthMm(), 0.0);
+            assertEquals(120.0, photo.getPhysicalHeightMm(), 0.0);
+            assertFalse(photo.hasVerifiedPolarityAnchors());
+            assertTrue(photo.isPlanarInlierPoseEnabled());
+            assertEquals(4, photo.getPlanarCornersNormalized().size());
+            boolean back = photo.getJpegAssetPath().contains("BacksidePOV");
+            if (back) backCount++; else frontCount++;
+            if (photo.isFastAcquisitionView()) {
+                if (back) quickBackCount++; else quickFrontCount++;
+            }
+            assertEquals(photo.getReferenceId(), back, signedArea(photo.getPlanarCornersNormalized()) < 0.0);
+        }
+        assertTrue(frontCount > 0);
+        assertTrue(backCount > 0);
+        assertTrue("Fast pass needs both physical faces", quickFrontCount >= 4 && quickBackCount >= 4);
+        for (File asset : assets) {
+            assertTrue(asset.getName(), paths.contains(
+                    "references/Mainboard_perspectives/" + asset.getName()));
         }
     }
 

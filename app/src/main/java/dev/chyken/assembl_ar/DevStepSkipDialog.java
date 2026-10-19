@@ -18,9 +18,11 @@ final class DevStepSkipDialog {
     static void show(AssemblyActivity activity, @Nullable PhaseAssemblyController phases,
                      boolean diagnosticsVisible, Consumer<Boolean> setDiagnosticsVisible) {
         String[] actions = {
-                "Force-complete current step / phase",
-                "Jump to assembly phase (1–17)",
+                "Complete current phase · stay here",
+                "Jump to assembly phase (1–18)",
                 "Jump to manual section (1–18)",
+                "Choose phase and sub-step",
+                "Skip current sub-step · stay here",
                 diagnosticsVisible ? "Hide live diagnostics" : "Show live diagnostics"
         };
         new AlertDialog.Builder(activity)
@@ -35,12 +37,35 @@ final class DevStepSkipDialog {
                     } else if (choice == 2) {
                         if (phases == null) unavailable(activity);
                         else chooseSection(activity, phases);
+                    } else if (choice == 3) {
+                        if(phases==null) unavailable(activity);
+                        else chooseSubStepPhase(activity,phases);
+                    } else if (choice == 4) {
+                        if(phases==null) activity.devForceCompleteCurrentStep();
+                        else phases.devSkipCurrentStep();
                     } else {
                         setDiagnosticsVisible.accept(!diagnosticsVisible);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private static void chooseSubStepPhase(AssemblyActivity activity, PhaseAssemblyController phases) {
+        List<AssemblyPhase> catalog=AssemblyPhaseCatalog.phases();
+        String[] names=new String[catalog.size()];
+        for(int i=0;i<names.length;i++) names[i]="Phase "+catalog.get(i).getNumber()+" · "+catalog.get(i).getTitle();
+        new AlertDialog.Builder(activity).setTitle("Select phase for sub-steps")
+                .setItems(names,(dialog,index)-> {
+                    AssemblyPhase selected=catalog.get(index);
+                    List<dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter> chapters=
+                            dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.forPhase(selected).getChapters();
+                    String[] labels=new String[chapters.size()];
+                    for(int i=0;i<labels.length;i++) labels[i]=(i+1)+" · "+chapters.get(i).getTitle();
+                    new AlertDialog.Builder(activity).setTitle("Phase "+selected.getNumber()+" sub-steps")
+                            .setItems(labels,(child,chapter)->phases.devJumpToChapter(selected,chapter))
+                            .setNegativeButton(android.R.string.cancel,null).show();
+                }).setNegativeButton(android.R.string.cancel,null).show();
     }
 
     private static void choosePhase(AssemblyActivity activity, PhaseAssemblyController phases) {
@@ -72,7 +97,7 @@ final class DevStepSkipDialog {
                     + " · " + owner.getTitle());
         }
         new AlertDialog.Builder(activity)
-                .setTitle("18 manual sections map to 17 phases")
+                .setTitle("Jump to a manual section")
                 .setItems(labels, (dialog, index) -> phases.devJumpToSection(index + 1))
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();

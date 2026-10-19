@@ -71,6 +71,12 @@ public final class ArHudView extends View {
     private boolean leftAccepted;
     private boolean rightAccepted;
     private long stateChangedAt = SystemClock.uptimeMillis();
+    private java.util.function.Consumer<HudState> stateListener;
+
+    public void setStateListener(java.util.function.Consumer<HudState> listener) {
+        stateListener=listener;
+        if(listener!=null) listener.accept(state);
+    }
 
     public ArHudView(@NonNull Context context) {
         this(context, null);
@@ -104,6 +110,7 @@ public final class ArHudView extends View {
 
     public void update(HudState newState, @Nullable String label, @Nullable float[] corners) {
         state = newState;
+        if(stateListener!=null) stateListener.accept(newState);
         componentLabel = label == null ? "" : label;
         detectedParts = Collections.emptyList();
         if (corners == null || corners.length != 8) {

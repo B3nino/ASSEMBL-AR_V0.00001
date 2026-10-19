@@ -52,4 +52,22 @@ public final class TransientFrameStreakGateTest {
         assertFalse(gate.observe(true, 300L * MILLIS));
         assertEquals(1, gate.getAcceptedFrames());
     }
+
+    @Test
+    public void boardAcquisitionRetainsOneValidFrameAcrossTwoBriefDropouts() {
+        TransientFrameStreakGate gate = new TransientFrameStreakGate(2, 5_000L * MILLIS, 2);
+
+        assertFalse(gate.observe(true, 0L));
+        assertFalse(gate.observe(false, 500L * MILLIS));
+        assertFalse(gate.observe(false, 900L * MILLIS));
+        assertEquals(1, gate.getAcceptedFrames());
+        assertTrue(gate.observe(true, 1_200L * MILLIS));
+
+        gate.reset();
+        assertFalse(gate.observe(true, 2_000L * MILLIS));
+        gate.observe(false, 2_300L * MILLIS);
+        gate.observe(false, 2_500L * MILLIS);
+        gate.observe(false, 2_700L * MILLIS);
+        assertEquals(0, gate.getAcceptedFrames());
+    }
 }

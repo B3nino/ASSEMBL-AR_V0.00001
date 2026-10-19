@@ -38,6 +38,10 @@ public final class ComponentReferenceSpec {
     private final boolean polarityAnchorsVerified;
     private final int assemblyStepNumber;
     private final boolean installedBracketView;
+    private final boolean fastAcquisitionView;
+    private final boolean planarInlierPoseEnabled;
+    private final boolean automaticBoardGeometry;
+    private final boolean bottomFace;
 
     private ComponentReferenceSpec(Builder builder) {
         referenceId = builder.referenceId;
@@ -62,6 +66,10 @@ public final class ComponentReferenceSpec {
         polarityAnchorsVerified = builder.polarityAnchorsVerified;
         assemblyStepNumber = builder.assemblyStepNumber;
         installedBracketView = builder.installedBracketView;
+        fastAcquisitionView = builder.fastAcquisitionView;
+        planarInlierPoseEnabled = builder.planarInlierPoseEnabled;
+        automaticBoardGeometry = builder.automaticBoardGeometry;
+        bottomFace = builder.bottomFace;
     }
 
     public static Builder builder(String referenceId, String componentId, String displayName,
@@ -105,6 +113,12 @@ public final class ComponentReferenceSpec {
     public int getAssemblyStepNumber() { return assemblyStepNumber; }
     /** Installed face crops are eligible only during a board-relative bracket checkpoint. */
     public boolean isInstalledBracketView() { return installedBracketView; }
+    /** A representative view tried before the complete catalog for quick board acquisition. */
+    public boolean isFastAcquisitionView() { return fastAcquisitionView; }
+    /** Fits a planar pose from RANSAC inliers mapped through this view's authored corners. */
+    public boolean isPlanarInlierPoseEnabled() { return planarInlierPoseEnabled; }
+    public boolean isAutomaticBoardGeometry() { return automaticBoardGeometry; }
+    public boolean isBottomFace() { return bottomFace; }
 
     public boolean acceptsCircleRadiusRatio(double radiusRatio) {
         return shapeHint == ShapeHint.CIRCULAR_HARDWARE
@@ -131,6 +145,10 @@ public final class ComponentReferenceSpec {
         private boolean polarityAnchorsVerified = true;
         private int assemblyStepNumber;
         private boolean installedBracketView;
+        private boolean fastAcquisitionView;
+        private boolean planarInlierPoseEnabled;
+        private boolean automaticBoardGeometry;
+        private boolean bottomFace;
         private List<VisionPoint> planarCornersNormalized = Arrays.asList(
                 new VisionPoint(0.0, 0.0),
                 new VisionPoint(1.0, 0.0),
@@ -201,6 +219,23 @@ public final class ComponentReferenceSpec {
 
         public Builder installedBracketView(boolean enabled) {
             installedBracketView = enabled;
+            return this;
+        }
+
+        public Builder fastAcquisitionView(boolean enabled) {
+            fastAcquisitionView = enabled;
+            return this;
+        }
+
+        public Builder planarInlierPose(boolean enabled) {
+            planarInlierPoseEnabled = enabled;
+            return this;
+        }
+
+        /** Raw Phase-1 photo: detect its board perimeter before descriptor preparation. */
+        public Builder automaticBoardGeometry(boolean bottom) {
+            automaticBoardGeometry = true;
+            bottomFace = bottom;
             return this;
         }
 

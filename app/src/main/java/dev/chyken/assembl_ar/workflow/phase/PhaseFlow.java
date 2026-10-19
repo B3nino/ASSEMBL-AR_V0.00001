@@ -223,6 +223,16 @@ public final class PhaseFlow {
         start(nowNanos, false);
     }
 
+    /** Explicit developer action; produces no learner completion or camera evidence. */
+    public void devStartDemo(long nowNanos) {
+        inventoryComplete=true; previewing=false; correctionTargetId=null;
+        enter(Mode.DEMO,nowNanos);
+    }
+
+    public void devComplete(long nowNanos) {
+        previewing=false; correctionTargetId=null; enter(Mode.COMPLETE,nowNanos);
+    }
+
     private void enter(Mode next, long evidenceStart) {
         mode = next;
         generation++;

@@ -27,10 +27,10 @@ import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.VisualTarget;
 import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
 
 /**
- * The NEOBOT guide grouped into 17 learner-visible phases (client test-run review, 30 Sep 2026).
+ * The NEOBOT guide grouped into 18 learner-visible phases.
  *
- * <p>All 18 manual sections and their 152 source instructions are preserved. Sections 4–5 and
- * 7–8 are combined because each pair is one wiring job; section 11 is split between mounting
+ * <p>All 18 manual sections and their 152 source instructions are preserved. Sections 4–5
+ * form one motor-lead job; driver power and control have independent phases. Section 11 is split between mounting
  * the distance sensor and wiring every sensor. Every camera target reuses an existing
  * recognition path, so a phase checks the same installed evidence the per-card guide did, once
  * the group is finished. Direct checks repeat every manual CHECK and section validation prompt
@@ -38,7 +38,7 @@ import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
  */
 public final class AssemblyPhaseCatalog {
     /** Bump whenever phase membership, targets or checklists change; shown in the build stamp. */
-    public static final int REVISION = 1;
+    public static final int REVISION = 2;
 
     public static final String BOARD_PREPARATION = "board_preparation";
     public static final String MOTOR_ASSEMBLIES = "motor_assemblies";
@@ -46,6 +46,7 @@ public final class AssemblyPhaseCatalog {
     public static final String MOTOR_LEADS = "motor_leads";
     public static final String MICROCONTROLLER_FIT = "microcontroller";
     public static final String DRIVER_WIRING = "driver_power_control";
+    public static final String DRIVER_CONTROL = "driver_control_signals";
     public static final String CASTER_FIT = "caster";
     public static final String LINE_TRACKERS = "line_trackers";
     public static final String DISTANCE_SENSOR_MOUNT = "distance_sensor_mount";
@@ -224,15 +225,24 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(BOARD_PREPARATION)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(DRIVER_WIRING, "Wire driver power and control",
-                "Six jumper leads: power from the driver to VIN/GND and four PWM control lines.")
-                .whole(7).whole(8)
-                .checklistPart(JUMPER_WIRE, 6, "Two power leads and four signal leads.")
+        phases.add(new PhaseBuilder(DRIVER_WIRING, "Wire driver power",
+                "Connect the two driver power leads to VIN and GND.")
+                .whole(7)
+                .checklistPart(JUMPER_WIRE, 2, "Two power leads.")
                 .context(MOTOR_DRIVER, 1, "VCC, GND and the four signal inputs.")
                 .context(MICROCONTROLLER, 1, "VIN, GND, D5, D9, D6 and D10.")
                 .pinCheck(7, 1, 2)
-                .pinCheck(8, 1, 2, 3, 4)
                 .dependsOn(MOTOR_DRIVER_MOUNT, MICROCONTROLLER_FIT)
+                .build(phases));
+
+        phases.add(new PhaseBuilder(DRIVER_CONTROL, "Wire driver control signals",
+                "Connect the four PWM control leads to D5, D9, D6 and D10.")
+                .whole(8)
+                .checklistPart(JUMPER_WIRE, 4, "Four control signal leads.")
+                .context(MOTOR_DRIVER, 1, "Four signal inputs.")
+                .context(MICROCONTROLLER, 1, "D5, D9, D6 and D10.")
+                .pinCheck(8, 1, 2, 3, 4)
+                .dependsOn(DRIVER_WIRING)
                 .build(phases));
 
         phases.add(new PhaseBuilder(CASTER_FIT, "Fit the caster",

@@ -16,8 +16,8 @@ import dev.chyken.assembl_ar.workflow.GuidedStepProgressStore;
  * that does not finish its manual section (mounting the distance sensor before its wiring).
  */
 public final class PhaseProgressStore {
-    /** Version 1: the 17-phase catalog of revision 1. */
-    public static final int SCHEMA_VERSION = 1;
+    /** Version 2 separates power/control wiring while retaining revision-1 records. */
+    public static final int SCHEMA_VERSION = 2;
     private static final String PREFERENCES = "assembly_phase_progress";
     private static final String KEY_SCHEMA = "schema_version";
     private static final String KEY_WORKFLOW = "workflow_mode";
@@ -104,8 +104,17 @@ public final class PhaseProgressStore {
         SharedPreferences preferences = Objects.requireNonNull(context, "context")
                 .getApplicationContext().getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
         if (preferences.getInt(KEY_SCHEMA, 0) != SCHEMA_VERSION) {
-            // Future schema changes migrate here; version 1 starts from an empty record set.
-            preferences.edit().putInt(KEY_SCHEMA, SCHEMA_VERSION).apply();
+            SharedPreferences.Editor migration=preferences.edit();
+            // Revision 1's combined power/control phase certified both new phases. Keep every
+            // project record and inventory result when separating the two wiring sections.
+            for(Map.Entry<String,?> entry:preferences.getAll().entrySet()) {
+                if(entry.getKey().endsWith(SEPARATOR+AssemblyPhaseCatalog.DRIVER_WIRING)
+                        && Boolean.TRUE.equals(entry.getValue())) {
+                    String prefix=entry.getKey().substring(0,entry.getKey().length()-AssemblyPhaseCatalog.DRIVER_WIRING.length());
+                    migration.putBoolean(prefix+AssemblyPhaseCatalog.DRIVER_CONTROL,true);
+                }
+            }
+            migration.putInt(KEY_SCHEMA, SCHEMA_VERSION).apply();
         }
         return preferences;
     }

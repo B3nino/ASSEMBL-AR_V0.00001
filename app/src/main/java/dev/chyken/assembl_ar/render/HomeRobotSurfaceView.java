@@ -59,7 +59,7 @@ public final class HomeRobotSurfaceView extends GLSurfaceView {
         super(context, attrs);
         orbitController = new OrbitController();
         componentPreview = componentId != null;
-        if (componentPreview) orbitController.restore(-20f, 55f, 6.5f);
+        if (componentPreview) orbitController.restore(-20f, 48f, 5.3f);
         robotRenderer = new HomeRobotRenderer(context.getApplicationContext(), orbitController, componentId);
         float density = getResources().getDisplayMetrics().density;
         orbitDegreesPerPixel = ORBIT_DEGREES_PER_DP / Math.max(1f, density);
@@ -122,7 +122,7 @@ public final class HomeRobotSurfaceView extends GLSurfaceView {
     /** Restores the authored isometric camera pose and zoom. */
     public void resetView() {
         orbitController.reset();
-        if (componentPreview) orbitController.restore(-20f, 55f, 6.5f);
+        if (componentPreview) orbitController.restore(-20f, 48f, 5.3f);
         requestRender();
     }
 

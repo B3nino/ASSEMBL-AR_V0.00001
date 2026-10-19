@@ -41,13 +41,14 @@ public final class AssemblyPhaseCatalogTest {
             new VisionPoint(1, 0), new VisionPoint(1, 1), new VisionPoint(0, 1));
 
     @Test
-    public void seventeenPhasesKeepTheirStableOrderAndIdentifiers() {
+    public void eighteenPhasesPreserveExistingIdentifiersAndSeparateDriverControl() {
         List<AssemblyPhase> phases = AssemblyPhaseCatalog.phases();
-        assertEquals(17, phases.size());
+        assertEquals(18, phases.size());
         List<String> expected = Arrays.asList(
                 AssemblyPhaseCatalog.BOARD_PREPARATION, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES,
                 AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT, AssemblyPhaseCatalog.MOTOR_LEADS,
                 AssemblyPhaseCatalog.MICROCONTROLLER_FIT, AssemblyPhaseCatalog.DRIVER_WIRING,
+                AssemblyPhaseCatalog.DRIVER_CONTROL,
                 AssemblyPhaseCatalog.CASTER_FIT, AssemblyPhaseCatalog.LINE_TRACKERS,
                 AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT, AssemblyPhaseCatalog.SENSOR_WIRING,
                 AssemblyPhaseCatalog.CENTER_STANDOFF, AssemblyPhaseCatalog.WHEEL_PAIR,
@@ -104,8 +105,10 @@ public final class AssemblyPhaseCatalogTest {
         assertEquals(Arrays.asList(11), AssemblyPhaseCatalog.sectionsCompletedBy(wiring));
         assertEquals(Arrays.asList(4, 5), AssemblyPhaseCatalog.sectionsCompletedBy(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_LEADS)));
-        assertEquals(Arrays.asList(7, 8), AssemblyPhaseCatalog.sectionsCompletedBy(
+        assertEquals(Arrays.asList(7), AssemblyPhaseCatalog.sectionsCompletedBy(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_WIRING)));
+        assertEquals(Arrays.asList(8), AssemblyPhaseCatalog.sectionsCompletedBy(
+                AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_CONTROL)));
     }
 
     @Test
@@ -136,7 +139,7 @@ public final class AssemblyPhaseCatalogTest {
                 }
                 if (JUMPER_WIRE.equals(required.getComponentId()) && (section.getStepNumber() == 7
                         || section.getStepNumber() == 8)) {
-                    assertEquals("Combined power and control leads", 6, listed);
+                    assertEquals("Independent power/control phase", required.getQuantity(), listed);
                 } else {
                     assertEquals("Section " + section.getStepNumber() + " "
                             + required.getComponentId(), required.getQuantity(), listed);
@@ -206,7 +209,8 @@ public final class AssemblyPhaseCatalogTest {
 
     @Test
     public void exactPinMappingsSurviveAsDirectChecks() {
-        List<String> driver = AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_WIRING).getDirectChecks();
+        List<String> driver = new ArrayList<>(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_WIRING).getDirectChecks());
+        driver.addAll(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_CONTROL).getDirectChecks());
         assertTrue(containsAll(driver, "VCC → Arduino Nano-compatible microcontroller board VIN",
                 "GND → Arduino Nano-compatible microcontroller board GND", "A-1A →", "D5 / PWM",
                 "A-1B →", "D9 / PWM", "B-1A →", "D6 / PWM", "B-1B →", "D10 / PWM"));

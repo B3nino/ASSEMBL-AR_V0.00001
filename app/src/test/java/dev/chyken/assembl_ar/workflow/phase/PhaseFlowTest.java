@@ -225,4 +225,18 @@ public final class PhaseFlowTest {
         assertFalse(flow.accept(other, 1 * MS));
         assertFalse(flow.accept(null, 1 * MS));
     }
+
+    @Test public void explicitDeveloperCompletionStaysInTheSelectedPhaseAndClosesEvidence() {
+        PhaseFlow flow=motors(0);
+        ScanTag before=flow.tag();
+        String selected=flow.getPhase().getId();
+        flow.devComplete(MS);
+        assertEquals(Mode.COMPLETE,flow.getMode());
+        assertEquals(selected,flow.getPhase().getId());
+        assertFalse(flow.collectsEvidence());
+        assertFalse(flow.accept(before,2*MS));
+        flow.devStartDemo(3*MS);
+        assertEquals(Mode.DEMO,flow.getMode());
+        assertFalse(flow.collectsEvidence());
+    }
 }
