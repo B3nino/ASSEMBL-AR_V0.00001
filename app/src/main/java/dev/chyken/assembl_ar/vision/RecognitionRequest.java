@@ -19,6 +19,17 @@ public final class RecognitionRequest {
     private List<VisionPoint> guidedBracketWorkplane = Collections.emptyList();
     private Object requestTag;
     private boolean installedMotorInspection;
+    private int phase2Stage;
+    public int getPhase2Stage() { return phase2Stage; }
+    public RecognitionRequest withPhase2Stage(int stage) {
+        if(stage!=1&&stage!=2&&stage!=5) throw new IllegalArgumentException("Phase 2 scanning stage");
+        String target=stage==1?"motor_bracket":stage==2?"gear_motor_6v":"main_board";
+        int count=stage==1?4:stage==2?2:1;
+        if(assemblyStepNumber!=2||expectation==null||!target.equals(expectation.getComponentId())
+                ||expectedInstanceCount!=count||spatialAnchorComponentId!=null)
+            throw new IllegalArgumentException("Phase 2 scene request requires the matching component/count and no AR anchor");
+        RecognitionRequest copy=copy(); copy.phase2Stage=stage; return copy;
+    }
 
     public RecognitionRequest(AssemblyExpectation expectation,
                               CameraCalibration cameraCalibration,
@@ -177,6 +188,7 @@ public final class RecognitionRequest {
         copy.guidedBracketWorkplane = guidedBracketWorkplane;
         copy.requestTag = requestTag;
         copy.installedMotorInspection = installedMotorInspection;
+        copy.phase2Stage=phase2Stage;
         return copy;
     }
 

@@ -24,6 +24,7 @@ public final class PhaseProgressStore {
     private static final String SEPARATOR = "\u001F";
     private static final String PHASE = SEPARATOR + "phase" + SEPARATOR;
     private static final String INVENTORY = SEPARATOR + "inventory" + SEPARATOR;
+    private static final String SESSION=SEPARATOR+"session";
 
     public enum WorkflowMode { PHASES, STEP_CARDS }
 
@@ -50,9 +51,11 @@ public final class PhaseProgressStore {
 
     public static boolean clear(Context context, String projectId, Iterable<String> phaseIds) {
         SharedPreferences.Editor editor = preferences(context).edit();
+        editor.remove(requireText(projectId)+SESSION);
         for (String phaseId : phaseIds) {
             editor.remove(key(projectId, phaseId));
             editor.remove(inventoryKey(projectId, phaseId));
+            if(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":gear_v1");
         }
         return editor.commit();
     }
@@ -72,12 +75,28 @@ public final class PhaseProgressStore {
     public static boolean isInventoryComplete(Context context, String projectId, String phaseId) {
         return preferences(context).getBoolean(inventoryKey(projectId, phaseId), false);
     }
+    public static String gearMotorState(Context context,String projectId){
+        return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",null);
+    }
+    public static void saveGearMotorState(Context context,String projectId,String state){
+        preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",state).apply();
+    }
+    public static PhaseSessionCheckpoint session(Context context,String projectId){
+        return PhaseSessionCheckpoint.decode(preferences(context).getString(requireText(projectId)+SESSION,null));
+    }
+    public static void saveSession(Context context,String projectId,PhaseSessionCheckpoint state){
+        preferences(context).edit().putString(requireText(projectId)+SESSION,state.encode()).apply();
+    }
+    public static void clearSession(Context context,String projectId){
+        preferences(context).edit().remove(requireText(projectId)+SESSION).apply();
+    }
 
     public static void clearProject(Context context, String projectId) {
         String prefix = requireText(projectId) + PHASE;
         String inventoryPrefix = requireText(projectId) + INVENTORY;
         SharedPreferences preferences = preferences(context);
         SharedPreferences.Editor editor = preferences.edit();
+        editor.remove(requireText(projectId)+SESSION);
         for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
             if (entry.getKey().startsWith(prefix) || entry.getKey().startsWith(inventoryPrefix)) {
                 editor.remove(entry.getKey());

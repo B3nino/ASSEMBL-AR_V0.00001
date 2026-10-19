@@ -19,12 +19,16 @@ final class DevStepSkipDialog {
                      boolean diagnosticsVisible, Consumer<Boolean> setDiagnosticsVisible) {
         String[] actions = {
                 "Complete current phase · stay here",
-                "Jump to assembly phase (1–18)",
+                "Jump to assembly phase (1–"+AssemblyPhaseCatalog.phases().size()+")",
                 "Jump to manual section (1–18)",
                 "Choose phase and sub-step",
                 "Skip current sub-step · stay here",
                 diagnosticsVisible ? "Hide live diagnostics" : "Show live diagnostics"
         };
+        if(phases!=null&&phases.isDeveloperSession()){
+            actions=java.util.Arrays.copyOf(actions,actions.length+1);
+            actions[actions.length-1]="Return to saved assembly progress";
+        }
         new AlertDialog.Builder(activity)
                 .setTitle("Developer controls")
                 .setItems(actions, (dialog, choice) -> {
@@ -43,8 +47,10 @@ final class DevStepSkipDialog {
                     } else if (choice == 4) {
                         if(phases==null) activity.devForceCompleteCurrentStep();
                         else phases.devSkipCurrentStep();
-                    } else {
+                    } else if(choice==5) {
                         setDiagnosticsVisible.accept(!diagnosticsVisible);
+                    } else if(phases!=null){
+                        phases.returnToSavedAssembly();
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -58,6 +64,13 @@ final class DevStepSkipDialog {
         new AlertDialog.Builder(activity).setTitle("Select phase for sub-steps")
                 .setItems(names,(dialog,index)-> {
                     AssemblyPhase selected=catalog.get(index);
+                    if(selected.getNumber()==2){
+                        String[] labels={"2.1 · Four brackets","2.2 · Two TT motors","2.3 · Fasteners and tools",
+                                "2.4 · Video assembly","2.5 · Hardware verification","2.6 · Joint stability"};
+                        new AlertDialog.Builder(activity).setTitle("Phase 2 sub-steps")
+                                .setItems(labels,(child,step)->phases.devJumpToChapter(selected,step))
+                                .setNegativeButton(android.R.string.cancel,null).show();return;
+                    }
                     List<dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter> chapters=
                             dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.forPhase(selected).getChapters();
                     String[] labels=new String[chapters.size()];

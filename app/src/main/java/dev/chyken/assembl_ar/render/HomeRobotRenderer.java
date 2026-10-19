@@ -81,7 +81,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         if (previewComponentId == null) GLES20.glClearColor(1f, 1f, 1f, 1f);
-        else GLES20.glClearColor(0.085f, 0.12f, 0.13f, 1f);
+        else GLES20.glClearColor(.94f, .94f, .94f, 1f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glDepthFunc(GLES20.GL_LEQUAL);
         GLES20.glEnable(GLES20.GL_BLEND);

@@ -69,7 +69,8 @@ public final class LoosePartShapeRecognizer {
     /** True only for requests whose missing pose can safely use this bounded fallback. */
     public static boolean supports(RecognitionRequest request) {
         if (request == null || request.getExpectation() == null
-                || request.getExpectedInstanceCount() != 1 && !request.inspectsLooseBracketSet()) {
+                || request.getExpectedInstanceCount() != 1 && !request.inspectsLooseBracketSet()
+                && !(request.getPhase2Stage()==2 && request.getExpectedInstanceCount()==2)) {
             return false;
         }
         RecognitionRequest.AssemblyExpectation expectation = request.getExpectation();
@@ -93,6 +94,10 @@ public final class LoosePartShapeRecognizer {
      * Descriptor-only identity has no corners or pose and may be replaced for the expected part.
      */
     public static boolean shouldAttempt(RecognitionRequest request, RecognitionResult primary) {
+        if(request!=null && request.getPhase2Stage()==2) return (primary==null
+                || primary.getRejectionEvidence()==null||primary.getRejectionEvidence().getReason()!=RecognitionResult.RejectionReason.IDENTITY_AMBIGUOUS)
+                && (primary==null||primary.getComponentId()==null||NeobotSeedData.GEAR_MOTOR.equals(primary.getComponentId()))
+                && (primary==null||primary.getDetectedInstanceCount(NeobotSeedData.GEAR_MOTOR)<2);
         if (request != null && request.inspectsLooseBracketSet()) {
             // A partial ORB set may be supplemented by full silhouette evidence. A conflicting
             // identity or ambiguous textured candidate always retains the original rejection.
@@ -167,6 +172,7 @@ public final class LoosePartShapeRecognizer {
         }
         String componentId = request.getExpectation().getComponentId();
         long started = System.nanoTime();
+        if(request.getPhase2Stage()==2) return recognizeMotorPair(rgb,frameTimestampNanos,request,primary);
         if (request.inspectsLooseBracketSet()) {
             reset();
             return recognizeBracketSet(grayscale, rgb, frameTimestampNanos, request, primary, started);
@@ -251,6 +257,34 @@ public final class LoosePartShapeRecognizer {
                 .spatialAnchor(primary == null ? null : primary.getSpatialAnchor())
                 .latency(latency)
                 .build();
+    }
+
+    private RecognitionResult recognizeMotorPair(Mat rgb,long timestamp,RecognitionRequest request,RecognitionResult primary) {
+        if(rgb==null||rgb.empty())return primary;
+        Mat remaining=rgb.clone();List<RecognitionResult.InstanceObservation> observations=new ArrayList<>();
+        try {
+            for(int i=0;i<2;i++) {
+                ShapeCandidate candidate=findGearMotor(remaining,minimumAreaRatio(request));
+                if(candidate==null)break;
+                boolean distinct=true;
+                for(RecognitionResult.InstanceObservation prior:observations)
+                    if(!ComponentRecognizer.areDistinctInstanceQuads(prior.getProjectedCorners(),candidate.corners))distinct=false;
+                if(!distinct)break;
+                observations.add(new RecognitionResult.InstanceObservation(MOTOR_REFERENCE_ID+":"+i,
+                        NeobotSeedData.GEAR_MOTOR,RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK,
+                        candidate.corners,candidate.confidence));
+                Point[] points=new Point[candidate.corners.size()];
+                for(int j=0;j<points.length;j++)points[j]=new Point(candidate.corners.get(j).getX(),candidate.corners.get(j).getY());
+                MatOfPoint polygon=new MatOfPoint(points);
+                try {Imgproc.fillConvexPoly(remaining,polygon,new Scalar(0,0,0));}finally{polygon.release();}
+            }
+        } finally {remaining.release();}
+        if(observations.isEmpty() || primary!=null&&primary.getDetectedInstanceCount(NeobotSeedData.GEAR_MOTOR)>=observations.size())return primary;
+        return RecognitionResult.builder(timestamp).identity(MOTOR_REFERENCE_ID,NeobotSeedData.GEAR_MOTOR,"TT gear motors")
+                .method(RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK)
+                .validation(RecognitionResult.ValidationState.EXPECTED_COMPONENT).confidence(.8)
+                .corners(observations.get(0).getProjectedCorners()).instances(observations)
+                .matches(primary==null?0:primary.getFrameKeypointCount(),0,0,0).build();
     }
 
     private RecognitionResult recognizeBracketSet(Mat gray, Mat rgb, long timestamp,

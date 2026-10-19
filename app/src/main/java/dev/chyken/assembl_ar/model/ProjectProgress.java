@@ -29,6 +29,11 @@ public final class ProjectProgress {
     public String getCurrentStepId() { return currentStepId; }
     public List<StepProgress> getSteps() { return steps; }
     public boolean isComplete() { return totalSteps > 0 && completedSteps == totalSteps; }
+    public boolean isStarted() {
+        if(completedSteps>0)return true;
+        for(StepProgress step:steps)if(step.getStatus()!=StepStatus.NOT_STARTED)return true;
+        return false;
+    }
     public int getPercentComplete() {
         return totalSteps == 0 ? 0 : (int) Math.round((completedSteps * 100.0d) / totalSteps);
     }

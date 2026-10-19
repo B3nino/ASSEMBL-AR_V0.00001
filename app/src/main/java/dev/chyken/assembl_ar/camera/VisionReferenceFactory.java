@@ -36,6 +36,9 @@ public final class VisionReferenceFactory {
             android.content.res.AssetManager assets) {
         List<ComponentReferenceSpec> result = new ArrayList<>();
         Set<String> referenceIds = new HashSet<>();
+        if(assets!=null) for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase2(assets)) {
+            if(referenceIds.add(spec.getReferenceId())) result.add(spec);
+        }
         for (Component component : repository.getComponents()) {
             double[] dimensions = dimensions(repository, component);
             List<String> paths = selectBundledReferences(component);

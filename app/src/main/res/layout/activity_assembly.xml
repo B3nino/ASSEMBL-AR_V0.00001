@@ -20,6 +20,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <dev.chyken.assembl_ar.ui.TargetAlignmentBoxView
+        android:id="@+id/targetAlignmentBox"
+        android:layout_width="300dp"
+        android:layout_height="280dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
     <dev.chyken.assembl_ar.ui.ArHudView
         android:id="@+id/arHudView"
         android:layout_width="match_parent"
@@ -693,6 +700,15 @@
             app:icon="@drawable/ic_check" />
 
     </LinearLayout>
+
+    <dev.chyken.assembl_ar.ui.CompactGuideCard
+        android:id="@+id/phaseTwoGuide"
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:elevation="8dp"
+        android:visibility="gone" />
 
     <dev.chyken.assembl_ar.ui.PhaseOneGuideView
         android:id="@+id/phaseOneGuide"

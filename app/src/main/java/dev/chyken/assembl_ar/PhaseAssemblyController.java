@@ -66,6 +66,7 @@ import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.Part;
 import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.VisualTarget;
 import dev.chyken.assembl_ar.workflow.phase.AssemblyPhaseCatalog;
 import dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript;
+import dev.chyken.assembl_ar.workflow.phase.PhaseSessionCheckpoint;
 import dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter;
 import dev.chyken.assembl_ar.workflow.phase.PhaseFlow;
 import dev.chyken.assembl_ar.workflow.phase.PhaseFlow.Mode;
@@ -154,6 +155,10 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private final MaterialButton nextButton;
     private final dev.chyken.assembl_ar.ui.PhaseOneGuideView phaseOneGuide;
     private boolean phaseOneScanConfirmed;
+    private volatile Phase2GuideController gearGuide;
+    private AlertDialog welcomeDialog;
+    private AlertDialog phaseOneRescanDialog;
+    private String phaseOneGuideAsset;
     private final MaterialButton doneChapterButton;
     private final Set<String> confirmedChapters = new HashSet<>();
     private final Set<String> viewedChapters = new HashSet<>();
@@ -187,6 +192,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     @Nullable private List<VisualTarget> correctionOverlayTargets;
     private boolean savingPhase;
     private boolean devNavigationActive;
+    private PhaseSessionCheckpoint pendingSession;
+    private boolean restoringSession;
     @Nullable private AlertDialog checklistDialog;
     private Chapter shownChapter;
     /** A one-time success message shown instead of the mode banner, e.g. "Parts found". */
@@ -210,6 +217,13 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         nextButton = activity.findViewById(R.id.nextGuidedStepButton);
         phaseOneGuide=activity.findViewById(R.id.phaseOneGuide);
         phaseOneGuide.setNextAction(() -> jumpChapter(1));
+        phaseOneGuide.setRescanAction(()->{phaseOneRescanDialog=RescanConfirmationDialog.show(activity,()->{
+            phaseOneRescanDialog=null;
+            if(phase==null||phase.getNumber()!=1||savingPhase)return;
+            if(!devNavigationActive)PhaseProgressStore.setInventoryComplete(activity,NeobotSeedData.PROJECT_ID,phase.getId(),false);
+            phaseOneScanConfirmed=false;phaseOneGuide.reset();flow.restart(SystemClock.elapsedRealtimeNanos());
+            inventoryIndex=0;inventoryDone.clear();resetGates();activity.resetAnalyzerTracking();enterMode();
+        });});
         doneChapterButton=activity.findViewById(R.id.doneChapterButton);
         android.content.SharedPreferences review=activity.getSharedPreferences("assembly_instruction_review",0);
         confirmedChapters.addAll(review.getStringSet("done",Collections.emptySet()));
@@ -264,10 +278,29 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
             activity.openCompletion();
             return;
         }
+        PhaseSessionCheckpoint saved=PhaseProgressStore.session(activity,NeobotSeedData.PROJECT_ID);
+        pendingSession=saved!=null&&saved.canRestore(resumed)?saved:null;
+        if(pendingSession!=null){
+            devNavigationActive=pendingSession.developer;
+            resumed=AssemblyPhaseCatalog.byId(pendingSession.phaseId);
+            if(devNavigationActive)currentSection=resumed.getFirstSection();
+            activity.acceptAssemblyWelcome();
+        }
+        final AssemblyPhase initialPhase=resumed;
+        if(resumed.getNumber()==1&&!activity.assemblyWelcomeAccepted()) {
+            welcomeDialog=WelcomeAssemblyDialog.show(activity,()->{
+                activity.acceptAssemblyWelcome();welcomeDialog=null;startPhase(initialPhase);
+            });
+            return;
+        }
         startPhase(resumed);
     }
 
     private void startPhase(AssemblyPhase next) {
+        if(gearGuide!=null){gearGuide.close();gearGuide=null;}
+        PhaseSessionCheckpoint restored=pendingSession;
+        pendingSession=null;
+        restoringSession=restored!=null&&restored.phaseId.equals(next.getId());
         phaseStartedAtNanos=SystemClock.elapsedRealtimeNanos();
         reviewScript=null;
         shownChapter=null;
@@ -277,12 +310,16 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         phase = next;
         phaseOneScanConfirmed=false;
         phaseOneGuide.reset();
+        activity.setPhaseTwoGuideActive(next.getNumber()==2);
         activity.setPhaseOneGuideActive(next.getNumber()==1);
+        dev.chyken.assembl_ar.ui.TargetAlignmentBoxView alignment=activity.findViewById(R.id.targetAlignmentBox);
+        alignment.showGuide(null);
+        if(next.getNumber()==1)phaseOneGuideAsset=dev.chyken.assembl_ar.camera.Phase2AssetCatalog.guide(activity.getAssets(),1,1);
         script = scriptFor(next);
         flow = new PhaseFlow(next, SystemClock.elapsedRealtimeNanos(),
                 PhaseProgressStore.isInventoryComplete(activity, NeobotSeedData.PROJECT_ID, next.getId()));
         if(next.getNumber()==1 && !devNavigationActive
-                && PhaseProgressStore.isInventoryComplete(activity,NeobotSeedData.PROJECT_ID,next.getId())) {
+                && (currentSection>1||PhaseProgressStore.isInventoryComplete(activity,NeobotSeedData.PROJECT_ID,next.getId()))) {
             phaseOneScanConfirmed=true;
             flow.inventoryComplete(SystemClock.elapsedRealtimeNanos());
         }
@@ -291,12 +328,60 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         correctionOverlayTargets = null;
         inventoryIndex = 0;
         inventoryDone.clear();
+        if(restoringSession&&next.getNumber()!=2){
+            inventoryIndex=Math.min(restored.inventoryIndex,next.getCameraInventory().size());
+            for(int i=0;i<inventoryIndex;i++)inventoryDone.put(next.getCameraInventory().get(i).getComponentId(),true);
+            flow.restoreSession(restored.mode,restored.inventoryComplete||restored.developer&&restored.mode!=Mode.SCAN_PARTS,
+                    restored.previewing,SystemClock.elapsedRealtimeNanos());
+            if(next.getNumber()==1)phaseOneScanConfirmed=flow.getMode()==Mode.COMPLETE&&!devNavigationActive;
+        }
         resetGates();
         activity.resetAnalyzerTracking();
         activity.stepInfoChanged("phase:" + next.getId());
         log("phase", next.getId() + " (section " + currentSection + ")");
         renderStatic();
+        if(next.getNumber()==1)((dev.chyken.assembl_ar.ui.ComponentPreviewWindow)activity.findViewById(R.id.componentPreviewWindow)).showInteractionHint();
+        if(next.getNumber()==2){
+            plan=RequestPlan.NONE;
+            gearGuide=new Phase2GuideController(activity,devNavigationActive,this::finishGearPhase,
+                    ()->startPhase(AssemblyPhaseCatalog.phases().get(0)),
+                    restoringSession?restored.gearState:null,this::persistSession);
+            flow.attachGearMotorFlow(gearGuide.flow);gearGuide.start();restoringSession=false;persistSession();return;
+        }
         enterMode();
+        if(restoringSession&&script!=null&&!script.getChapters().isEmpty()){
+            int chapter=Math.min(restored.chapter,script.getChapters().size()-1);
+            if(flow.getMode()==Mode.DEMO)player.jumpTo(chapter);
+            else if(flow.getMode()==Mode.ASSEMBLE)onChapterStarted(script.getChapters().get(chapter),chapter,script.getChapters().size());
+        }
+        restoringSession=false;persistSession();
+    }
+    /** Session location is resumable even in DEV; verified learner records remain separate. */
+    private void persistSession(){
+        if(restoringSession||savingPhase||phase==null||flow==null)return;
+        int chapter=reviewScript!=null?pausedChapter:shownChapter==null?0:shownChapter.getIndex();
+        String gearState=phase.getNumber()==2&&gearGuide!=null?gearGuide.checkpointState():null;
+        PhaseProgressStore.saveSession(activity,NeobotSeedData.PROJECT_ID,new PhaseSessionCheckpoint(
+                phase.getId(),devNavigationActive,flow.getMode(),chapter,inventoryIndex,
+                flow.isInventoryComplete(),flow.isPreviewing(),gearState));
+    }
+    private void finishGearPhase(){
+        if(devNavigationActive){devJumpToPhase(AssemblyPhaseCatalog.phases().get(2));return;}
+        completePhase();
+    }
+    boolean isDeveloperSession(){return devNavigationActive;}
+    void returnToSavedAssembly(){
+        if(!devNavigationActive||savingPhase)return;
+        activity.databaseExecutor().execute(()->{
+            ProjectProgress saved=activity.repository().getProjectProgress(NeobotSeedData.PROJECT_ID);
+            activity.runOnUiThread(()->{
+                if(activity.isGone())return;
+                if(gearGuide!=null){gearGuide.close();gearGuide=null;}
+                PhaseProgressStore.clearSession(activity,NeobotSeedData.PROJECT_ID);
+                activity.onPhaseSectionsSaved(saved);
+                load(steps,saved);
+            });
+        });
     }
 
     private int sectionNumber(String stepId) {
@@ -324,6 +409,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
             if (step != null) stepIds.add(step.getId());
         }
         savingPhase = true;
+        if(gearGuide!=null)gearGuide.setSaving(true);
         if(phase.getNumber()==1) phaseOneGuide.setScanned(true,true,!phaseOneScanConfirmed);
         plan = RequestPlan.NONE;
         activity.setBanner(activity.getString(R.string.phase_saving), true, R.drawable.bg_live_pill);
@@ -371,6 +457,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private void onPhaseSaveFailed(AssemblyPhase finished) {
         savingPhase = false;
         if (activity.isGone() || flow == null || phase != finished) return;
+        if(gearGuide!=null){gearGuide.setSaving(false);activity.setBanner(activity.getString(R.string.progress_save_failed),false,R.drawable.bg_camera_warning);return;}
         flow.completionSaveFailed(SystemClock.elapsedRealtimeNanos());
         if (flow.getMode() == Mode.COMPLETE) {
             // Board preparation: rescan to retry, it has no checklist to reopen.
@@ -465,6 +552,19 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     private void reviewPhase(AssemblyPhase earlier, boolean lastChapter) {
+        if(earlier.getNumber()==2&&phase!=null&&phase.getNumber()>2){
+            if(reviewScript==null)pausedChapter=shownChapter==null?0:shownChapter.getIndex();
+            handler.removeCallbacks(budgetPoll);plan=RequestPlan.NONE;clearOverlay();player.pause();reviewScript=null;
+            activity.setPhaseTwoGuideActive(true);
+            gearGuide=new Phase2GuideController(activity,true,()->{
+                if(gearGuide!=null){gearGuide.close();gearGuide=null;}
+                activity.setPhaseTwoGuideActive(false);returnFromReview();
+            },()->{
+                if(gearGuide!=null){gearGuide.close();gearGuide=null;}
+                activity.setPhaseTwoGuideActive(false);reviewPhase(AssemblyPhaseCatalog.phases().get(0),true);
+            });
+            gearGuide.startReview(lastChapter);return;
+        }
         if(reviewScript==null) pausedChapter=shownChapter==null ? 0 : shownChapter.getIndex();
         handler.removeCallbacks(budgetPoll);
         plan=RequestPlan.NONE;
@@ -501,6 +601,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     private void restartPhase() {
         if (flow == null || savingPhase) return;
+        if(gearGuide!=null){gearGuide.restart();return;}
         log("action", "restart phase");
         confirmedChapters.removeIf(key->key.startsWith(phase.getId()+":")); persistReview();
         PhaseProgressStore.setInventoryComplete(activity, NeobotSeedData.PROJECT_ID, phase.getId(), false);
@@ -536,6 +637,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void devForceCompleteCurrentPhase() {
         if (phase == null || savingPhase) return;
+        if(gearGuide!=null){devNavigationActive=true;gearGuide.devComplete();return;}
         reviewScript=null; devNavigationActive=true;
         flow.devComplete(SystemClock.elapsedRealtimeNanos());
         plan=RequestPlan.NONE; player.stop(); clearOverlay();
@@ -546,6 +648,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     void devJumpToChapter(AssemblyPhase selected, int chapter) {
         if(selected==null || savingPhase) return;
         devJumpToPhase(selected);
+        if(gearGuide!=null){gearGuide.devJump(chapter+1);return;}
         if(script==null || chapter<0 || chapter>=script.getChapters().size()) return;
         for(int i=0;i<chapter;i++) confirmedChapters.add(chapterKey(phase,script.getChapters().get(i)));
         persistReview();
@@ -554,6 +657,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void devSkipCurrentStep() {
         if(phase==null || script==null || savingPhase) return;
+        if(gearGuide!=null){devNavigationActive=true;gearGuide.devSkip();return;}
         if(reviewScript!=null) returnFromReview();
         if(shownChapter==null || flow.getMode()==Mode.SCAN_PARTS) {
             devJumpToChapter(phase,0);
@@ -681,6 +785,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     /** Applies the current flow mode to playback, camera requests and the screen. */
     private void enterMode() {
+        if(gearGuide!=null){gearGuide.render();return;}
         if (flow == null || phase == null || script == null) return;
         handler.removeCallbacks(budgetPoll);
         Mode mode = flow.getMode();
@@ -741,6 +846,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
                 break;
         }
         renderMode();
+        persistSession();
     }
 
     private void playFullDemo(boolean withIntroduction) {
@@ -916,6 +1022,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
                     chapter.getCaption()));
         }
         updateNavigation();
+        persistSession();
     }
 
     @Override
@@ -952,6 +1059,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     void onSpeechFinished(String key) {
+        if(gearGuide!=null){gearGuide.onSpeechFinished(key);return;}
         player.onSpeechFinished(key);
         if(isLivePhaseOne() && flow.getMode()==Mode.SCAN_PARTS
                 && key.equals("phase1:bring:"+flow.getGeneration())) {
@@ -970,16 +1078,21 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         speak(activity.getString(R.string.phase_one_bring_board),"phase1:bring:"+flow.getGeneration());
     }
 
-    void onVoiceStatusChanged() { player.onVoiceModeChanged(); }
+    void onVoiceStatusChanged() {
+        if(gearGuide!=null)gearGuide.onVoiceStatusChanged();
+        else player.onVoiceModeChanged();
+    }
 
     // ---- Camera requests (camera thread) ----------------------------------------------------
 
     boolean isAnalysisSuspended() {
+        if(gearGuide!=null)return !gearGuide.scanning();
         return plan.kind == RequestPlan.Kind.NONE;
     }
 
     @Nullable
     RecognitionRequest requestFor(CameraCalibration calibration) {
+        if(gearGuide!=null)return gearGuide.request(calibration);
         RequestPlan current = plan;
         switch (current.kind) {
             case INVENTORY:
@@ -1076,6 +1189,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     /** Recognition references finished loading; start any camera plan that was waiting for them. */
     void onRecognitionReady() {
+        if(gearGuide!=null){gearGuide.render();return;}
         if(reviewScript!=null) return;
         if (flow == null) return;
         if (flow.getMode() == Mode.SCAN_PARTS && !flow.isPreviewing()) planInventory();
@@ -1087,6 +1201,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void onResult(RecognitionResult result, long evidenceNanos) {
         if (flow == null || phase == null || savingPhase || reviewScript!=null) return;
+        if(gearGuide!=null){gearGuide.onResult(result);return;}
         Object tag = result.getRequestTag();
         PhaseFlow.ScanTag scanTag = tag instanceof PhaseFlow.ScanTag ? (PhaseFlow.ScanTag) tag : null;
         if (flow.getMode() == Mode.CORRECTION) {
@@ -1523,7 +1638,10 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     // ---- Lifecycle --------------------------------------------------------------------------
 
     void onPause() {
+        persistSession();
+        if(phaseOneRescanDialog!=null){phaseOneRescanDialog.dismiss();phaseOneRescanDialog=null;}
         handler.removeCallbacks(budgetPoll);
+        if(gearGuide!=null){gearGuide.pause();hud.reset();return;}
         player.pause();
         if (flow != null) {
             Mode before = flow.getMode();
@@ -1540,6 +1658,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void onResume() {
         if (flow == null) return;
+        if(gearGuide!=null){gearGuide.resume();return;}
         if(reviewScript!=null) { player.resume(); return; }
         flow.resume(SystemClock.elapsedRealtimeNanos());
         Mode mode = flow.getMode();
@@ -1554,6 +1673,9 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     void onDestroy() {
+        if(phaseOneRescanDialog!=null){phaseOneRescanDialog.dismiss();phaseOneRescanDialog=null;}
+        if(welcomeDialog!=null){welcomeDialog.dismiss();welcomeDialog=null;}
+        if(gearGuide!=null){gearGuide.close();gearGuide=null;}
         handler.removeCallbacksAndMessages(null);
         dismissChecklist();
         player.release();
@@ -1562,6 +1684,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     /** Banner for the current mode, used after camera start-up and recovery. */
     void showBanner() {
+        if(gearGuide!=null){gearGuide.render();return;}
         if(reviewScript!=null) {
             activity.setBanner(activity.getString(R.string.review_preserves_progress),false,R.drawable.bg_live_pill);
             return;
@@ -1635,8 +1758,11 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     private void renderMode() {
+        if(gearGuide!=null){gearGuide.render();return;}
         if (flow == null || phase == null) return;
         Mode mode = flow.getMode();
+        if(isLivePhaseOne())((dev.chyken.assembl_ar.ui.TargetAlignmentBoxView)activity.findViewById(R.id.targetAlignmentBox))
+                .showGuide(mode==Mode.SCAN_PARTS?phaseOneGuideAsset:null);
         if(isLivePhaseOne()) {
             phaseOneGuide.setScanned(mode==Mode.COMPLETE,savingPhase,!phaseOneScanConfirmed);
             if(mode==Mode.COMPLETE && phaseOneScanConfirmed && hud.getHudState()!=ArHudView.HudState.MATCHED)
@@ -1917,10 +2043,12 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     /** Current request tag, for the trial log's frame rows. */
     @Nullable
     PhaseFlow.ScanTag currentTag() {
+        if(gearGuide!=null)return gearGuide.flow.tag();
         return flow == null ? null : flow.tag();
     }
 
     boolean isFrameForCurrentPhase(RecognitionResult result) {
+        if(gearGuide!=null)return gearGuide.current(result);
         return reviewScript==null && flow!=null
                 && result.getFrameTimestampNanos()>=phaseStartedAtNanos
                 && java.util.Objects.equals(result.getRequestTag(),flow.tag());

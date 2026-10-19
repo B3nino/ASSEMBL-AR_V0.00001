@@ -232,6 +232,8 @@ public final class ReferenceDatabase implements AutoCloseable {
         if (spec.isAutomaticBoardGeometry()) {
             spec = BoardPhotoGeometry.resolve(spec, imageBytes, cacheFile);
         }
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
+            spec=Phase2PhotoGeometry.resolve(spec,imageBytes,cacheFile);
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
                 return preparedFromBlob(spec, readFully(input), config);
@@ -403,6 +405,8 @@ public final class ReferenceDatabase implements AutoCloseable {
                 + "_raw" + (spec.isAutomaticBoardGeometry() ? 1 : 0)
                 + "_bottom" + (spec.isBottomFace() ? 1 : 0)
                 + "_prep" + REFERENCE_PREPARATION_VERSION;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
+            assetFingerprint+="_p2roi"+Phase2PhotoGeometry.CACHE_VERSION;
         return new File(directory, safeId + "_" + assetFingerprint + ".asor");
     }
 

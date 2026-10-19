@@ -39,6 +39,8 @@ public final class StepInfoPanelController {
     private final ComponentPreviewWindow preview;
     private final PhaseOneGuideView phaseOneGuide;
     private boolean phaseOneActive;
+    private final CompactGuideCard phaseTwoGuide;
+    private boolean phaseTwoActive;
     private final ViewTreeObserver.OnGlobalLayoutListener layoutListener = this::updateLayout;
     private boolean expanded;
     private boolean contentReady;
@@ -61,6 +63,10 @@ public final class StepInfoPanelController {
         toggle = activity.findViewById(R.id.toggleStepInfoButton);
         preview = activity.findViewById(R.id.componentPreviewWindow);
         phaseOneGuide = activity.findViewById(R.id.phaseOneGuide);
+        phaseTwoGuide=activity.findViewById(R.id.phaseTwoGuide);
+        phaseTwoGuide.setTranslationX(state==null?0:state.getFloat("phase_two_window_x",0));
+        phaseTwoGuide.setTranslationY(state==null?0:state.getFloat("phase_two_window_y",0));
+        phaseTwoGuide.dragHandle().setOnTouchListener((view,event)->drag(phaseTwoGuide,view,event));
         expanded = state == null || state.getBoolean(STATE_EXPANDED, true);
         stepId = state == null ? null : state.getString(STATE_STEP);
         savedScrollY = state == null ? 0 : state.getInt(STATE_SCROLL, 0);
@@ -109,10 +115,11 @@ public final class StepInfoPanelController {
 
     public void setPhaseOneActive(boolean active) {
         phaseOneActive=active;
-        panel.setVisibility(active ? View.GONE : contentReady ? View.VISIBLE : View.INVISIBLE);
+        panel.setVisibility(active || phaseTwoActive ? View.GONE : contentReady ? View.VISIBLE : View.INVISIBLE);
         phaseOneGuide.setVisibility(active ? View.VISIBLE : View.GONE);
         updateLayout();
     }
+    public void setPhaseTwoActive(boolean active){phaseTwoActive=active;phaseTwoGuide.setVisibility(active?View.VISIBLE:View.GONE);setPhaseOneActive(false);}
 
     public void onStepChanged(String newStepId) {
         if (!newStepId.equals(stepId)) {
@@ -121,7 +128,7 @@ public final class StepInfoPanelController {
         }
         stepId = newStepId;
         contentReady = true;
-        if(!phaseOneActive) panel.setVisibility(View.VISIBLE);
+        if(!phaseOneActive&&!phaseTwoActive) panel.setVisibility(View.VISIBLE);
         scroll.requestLayout();
     }
 
@@ -130,6 +137,8 @@ public final class StepInfoPanelController {
         state.putFloat("info_window_y",panel.getTranslationY());
         state.putFloat("phase_one_window_x",phaseOneGuide.getTranslationX());
         state.putFloat("phase_one_window_y",phaseOneGuide.getTranslationY());
+        state.putFloat("phase_two_window_x",phaseTwoGuide.getTranslationX());
+        state.putFloat("phase_two_window_y",phaseTwoGuide.getTranslationY());
         state.putInt(STATE_PREVIEW_WIDTH, preview.getWidth());
         state.putInt(STATE_PREVIEW_HEIGHT, preview.getHeight());
         state.putBoolean(STATE_EXPANDED, expanded);
@@ -163,6 +172,11 @@ public final class StepInfoPanelController {
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
         int safeWidth = root.getWidth() - bars.left - bars.right;
         int safeHeight = root.getHeight() - bars.top - bars.bottom;
+        View alignment=activity.findViewById(R.id.targetAlignmentBox);
+        FrameLayout.LayoutParams alignmentParams=(FrameLayout.LayoutParams)alignment.getLayoutParams();
+        int guideHeight=Math.min(dp(480),Math.round(safeHeight*.48f));
+        int guideWidth=Math.min(Math.round(safeWidth*.50f),Math.round(guideHeight*1.25f));
+        if(alignmentParams.width!=guideWidth||alignmentParams.height!=guideHeight){alignmentParams.width=guideWidth;alignmentParams.height=guideHeight;alignment.setLayoutParams(alignmentParams);}
         boolean rtl = ViewCompat.getLayoutDirection(root) == ViewCompat.LAYOUT_DIRECTION_RTL;
         int startInset = rtl ? bars.right : bars.left;
         int endInset = rtl ? bars.left : bars.right;
@@ -233,9 +247,11 @@ public final class StepInfoPanelController {
         // climb over the toolbar/status banner.
         int height = expanded ? Math.max(1, expandedHeight)
                 : Math.max(1, Math.min(collapsedHeight, availableHeight));
-        View target=phaseOneActive ? phaseOneGuide : panel;
-        if(phaseOneActive) phaseOneGuide.setMaximumHeight(Math.max(1,availableHeight));
-        int targetHeight=phaseOneActive ? FrameLayout.LayoutParams.WRAP_CONTENT : height;
+        View target=phaseTwoActive?phaseTwoGuide:phaseOneActive ? phaseOneGuide : panel;
+        int compactMaximum=Math.max(1,Math.min(availableHeight,Math.round(safeHeight*.46f)));
+        if(phaseOneActive) phaseOneGuide.setMaximumHeight(compactMaximum);
+        if(phaseTwoActive)phaseTwoGuide.setMaximumHeight(compactMaximum);
+        int targetHeight=phaseOneActive||phaseTwoActive ? FrameLayout.LayoutParams.WRAP_CONTENT : height;
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) target.getLayoutParams();
         int gravity = Gravity.BOTTOM | GravityCompat.START;
         if (params.width != panelWidth || params.height != targetHeight || params.gravity != gravity
@@ -264,7 +280,7 @@ public final class StepInfoPanelController {
     }
 
     private void clampPanel() {
-        View panel=phaseOneActive ? phaseOneGuide : this.panel;
+        View panel=phaseTwoActive?phaseTwoGuide:phaseOneActive ? phaseOneGuide : this.panel;
         if(panel.getWidth()==0 || root.getWidth()==0) return;
         WindowInsetsCompat windowInsets=ViewCompat.getRootWindowInsets(root);
         Insets bars=windowInsets==null ? Insets.NONE : windowInsets.getInsets(

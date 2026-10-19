@@ -106,6 +106,8 @@ dependencies {
     implementation(libs.camera.view)
     implementation(libs.opencv)
     implementation(libs.recyclerview)
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-ui:1.5.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)

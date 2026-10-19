@@ -46,6 +46,11 @@ public final class PhaseFlow {
     }
 
     private final AssemblyPhase phase;
+    private Phase2GearMotorFlow gearMotorFlow;
+    public void attachGearMotorFlow(Phase2GearMotorFlow flow){
+        if(!AssemblyPhaseCatalog.MOTOR_ASSEMBLIES.equals(phase.getId()))throw new IllegalStateException();
+        gearMotorFlow=Objects.requireNonNull(flow);
+    }
     private Mode mode;
     private boolean previewing;
     private int generation;
@@ -78,22 +83,24 @@ public final class PhaseFlow {
     }
 
     public AssemblyPhase getPhase() { return phase; }
-    public Mode getMode() { return mode; }
-    public int getGeneration() { return generation; }
+    public Mode getMode() { return gearMotorFlow==null?mode:gearMotorFlow.mode(); }
+    public int getGeneration() { return gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
     /** A demo opened from part scanning; it returns to scanning without skipping inventory. */
     public boolean isPreviewing() { return previewing; }
-    public boolean isInventoryComplete() { return inventoryComplete; }
+    public boolean isInventoryComplete() { return gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete(); }
     @Nullable public String getCorrectionTargetId() { return correctionTargetId; }
 
-    public ScanTag tag() { return new ScanTag(phase.getId(), mode, generation); }
+    public ScanTag tag() { return gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
 
     /** Camera analysis is needed only while identifying parts or verifying the finished group. */
     public boolean collectsEvidence() {
+        if(gearMotorFlow!=null)return gearMotorFlow.scanning();
         return mode == Mode.SCAN_PARTS && !previewing || mode == Mode.VERIFY;
     }
 
     /** Scan is offered while the learner watches, assembles, or has just seen a correction. */
     public boolean canScan() {
+        if(gearMotorFlow!=null)return false;
         return mode == Mode.DEMO && !previewing || mode == Mode.ASSEMBLE || mode == Mode.CORRECTION;
     }
 
@@ -102,6 +109,7 @@ public final class PhaseFlow {
      * window opened and newer than every frame already used. Duplicates and reordered frames fail.
      */
     public boolean accept(@Nullable ScanTag resultTag, long frameNanos) {
+        if(gearMotorFlow!=null)return gearMotorFlow.accepts(resultTag,frameNanos);
         if (!collectsEvidence() || !tag().equals(resultTag)
                 || frameNanos < evidenceStartNanos || frameNanos <= lastFrameNanos) return false;
         lastFrameNanos = frameNanos;
@@ -113,6 +121,7 @@ public final class PhaseFlow {
      * next verification group, so frames requested for the previous subject cannot be reused.
      */
     public void restartEvidence(long nowNanos) {
+        if(gearMotorFlow!=null){gearMotorFlow.restartEvidence(nowNanos);return;}
         if (collectsEvidence()) enter(mode, nowNanos);
     }
 
@@ -206,6 +215,7 @@ public final class PhaseFlow {
 
     /** Activity pause/navigation: in-flight evidence is discarded and a Scan must be repeated. */
     public void interrupt(long nowNanos) {
+        if(gearMotorFlow!=null){gearMotorFlow.pause();return;}
         if (mode == Mode.VERIFY) {
             enter(Mode.ASSEMBLE, nowNanos);
         } else if (mode == Mode.SCAN_PARTS) {
@@ -215,11 +225,13 @@ public final class PhaseFlow {
 
     /** Resuming part scanning accepts only frames captured after the resume. */
     public void resume(long nowNanos) {
+        if(gearMotorFlow!=null){gearMotorFlow.resume(nowNanos);return;}
         if (mode == Mode.SCAN_PARTS && !previewing) enter(Mode.SCAN_PARTS, nowNanos);
     }
 
     /** Restart this phase from its first mode, discarding every result of the current attempt. */
     public void restart(long nowNanos) {
+        if(gearMotorFlow!=null){gearMotorFlow.restart(nowNanos);return;}
         start(nowNanos, false);
     }
 
@@ -231,6 +243,17 @@ public final class PhaseFlow {
 
     public void devComplete(long nowNanos) {
         previewing=false; correctionTargetId=null; enter(Mode.COMPLETE,nowNanos);
+    }
+
+    /** Restores a saved UI checkpoint; camera evidence always starts with a new generation/window. */
+    public void restoreSession(Mode savedMode,boolean partsComplete,boolean preview,long nowNanos){
+        if(gearMotorFlow!=null)throw new IllegalStateException("Gear flow owns its own checkpoint");
+        inventoryComplete=partsComplete||phase.getCameraInventory().isEmpty();
+        previewing=preview&&!inventoryComplete&&savedMode==Mode.DEMO;
+        correctionTargetId=null;
+        Mode restored=savedMode==Mode.CORRECTION?Mode.ASSEMBLE:savedMode;
+        if(!inventoryComplete&&!previewing)restored=Mode.SCAN_PARTS;
+        enter(restored,nowNanos);
     }
 
     private void enter(Mode next, long evidenceStart) {

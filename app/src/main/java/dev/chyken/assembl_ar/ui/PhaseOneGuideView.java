@@ -16,9 +16,12 @@ import dev.chyken.assembl_ar.R;
 /** Phase 1's learner card. All content scrolls when large text or a short window needs it. */
 public final class PhaseOneGuideView extends FrameLayout {
     private final LinearLayout body;
+    private final LinearLayout footer;
+    private final ScrollView scroll;
     private final TextView dragHandle, progress, instruction, status, learn, nudge;
     private final TextView details;
     private final MaterialButton next;
+    private final MaterialButton rescan;
     private int maximumHeight = Integer.MAX_VALUE;
     private boolean expanded, scanned;
     private final Runnable dismissNudge = () -> fadeNudge();
@@ -26,14 +29,16 @@ public final class PhaseOneGuideView extends FrameLayout {
     public PhaseOneGuideView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         setBackgroundResource(R.drawable.bg_camera_panel);
-        ScrollView scroll = new ScrollView(context);
+        scroll = new ScrollView(context);
         scroll.setFillViewport(false);
         scroll.setVerticalScrollBarEnabled(true);
         addView(scroll, new LayoutParams(-1, -2));
         body = new LinearLayout(context);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(dp(16), dp(12), dp(16), dp(14));
+        body.setPadding(dp(16), dp(12), dp(16), dp(4));
         scroll.addView(body, new ScrollView.LayoutParams(-1, -2));
+        footer=new LinearLayout(context);footer.setPadding(dp(16),0,dp(16),dp(12));
+        addView(footer,new LayoutParams(-1,-2,Gravity.BOTTOM));
 
         dragHandle = text(12, 0xFFB6C0BD);
         dragHandle.setText(R.string.phase_one_move);
@@ -72,7 +77,10 @@ public final class PhaseOneGuideView extends FrameLayout {
         next.setMinHeight(dp(48));
         next.setText(R.string.phase_one_next_locked);
         next.setEnabled(false);
-        body.addView(next, new LinearLayout.LayoutParams(-1, -2));
+        rescan=new MaterialButton(context);rescan.setText("Rescan this step");rescan.setMinHeight(dp(44));
+        rescan.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0));rescan.setStrokeWidth(dp(1));rescan.setStrokeColor(android.content.res.ColorStateList.valueOf(0xFF526057));rescan.setTextColor(0xFFE1E8E0);
+        rescan.setVisibility(GONE);footer.addView(rescan,new LinearLayout.LayoutParams(0,-2,1));
+        LinearLayout.LayoutParams nextParams=new LinearLayout.LayoutParams(0,-2,1);nextParams.leftMargin=dp(6);footer.addView(next,nextParams);
         setExpanded(false);
     }
 
@@ -85,6 +93,7 @@ public final class PhaseOneGuideView extends FrameLayout {
 
     public View getDragHandle() { return dragHandle; }
     public void setNextAction(Runnable action) { next.setOnClickListener(v -> action.run()); }
+    public void setRescanAction(Runnable action){rescan.setOnClickListener(v->action.run());}
     public boolean isNextEnabled() { return next.isEnabled(); }
     public CharSequence getInstruction() { return instruction.getText(); }
     public boolean isExpanded() { return expanded; }
@@ -114,6 +123,7 @@ public final class PhaseOneGuideView extends FrameLayout {
         status.setVisibility(complete ? VISIBLE : GONE);
         status.setText(developer ? R.string.phase_one_dev_complete : R.string.phase_one_scan_success);
         next.setVisibility(complete ? VISIBLE : GONE);
+        rescan.setVisibility(complete&&!saving?VISIBLE:GONE);
         next.setEnabled(complete && !saving);
         next.setAlpha(complete && !saving ? 1f : .45f);
         next.setText(saving ? R.string.phase_saving : complete
@@ -145,7 +155,9 @@ public final class PhaseOneGuideView extends FrameLayout {
 
     @Override protected void onMeasure(int width, int height) {
         int limit = Math.min(maximumHeight, MeasureSpec.getSize(height));
-        super.onMeasure(width, MeasureSpec.makeMeasureSpec(limit, MeasureSpec.AT_MOST));
+        footer.measure(width,MeasureSpec.makeMeasureSpec(limit,MeasureSpec.AT_MOST));
+        scroll.measure(width,MeasureSpec.makeMeasureSpec(Math.max(0,limit-footer.getMeasuredHeight()),MeasureSpec.AT_MOST));
+        setMeasuredDimension(MeasureSpec.getSize(width),footer.getMeasuredHeight()+scroll.getMeasuredHeight());
     }
 
     @Override protected void onDetachedFromWindow() {

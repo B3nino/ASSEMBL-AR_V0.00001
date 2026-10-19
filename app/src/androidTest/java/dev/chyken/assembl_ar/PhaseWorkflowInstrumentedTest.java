@@ -38,6 +38,7 @@ import dev.chyken.assembl_ar.diagnostics.TrialLog;
 import dev.chyken.assembl_ar.model.AssemblyStep;
 import dev.chyken.assembl_ar.model.ProjectProgress;
 import dev.chyken.assembl_ar.model.StepStatus;
+import dev.chyken.assembl_ar.ui.ArHudView;
 import dev.chyken.assembl_ar.vision.CameraCalibration;
 import dev.chyken.assembl_ar.vision.MotorAssemblyObservation;
 import dev.chyken.assembl_ar.vision.RecognitionRequest;
@@ -69,6 +70,48 @@ public final class PhaseWorkflowInstrumentedTest {
     @After
     public void restoreFreshProgress() {
         positionAt(1);
+    }
+
+    @Test
+    public void welcomeBlocksScanningUntilLetsAssembleIsTapped(){
+        positionAt(1);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            AlertDialog[] welcome=new AlertDialog[1];
+            for(int i=0;i<80&&welcome[0]==null;i++){
+                scenario.onActivity(activity->{PhaseAssemblyController controller=(PhaseAssemblyController)getField(activity,"phaseController");
+                    if(controller!=null)welcome[0]=(AlertDialog)getField(controller,"welcomeDialog");
+                });
+                if(welcome[0]==null)SystemClock.sleep(100);
+            }
+            assertNotNull(welcome[0]);
+            scenario.onActivity(activity->{
+                PhaseAssemblyController controller=(PhaseAssemblyController)getField(activity,"phaseController");
+                assertNull(controller.getPhase());assertTrue(controller.isAnalysisSuspended());
+                assertEquals("Let's Assemble",welcome[0].getButton(AlertDialog.BUTTON_POSITIVE).getText().toString());
+                welcome[0].getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            scenario.onActivity(activity->assertEquals(View.VISIBLE,activity.findViewById(R.id.targetAlignmentBox).getVisibility()));
+        }
+    }
+
+    @Test
+    public void phaseTwoLookBackReturnsToTheSameActiveLaterPhase(){
+        positionAt(3);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            scenario.onActivity(activity->{
+                PhaseFlow active=controller.getFlow();
+                activity.findViewById(R.id.previousGuidedStepButton).performClick();
+                assertEquals(active,controller.getFlow());assertEquals(6,gear(controller).flow.step());
+                assertEquals(View.VISIBLE,gearCard(activity).getVisibility());
+                gearCard(activity).next.performClick();
+                assertEquals(active,controller.getFlow());assertEquals(View.GONE,gearCard(activity).getVisibility());
+                RecognitionRequest request=controller.requestFor(CameraCalibration.pinhole(500,500,320,240));
+                assertEquals(3,request.getAssemblyStepNumber());assertEquals(0,request.getPhase2Stage());
+                assertEquals(StepStatus.IN_PROGRESS,statusOf(3));
+            });
+        }
     }
 
     @Test
@@ -132,20 +175,22 @@ public final class PhaseWorkflowInstrumentedTest {
     }
 
     @Test
-    public void lookingBackKeepsTheActivePhaseAndResumesItsScanner() {
+    public void lookingBackPreservesCurrentPhaseTwoProgressAndReturnsToItsScanner() {
         positionAt(2);
         try(ActivityScenario<AssemblyActivity> scenario=launch()) {
             PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->gearCard(activity).previous.performClick());
+            awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
             scenario.onActivity(activity->{
-                PhaseFlow active=controller.getFlow();
-                activity.findViewById(R.id.previousGuidedStepButton).performClick();
-                assertEquals(active,controller.getFlow());
-                assertEquals(Mode.SCAN_PARTS,active.getMode());
+                assertEquals(Mode.COMPLETE,controller.getFlow().getMode());
                 assertTrue(controller.isAnalysisSuspended());
+                assertEquals(StepStatus.IN_PROGRESS,statusOf(2));
                 activity.findViewById(R.id.nextGuidedStepButton).performClick();
-                assertEquals(active,controller.getFlow());
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
                 assertFalse(controller.isAnalysisSuspended());
-                assertEquals(2,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getAssemblyStepNumber());
+                assertEquals(1,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getPhase2Stage());
             });
         }
     }
@@ -168,174 +213,236 @@ public final class PhaseWorkflowInstrumentedTest {
     }
 
     @Test
-    public void motorPhaseStartsWithTheWholeGroupAndHonestInventoryLabels() {
+    public void motorPhaseStartsWithFourBracketScanAndCompactCard() {
         positionAt(2);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
-            scenario.onActivity(activity -> {
-                assertEquals(Mode.SCAN_PARTS, controller.getFlow().getMode());
-                assertEquals("Phase 2 of 18", text(activity, R.id.stepCounter));
-                String inventory = text(activity, R.id.phaseInventory);
-                assertTrue(inventory, inventory.contains("◉ 4 × Gear-motor bracket — scanning"));
-                assertTrue(inventory.contains("○ 2 × 6 V DC gear motor — camera scan next"));
-                assertTrue(inventory.contains("☐ 4 × 30 mm screw"));
-                assertTrue(inventory.contains("camera cannot check this yet"));
-                assertTrue(inventory.contains("already installed"));
-                assertTrue(inventory.contains("(or Nail polish"));
-                assertEquals("Scan is not offered before the parts are found",
-                        View.GONE, activity.findViewById(R.id.scanAssemblyButton).getVisibility());
-                assertFalse(controller.isAnalysisSuspended());
-                RecognitionRequest request = controller.requestFor(CameraCalibration.pinhole(500, 500, 320, 240));
-                assertNotNull(request);
-                assertEquals(4, request.getExpectedInstanceCount());
-                assertTrue(request.inspectsLooseBracketSet());
-                assertEquals(controller.getFlow().tag(), request.getRequestTag());
-                assertTrue(text(activity, R.id.buildStampLabel).startsWith("v1.1."));
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                assertEquals(View.VISIBLE,gearCard(activity).getVisibility());
+                assertEquals(View.GONE,activity.findViewById(R.id.instructionPanel).getVisibility());
+                assertFalse(gearCard(activity).next.isEnabled());
+                RecognitionRequest request=controller.requestFor(CameraCalibration.pinhole(500,500,320,240));
+                assertEquals(4,request.getExpectedInstanceCount());assertEquals(1,request.getPhase2Stage());
+                assertEquals(controller.getFlow().tag(),request.getRequestTag());
+                assertEquals(View.VISIBLE,activity.findViewById(R.id.targetAlignmentBox).getVisibility());
             });
-            capture(scenario, "phase-motor-inventory");
+            capture(scenario,"phase2-brackets-compact");
         }
     }
 
     @Test
-    public void groupedInventoryStartsTheWholeDemoAndSuspendsCameraAnalysis() {
+    public void bracketAndMotorScansWaitForExplicitNextAndCountBothMotors() {
         positionAt(2);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                // A wrong tag (for example from an earlier attempt) never counts.
-                for (int index = 0; index < 5; index++) {
-                    frames.deliver(frames.brackets(4), new PhaseFlow.ScanTag(
-                            AssemblyPhaseCatalog.MOTOR_ASSEMBLIES, Mode.SCAN_PARTS, -1));
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                Frames frames=new Frames(activity,controller);
+                for(int i=0;i<5;i++)frames.deliver(frames.brackets(4),new PhaseFlow.ScanTag(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES,Mode.SCAN_PARTS,-1));
+                assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.brackets(4),null);
+                assertTrue(gearCard(activity).next.isEnabled());assertTrue(controller.isAnalysisSuspended());
+                frames.deliver(frames.brackets(0),null);
+                assertTrue("Detection drop cannot lock a completed scan",gearCard(activity).next.isEnabled());
+                assertEquals(1,gear(controller).flow.step());
+                gearCard(activity).next.performClick();
+                assertEquals(2,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getPhase2Stage());
+                for(int i=0;i<5;i++)frames.deliver(frames.motorPair(1),null);
+                assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.motorPair(2),null);
+                assertTrue(gearCard(activity).next.isEnabled());assertEquals(2,gear(controller).flow.step());
+                gearCard(activity).next.performClick();
+                assertEquals(3,gear(controller).flow.step());assertTrue(controller.isAnalysisSuspended());
+                assertEquals("I Have These",gearCard(activity).action.getText().toString());
+                gearCard(activity).action.performClick();
+                AlertDialog tools=(AlertDialog)getField(gear(controller),"dialog");
+                tools.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+                assertFalse(gearCard(activity).next.isEnabled());
+                gearCard(activity).action.performClick();
+                ((AlertDialog)getField(gear(controller),"dialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertTrue(gearCard(activity).next.isEnabled());assertEquals(3,gear(controller).flow.step());
+            });
+        }
+    }
+
+    @Test
+    public void allThreeHardwareViewsAreRequiredBeforeJointStability() {
+        positionAt(2);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                Phase2GuideController guide=gear(controller);
+                for(int i=1;i<=4;i++){guide.flow.devJump(i,SystemClock.elapsedRealtimeNanos());guide.flow.devCompleteStep();}
+                guide.flow.devJump(5,SystemClock.elapsedRealtimeNanos());guide.render();
+                Frames frames=new Frames(activity,controller);
+                frames.deliver(frames.hardware("left",50,0,0),null);
+                assertFalse("The wrong view cannot unlock Top",gearCard(activity).next.isEnabled());
+                for(String view:new String[]{"top","left"}){
+                    frames.deliver(frames.hardware(view,50,100,0),null);
+                    assertTrue("A positive match must unlock this view without colour counts or invalid vetoes",gearCard(activity).next.isEnabled());
+                    assertEquals(view,guide.flow.expectedHardwareView());
+                    assertTrue(controller.isAnalysisSuspended());
+                    assertEquals(ArHudView.HudState.MATCHED,((ArHudView)activity.findViewById(R.id.arHudView)).getHudState());
+                    gearCard(activity).next.performClick();
+                    assertFalse(gearCard(activity).next.isEnabled());
+                    assertFalse(controller.isAnalysisSuspended());
                 }
-                assertEquals(Mode.SCAN_PARTS, controller.getFlow().getMode());
-                assertTrue(text(activity, R.id.phaseInventory).contains("◉ 4 × Gear-motor bracket"));
-
-                for (int index = 0; index < 3; index++) frames.deliver(frames.brackets(4), null);
-                frames.deliver(frames.brackets(3), null);
-                assertTrue("Three of four brackets restart the count",
-                        text(activity, R.id.recognitionText).contains("3 of 4"));
-                for (int index = 0; index < 4; index++) frames.deliver(frames.brackets(4), null);
-                String inventory = text(activity, R.id.phaseInventory);
-                assertTrue(inventory, inventory.contains("✓ 4 × Gear-motor bracket — all 4 seen together"));
-                assertTrue(inventory.contains("◉ 2 × 6 V DC gear motor — scanning"));
-                RecognitionRequest motorRequest = controller.requestFor(CameraCalibration.pinhole(500, 500, 320, 240));
-                assertEquals(NeobotSeedData.GEAR_MOTOR, motorRequest.getExpectation().getComponentId());
-                assertNull("A loose motor scan is not an installed-motor check",
-                        motorRequest.getSpatialAnchorComponentId());
-
-                for (int index = 0; index < 4; index++) frames.deliver(frames.looseMotor(), null);
-                assertEquals(Mode.DEMO, controller.getFlow().getMode());
-                assertTrue(controller.isAnalysisSuspended());
-                assertNull(controller.requestFor(CameraCalibration.pinhole(500, 500, 320, 240)));
-                assertTrue(text(activity, R.id.demoStage).contains("step 1 of 25"));
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.scanAssemblyButton).getVisibility());
-                assertTrue(text(activity, R.id.phaseInventory).contains(
-                        "✓ 2 × 6 V DC gear motor — identified by camera (quantity not counted)"));
+                frames.deliver(frames.hardware("right",50,100,0),null);
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();
+                assertEquals(6,guide.flow.step());assertFalse(gearCard(activity).next.isEnabled());
+                assertTrue(controller.isAnalysisSuspended());assertFalse(guide.flow.allComplete());
+                gearCard(activity).action.performClick();
+                AlertDialog dialog=(AlertDialog)getField(guide,"dialog");assertTrue(dialog.isShowing());
+                assertEquals(StepStatus.IN_PROGRESS,statusOf(2));
+                List<android.widget.RadioGroup> groups=new ArrayList<>();collectRadioGroups(dialog.getWindow().getDecorView(),groups);
+                ((android.widget.RadioButton)groups.get(0).getChildAt(0)).setChecked(true);
+                ((android.widget.RadioButton)groups.get(1).getChildAt(1)).setChecked(true);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertFalse(gearCard(activity).next.isEnabled());
+                gearCard(activity).action.performClick();dialog=(AlertDialog)getField(guide,"dialog");
+                groups.clear();collectRadioGroups(dialog.getWindow().getDecorView(),groups);
+                for(android.widget.RadioGroup group:groups)((android.widget.RadioButton)group.getChildAt(0)).setChecked(true);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertTrue(gearCard(activity).next.isEnabled());assertEquals(StepStatus.IN_PROGRESS,statusOf(2));
+                gearCard(activity).next.performClick();
             });
-            capture(scenario, "phase-motor-demo");
+            awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            assertEquals(StepStatus.COMPLETED,statusOf(2));
+            assertEquals(StepStatus.IN_PROGRESS,statusOf(3));
         }
     }
 
     @Test
-    public void scanVerifiesTheMotorPairThenProbesEachBracketSlot() {
+    public void legacyNegativeEvidenceDoesNotRejectAndRescanStillNeedsConfirmation() {
         positionAt(2);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                frames.completeInventory();
-                controller.onFinished();
-                assertEquals(Mode.ASSEMBLE, controller.getFlow().getMode());
-                assertTrue("The device may be set down while assembling", controller.isAnalysisSuspended());
-                PhaseFlow.ScanTag assembling = controller.getFlow().tag();
-                activity.findViewById(R.id.scanAssemblyButton).performClick();
-                assertEquals(Mode.VERIFY, controller.getFlow().getMode());
-                RecognitionRequest request = controller.requestFor(CameraCalibration.pinhole(500, 500, 320, 240));
-                assertTrue(request.inspectsInstalledMotors());
-
-                // A frame requested before Scan is not verification evidence.
-                frames.deliver(frames.installedMotors(true, true), assembling);
-                assertNull(controller.getSession());
-
-                for (int index = 0; index < 4; index++) frames.deliver(frames.installedMotors(false, false), null);
-                for (int index = 0; index < 6; index++) frames.deliver(frames.installedMotors(true, true), null);
-                PhaseVerificationSession session = controller.getSession();
-                assertTrue(session.getResult("left_motor").isAccepted());
-                assertTrue(session.getResult("right_motor").isAccepted());
-                assertEquals("bracket_slot_1", session.getActiveGroup());
-                RecognitionRequest slot = controller.requestFor(CameraCalibration.pinhole(500, 500, 320, 240));
-                assertEquals(1, slot.getGuidedBracketSlot());
-                assertTrue("Motors stay inspected while brackets are probed",
-                        slot.requestsInstalledMotorInspection());
-                String results = text(activity, R.id.phaseResults);
-                assertTrue(results, results.contains("✓ Left motor"));
-                assertTrue(results.contains("… Bracket 1 · left outer slot"));
-            });
-            capture(scenario, "phase-motor-verifying");
-        }
-    }
-
-    @Test
-    public void aMisplacedMotorBecomesANamedCorrectionWithItsDemoChapters() {
-        positionAt(2);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                frames.completeInventory();
-                controller.onFinished();
-                activity.findViewById(R.id.scanAssemblyButton).performClick();
-                for (int index = 0; index < 4; index++) frames.deliver(frames.installedMotors(false, false), null);
-                frames.deliver(frames.misalignedRight(), null);
-                frames.deliver(frames.installedMotors(false, false), null);
-                assertEquals("One noisy frame is not a correction", Mode.VERIFY, controller.getFlow().getMode());
-                for (int index = 0; index < PhaseVerificationSession.ERROR_FRAMES; index++) {
-                    frames.deliver(frames.misalignedRight(), null);
-                }
-                assertEquals(Mode.CORRECTION, controller.getFlow().getMode());
-                assertEquals("right_motor", controller.getFlow().getCorrectionTargetId());
-                assertTrue(text(activity, R.id.phaseResults).contains("✗ Right motor — wrong position"));
-                assertTrue(text(activity, R.id.demoStage).contains("right motor"));
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.scanAssemblyButton).getVisibility());
-                assertFalse("Analysis continues only to keep the red target on the board",
-                        controller.isAnalysisSuspended());
-            });
-            capture(scenario, "phase-motor-correction");
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                // Correction frames never count as verification evidence.
-                for (int index = 0; index < 8; index++) frames.deliver(frames.installedMotors(true, true), null);
-                assertEquals(Mode.CORRECTION, controller.getFlow().getMode());
-                activity.findViewById(R.id.scanAssemblyButton).performClick();
-                assertEquals(Mode.VERIFY, controller.getFlow().getMode());
-                assertNull("A fresh Scan starts a fresh session", controller.getSession());
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                Phase2GuideController guide=gear(controller);guide.flow.devJump(5,SystemClock.elapsedRealtimeNanos());guide.render();
+                Frames frames=new Frames(activity,controller);
+                frames.deliver(frames.hardware("top",50,100,0),null);
+                assertFalse(guide.flow.hardwareViews().isEmpty());
+                assertTrue(gearCard(activity).next.isEnabled());assertNull(getField(guide,"dialog"));
+                PhaseFlow.ScanTag old=guide.flow.tag();gearCard(activity).rescan.performClick();
+                assertEquals("The confirmation guard retains evidence until confirmed",old,guide.flow.tag());
+                AlertDialog confirmation=(AlertDialog)getField(guide,"dialog");
+                assertTrue(((TextView)confirmation.findViewById(android.R.id.message)).getText().toString().contains("verification progress will be reset"));
+                confirmation.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertFalse(old.equals(guide.flow.tag()));assertEquals(5,guide.flow.step());
             });
         }
     }
 
     @Test
-    public void pausingDuringAScanDiscardsItAndReplayNeverCompletes() {
+    public void pausingHardwareVerificationKeepsConfirmedViewsAndDiscardsOldFrames() {
+        positionAt(2);PhaseFlow.ScanTag[] old=new PhaseFlow.ScanTag[1];
+        try(ActivityScenario<AssemblyActivity> scenario=launch()) {
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                Phase2GuideController guide=gear(controller);guide.flow.devJump(5,SystemClock.elapsedRealtimeNanos());guide.render();
+                Frames frames=new Frames(activity,controller);frames.deliver(frames.hardware("top",50,0,0),null);
+                assertFalse(guide.flow.hardwareViews().isEmpty());old[0]=guide.flow.tag();
+                gearCard(activity).next.performClick();
+            });
+            scenario.moveToState(Lifecycle.State.STARTED);scenario.moveToState(Lifecycle.State.RESUMED);
+            scenario.onActivity(activity->{
+                Phase2GuideController guide=gear(controller);assertEquals("left",guide.flow.expectedHardwareView());
+                Frames frames=new Frames(activity,controller);for(int i=0;i<4;i++)frames.deliver(frames.hardware("top",50,0,2),old[0]);
+                assertEquals(1,guide.flow.hardwareViews().size());assertEquals(Mode.VERIFY,controller.getFlow().getMode());
+                assertFalse(gearCard(activity).next.isEnabled());
+            });
+            assertEquals(StepStatus.IN_PROGRESS,statusOf(2));
+        }
+    }
+
+    @Test
+    public void leavingTheAssemblyAndReopeningRestoresTheNextUnscannedHardwareSide(){
         positionAt(2);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
-            scenario.onActivity(activity -> {
-                new Frames(activity, controller).completeInventory();
-                controller.onFinished();
-                activity.findViewById(R.id.replayDemoButton).performClick();
-                assertEquals(Mode.DEMO, controller.getFlow().getMode());
-                controller.onFinished();
-                assertEquals(Mode.ASSEMBLE, controller.getFlow().getMode());
-                activity.findViewById(R.id.scanAssemblyButton).performClick();
-                assertEquals(Mode.VERIFY, controller.getFlow().getMode());
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            scenario.onActivity(activity->{
+                Phase2GuideController guide=gear(controller);guide.flow.devJump(5,SystemClock.elapsedRealtimeNanos());guide.render();
+                Frames frames=new Frames(activity,controller);
+                frames.deliver(frames.hardware("top",50,0,0),null);gearCard(activity).next.performClick();
+                frames.deliver(frames.hardware("left",50,0,0),null);
+                assertEquals("left",guide.flow.expectedHardwareView());assertTrue(gearCard(activity).next.isEnabled());
             });
-            scenario.moveToState(Lifecycle.State.STARTED);
-            scenario.moveToState(Lifecycle.State.RESUMED);
-            scenario.onActivity(activity -> {
-                assertEquals(Mode.ASSEMBLE, controller.getFlow().getMode());
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.scanAssemblyButton).getVisibility());
+        }
+        try(ActivityScenario<AssemblyActivity> reopened=launch()){
+            PhaseAssemblyController restored=awaitPhase(reopened,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            reopened.onActivity(activity->{
+                assertEquals(5,gear(restored).flow.step());
+                assertEquals("left",gear(restored).flow.expectedHardwareView());
+                assertEquals(2,gear(restored).flow.hardwareViews().size());
+                assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).next.performClick();
+                assertEquals("right",gear(restored).flow.expectedHardwareView());assertFalse(gearCard(activity).next.isEnabled());
             });
-            assertEquals(StepStatus.IN_PROGRESS, statusOf(2));
+        }
+    }
+
+    @Test
+    public void developerHardwareSessionResumesWithoutResettingToLearnerPhaseOne(){
+        positionAt(1);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            scenario.onActivity(activity->{
+                controller.devJumpToChapter(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES),4);
+                Frames frames=new Frames(activity,controller);frames.deliver(frames.hardware("top",50,0,0),null);
+                assertTrue(gearCard(activity).next.isEnabled());
+                assertEquals("top",gear(controller).flow.expectedHardwareView());
+            });
+        }
+        try(ActivityScenario<AssemblyActivity> resumed=launch()){
+            PhaseAssemblyController controller=awaitPhase(resumed,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES);
+            resumed.onActivity(activity->{
+                assertEquals(5,gear(controller).flow.step());assertEquals("top",gear(controller).flow.expectedHardwareView());
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();
+                assertEquals("left",gear(controller).flow.expectedHardwareView());assertFalse(gearCard(activity).next.isEnabled());
+                assertEquals(StepStatus.IN_PROGRESS,statusOf(1));assertEquals(StepStatus.NOT_STARTED,statusOf(2));
+            });
+            resumed.onActivity(activity->controller.returnToSavedAssembly());
+            awaitPhase(resumed,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            resumed.onActivity(activity->assertFalse(controller.isDeveloperSession()));
+        }
+    }
+
+    @Test
+    public void developerDemoResumesAtTheSelectedChapter(){
+        positionAt(1);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            scenario.onActivity(activity->{
+                controller.devJumpToChapter(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT),2);
+                assertEquals(2,((dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter)getField(controller,"shownChapter")).getIndex());
+            });
+        }
+        try(ActivityScenario<AssemblyActivity> resumed=launch()){
+            PhaseAssemblyController controller=awaitPhase(resumed,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            resumed.onActivity(activity->{
+                assertEquals(2,((dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter)getField(controller,"shownChapter")).getIndex());
+                assertTrue(controller.isDeveloperSession());
+            });
+        }
+    }
+
+    @Test
+    public void developerFinishingTheSelectedJointCheckNavigatesToPhaseThreeWithoutSavingLearnerCompletion(){
+        positionAt(1);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
+            scenario.onActivity(activity->{
+                controller.devJumpToChapter(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES),5);
+                gearCard(activity).action.performClick();
+                AlertDialog dialog=(AlertDialog)getField(gear(controller),"dialog");
+                List<android.widget.RadioGroup> groups=new ArrayList<>();collectRadioGroups(dialog.getWindow().getDecorView(),groups);
+                for(android.widget.RadioGroup group:groups)((android.widget.RadioButton)group.getChildAt(0)).setChecked(true);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            assertEquals(StepStatus.IN_PROGRESS,statusOf(1));assertEquals(StepStatus.NOT_STARTED,statusOf(2));
+        }
+        try(ActivityScenario<AssemblyActivity> resumed=launch()){
+            awaitPhase(resumed,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
         }
     }
 
@@ -526,6 +633,13 @@ public final class PhaseWorkflowInstrumentedTest {
         assertTrue(all.contains("motor_assemblies/DEMO"));
     }
 
+    private static Phase2GuideController gear(PhaseAssemblyController controller){return (Phase2GuideController)getField(controller,"gearGuide");}
+    private static dev.chyken.assembl_ar.ui.CompactGuideCard gearCard(AssemblyActivity activity){return activity.findViewById(R.id.phaseTwoGuide);}
+    private static void collectRadioGroups(View view,List<android.widget.RadioGroup> groups){
+        if(view instanceof android.widget.RadioGroup)groups.add((android.widget.RadioGroup)view);
+        if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)collectRadioGroups(((ViewGroup)view).getChildAt(i),groups);
+    }
+
     // ---- Fixtures ------------------------------------------------------------------------------
 
     private static void positionAt(int section) {
@@ -561,6 +675,10 @@ public final class PhaseWorkflowInstrumentedTest {
             scenario.onActivity(activity -> {
                 PhaseAssemblyController controller =
                         (PhaseAssemblyController) getField(activity, "phaseController");
+                if(controller!=null && controller.getPhase()==null) {
+                    AlertDialog welcome=(AlertDialog)getField(controller,"welcomeDialog");
+                    if(welcome!=null&&welcome.isShowing())welcome.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                }
                 found[0] = controller != null && controller.getPhase() != null
                         && controller.getPhase().getId().equals(phaseId)
                         && activity.findViewById(R.id.previewView).getWidth() > 0 ? controller : null;
@@ -625,9 +743,11 @@ public final class PhaseWorkflowInstrumentedTest {
         }
 
         void completeInventory() {
-            for (int index = 0; index < 4; index++) deliver(brackets(4), null);
-            for (int index = 0; index < 4; index++) deliver(looseMotor(), null);
-            assertEquals(Mode.DEMO, controller.getFlow().getMode());
+            for(int i=0;i<3;i++)deliver(brackets(4),null);
+            gearCard(activity).next.performClick();
+            for(int i=0;i<3;i++)deliver(motorPair(2),null);
+            gearCard(activity).next.performClick();
+            assertEquals(Mode.DEMO,controller.getFlow().getMode());
         }
 
         /** @param tag null uses the controller's current tag */
@@ -651,10 +771,21 @@ public final class PhaseWorkflowInstrumentedTest {
                         NeobotSeedData.MOTOR_BRACKET, RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK,
                         quad(left, height * 0.40, width * 0.14, height * 0.20), 0.9));
             }
-            return component(NeobotSeedData.MOTOR_BRACKET, instances.get(0).getProjectedCorners(),
+            return component(NeobotSeedData.MOTOR_BRACKET, instances.isEmpty()?board:instances.get(0).getProjectedCorners(),
                     instances, 2, null, null);
         }
 
+        RecognitionResult motorPair(int count) {
+            List<RecognitionResult.InstanceObservation> objects=new ArrayList<>();
+            for(int i=0;i<count;i++)objects.add(new RecognitionResult.InstanceObservation("motor-"+i,NeobotSeedData.GEAR_MOTOR,
+                    RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY,quad(width*(.15+i*.4),height*.35,width*.25,height*.25),.95));
+            return component(NeobotSeedData.GEAR_MOTOR,objects.get(0).getProjectedCorners(),objects,2,null,null);
+        }
+        RecognitionResult hardware(String view,double positive,double negative,int motors) {
+            RecognitionResult base=component(NeobotSeedData.MAIN_BOARD,board,Collections.emptyList(),2,null,null);
+            return (RecognitionResult)call(base,"withPhase2Observation",new Class<?>[]{dev.chyken.assembl_ar.vision.Phase2Observation.class},
+                    new dev.chyken.assembl_ar.vision.Phase2Observation(view,positive,negative,motors));
+        }
         RecognitionResult looseMotor() {
             List<VisionPoint> corners = quad(width * 0.35, height * 0.35, width * 0.30, height * 0.25);
             return component(NeobotSeedData.GEAR_MOTOR, corners, Collections.emptyList(), 2, null, null);

@@ -95,12 +95,12 @@ public final class ProjectDetailActivity extends AppCompatActivity {
                 + " manual sections verified · " + progress.getPercentComplete() + "%");
         if (progress.isComplete()) {
             startButton.setText(R.string.review_project);
-        } else if (progress.getCompletedSteps() > 0) {
+        } else if (progress.isStarted()) {
             startButton.setText(R.string.resume_assembly);
         } else {
             startButton.setText(R.string.begin_assembly);
         }
-        restartButton.setVisibility(progress.getCompletedSteps() > 0 ? View.VISIBLE : View.GONE);
+        restartButton.setVisibility(progress.isStarted() ? View.VISIBLE : View.GONE);
         renderSteps(project.getSteps(), progress.getSteps());
     }
 

@@ -154,6 +154,17 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             RecognitionRequest request = requestProvider.requestFor(metadata);
             Object requestTag = request == null ? null : request.getRequestTag();
             int assemblyStep = request == null ? 0 : request.getAssemblyStepNumber();
+            if(request!=null && request.getPhase2Stage()==5) {
+                RecognitionResult inspected=recognizer.inspectPhase2(analyzed,metadata.getTimestampNanos(),5,null)
+                        .withAssemblyInspection(2,null,false,null).withRequestTag(requestTag);
+                FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);
+                if(snapshot!=null){
+                    if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
+                    captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());
+                }
+                if(!closed.get()) deliverResult(inspected);
+                return;
+            }
             double frameGapMs = previousBoardFrame == null ? Double.NaN
                     : (metadata.getTimestampNanos() - previousBoardFrame.getTimestampNanos()) / 1_000_000.0;
             int recognitionPasses = 0;
@@ -170,7 +181,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             RecognitionResult boardDetection = null;
             // Inventory recognition needs only the loose parts; avoid a second independent board
             // recognition pass until the user starts an actual installed-slot instruction.
-            if (assemblyStep > 0 && !request.inspectsLooseBracketSet()) {
+            if (assemblyStep > 0 && request.getPhase2Stage()==0 && !request.inspectsLooseBracketSet()) {
                 recognitionPasses++;
                 boardDetection = recognizer.recognizeBoard(analyzed,
                         metadata.getTimestampNanos(), request.getCameraCalibration(), assemblyStep);
@@ -364,6 +375,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             result = result.withAssemblyInspection(assemblyStep, workplane,
                     workplaneTracked, motorObservation).withBoardObservation(board)
                     .withRequestTag(requestTag);
+            if(request!=null && request.getPhase2Stage()>0)
+                result=recognizer.inspectPhase2(analyzed,metadata.getTimestampNanos(),request.getPhase2Stage(),result);
             FrameSnapshotCallback requestedSnapshot = pendingFrameSnapshot.getAndSet(null);
             if (requestedSnapshot != null) {
                 try {

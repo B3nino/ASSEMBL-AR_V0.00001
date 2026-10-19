@@ -37,6 +37,8 @@ import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
  * verbatim; authored lines consolidate fastening and seating facts the camera cannot see.</p>
  */
 public final class AssemblyPhaseCatalog {
+    /** Planned roadmap. Phase 3–11 membership awaits the user's revised grouping. */
+    public static final int ROADMAP_PHASE_COUNT=11;
     /** Bump whenever phase membership, targets or checklists change; shown in the build stamp. */
     public static final int REVISION = 2;
 

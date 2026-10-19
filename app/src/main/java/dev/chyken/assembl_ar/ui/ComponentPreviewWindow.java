@@ -33,7 +33,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
 
     public ComponentPreviewWindow(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        setBackgroundColor(Color.rgb(22,30,32));
+        setBackgroundColor(0xD0F0F0F0);
         int pad=UiUtils.dp(context,4);
         setPadding(pad,pad,pad,pad);
         viewport=new FrameLayout(context);
@@ -42,12 +42,12 @@ public final class ComponentPreviewWindow extends FrameLayout {
         modelParams.bottomMargin=UiUtils.dp(context,38);
         addView(viewport,modelParams);
         title=new TextView(context);
-        title.setTextColor(Color.WHITE); title.setTextSize(13); title.setMaxLines(1);
+        title.setTextColor(0xFF26332D); title.setTextSize(13); title.setMaxLines(1);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setGravity(Gravity.CENTER_VERTICAL); title.setPadding(UiUtils.dp(context,10),0,UiUtils.dp(context,44),0);
         addView(title,new LayoutParams(-1,UiUtils.dp(context,32),Gravity.TOP));
         hint=new TextView(context);
-        hint.setText(R.string.preview_rotate_hint); hint.setTextColor(Color.WHITE); hint.setTextSize(12);
+        hint.setText(R.string.preview_rotate_hint); hint.setTextColor(0xFF47534C); hint.setTextSize(12);
         hint.setGravity(Gravity.CENTER_VERTICAL);
         LayoutParams hintParams=new LayoutParams(-1,UiUtils.dp(context,22),Gravity.TOP);
         hintParams.topMargin=UiUtils.dp(context,32);
@@ -55,7 +55,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         addView(hint,hintParams);
         TextView resizeCaption=new TextView(context);
         resizeCaption.setText(R.string.preview_resize_visible); resizeCaption.setTextSize(11);
-        resizeCaption.setTextColor(0xFFB6C8C9); resizeCaption.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+        resizeCaption.setTextColor(0xFF47534C); resizeCaption.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
         LayoutParams captionParams=new LayoutParams(-1,UiUtils.dp(context,38),Gravity.BOTTOM);
         captionParams.leftMargin=UiUtils.dp(context,48);
         captionParams.rightMargin=UiUtils.dp(context,10);
@@ -89,6 +89,13 @@ public final class ComponentPreviewWindow extends FrameLayout {
     }
 
     public void setResizeListener(@Nullable ResizeListener listener) { resizeListener=listener; }
+    public void showInteractionHint(){hint.animate().cancel();hint.setAlpha(1);removeCallbacks(fadeHint);postDelayed(fadeHint,3_000);}
+    public void showContent(View content,String name){
+        if(surface!=null)surface.onPause();surface=null;componentId=null;
+        viewport.removeAllViews();viewport.addView(content,new LayoutParams(-1,-1));
+        title.setText(name);hint.animate().cancel();hint.setAlpha(0);removeCallbacks(fadeHint);
+        setVisibility(VISIBLE);outline.state=ArHudView.HudState.SEARCHING;outline.invalidate();
+    }
 
     public void showComponent(String id, String name) {
         if (id == null || !ComponentModelCatalog.hasModel(id)) { setVisibility(GONE); return; }
@@ -103,8 +110,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         viewport.addView(surface,new LayoutParams(-1,-1));
         if (resumed) surface.onResume();
         outline.state=ArHudView.HudState.SEARCHING;
-        hint.animate().cancel(); hint.setAlpha(1f);
-        removeCallbacks(fadeHint); postDelayed(fadeHint,3_000);
+        showInteractionHint();
     }
 
     public void onHudState(ArHudView.HudState state) {

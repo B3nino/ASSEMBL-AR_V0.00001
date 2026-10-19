@@ -249,6 +249,9 @@ public final class AssemblyActivity extends AppCompatActivity {
     private LinearLayout instructionPanel;
     private StepInfoPanelController stepInfoPanel;
     private dev.chyken.assembl_ar.ui.ComponentPreviewWindow componentPreview;
+    private boolean assemblyWelcomeAccepted;
+    boolean assemblyWelcomeAccepted(){return assemblyWelcomeAccepted;}
+    void acceptAssemblyWelcome(){assemblyWelcomeAccepted=true;}
     private TextView stepCounter;
     private TextView progressLabel;
     private LinearProgressIndicator assemblyProgress;
@@ -294,6 +297,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        assemblyWelcomeAccepted=savedInstanceState!=null&&savedInstanceState.getBoolean("assembly_welcome_accepted",false);
         MeasurementRecorder.install(this);
         setContentView(R.layout.activity_assembly);
         bindViews();
@@ -2048,6 +2052,13 @@ public final class AssemblyActivity extends AppCompatActivity {
                         : board.isDetected() ? "ORB detection" : "lost",
                 result.getAssemblyStepNumber(), board.isDetected(),
                 board.getDetection().getGoodMatchCount(), board.getDetection().getInlierCount()));
+        else diagnosticsText.append(String.format(Locale.US,"\nFPS: %.1f\nORB keypoints: %d\ntracking: %s",
+                diagnosticFps,result.getFrameKeypointCount(),result.getPhase2Observation()!=null
+                        ?result.getPhase2Observation().rejected?"rejected scene":result.getPhase2Observation().referenceSupported?"photo evidence":"searching scene"
+                        :result.hasLocatedComponent()?"component located":"searching"));
+        if(result.getPhase2Observation()!=null)diagnosticsText.append(String.format(Locale.US,
+                "\nscene: %s\npositive/negative: %.1f / %.1f\nvisible gearboxes: %d",result.getPhase2Observation().view,
+                result.getPhase2Observation().positiveScore,result.getPhase2Observation().negativeScore,result.getPhase2Observation().visibleMotors));
         if (diagnosticsVisible) {
             RecognitionResult.SpatialAnchor boardAnchor = board == null ? null : board.getAnchor();
             List<VisionPoint> boardCorners = boardAnchor == null
@@ -2875,6 +2886,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Nullable TrialLog trialLog() { return trialLog; }
     void stepInfoChanged(String key) { stepInfoPanel.onStepChanged(key); }
     void setPhaseOneGuideActive(boolean active) { stepInfoPanel.setPhaseOneActive(active); }
+    void setPhaseTwoGuideActive(boolean active) { stepInfoPanel.setPhaseTwoActive(active); }
     void showComponentPreview(String id, String name) {
         if(componentPreview!=null) componentPreview.showComponent(id,name);
     }
@@ -2907,6 +2919,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putLong("session_started_at", sessionStartedAt);
+        outState.putBoolean("assembly_welcome_accepted",assemblyWelcomeAccepted);
         stepInfoPanel.saveState(outState);
         super.onSaveInstanceState(outState);
     }

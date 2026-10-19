@@ -27,13 +27,17 @@ public final class AssetImageLoader {
     }
 
     public static void load(ImageView target, @Nullable String assetPath) {
+        loadBounded(target,assetPath,0);
+    }
+    public static void loadBounded(ImageView target,@Nullable String assetPath,int maximumDimension) {
         if (assetPath == null || assetPath.isEmpty()) {
             target.setTag(null);
             target.setImageDrawable(null);
             return;
         }
-        target.setTag(assetPath);
-        Bitmap cached = CACHE.get(assetPath);
+        String key=maximumDimension>0?assetPath+"#"+maximumDimension:assetPath;
+        target.setTag(key);
+        Bitmap cached = CACHE.get(key);
         if (cached != null && !cached.isRecycled()) {
             target.setImageBitmap(cached);
             return;
@@ -44,20 +48,28 @@ public final class AssetImageLoader {
         target.setImageDrawable(null);
         WeakReference<ImageView> targetReference = new WeakReference<>(target);
         EXECUTOR.execute(() -> {
-            Bitmap bitmap = decode(applicationContext, assetPath);
+            Bitmap bitmap = maximumDimension>0?decodeBounded(applicationContext,assetPath,maximumDimension):decode(applicationContext, assetPath);
             if (bitmap == null) {
                 return;
             }
-            CACHE.put(assetPath, bitmap);
+            CACHE.put(key, bitmap);
             ImageView imageView = targetReference.get();
             if (imageView != null) {
                 imageView.post(() -> {
-                    if (assetPath.equals(imageView.getTag())) {
+                    if (key.equals(imageView.getTag())) {
                         imageView.setImageBitmap(bitmap);
                     }
                 });
             }
         });
+    }
+    @Nullable private static Bitmap decodeBounded(Context context,String path,int maximum){
+        BitmapFactory.Options options=new BitmapFactory.Options();options.inJustDecodeBounds=true;
+        try(InputStream stream=context.getAssets().open(path)){BitmapFactory.decodeStream(stream,null,options);}catch(IOException failure){return null;}
+        options.inSampleSize=1;
+        while(Math.max(options.outWidth,options.outHeight)/options.inSampleSize>maximum)options.inSampleSize*=2;
+        options.inJustDecodeBounds=false;
+        try(InputStream stream=context.getAssets().open(path)){return BitmapFactory.decodeStream(stream,null,options);}catch(IOException failure){return null;}
     }
 
     @Nullable
