@@ -19,6 +19,7 @@ import android.util.AttributeSet;
 import android.util.LruCache;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.MotionEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
@@ -33,6 +34,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import dev.chyken.assembl_ar.model.PinConnection;
+import dev.chyken.assembl_ar.model.MotorWireColorConfig;
+import dev.chyken.assembl_ar.model.MotorWireColorConfig.Terminal;
+import dev.chyken.assembl_ar.data.NeobotSeedData;
 import dev.chyken.assembl_ar.vision.VisionPoint;
 import dev.chyken.assembl_ar.workflow.ChassisRelativePlacementGate.TargetProjection;
 import dev.chyken.assembl_ar.workflow.GuidedDemonstrationCatalog.Action;
@@ -65,6 +69,12 @@ public final class AssemblyDemoView extends View {
     private int imageGeneration;
     private float progress;
     private boolean explicitlyPaused;
+    @Nullable private MotorWireColorConfig motorWireColors;
+    private List<PinConnection> motorConnections=java.util.Collections.emptyList();
+    @Nullable private java.util.function.Consumer<Terminal> wireSelected;
+    private Terminal selectedWire=Terminal.LEFT_POSITIVE;
+    @Nullable private MotorWiringArtworkRenderer wiringArtwork;
+    private boolean wireTouch;
 
     public AssemblyDemoView(@NonNull Context context) { this(context, null); }
 
@@ -87,6 +97,7 @@ public final class AssemblyDemoView extends View {
     /** Replaces the instruction and starts its demonstration from the beginning when visible. */
     public void setDemo(@Nullable Demo value) {
         animator.cancel();
+        motorWireColors=null;motorConnections=java.util.Collections.emptyList();wireSelected=null;setClickable(false);animator.setRepeatCount(0);
         demo = value;
         progress = 0f;
         reference = null;
@@ -147,7 +158,7 @@ public final class AssemblyDemoView extends View {
     }
 
     private void startOrResume() {
-        if (demo == null || explicitlyPaused) return;
+        if (demo == null && motorWireColors==null || explicitlyPaused) return;
         if (reduceMotion()) {
             animator.cancel();
             progress = 1f;
@@ -156,7 +167,7 @@ public final class AssemblyDemoView extends View {
         }
         if (!isAttachedToWindow() || !isShown() || getWindowVisibility() != VISIBLE) return;
         if (animator.isPaused()) animator.resume();
-        else if (!animator.isStarted() && progress < 1f) animator.start();
+        else if (!animator.isStarted() && (progress < 1f || motorWireColors!=null)) animator.start();
     }
 
     @Override protected void onAttachedToWindow() {
@@ -194,6 +205,7 @@ public final class AssemblyDemoView extends View {
         super.onDraw(canvas);
         fill(BACKGROUND);
         canvas.drawRoundRect(0, 0, getWidth(), getHeight(), dp(14), dp(14), paint);
+        if(motorWireColors!=null){drawMotorWiring(canvas);return;}
         if (demo == null || getWidth() < dp(80) || getHeight() < dp(90)) return;
         float inset = dp(12);
         text(canvas, demo.getRelationship() != Relationship.NONE ? "BOARD SLOT DETAIL · FRONT ↑"
@@ -212,6 +224,32 @@ public final class AssemblyDemoView extends View {
         canvas.restoreToCount(save);
         drawPhase(canvas);
     }
+
+    /** Independent custom schematic; never projected onto the live camera or played as a video. */
+    public void setMotorWireColors(@NonNull MotorWireColorConfig colors){
+        boolean entering=motorWireColors==null;motorWireColors=colors;motorConnections=NeobotSeedData.getPhase4PinConnections(colors);demo=null;reference=null;imageGeneration++;
+        StringBuilder description=new StringBuilder("Motor wiring using component illustrations. Green screw blocks toward you; six small header pins away. Inner motor tabs face the board center. Motor tabs have no marked polarity. ");
+        for(Terminal t:Terminal.values())description.append(t.spoken()).append(", ").append(colors.swatch(t).label).append(" wire to ").append(t.output).append(". ");
+        if(wiringArtwork==null)wiringArtwork=new MotorWiringArtworkRenderer(this);
+        setContentDescription(description);if(entering){animator.cancel();progress=0;animator.setRepeatCount(ValueAnimator.INFINITE);}startOrResume();invalidate();
+    }
+    public void setSelectedMotorWire(Terminal terminal){selectedWire=terminal;invalidate();}
+    public void setOnMotorWireSelected(@Nullable java.util.function.Consumer<Terminal> listener){wireSelected=listener;setClickable(listener!=null);}
+    public List<PinConnection> getMotorWireConnections(){return motorConnections;}
+    @Override public boolean onTouchEvent(MotionEvent event){
+        if(motorWireColors==null||wireSelected==null)return super.onTouchEvent(event);
+        if(event.getActionMasked()==MotionEvent.ACTION_DOWN){wireTouch=hitWire(event.getX(),event.getY())!=null;return wireTouch;}
+        if(event.getActionMasked()==MotionEvent.ACTION_UP&&wireTouch){wireTouch=false;Terminal terminal=hitWire(event.getX(),event.getY());if(terminal!=null){selectedWire=terminal;performClick();wireSelected.accept(terminal);invalidate();}return true;}
+        if(event.getActionMasked()==MotionEvent.ACTION_CANCEL)wireTouch=false;return true;
+    }
+    @Override public boolean performClick(){super.performClick();return true;}
+    private Terminal hitWire(float x,float y){return wiringArtwork==null?null:wiringArtwork.hit(x,y);}
+    /** Artwork and pin hit targets share the same fitted/cropped/rotated transform. */
+    private void drawMotorWiring(Canvas canvas){
+        if(wiringArtwork!=null)wiringArtwork.draw(canvas,getWidth(),getHeight(),motorWireColors,
+                selectedWire,wireSelected!=null,progress,!reduceMotion());
+    }
+    public boolean isMotorWiringArtworkReady(){return wiringArtwork!=null&&wiringArtwork.isReady();}
 
     private void drawPlacement(Canvas canvas, List<TargetProjection> targets) {
         // Reserve space around the unit square: authored outboard targets must not be clamped.

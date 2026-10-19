@@ -48,6 +48,8 @@ public final class PhaseFlow {
     private final AssemblyPhase phase;
     private Phase2GearMotorFlow gearMotorFlow;
     private Phase3MotorDriverFlow driverFlow;
+    private Phase4MotorWiringFlow wiringFlow;
+    public void attachWiringFlow(Phase4MotorWiringFlow flow){if(!AssemblyPhaseCatalog.MOTOR_LEADS.equals(phase.getId()))throw new IllegalStateException();wiringFlow=Objects.requireNonNull(flow);}
     public void attachDriverFlow(Phase3MotorDriverFlow flow){if(!AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT.equals(phase.getId()))throw new IllegalStateException();driverFlow=Objects.requireNonNull(flow);}
     public void attachGearMotorFlow(Phase2GearMotorFlow flow){
         if(!AssemblyPhaseCatalog.MOTOR_ASSEMBLIES.equals(phase.getId()))throw new IllegalStateException();
@@ -85,17 +87,18 @@ public final class PhaseFlow {
     }
 
     public AssemblyPhase getPhase() { return phase; }
-    public Mode getMode() { return driverFlow!=null?driverFlow.mode():gearMotorFlow==null?mode:gearMotorFlow.mode(); }
-    public int getGeneration() { return driverFlow!=null?driverFlow.tag().getGeneration():gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
+    public Mode getMode() { return wiringFlow!=null?wiringFlow.mode():driverFlow!=null?driverFlow.mode():gearMotorFlow==null?mode:gearMotorFlow.mode(); }
+    public int getGeneration() { return wiringFlow!=null?wiringFlow.tag().getGeneration():driverFlow!=null?driverFlow.tag().getGeneration():gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
     /** A demo opened from part scanning; it returns to scanning without skipping inventory. */
     public boolean isPreviewing() { return previewing; }
-    public boolean isInventoryComplete() { return driverFlow!=null?driverFlow.step()>1:gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete(); }
+    public boolean isInventoryComplete() { return wiringFlow!=null||(driverFlow!=null?driverFlow.step()>1:gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete()); }
     @Nullable public String getCorrectionTargetId() { return correctionTargetId; }
 
-    public ScanTag tag() { return driverFlow!=null?driverFlow.tag():gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
+    public ScanTag tag() { return wiringFlow!=null?wiringFlow.tag():driverFlow!=null?driverFlow.tag():gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
 
     /** Camera analysis is needed only while identifying parts or verifying the finished group. */
     public boolean collectsEvidence() {
+        if(wiringFlow!=null)return false;
         if(driverFlow!=null)return driverFlow.scanning();
         if(gearMotorFlow!=null)return gearMotorFlow.scanning();
         return mode == Mode.SCAN_PARTS && !previewing || mode == Mode.VERIFY;
@@ -103,6 +106,7 @@ public final class PhaseFlow {
 
     /** Scan is offered while the learner watches, assembles, or has just seen a correction. */
     public boolean canScan() {
+        if(wiringFlow!=null)return false;
         if(driverFlow!=null)return false;
         if(gearMotorFlow!=null)return false;
         return mode == Mode.DEMO && !previewing || mode == Mode.ASSEMBLE || mode == Mode.CORRECTION;
@@ -113,6 +117,7 @@ public final class PhaseFlow {
      * window opened and newer than every frame already used. Duplicates and reordered frames fail.
      */
     public boolean accept(@Nullable ScanTag resultTag, long frameNanos) {
+        if(wiringFlow!=null)return false;
         if(driverFlow!=null)return driverFlow.accepts(resultTag,frameNanos);
         if(gearMotorFlow!=null)return gearMotorFlow.accepts(resultTag,frameNanos);
         if (!collectsEvidence() || !tag().equals(resultTag)
@@ -126,6 +131,7 @@ public final class PhaseFlow {
      * next verification group, so frames requested for the previous subject cannot be reused.
      */
     public void restartEvidence(long nowNanos) {
+        if(wiringFlow!=null){wiringFlow.interrupt();return;}
         if(driverFlow!=null){driverFlow.resume(nowNanos);return;}
         if(gearMotorFlow!=null){gearMotorFlow.restartEvidence(nowNanos);return;}
         if (collectsEvidence()) enter(mode, nowNanos);
@@ -221,6 +227,7 @@ public final class PhaseFlow {
 
     /** Activity pause/navigation: in-flight evidence is discarded and a Scan must be repeated. */
     public void interrupt(long nowNanos) {
+        if(wiringFlow!=null){wiringFlow.interrupt();return;}
         if(driverFlow!=null){driverFlow.pause();return;}
         if(gearMotorFlow!=null){gearMotorFlow.pause();return;}
         if (mode == Mode.VERIFY) {
@@ -232,6 +239,7 @@ public final class PhaseFlow {
 
     /** Resuming part scanning accepts only frames captured after the resume. */
     public void resume(long nowNanos) {
+        if(wiringFlow!=null){wiringFlow.interrupt();return;}
         if(driverFlow!=null){driverFlow.resume(nowNanos);return;}
         if(gearMotorFlow!=null){gearMotorFlow.resume(nowNanos);return;}
         if (mode == Mode.SCAN_PARTS && !previewing) enter(Mode.SCAN_PARTS, nowNanos);
@@ -239,6 +247,7 @@ public final class PhaseFlow {
 
     /** Restart this phase from its first mode, discarding every result of the current attempt. */
     public void restart(long nowNanos) {
+        if(wiringFlow!=null){wiringFlow.restart();return;}
         if(driverFlow!=null){driverFlow.restart(nowNanos);return;}
         if(gearMotorFlow!=null){gearMotorFlow.restart(nowNanos);return;}
         start(nowNanos, false);
@@ -256,7 +265,7 @@ public final class PhaseFlow {
 
     /** Restores a saved UI checkpoint; camera evidence always starts with a new generation/window. */
     public void restoreSession(Mode savedMode,boolean partsComplete,boolean preview,long nowNanos){
-        if(gearMotorFlow!=null)throw new IllegalStateException("Gear flow owns its own checkpoint");
+        if(gearMotorFlow!=null||driverFlow!=null||wiringFlow!=null)throw new IllegalStateException("Specialized flow owns its checkpoint");
         inventoryComplete=partsComplete||phase.getCameraInventory().isEmpty();
         previewing=preview&&!inventoryComplete&&savedMode==Mode.DEMO;
         correctionTargetId=null;

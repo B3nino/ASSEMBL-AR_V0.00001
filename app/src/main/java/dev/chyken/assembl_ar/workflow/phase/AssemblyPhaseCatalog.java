@@ -203,13 +203,13 @@ public final class AssemblyPhaseCatalog {
                 .build(phases));
 
         phases.add(new PhaseBuilder(MOTOR_LEADS, "Connect the motor leads",
-                "Open all four terminals, then clamp each motor's red and black leads.")
+                "Choose your wire colors, follow the custom schematic, then pull-test all four leads.")
                 .whole(4).whole(5)
-                .context(GEAR_MOTOR, 2, "Use each motor's attached red and black leads.")
+                .context(GEAR_MOTOR, 2, "Match the selected colors to each motor's positive and negative leads.")
                 .context(MOTOR_DRIVER, 1, "Left and right motor screw-terminal pairs.")
                 .tool(PHILLIPS_SCREWDRIVER, 1, "Loosen, then tighten all four terminal screws.")
                 .check("All four motor-output terminal screws were loosened before inserting leads.")
-                .check("The first motor's red and black leads are in its illustrated terminal pair; "
+                .check("The first motor's selected leads are in its illustrated terminal pair; "
                         + "the flipped right motor's leads are in the other pair in reversed order.")
                 .check("All four terminal screws are tightened.")
                 .dependsOn(MOTOR_ASSEMBLIES, MOTOR_DRIVER_MOUNT)

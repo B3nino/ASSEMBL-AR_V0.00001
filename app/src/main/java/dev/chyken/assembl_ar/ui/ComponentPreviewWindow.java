@@ -20,6 +20,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private final FrameLayout viewport;
     private final TextView title, hint;
     private final TextView resizeHandle;
+    private final android.widget.ImageButton contentAction;
     private final Outline outline;
     private HomeRobotSurfaceView surface;
     private final android.widget.LinearLayout pairLabels;
@@ -92,11 +93,14 @@ public final class ComponentPreviewWindow extends FrameLayout {
             }
         });
         addView(resizeHandle,new LayoutParams(UiUtils.dp(context,44),UiUtils.dp(context,44),Gravity.LEFT|Gravity.BOTTOM));
+        contentAction=new android.widget.ImageButton(context);contentAction.setImageResource(R.drawable.ic_expand_diagram);contentAction.setBackgroundColor(Color.TRANSPARENT);contentAction.setPadding(UiUtils.dp(context,12),UiUtils.dp(context,12),UiUtils.dp(context,12),UiUtils.dp(context,12));
+        addView(contentAction,new LayoutParams(UiUtils.dp(context,48),UiUtils.dp(context,48),Gravity.RIGHT|Gravity.TOP));contentAction.setVisibility(GONE);
     }
 
     public void setResizeListener(@Nullable ResizeListener listener) { resizeListener=listener; }
     public void showInteractionHint(){hint.animate().cancel();hint.setAlpha(1);removeCallbacks(fadeHint);postDelayed(fadeHint,3_000);}
     public void showContent(View content,String name){
+        contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
         if(surface!=null)surface.onPause();surface=null;componentId=null;
         viewport.removeAllViews();viewport.addView(content,new LayoutParams(-1,-1));
@@ -105,6 +109,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     }
 
     public void showComponent(String id, String name) {
+        contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
         if (id == null || !ComponentModelCatalog.hasModel(id)) { setVisibility(GONE); return; }
         setVisibility(VISIBLE); title.setText(getContext().getString(R.string.preview_model_title,name));
@@ -124,6 +129,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         showComponent(shortScrew?ComponentModelCatalog.SHORT_FASTENERS:ComponentModelCatalog.LONG_FASTENERS,"Fasteners · Touch to rotate");
         screwLabel.setText(shortScrew?"10mm screw":"30mm screw");pairLabels.setVisibility(VISIBLE);
     }
+    public void setContentAction(String label,Runnable action){contentAction.setContentDescription(label);contentAction.setOnClickListener(v->action.run());contentAction.setVisibility(VISIBLE);}
 
     public void onHudState(ArHudView.HudState state) {
         if (outline.state==state) return;

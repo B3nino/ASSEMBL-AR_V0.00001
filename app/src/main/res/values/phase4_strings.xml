@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wire_picker_title">Motor wire colors</string>
+    <string name="wire_picker_intro">Match the motor to its picture. Inner tabs face the board center. Tap a tab, then choose its wire color.</string>
+    <string name="wire_picker_reset">Reset</string>
+    <string name="wire_picker_palette">WIRE COLOR</string>
+    <string name="wire_picker_previous">‹ Previous wire</string>
+    <string name="wire_picker_next">Next wire ›</string>
+    <string name="wire_picker_apply">Apply Colors</string>
+</resources>

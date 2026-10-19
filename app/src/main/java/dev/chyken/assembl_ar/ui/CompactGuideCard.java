@@ -18,6 +18,8 @@ public final class CompactGuideCard extends FrameLayout {
     private int maximumHeight=Integer.MAX_VALUE;
     private boolean expanded;
     private String stepKey="";
+    @Nullable private java.util.function.Consumer<String> detailsChanged;
+    public void setOnDetailsChanged(@Nullable java.util.function.Consumer<String> listener){detailsChanged=listener;}
     private final Runnable hideNudge=()->fadeNudge();
     public CompactGuideCard(Context context,@Nullable AttributeSet attrs){
         super(context,attrs);setBackgroundResource(R.drawable.bg_camera_panel);
@@ -64,7 +66,7 @@ public final class CompactGuideCard extends FrameLayout {
         rescan.setVisibility(canRescan?VISIBLE:GONE);
         if(completed&&!wasComplete&&!expanded){nudge.setVisibility(VISIBLE);nudge.setAlpha(1);postDelayed(hideNudge,4500);}
     }
-    private void setExpanded(boolean value){expanded=value;details.setVisibility(value?VISIBLE:GONE);learn.setText(value?"Show less ⌃":"Expand to learn more ⌄");if(value)nudge.setVisibility(GONE);}
+    private void setExpanded(boolean value){boolean changed=expanded!=value;expanded=value;details.setVisibility(value?VISIBLE:GONE);learn.setText(value?"Show less ⌃":"Expand to learn more ⌄");if(value)nudge.setVisibility(GONE);if(changed&&detailsChanged!=null)detailsChanged.accept(value?details.getText().toString():"");}
     private void fadeNudge(){nudge.animate().alpha(0).setDuration(400).withEndAction(()->nudge.setVisibility(GONE)).start();}
     public void setMaximumHeight(int value){value=Math.max(1,value);if(value!=maximumHeight){maximumHeight=value;requestLayout();}}
     @Override protected void onMeasure(int width,int height){

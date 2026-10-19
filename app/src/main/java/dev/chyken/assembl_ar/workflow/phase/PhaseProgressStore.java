@@ -57,6 +57,7 @@ public final class PhaseProgressStore {
             editor.remove(inventoryKey(projectId, phaseId));
             if(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":gear_v1");
             if(AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":driver_v1");
+            if(AssemblyPhaseCatalog.MOTOR_LEADS.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":wiring_v1");
         }
         return editor.commit();
     }
@@ -80,6 +81,8 @@ public final class PhaseProgressStore {
         return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",null);
     }
     public static String driverState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT)+":driver_v1",null);}
+    public static String wiringState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_LEADS)+":wiring_v1",null);}
+    public static void saveWiringState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_LEADS)+":wiring_v1",state).apply();}
     public static void saveDriverState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT)+":driver_v1",state).apply();}
     public static void saveGearMotorState(Context context,String projectId,String state){
         preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",state).apply();

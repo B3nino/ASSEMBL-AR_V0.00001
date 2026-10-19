@@ -554,21 +554,161 @@ public final class PhaseWorkflowInstrumentedTest {
         try (ActivityScenario<AssemblyActivity> scenario = launch()) {
             PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.MOTOR_LEADS);
             scenario.onActivity(activity -> {
-                assertEquals("Nothing new to scan starts the demo", Mode.DEMO, controller.getFlow().getMode());
+                activity.voiceGuide().setMuted(true);
+                Phase4GuideController guide=(Phase4GuideController)getField(controller,"wiringGuide");
+                assertEquals(Mode.DEMO, controller.getFlow().getMode());
                 assertTrue(controller.isAnalysisSuspended());
-                controller.onFinished();
-                TextView scan = activity.findViewById(R.id.scanAssemblyButton);
-                assertEquals(activity.getString(R.string.phase_check_work), scan.getText().toString());
-                scan.performClick();
+                assertNull(controller.requestFor(CameraCalibration.pinhole(500,500,320,240)));
+                assertFalse(((ArHudView)activity.findViewById(R.id.arHudView)).isScanningEnabled());
+                call(guide,"openPicker",new Class<?>[0]);
+                dev.chyken.assembl_ar.ui.WireColorPickerDialog picker=(dev.chyken.assembl_ar.ui.WireColorPickerDialog)getField(guide,"picker");
+                picker.findViewById(R.id.applyWireColors).performClick();assertEquals(2,guide.flow.step());
+                assertFalse(gearCard(activity).next.isEnabled());gearCard(activity).action.performClick();
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();
                 assertEquals(Mode.PHYSICAL_CHECK, controller.getFlow().getMode());
+                gearCard(activity).action.performClick();AlertDialog check=(AlertDialog)getField(guide,"pullDialog");
+                check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertTrue(check.isShowing());assertFalse(guide.flow.complete());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             });
-            completeChecklist(scenario, controller);
             awaitPhase(scenario, AssemblyPhaseCatalog.MICROCONTROLLER_FIT);
             assertEquals(StepStatus.COMPLETED, statusOf(4));
             assertEquals(StepStatus.COMPLETED, statusOf(5));
             assertEquals(StepStatus.IN_PROGRESS, statusOf(6));
             scenario.onActivity(activity ->
                     assertEquals("Phase 5 of 18", text(activity, R.id.stepCounter)));
+        }
+    }
+
+    @Test
+    public void motorWirePickerIsTransactionalAndAppliedColorsResumeInTheSchematic(){
+        positionAt(4);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);
+            scenario.onActivity(activity->{
+                Phase4GuideController guide=(Phase4GuideController)getField(controller,"wiringGuide");call(guide,"openPicker",new Class<?>[0]);
+                dev.chyken.assembl_ar.ui.WireColorPickerDialog picker=(dev.chyken.assembl_ar.ui.WireColorPickerDialog)getField(guide,"picker");
+                android.widget.GridLayout palette=picker.findViewById(R.id.motorWireSwatches),slots=picker.findViewById(R.id.motorWireSlots);
+                assertEquals(10,palette.getChildCount());assertEquals(4,slots.getChildCount());palette.getChildAt(6).performClick();
+                picker.findViewById(R.id.cancelWireColors).performClick();assertEquals(1,guide.flow.step());
+                assertEquals(dev.chyken.assembl_ar.model.MotorWireColorConfig.defaults(),guide.flow.colors());
+                call(guide,"openPicker",new Class<?>[0]);picker=(dev.chyken.assembl_ar.ui.WireColorPickerDialog)getField(guide,"picker");
+                palette=picker.findViewById(R.id.motorWireSwatches);slots=picker.findViewById(R.id.motorWireSlots);
+                palette.getChildAt(6).performClick();slots.getChildAt(2).performClick();palette.getChildAt(9).performClick();
+                picker.findViewById(R.id.applyWireColors).performClick();assertEquals(2,guide.flow.step());
+                assertEquals(0xFF0000FF,guide.flow.colors().leftMotorPositiveColor);assertEquals(0xFFFFFFFF,guide.flow.colors().rightMotorPositiveColor);
+                dev.chyken.assembl_ar.ui.AssemblyDemoView diagram=(dev.chyken.assembl_ar.ui.AssemblyDemoView)getField(guide,"schematic");
+                assertEquals("#0000FF",diagram.getMotorWireConnections().get(0).getWireColor());assertEquals("Right pair · right opening",diagram.getMotorWireConnections().get(2).getTargetPin());
+                gearCard(activity).action.performClick();assertTrue(gearCard(activity).next.isEnabled());
+            });
+        }
+        try(ActivityScenario<AssemblyActivity> resumed=launch()){
+            PhaseAssemblyController controller=awaitPhase(resumed,AssemblyPhaseCatalog.MOTOR_LEADS);
+            resumed.onActivity(activity->{
+                Phase4GuideController guide=(Phase4GuideController)getField(controller,"wiringGuide");assertEquals(2,guide.flow.step());
+                assertEquals(0xFF0000FF,guide.flow.colors().leftMotorPositiveColor);assertEquals(0xFFFFFFFF,guide.flow.colors().rightMotorPositiveColor);assertTrue(gearCard(activity).next.isEnabled());
+                ((View)getField(gearCard(activity),"learn")).performClick();
+            });
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            resumed.onActivity(activity->{
+                View card=gearCard(activity),preview=activity.findViewById(R.id.componentPreviewWindow);
+                assertFalse(android.graphics.RectF.intersects(new android.graphics.RectF(card.getX(),card.getY(),card.getX()+card.getWidth(),card.getY()+card.getHeight()),new android.graphics.RectF(preview.getX(),preview.getY(),preview.getX()+preview.getWidth(),preview.getY()+preview.getHeight())));
+                call(getField(controller,"wiringGuide"),"openPicker",new Class<?>[0]);
+            });
+            capture(resumed,"phase4-wire-color-picker");
+        }
+    }
+
+    @Test
+    public void phaseFourLookBackRestoresItsOwnControlsAndSelectedColors(){
+        positionAt(4);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);
+            scenario.onActivity(activity->{
+                Phase4GuideController guide=(Phase4GuideController)getField(controller,"wiringGuide");call(guide,"openPicker",new Class<?>[0]);
+                ((dev.chyken.assembl_ar.ui.WireColorPickerDialog)getField(guide,"picker")).findViewById(R.id.applyWireColors).performClick();
+                gearCard(activity).previous.performClick();assertEquals(1,guide.flow.step());gearCard(activity).previous.performClick();
+                assertNotNull(getField(controller,"driverGuide"));gearCard(activity).next.performClick();
+                assertNull(getField(controller,"driverGuide"));assertEquals(guide,getField(controller,"wiringGuide"));
+                assertEquals(1,guide.flow.step());gearCard(activity).next.performClick();assertEquals(2,guide.flow.step());
+                gearCard(activity).action.performClick();assertTrue(gearCard(activity).next.isEnabled());assertTrue(controller.isAnalysisSuspended());
+            });
+        }
+    }
+
+    @Test
+    public void motorWireDraftSurvivesRecreationWithoutUnlockingStepOne(){
+        positionAt(4);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);
+            scenario.onActivity(activity->{
+                Phase4GuideController guide=(Phase4GuideController)getField(controller,"wiringGuide");call(guide,"openPicker",new Class<?>[0]);
+                dev.chyken.assembl_ar.ui.WireColorPickerDialog picker=(dev.chyken.assembl_ar.ui.WireColorPickerDialog)getField(guide,"picker");
+                ((android.widget.GridLayout)picker.findViewById(R.id.motorWireSlots)).getChildAt(3).performClick();
+                ((android.widget.GridLayout)picker.findViewById(R.id.motorWireSwatches)).getChildAt(7).performClick();
+                assertEquals(0xFF000000,guide.flow.colors().rightMotorNegativeColor);assertFalse(guide.flow.complete());
+            });
+            scenario.recreate();PhaseAssemblyController restored=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);
+            scenario.onActivity(activity->{
+                Phase4GuideController guide=(Phase4GuideController)getField(restored,"wiringGuide");call(guide,"openPicker",new Class<?>[0]);
+                dev.chyken.assembl_ar.ui.WireColorPickerDialog picker=(dev.chyken.assembl_ar.ui.WireColorPickerDialog)getField(guide,"picker");
+                assertEquals(dev.chyken.assembl_ar.model.MotorWireColorConfig.Terminal.RIGHT_NEGATIVE,picker.selectedTerminal());
+                assertEquals(0xFF800080,picker.draftColors().rightMotorNegativeColor);assertFalse(gearCard(activity).next.isEnabled());
+                picker.findViewById(R.id.applyWireColors).performClick();assertEquals(2,guide.flow.step());assertEquals(0xFF800080,guide.flow.colors().rightMotorNegativeColor);
+            });
+        }
+    }
+
+    @Test
+    public void customMotorWireColorsRenderAtCompactAndExpandedPreviewSizes(){
+        positionAt(4);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);
+            dev.chyken.assembl_ar.ui.AssemblyDemoView[] holder=new dev.chyken.assembl_ar.ui.AssemblyDemoView[1];
+            int[] colors={0xFF000000,0xFFFFFFFF,0xFFFFFF00,0xFF800080};
+            scenario.onActivity(activity->{
+                holder[0]=new dev.chyken.assembl_ar.ui.AssemblyDemoView(activity);
+                holder[0].setMotorWireColors(new dev.chyken.assembl_ar.model.MotorWireColorConfig(colors[0],colors[1],colors[2],colors[3]));holder[0].pause();
+            });
+            // Decode happens off the UI thread; never block the main looper waiting for it.
+            long deadline=SystemClock.uptimeMillis()+5000;
+            boolean[] ready={false};
+            while(!ready[0]&&SystemClock.uptimeMillis()<deadline){
+                scenario.onActivity(activity->ready[0]=holder[0].isMotorWiringArtworkReady());
+                if(!ready[0])SystemClock.sleep(30);
+            }
+            assertTrue("Packaged component artwork did not load",ready[0]);
+            scenario.onActivity(activity->{
+                dev.chyken.assembl_ar.ui.AssemblyDemoView diagram=holder[0];
+                float density=activity.getResources().getDisplayMetrics().density;
+                for(int[] size:new int[][]{{200,94},{320,194},{900,480}}){
+                    int width=Math.round(size[0]*density),height=Math.round(size[1]*density);diagram.layout(0,0,width,height);
+                    Bitmap bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);diagram.draw(new android.graphics.Canvas(bitmap));
+                    for(int color:colors){int count=0;for(int y=0;y<height;y++)for(int x=0;x<width;x++)if(bitmap.getPixel(x,y)==color)count++;assertTrue("Wire color missing at "+size[0]+" x "+size[1],count>5);}
+                    if(size[1]>=140){
+                        int yellow=0,blue=0;
+                        for(int y=0;y<height;y++)for(int x=0;x<width;x++){
+                            int pixel=bitmap.getPixel(x,y),r=android.graphics.Color.red(pixel),g=android.graphics.Color.green(pixel),b=android.graphics.Color.blue(pixel);
+                            if(r>225&&g>140&&g<240&&b<80)yellow++;
+                            if(b>60&&b>r*1.2&&g>r)blue++;
+                        }
+                        assertTrue("Yellow gearbox image missing",yellow>30);assertTrue("Blue driver artwork missing",blue>30);
+                    }
+                    bitmap.recycle();
+                }
+                // Compact preview exposes all four selectable tab slots without invented output labels.
+                int width=Math.round(320*density),height=Math.round(194*density);diagram.layout(0,0,width,height);
+                Bitmap bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);diagram.draw(new android.graphics.Canvas(bitmap));
+                java.util.List<dev.chyken.assembl_ar.model.MotorWireColorConfig.Terminal> selected=new java.util.ArrayList<>();diagram.setOnMotorWireSelected(selected::add);
+                for(int i=0;i<4;i++){
+                    float x=(6+(320-12)/4f*(i+.5f))*density,y=18*density;
+                    android.view.MotionEvent down=android.view.MotionEvent.obtain(0,0,android.view.MotionEvent.ACTION_DOWN,x,y,0);
+                    android.view.MotionEvent up=android.view.MotionEvent.obtain(0,1,android.view.MotionEvent.ACTION_UP,x,y,0);
+                    diagram.onTouchEvent(down);diagram.onTouchEvent(up);down.recycle();up.recycle();
+                }
+                assertEquals(java.util.Arrays.asList(dev.chyken.assembl_ar.model.MotorWireColorConfig.Terminal.values()),selected);bitmap.recycle();
+                assertTrue(diagram.getContentDescription().toString().contains("White wire to Left pair"));
+                assertFalse(diagram.getContentDescription().toString().contains("OUT1"));
+            });
         }
     }
 

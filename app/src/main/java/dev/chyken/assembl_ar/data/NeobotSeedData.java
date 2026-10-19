@@ -12,6 +12,7 @@ import dev.chyken.assembl_ar.model.LearningStep;
 import dev.chyken.assembl_ar.model.ManualReference;
 import dev.chyken.assembl_ar.model.OverlayType;
 import dev.chyken.assembl_ar.model.PinConnection;
+import dev.chyken.assembl_ar.model.MotorWireColorConfig;
 import dev.chyken.assembl_ar.model.RequiredComponent;
 import dev.chyken.assembl_ar.model.SeedIntegrityReport;
 import dev.chyken.assembl_ar.model.ValidationType;
@@ -31,6 +32,16 @@ import java.util.Set;
  * No Android APIs are used here so seed integrity can be tested as a plain unit test.
  */
 public final class NeobotSeedData {
+    /** Runtime Phase 4 routes described by physical openings in the mounted-view artwork. */
+    public static List<PinConnection> getPhase4PinConnections(MotorWireColorConfig colors){
+        List<PinConnection> pins=new ArrayList<>();
+        for(MotorWireColorConfig.Terminal terminal:MotorWireColorConfig.Terminal.values()){
+            pins.add(new PinConnection(terminal.ordinal()+1,GEAR_MOTOR,terminal.label,MOTOR_DRIVER,
+                    terminal.output,colors.swatch(terminal).hex(),"Motor output",
+                    "View the driver with green screw blocks toward you and the six small header pins away. Insert the wire into the pictured opening and tighten the matching screw. Motor tabs are unmarked; the picture does not establish positive/negative polarity."));
+        }
+        return Collections.unmodifiableList(pins);
+    }
     public static final String PROJECT_ID = "neobot_personal_robot_kit_2026";
     public static final String ASSEMBLY_DOCUMENT_ID = "neobot_assembly_wiring_2026";
     public static final String LEARNING_DOCUMENT_ID = "neobot_personal_robot_manual_2026";
