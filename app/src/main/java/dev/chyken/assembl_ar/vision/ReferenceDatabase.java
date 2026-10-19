@@ -234,6 +234,8 @@ public final class ReferenceDatabase implements AutoCloseable {
         }
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
             spec=Phase2PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))
+            spec=Phase3PhotoGeometry.resolve(spec,imageBytes);
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
                 return preparedFromBlob(spec, readFully(input), config);
@@ -407,6 +409,7 @@ public final class ReferenceDatabase implements AutoCloseable {
                 + "_prep" + REFERENCE_PREPARATION_VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
             assetFingerprint+="_p2roi"+Phase2PhotoGeometry.CACHE_VERSION;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))assetFingerprint+="_p3roi"+Phase3PhotoGeometry.VERSION;
         return new File(directory, safeId + "_" + assetFingerprint + ".asor");
     }
 
@@ -529,6 +532,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         MatOfPoint polygon = new MatOfPoint(pixels);
         try {
             Imgproc.fillConvexPoly(mask, polygon, new Scalar(255));
+            if("assembly".equals(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
             List<List<VisionPoint>> featureRegions = spec.getFeatureRegionsNormalized();
             if (featureRegions.isEmpty()) {
                 return mask;
@@ -556,6 +560,7 @@ public final class ReferenceDatabase implements AutoCloseable {
                     }
                 }
                 Core.bitwise_and(mask, featureMask, mask);
+                if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))Phase3PhotoGeometry.excludeMountingHoles(mask,spec);
                 return mask;
             } finally {
                 featureMask.release();

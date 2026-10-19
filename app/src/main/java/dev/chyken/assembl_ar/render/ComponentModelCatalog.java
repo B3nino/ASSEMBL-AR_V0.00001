@@ -10,6 +10,7 @@ import dev.chyken.assembl_ar.data.NeobotSeedData;
 
 /** Packaged standalone models keyed by the same component IDs as the library. */
 public final class ComponentModelCatalog {
+    public static final String SHORT_FASTENERS="preview_short_fasteners",LONG_FASTENERS="preview_long_fasteners";
     private static final Map<String, String> ASSETS;
 
     static {
@@ -57,10 +58,12 @@ public final class ComponentModelCatalog {
     }
 
     public static boolean hasModel(String componentId) {
-        return ASSETS.containsKey(componentId);
+        return SHORT_FASTENERS.equals(componentId)||LONG_FASTENERS.equals(componentId)||ASSETS.containsKey(componentId);
     }
 
     @Nullable public static String assetPath(String componentId) {
+        if(SHORT_FASTENERS.equals(componentId))return ASSETS.get(NeobotSeedData.SCREW_SHORT);
+        if(LONG_FASTENERS.equals(componentId))return ASSETS.get(NeobotSeedData.SCREW_30MM);
         return ASSETS.get(componentId);
     }
 

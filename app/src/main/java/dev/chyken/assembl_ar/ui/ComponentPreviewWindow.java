@@ -22,6 +22,8 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private final TextView resizeHandle;
     private final Outline outline;
     private HomeRobotSurfaceView surface;
+    private final android.widget.LinearLayout pairLabels;
+    private final TextView screwLabel;
     private String componentId;
     private boolean resumed;
     @Nullable private ResizeListener resizeListener;
@@ -41,6 +43,10 @@ public final class ComponentPreviewWindow extends FrameLayout {
         modelParams.topMargin=UiUtils.dp(context,58);
         modelParams.bottomMargin=UiUtils.dp(context,38);
         addView(viewport,modelParams);
+        pairLabels=new android.widget.LinearLayout(context);
+        screwLabel=new TextView(context);TextView nutLabel=new TextView(context);nutLabel.setText("M3 nut");
+        for(TextView label:new TextView[]{screwLabel,nutLabel}){label.setTextSize(12);label.setTextColor(0xFF26332D);label.setGravity(Gravity.CENTER);pairLabels.addView(label,new android.widget.LinearLayout.LayoutParams(0,-1,1));}
+        LayoutParams labelsParams=new LayoutParams(-1,UiUtils.dp(context,26),Gravity.BOTTOM);labelsParams.bottomMargin=UiUtils.dp(context,36);addView(pairLabels,labelsParams);pairLabels.setVisibility(GONE);
         title=new TextView(context);
         title.setTextColor(0xFF26332D); title.setTextSize(13); title.setMaxLines(1);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -91,6 +97,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     public void setResizeListener(@Nullable ResizeListener listener) { resizeListener=listener; }
     public void showInteractionHint(){hint.animate().cancel();hint.setAlpha(1);removeCallbacks(fadeHint);postDelayed(fadeHint,3_000);}
     public void showContent(View content,String name){
+        pairLabels.setVisibility(GONE);
         if(surface!=null)surface.onPause();surface=null;componentId=null;
         viewport.removeAllViews();viewport.addView(content,new LayoutParams(-1,-1));
         title.setText(name);hint.animate().cancel();hint.setAlpha(0);removeCallbacks(fadeHint);
@@ -98,6 +105,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     }
 
     public void showComponent(String id, String name) {
+        pairLabels.setVisibility(GONE);
         if (id == null || !ComponentModelCatalog.hasModel(id)) { setVisibility(GONE); return; }
         setVisibility(VISIBLE); title.setText(getContext().getString(R.string.preview_model_title,name));
         if (id.equals(componentId)) return;
@@ -111,6 +119,10 @@ public final class ComponentPreviewWindow extends FrameLayout {
         if (resumed) surface.onResume();
         outline.state=ArHudView.HudState.SEARCHING;
         showInteractionHint();
+    }
+    public void showFasteners(boolean shortScrew){
+        showComponent(shortScrew?ComponentModelCatalog.SHORT_FASTENERS:ComponentModelCatalog.LONG_FASTENERS,"Fasteners · Touch to rotate");
+        screwLabel.setText(shortScrew?"10mm screw":"30mm screw");pairLabels.setVisibility(VISIBLE);
     }
 
     public void onHudState(ArHudView.HudState state) {

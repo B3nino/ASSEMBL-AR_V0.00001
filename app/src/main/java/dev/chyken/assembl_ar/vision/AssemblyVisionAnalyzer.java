@@ -154,6 +154,13 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             RecognitionRequest request = requestProvider.requestFor(metadata);
             Object requestTag = request == null ? null : request.getRequestTag();
             int assemblyStep = request == null ? 0 : request.getAssemblyStepNumber();
+            if(request!=null&&request.getPhase3Stage()>0){
+                RecognitionResult inspected=recognizer.inspectPhase3(analyzed,metadata.getTimestampNanos(),request.getPhase3Stage())
+                        .withAssemblyInspection(3,null,false,null).withRequestTag(requestTag);
+                FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);
+                if(snapshot!=null){rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());}
+                if(!closed.get())deliverResult(inspected);return;
+            }
             if(request!=null && request.getPhase2Stage()==5) {
                 RecognitionResult inspected=recognizer.inspectPhase2(analyzed,metadata.getTimestampNanos(),5,null)
                         .withAssemblyInspection(2,null,false,null).withRequestTag(requestTag);

@@ -24,7 +24,8 @@
         android:id="@+id/targetAlignmentBox"
         android:layout_width="300dp"
         android:layout_height="280dp"
-        android:layout_gravity="center"
+        android:layout_gravity="bottom|left"
+        android:layout_margin="16dp"
         android:visibility="gone" />
 
     <dev.chyken.assembl_ar.ui.ArHudView
@@ -705,7 +706,7 @@
         android:id="@+id/phaseTwoGuide"
         android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|start"
+        android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:elevation="8dp"
         android:visibility="gone" />
@@ -714,7 +715,7 @@
         android:id="@+id/phaseOneGuide"
         android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|start"
+        android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:elevation="8dp"
         android:visibility="gone" />

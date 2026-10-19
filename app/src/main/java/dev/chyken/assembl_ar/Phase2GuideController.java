@@ -230,7 +230,7 @@ final class Phase2GuideController implements AutoCloseable {
             stopVideo();previewStep=step;
             if(step==1)preview.showComponent(MOTOR_BRACKET,"Motor bracket");
             else if(step==2)preview.showComponent(GEAR_MOTOR,"TT gear motor");
-            else if(step==3)showToolsPreview();
+            else if(step==3)preview.showFasteners(false);
             else if(step==4)startVideo();
             else preview.showComponent(MAIN_BOARD,"Main Board · motor assembly");
         }

@@ -86,9 +86,11 @@ public final class RecognitionResult {
     private final RejectionEvidence rejectionEvidence;
     private final Object requestTag;
     private final Phase2Observation phase2Observation;
+    private final Phase3Observation phase3Observation;
 
     private RecognitionResult(Builder builder) {
         phase2Observation=builder.phase2Observation;
+        phase3Observation=builder.phase3Observation;
         frameTimestampNanos = builder.frameTimestampNanos;
         referenceId = builder.referenceId;
         componentId = builder.componentId;
@@ -249,6 +251,8 @@ public final class RecognitionResult {
     }
 
     public Phase2Observation getPhase2Observation() { return phase2Observation; }
+    public Phase3Observation getPhase3Observation(){return phase3Observation;}
+    RecognitionResult withPhase3Observation(Phase3Observation observation){Builder copy=copyBuilder();copy.phase3Observation=observation;return copy.build();}
     RecognitionResult withPhase2Observation(Phase2Observation observation) {
         Builder copy=copyBuilder(); copy.phase2Observation=observation; return copy.build();
     }
@@ -335,6 +339,7 @@ public final class RecognitionResult {
         copy.rejectionEvidence = rejectionEvidence;
         copy.requestTag = requestTag;
         copy.phase2Observation=phase2Observation;
+        copy.phase3Observation=phase3Observation;
         return copy;
     }
 
@@ -379,6 +384,7 @@ public final class RecognitionResult {
 
     static final class Builder {
         private Phase2Observation phase2Observation;
+        private Phase3Observation phase3Observation;
         private final long frameTimestampNanos;
         private String referenceId;
         private String componentId;

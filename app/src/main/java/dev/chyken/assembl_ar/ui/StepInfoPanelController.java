@@ -49,6 +49,8 @@ public final class StepInfoPanelController {
     @Nullable private String stepId;
     private float dragStartX, dragStartY, panelStartX, panelStartY;
     private int previewWidth, previewHeight;
+    private int guideWidth,guideHeight;
+    private final TargetAlignmentBoxView guide;
 
     public StepInfoPanelController(Activity activity, @Nullable Bundle state) {
         this.activity = activity;
@@ -64,6 +66,10 @@ public final class StepInfoPanelController {
         preview = activity.findViewById(R.id.componentPreviewWindow);
         phaseOneGuide = activity.findViewById(R.id.phaseOneGuide);
         phaseTwoGuide=activity.findViewById(R.id.phaseTwoGuide);
+        guide=activity.findViewById(R.id.targetAlignmentBox);
+        guideWidth=state==null?0:state.getInt("guide_width",0);guideHeight=state==null?0:state.getInt("guide_height",0);
+        guide.setTranslationX(state==null?0:state.getFloat("guide_x",0));guide.setTranslationY(state==null?0:state.getFloat("guide_y",0));
+        guide.setResizeListener((width,height)->{guideWidth=width;guideHeight=height;updateLayout();});
         phaseTwoGuide.setTranslationX(state==null?0:state.getFloat("phase_two_window_x",0));
         phaseTwoGuide.setTranslationY(state==null?0:state.getFloat("phase_two_window_y",0));
         phaseTwoGuide.dragHandle().setOnTouchListener((view,event)->drag(phaseTwoGuide,view,event));
@@ -133,6 +139,7 @@ public final class StepInfoPanelController {
     }
 
     public void saveState(Bundle state) {
+        state.putInt("guide_width",guideWidth);state.putInt("guide_height",guideHeight);state.putFloat("guide_x",guide.getTranslationX());state.putFloat("guide_y",guide.getTranslationY());
         state.putFloat("info_window_x",panel.getTranslationX());
         state.putFloat("info_window_y",panel.getTranslationY());
         state.putFloat("phase_one_window_x",phaseOneGuide.getTranslationX());
@@ -174,9 +181,6 @@ public final class StepInfoPanelController {
         int safeHeight = root.getHeight() - bars.top - bars.bottom;
         View alignment=activity.findViewById(R.id.targetAlignmentBox);
         FrameLayout.LayoutParams alignmentParams=(FrameLayout.LayoutParams)alignment.getLayoutParams();
-        int guideHeight=Math.min(dp(480),Math.round(safeHeight*.48f));
-        int guideWidth=Math.min(Math.round(safeWidth*.50f),Math.round(guideHeight*1.25f));
-        if(alignmentParams.width!=guideWidth||alignmentParams.height!=guideHeight){alignmentParams.width=guideWidth;alignmentParams.height=guideHeight;alignment.setLayoutParams(alignmentParams);}
         boolean rtl = ViewCompat.getLayoutDirection(root) == ViewCompat.LAYOUT_DIRECTION_RTL;
         int startInset = rtl ? bars.right : bars.left;
         int endInset = rtl ? bars.left : bars.right;
@@ -185,8 +189,17 @@ public final class StepInfoPanelController {
         int edge = dp(tablet ? 20 : 12);
         int preferredWidth = tablet ? activity.getResources().getDimensionPixelSize(
                 R.dimen.tablet_camera_panel_width) : dp(340);
-        int panelWidth = Math.min(tablet ? Math.max(preferredWidth, dp(620)) : preferredWidth,
-                Math.round(safeWidth * (sidebar ? .48f : .88f)));
+        int panelWidth = Math.min(tablet ? Math.max(preferredWidth, dp(440)) : preferredWidth,Math.round(safeWidth*.46f));
+        int maxGuideWidth=Math.max(1,safeWidth-panelWidth-3*edge);
+        guideWidth=Math.max(Math.min(dp(170),maxGuideWidth),Math.min(maxGuideWidth,guideWidth==0?Math.round(safeWidth*.34f):guideWidth));
+        int guideTop=Math.max(toolbar.getBottom(),banner.getBottom())+dp(8);
+        int maxGuideHeight=Math.max(1,Math.min(Math.round(safeHeight*.55f),root.getHeight()-bars.bottom-edge-guideTop));
+        guideHeight=Math.max(Math.min(dp(160),maxGuideHeight),Math.min(maxGuideHeight,guideHeight==0?Math.round(safeHeight*.33f):guideHeight));
+        if(alignmentParams.width!=guideWidth||alignmentParams.height!=guideHeight||alignmentParams.gravity!=(Gravity.BOTTOM|Gravity.LEFT)){
+            alignmentParams.width=guideWidth;alignmentParams.height=guideHeight;alignmentParams.gravity=Gravity.BOTTOM|Gravity.LEFT;
+            alignmentParams.leftMargin=bars.left+edge;alignmentParams.bottomMargin=bars.bottom+edge;alignment.setLayoutParams(alignmentParams);
+        }
+        guide.setAllowedBounds(bars.left+edge,guideTop,root.getWidth()-bars.right-panelWidth-2*edge,root.getHeight()-bars.bottom-edge);
         FrameLayout.LayoutParams previewParams=(FrameLayout.LayoutParams) preview.getLayoutParams();
         int defaultPreviewWidth=Math.min(dp(tablet ? 340 : 220), Math.round(safeWidth*(tablet ? .27f : .38f)));
         int defaultPreviewHeight=Math.min(dp(tablet ? 290 : 220), Math.round(safeHeight*(tablet ? .34f : .28f)));
@@ -230,8 +243,7 @@ public final class StepInfoPanelController {
             banner.setLayoutParams(bannerParams);
         }
 
-        int reservedTop = sidebar ? toolbar.getBottom() + dp(8)
-                : Math.max(bannerTop + banner.getHeight(),previewTop+targetPreviewHeight) + dp(12);
+        int reservedTop = Math.max(bannerTop+banner.getHeight(),previewTop+targetPreviewHeight)+dp(12);
         int availableHeight = root.getHeight() - bars.bottom - edge - reservedTop;
         int preferredHeight = activity.getResources().getDimensionPixelSize(
                 R.dimen.assembly_info_panel_height);
@@ -253,7 +265,7 @@ public final class StepInfoPanelController {
         if(phaseTwoActive)phaseTwoGuide.setMaximumHeight(compactMaximum);
         int targetHeight=phaseOneActive||phaseTwoActive ? FrameLayout.LayoutParams.WRAP_CONTENT : height;
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) target.getLayoutParams();
-        int gravity = Gravity.BOTTOM | GravityCompat.START;
+        int gravity = Gravity.BOTTOM | GravityCompat.END;
         if (params.width != panelWidth || params.height != targetHeight || params.gravity != gravity
                 || params.getMarginStart() != startInset + edge
                 || params.getMarginEnd() != endInset + edge
@@ -291,6 +303,11 @@ public final class StepInfoPanelController {
         float maximumY=root.getHeight()-bars.bottom-dp(8)-panel.getBottom();
         panel.setTranslationX(Math.max(minimumX,Math.min(maximumX,panel.getTranslationX())));
         panel.setTranslationY(Math.max(minimumY,Math.min(maximumY,panel.getTranslationY())));
+        if(guide.getVisibility()==View.VISIBLE){
+            android.graphics.RectF card=new android.graphics.RectF(panel.getX(),panel.getY(),panel.getX()+panel.getWidth(),panel.getY()+panel.getHeight());
+            android.graphics.RectF reference=new android.graphics.RectF(guide.getX(),guide.getY(),guide.getX()+guide.getWidth()+dp(12),guide.getY()+guide.getHeight());
+            if(android.graphics.RectF.intersects(card,reference))panel.setX(root.getWidth()-bars.right-dp(12)-panel.getWidth());
+        }
         // A SurfaceView can cover sibling text even when the card has a higher elevation.
         // Reserve real space for the model instead of relying on drawing order.
         if(preview.getVisibility()==View.VISIBLE && preview.getWidth()>0) {
@@ -299,9 +316,7 @@ public final class StepInfoPanelController {
             float previewLeft=preview.getX(), previewBottom=preview.getY()+preview.getHeight();
             if(left+panel.getWidth()>previewLeft-gap && left<previewLeft+preview.getWidth()
                     && top<previewBottom+gap && top+panel.getHeight()>preview.getY()) {
-                float beside=previewLeft-gap-panel.getWidth();
-                if(beside>=bars.left+dp(8)) panel.setTranslationX(beside-panel.getLeft());
-                else panel.setTranslationY(previewBottom+gap-panel.getTop());
+                panel.setTranslationY(previewBottom+gap-panel.getTop());
             }
         }
     }

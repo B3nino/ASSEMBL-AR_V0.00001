@@ -102,13 +102,14 @@ public final class PhaseWorkflowInstrumentedTest {
             PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
             scenario.onActivity(activity->{
                 PhaseFlow active=controller.getFlow();
-                activity.findViewById(R.id.previousGuidedStepButton).performClick();
+                gearCard(activity).previous.performClick();
                 assertEquals(active,controller.getFlow());assertEquals(6,gear(controller).flow.step());
                 assertEquals(View.VISIBLE,gearCard(activity).getVisibility());
                 gearCard(activity).next.performClick();
-                assertEquals(active,controller.getFlow());assertEquals(View.GONE,gearCard(activity).getVisibility());
+                assertEquals(active,controller.getFlow());assertEquals(View.VISIBLE,gearCard(activity).getVisibility());
+                assertNotNull(getField(controller,"driverGuide"));
                 RecognitionRequest request=controller.requestFor(CameraCalibration.pinhole(500,500,320,240));
-                assertEquals(3,request.getAssemblyStepNumber());assertEquals(0,request.getPhase2Stage());
+                assertEquals(3,request.getAssemblyStepNumber());assertEquals(0,request.getPhase2Stage());assertEquals(1,request.getPhase3Stage());
                 assertEquals(StepStatus.IN_PROGRESS,statusOf(3));
             });
         }
@@ -412,15 +413,88 @@ public final class PhaseWorkflowInstrumentedTest {
             PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.BOARD_PREPARATION);
             scenario.onActivity(activity->{
                 controller.devJumpToChapter(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT),2);
-                assertEquals(2,((dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter)getField(controller,"shownChapter")).getIndex());
+                assertEquals(3,((Phase3GuideController)getField(controller,"driverGuide")).flow.step());
             });
         }
         try(ActivityScenario<AssemblyActivity> resumed=launch()){
             PhaseAssemblyController controller=awaitPhase(resumed,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
             resumed.onActivity(activity->{
-                assertEquals(2,((dev.chyken.assembl_ar.workflow.phase.PhaseDemoScript.Chapter)getField(controller,"shownChapter")).getIndex());
+                assertEquals(3,((Phase3GuideController)getField(controller,"driverGuide")).flow.step());
                 assertTrue(controller.isDeveloperSession());
             });
+        }
+    }
+
+    @Test
+    public void driverFlowRequiresFrontPlacementFinalScanAndExplicitHardwareCheck(){
+        positionAt(3);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            scenario.onActivity(activity->{
+                activity.voiceGuide().setMuted(true);
+                Phase3GuideController guide=(Phase3GuideController)getField(controller,"driverGuide");
+                Frames frames=new Frames(activity,controller);
+                frames.deliver(frames.driver(dev.chyken.assembl_ar.vision.Phase3Observation.State.FLIPPED),null);
+                assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.driver(dev.chyken.assembl_ar.vision.Phase3Observation.State.FRONT),null);
+                assertTrue(gearCard(activity).next.isEnabled());assertEquals(1,guide.flow.step());
+                gearCard(activity).next.performClick();assertEquals(2,guide.flow.step());
+                assertFalse(gearCard(activity).next.isEnabled());gearCard(activity).action.performClick();
+                ((AlertDialog)getField(guide,"dialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                gearCard(activity).next.performClick();assertEquals(3,guide.flow.step());
+                assertFalse(gearCard(activity).action.isEnabled());
+                dev.chyken.assembl_ar.ui.Phase2VideoPlayer video=(dev.chyken.assembl_ar.ui.Phase2VideoPlayer)getField(guide,"video");
+                dev.chyken.assembl_ar.ui.Phase2VideoPlayer.Listener playback=(dev.chyken.assembl_ar.ui.Phase2VideoPlayer.Listener)getField(video,"listener");
+                playback.onClip(0);playback.onClip(1);playback.onFinished();
+                assertFalse("Finishing playback still waits for user confirmation",gearCard(activity).next.isEnabled());
+                gearCard(activity).action.performClick();gearCard(activity).next.performClick();
+                assertEquals(4,guide.flow.step());
+                frames.deliver(frames.driver(dev.chyken.assembl_ar.vision.Phase3Observation.State.BACKWARD),null);
+                assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.driver(dev.chyken.assembl_ar.vision.Phase3Observation.State.PLACED),null);
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();assertEquals(5,guide.flow.step());
+                assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.driver(dev.chyken.assembl_ar.vision.Phase3Observation.State.PLACED),null);
+                gearCard(activity).next.performClick();assertEquals(6,guide.flow.step());
+                gearCard(activity).action.performClick();AlertDialog check=(AlertDialog)getField(guide,"dialog");
+                check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertTrue(check.isShowing());assertFalse(guide.flow.complete());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertFalse(guide.flow.complete());
+                List<CheckBox> hardware=new ArrayList<>();collectCheckBoxes(check.getWindow().getDecorView(),hardware);
+                assertEquals(1,hardware.size());hardware.get(0).setChecked(true);
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_LEADS);assertEquals(StepStatus.COMPLETED,statusOf(3));
+        }
+    }
+
+    @Test
+    public void driverConfirmedPlacementResumesUnlockedAndExpandedCardAvoidsBothViewers(){
+        positionAt(3);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            scenario.onActivity(activity->{
+                Phase3GuideController guide=(Phase3GuideController)getField(controller,"driverGuide");
+                for(int i=1;i<=3;i++){guide.flow.devSkip();guide.flow.next(SystemClock.elapsedRealtimeNanos());}
+                guide.render();Frames frames=new Frames(activity,controller);
+                frames.deliver(frames.driver(dev.chyken.assembl_ar.vision.Phase3Observation.State.PLACED),null);
+                assertTrue(gearCard(activity).next.isEnabled());
+            });
+        }
+        try(ActivityScenario<AssemblyActivity> resumed=launch()){
+            PhaseAssemblyController controller=awaitPhase(resumed,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT);
+            resumed.onActivity(activity->{
+                Phase3GuideController guide=(Phase3GuideController)getField(controller,"driverGuide");
+                assertEquals(4,guide.flow.step());assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).next.performClick();assertEquals(5,guide.flow.step());assertFalse(gearCard(activity).next.isEnabled());
+                ((View)getField(gearCard(activity),"learn")).performClick();
+            });
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            resumed.onActivity(activity->{
+                View card=gearCard(activity),model=activity.findViewById(R.id.componentPreviewWindow),frame=activity.findViewById(R.id.targetAlignmentBox);
+                android.graphics.RectF bounds=new android.graphics.RectF(card.getX(),card.getY(),card.getX()+card.getWidth(),card.getY()+card.getHeight());
+                for(View viewer:new View[]{model,frame})assertFalse(android.graphics.RectF.intersects(bounds,new android.graphics.RectF(viewer.getX(),viewer.getY(),viewer.getX()+viewer.getWidth(),viewer.getY()+viewer.getHeight())));
+            });
+            capture(resumed,"phase3-installed-scan-expanded");
         }
     }
 
@@ -761,6 +835,11 @@ public final class PhaseWorkflowInstrumentedTest {
         private long nextTimestamp() {
             timestamp = Math.max(timestamp + 100 * MILLIS, SystemClock.elapsedRealtimeNanos());
             return timestamp;
+        }
+
+        RecognitionResult driver(dev.chyken.assembl_ar.vision.Phase3Observation.State state){
+            RecognitionResult base=component(NeobotSeedData.MOTOR_DRIVER,board,Collections.emptyList(),3,null,null);
+            return (RecognitionResult)call(base,"withPhase3Observation",new Class<?>[]{dev.chyken.assembl_ar.vision.Phase3Observation.class},new dev.chyken.assembl_ar.vision.Phase3Observation(state,40));
         }
 
         RecognitionResult brackets(int count) {

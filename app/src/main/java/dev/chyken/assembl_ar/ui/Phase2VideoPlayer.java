@@ -33,6 +33,9 @@ public final class Phase2VideoPlayer implements AutoCloseable {
     private final int clipCount;
     private final Listener listener;
     public Phase2VideoPlayer(Context context,List<String> assets,Listener listener){
+        this(context,assets,listener,Phase2AssetCatalog::clipOrder);
+    }
+    public Phase2VideoPlayer(Context context,List<String> assets,Listener listener,java.util.function.ToIntFunction<String> clipOrder){
         this.listener=listener;clipCount=assets.size();
         view=(PlayerView)LayoutInflater.from(context).inflate(R.layout.view_phase2_video,null,false);
         // Autoplay and narration holds must not cover short clips with transport controls.
@@ -61,12 +64,12 @@ public final class Phase2VideoPlayer implements AutoCloseable {
                     return;
                 }
                 int index=source.getCurrentMediaItemIndex();
-                int role=index>=0&&index<assets.size()?Phase2AssetCatalog.clipOrder(assets.get(index)):-1;
+                int role=index>=0&&index<assets.size()?clipOrder.applyAsInt(assets.get(index)):-1;
                 boolean seek=seekPending;seekPending=false;
                 listener.onPlayback(role,source.isPlaying(),seek);
             }
             @Override public void onMediaItemTransition(MediaItem item,int reason){
-                if(!released&&item!=null)listener.onClip(Phase2AssetCatalog.clipOrder(assets.get(player.getCurrentMediaItemIndex())));
+                if(!released&&item!=null)listener.onClip(clipOrder.applyAsInt(assets.get(player.getCurrentMediaItemIndex())));
             }
             @Override public void onPlaybackStateChanged(int state){
                 if(!released&&state==Player.STATE_ENDED&&!waitingAtBoundary){waitingAtBoundary=true;boundaryNotificationPending=true;}

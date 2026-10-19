@@ -58,6 +58,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     private final ORB orb;
     private final CLAHE clahe;
     private final Phase2ReferenceMatcher phase2Matcher;
+    private final Phase3ReferenceMatcher phase3Matcher;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final FrameFeatureCache frameCache = new FrameFeatureCache();
     private final OrderedMatchingExecutor matchingExecutor = new OrderedMatchingExecutor(
@@ -86,10 +87,12 @@ public final class ComponentRecognizer implements AutoCloseable {
         orb = OpenCvVisionUtils.createOrb(config);
         clahe = OpenCvVisionUtils.createClahe(config);
         phase2Matcher=new Phase2ReferenceMatcher(database,config);
+        phase3Matcher=new Phase3ReferenceMatcher(database,config);
     }
     synchronized RecognitionResult inspectPhase2(Mat gray,long timestamp,int stage,RecognitionResult primary) {
         ensureOpen(); return phase2Matcher.inspect(gray,timestamp,stage,primary);
     }
+    synchronized RecognitionResult inspectPhase3(Mat gray,long timestamp,int step){ensureOpen();return phase3Matcher.inspect(gray,timestamp,step);}
 
     /**
      * Runs the same board recognition for every assembly step on the original grayscale frame.
@@ -826,6 +829,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         if (closed.compareAndSet(false, true)) {
             matchingExecutor.close();
             phase2Matcher.close();
+            phase3Matcher.close();
             descriptorBatches.close();
             frameCache.release();
             clahe.collectGarbage();
@@ -1539,6 +1543,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     static boolean isReferenceEligibleForRequest(
             ComponentReferenceSpec spec, RecognitionRequest request) {
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX)) return false;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX)) return false;
         if (spec.isInstalledBracketView()
                 && (request == null || request.getGuidedBracketSlot() == 0)) return false;
         if (spec.getAssemblyStepNumber() != 0
@@ -1558,6 +1563,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     static boolean isAssemblyReferenceEligibleForBoardFallback(ComponentReferenceSpec spec) {
         return spec != null && MAIN_BOARD_COMPONENT_ID.equals(spec.getComponentId())
                 && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX)
+                && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX)
                 && !spec.isAutomaticBoardGeometry()
                 && spec.getAssemblyStepNumber() > 0;
     }

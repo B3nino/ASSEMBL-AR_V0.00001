@@ -94,7 +94,7 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
     /** Requests the latest instruction; repeated camera/UI updates with the same key do not speak again. */
     public void speak(String text, String key) {
         if (closed) return;
-        String cleaned = text == null ? "" : text.trim();
+        String cleaned = SpeechText.clean(text);
         if (cleaned.isEmpty()) { stop(); return; }
         String safeKey = key == null ? cleaned : key;
         if (safeKey.equals(currentKey) && cleaned.equals(currentText)) return;
@@ -198,25 +198,29 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
     private static final class AndroidEngine implements Engine {
         private final Context context;
         private final Handler main = new Handler(Looper.getMainLooper());
+        private final android.os.HandlerThread workerThread=new android.os.HandlerThread("Assembly-TTS");
+        private final Handler worker;
         private TextToSpeech tts;
         private Listener listener;
-        private boolean closed;
+        private volatile boolean closed;
         private boolean initializationFinished;
         private final Runnable initializationTimeout = () -> finishInitialization(TextToSpeech.ERROR);
 
-        AndroidEngine(Context context) { this.context = context; }
+        AndroidEngine(Context context) { this.context = context;workerThread.start();worker=new Handler(workerThread.getLooper()); }
 
         @Override public void start(Listener listener) {
             this.listener = listener;
             // Always post: even synchronous initialization failure must see the assigned tts field.
-            tts = new TextToSpeech(context, result -> main.post(() -> finishInitialization(result)));
-            main.postDelayed(initializationTimeout, 10_000L);
+            worker.post(()->{if(closed)return;try{
+                tts = new TextToSpeech(context, result -> worker.post(() -> finishInitialization(result)));
+                worker.postDelayed(initializationTimeout,10_000L);
+            }catch(RuntimeException failure){finishInitialization(TextToSpeech.ERROR);}});
         }
 
         private void finishInitialization(int result) {
             if (closed || initializationFinished) return;
             initializationFinished = true;
-            main.removeCallbacks(initializationTimeout);
+            worker.removeCallbacks(initializationTimeout);
             boolean ready = false;
             try {
                 if (result == TextToSpeech.SUCCESS && selectOfflineVoice()) {
@@ -233,7 +237,7 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
                     }) == TextToSpeech.SUCCESS;
                 }
             } catch (RuntimeException failure) { ready = false; }
-            listener.onInitialized(ready);
+            final boolean available=ready;main.post(()->{if(!closed)listener.onInitialized(available);});
         }
 
         private boolean selectOfflineVoice() {
@@ -265,18 +269,16 @@ public final class AssemblyVoiceGuide implements AutoCloseable {
         }
 
         @Override public boolean speak(String text, String utteranceId) {
-            return !closed && tts != null && text.length() <= TextToSpeech.getMaxSpeechInputLength()
-                    && tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId) == TextToSpeech.SUCCESS;
+            if(closed||text.length()>TextToSpeech.getMaxSpeechInputLength())return false;
+            return worker.post(()->{if(closed)return;try{if(tts==null||tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,utteranceId)!=TextToSpeech.SUCCESS)reportError(utteranceId);}catch(RuntimeException failure){reportError(utteranceId);}});
         }
 
-        @Override public void stop() { if (!closed && tts != null) tts.stop(); }
+        @Override public void stop() { if(!closed)worker.post(()->{if(tts!=null)try{tts.stop();}catch(RuntimeException ignored){}}); }
 
         @Override public void shutdown() {
             closed = true;
             main.removeCallbacksAndMessages(null);
-            if (tts != null) tts.shutdown();
-            tts = null;
-            listener = null;
+            worker.post(()->{worker.removeCallbacks(initializationTimeout);try{if(tts!=null)tts.shutdown();}catch(RuntimeException ignored){}finally{tts=null;workerThread.quitSafely();}});
         }
     }
 }

@@ -64,6 +64,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
     private final Map<String, ObjModel> assemblyModels = new LinkedHashMap<>();
     @Nullable private ObjModel wiringModel;
     @Nullable private ObjModel componentModel;
+    @Nullable private ObjModel companionModel;
     private float componentScale = 1f;
 
     HomeRobotRenderer(Context context, OrbitController orbitController) {
@@ -113,6 +114,9 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
             componentModel = path == null ? null : ObjModel.load(context, path);
             if (componentModel != null) componentScale = previewScale(componentModel);
             materialRenderer.prepare(componentModel);
+            if(ComponentModelCatalog.SHORT_FASTENERS.equals(previewComponentId)||ComponentModelCatalog.LONG_FASTENERS.equals(previewComponentId)){
+                companionModel=ObjModel.load(context,"models/hex_nut.obj");materialRenderer.prepare(companionModel);
+            }
         }
     }
 
@@ -147,6 +151,11 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
 
         if (previewComponentId != null) {
             if (componentModel == null) return;
+            if(companionModel!=null){
+                drawPreviewPart(componentModel,-.65f,.60f);
+                drawPreviewPart(companionModel,.65f,.45f);
+                return;
+            }
             Matrix.setIdentityM(model, 0);
             Matrix.rotateM(model, 0, -90f, 1f, 0f, 0f);
             // Turn around the model's vertical axis so the named top edge stays at the top.
@@ -178,9 +187,18 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
             GLES20.glDepthMask(true);
         }
     }
+    private void drawPreviewPart(ObjModel part,float x,float size){
+        OrbitController.Snapshot orbit=orbitController.snapshot();
+        // Rotate each labeled part in place so the screw/nut never exchange their label positions.
+        Matrix.setIdentityM(model,0);Matrix.translateM(model,0,x,0,0);
+        Matrix.rotateM(model,0,orbit.pitchDegrees,1,0,0);Matrix.rotateM(model,0,orbit.yawDegrees,0,1,0);Matrix.rotateM(model,0,-90f,1,0,0);
+        float scale=previewScale(part)*size;Matrix.scaleM(model,0,scale,scale,scale);
+        Matrix.translateM(model,0,-part.center(0),-part.center(1),-part.center(2));draw(part,MATERIAL_COLOR);
+    }
 
     private void updateCamera() {
         OrbitController.Snapshot orbit = orbitController.snapshot();
+        if(companionModel!=null){Matrix.setLookAtM(view,0,0,0,orbit.distance,0,0,0,0,1,0);return;}
         double yaw = Math.toRadians(orbit.yawDegrees);
         double pitch = Math.toRadians(orbit.pitchDegrees);
         float horizontalDistance = orbit.distance * (float) Math.cos(pitch);
@@ -197,7 +215,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
     /** Fits any component in the initial 38-degree camera frustum, with room to orbit it. */
     static float previewScale(ObjModel mesh) {
         float radius = mesh.boundingRadius();
-        return Float.isFinite(radius) && radius > 0f ? 1.95f / radius : 1f;
+        return Float.isFinite(radius) && radius > 0f ? 1.70f / radius : 1f;
     }
 
     private void drawHorizontal(@Nullable ObjModel mesh, float[] color,

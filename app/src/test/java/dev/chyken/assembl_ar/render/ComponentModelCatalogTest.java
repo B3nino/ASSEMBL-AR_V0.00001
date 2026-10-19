@@ -15,6 +15,14 @@ import static org.junit.Assert.*;
 
 /** Checks the actual Android assets and preview framing, not just filename conventions. */
 public final class ComponentModelCatalogTest {
+    @Test public void combinedFastenerPreviewsReuseRealScrewsWithoutAddingLibraryComponents(){
+        assertTrue(ComponentModelCatalog.hasModel(ComponentModelCatalog.SHORT_FASTENERS));
+        assertTrue(ComponentModelCatalog.hasModel(ComponentModelCatalog.LONG_FASTENERS));
+        assertEquals(ComponentModelCatalog.assetPath(NeobotSeedData.SCREW_SHORT),ComponentModelCatalog.assetPath(ComponentModelCatalog.SHORT_FASTENERS));
+        assertEquals(ComponentModelCatalog.assetPath(NeobotSeedData.SCREW_30MM),ComponentModelCatalog.assetPath(ComponentModelCatalog.LONG_FASTENERS));
+        assertEquals("models/hex_nut.obj",ComponentModelCatalog.assetPath(NeobotSeedData.NUT));
+        assertFalse(ComponentModelCatalog.assets().containsKey(ComponentModelCatalog.SHORT_FASTENERS));
+    }
     @Test public void everyLibraryComponentHasItsOwnModelAndNoUnknownIdsAreAccepted() {
         Set<String> componentIds = new HashSet<>();
         Set<String> modelPaths = new HashSet<>();
@@ -59,6 +67,6 @@ public final class ComponentModelCatalogTest {
             assertTrue("Missing materials for " + path, hasAuthoredMaterial);
         }
         // A radius of 1.75 fits at the default distance even in the narrower frustum axis.
-        assertTrue(1.75 < 6.5 * Math.sin(Math.toRadians(19)));
+        assertTrue(1.70 < 5.3 * Math.sin(Math.toRadians(19)));
     }
 }

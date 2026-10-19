@@ -20,6 +20,14 @@ public final class RecognitionRequest {
     private Object requestTag;
     private boolean installedMotorInspection;
     private int phase2Stage;
+    private int phase3Stage;
+    public int getPhase3Stage(){return phase3Stage;}
+    public RecognitionRequest withPhase3Stage(int stage){
+        if((stage!=1&&stage!=4&&stage!=5)||assemblyStepNumber!=3||expectation==null
+                ||!"dual_motor_driver".equals(expectation.getComponentId())||expectedInstanceCount!=1||spatialAnchorComponentId!=null)
+            throw new IllegalArgumentException("Phase 3 photo request requires the driver and no AR anchor");
+        RecognitionRequest copy=copy();copy.phase3Stage=stage;return copy;
+    }
     public int getPhase2Stage() { return phase2Stage; }
     public RecognitionRequest withPhase2Stage(int stage) {
         if(stage!=1&&stage!=2&&stage!=5) throw new IllegalArgumentException("Phase 2 scanning stage");
@@ -189,6 +197,7 @@ public final class RecognitionRequest {
         copy.requestTag = requestTag;
         copy.installedMotorInspection = installedMotorInspection;
         copy.phase2Stage=phase2Stage;
+        copy.phase3Stage=phase3Stage;
         return copy;
     }
 
