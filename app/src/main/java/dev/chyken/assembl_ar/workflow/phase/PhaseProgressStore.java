@@ -80,6 +80,8 @@ public final class PhaseProgressStore {
     public static String gearMotorState(Context context,String projectId){
         return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",null);
     }
+    public static String microcontrollerState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MICROCONTROLLER_FIT)+":nano_v1",null);}
+    public static void saveMicrocontrollerState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MICROCONTROLLER_FIT)+":nano_v1",state).apply();}
     public static String driverState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT)+":driver_v1",null);}
     public static String wiringState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_LEADS)+":wiring_v1",null);}
     public static void saveWiringState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_LEADS)+":wiring_v1",state).apply();}

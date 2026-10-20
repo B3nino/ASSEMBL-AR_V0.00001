@@ -658,6 +658,63 @@ public final class PhaseWorkflowInstrumentedTest {
         }
     }
 
+    @Test public void nanoFlowRequiresFrontDemoInstalledScanAndBothPhysicalAnswers(){
+        positionAt(6);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MICROCONTROLLER_FIT);
+            scenario.onActivity(activity->{
+                activity.voiceGuide().setMuted(true);
+                Phase5GuideController guide=(Phase5GuideController)getField(controller,"microcontrollerGuide");Frames frames=new Frames(activity,controller);
+                assertEquals(1,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getPhase5Stage());
+                assertNull(controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getSpatialAnchorComponentId());
+                gearCard(activity).action.performClick();AlertDialog info=(AlertDialog)getField(guide,"dialog");assertTrue(info.isShowing());assertTrue(controller.isAnalysisSuspended());info.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertFalse(controller.isAnalysisSuspended());
+                frames.deliver(frames.nano(dev.chyken.assembl_ar.vision.Phase5Observation.State.FLIPPED),null);assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.nano(dev.chyken.assembl_ar.vision.Phase5Observation.State.FRONT),null);assertTrue(gearCard(activity).next.isEnabled());assertEquals(1,guide.flow.step());
+                gearCard(activity).next.performClick();assertEquals(2,guide.flow.step());assertTrue(controller.isAnalysisSuspended());assertFalse(gearCard(activity).action.isEnabled());
+                dev.chyken.assembl_ar.ui.Phase2VideoPlayer video=(dev.chyken.assembl_ar.ui.Phase2VideoPlayer)getField(guide,"video");
+                ((dev.chyken.assembl_ar.ui.Phase2VideoPlayer.Listener)getField(video,"listener")).onFinished();
+                assertFalse(gearCard(activity).next.isEnabled());gearCard(activity).action.performClick();assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();
+                assertEquals(3,guide.flow.step());assertFalse(controller.isAnalysisSuspended());assertEquals(3,controller.requestFor(CameraCalibration.pinhole(500,500,320,240)).getPhase5Stage());
+                frames.deliver(frames.nano(dev.chyken.assembl_ar.vision.Phase5Observation.State.BACKWARD),null);assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.nano(dev.chyken.assembl_ar.vision.Phase5Observation.State.PLACED),null);assertTrue(gearCard(activity).next.isEnabled());assertEquals(3,guide.flow.step());
+                gearCard(activity).next.performClick();gearCard(activity).action.performClick();AlertDialog check=(AlertDialog)getField(guide,"dialog");
+                check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertFalse(guide.flow.complete());assertTrue(check.isShowing());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertTrue(guide.flow.firmConfirmed());assertFalse(guide.flow.complete());assertEquals("All Pins In",check.getButton(AlertDialog.BUTTON_POSITIVE).getText().toString());
+                check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertFalse(guide.flow.firmConfirmed());assertFalse(guide.flow.pinsConfirmed());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.DRIVER_WIRING);assertEquals(StepStatus.COMPLETED,statusOf(6));assertEquals(StepStatus.IN_PROGRESS,statusOf(7));
+        }
+    }
+
+    @Test public void nanoPlacementUnlockAndPartialChecklistSurviveRecreationAndLookBack(){
+        positionAt(6);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MICROCONTROLLER_FIT);
+            scenario.onActivity(activity->{
+                Phase5GuideController guide=(Phase5GuideController)getField(controller,"microcontrollerGuide");guide.flow.observe(true);guide.flow.next(SystemClock.elapsedRealtimeNanos());guide.flow.confirmDemo(true);guide.flow.next(SystemClock.elapsedRealtimeNanos());guide.render();
+                Frames frames=new Frames(activity,controller);frames.deliver(frames.nano(dev.chyken.assembl_ar.vision.Phase5Observation.State.PLACED),null);
+                assertTrue(gearCard(activity).next.isEnabled());
+            });
+        }
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.MICROCONTROLLER_FIT);
+            scenario.onActivity(activity->{
+                Phase5GuideController guide=(Phase5GuideController)getField(controller,"microcontrollerGuide");assertEquals(3,guide.flow.step());assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).rescan.performClick();((AlertDialog)getField(guide,"dialog")).getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).next.performClick();gearCard(activity).action.performClick();((AlertDialog)getField(guide,"dialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertTrue(guide.flow.firmConfirmed());
+            });
+            scenario.recreate();
+            PhaseAssemblyController restored=awaitPhase(scenario,AssemblyPhaseCatalog.MICROCONTROLLER_FIT);
+            scenario.onActivity(activity->{
+                Phase5GuideController guide=(Phase5GuideController)getField(restored,"microcontrollerGuide");assertEquals(4,guide.flow.step());assertTrue(guide.flow.firmConfirmed());assertFalse(guide.flow.pinsConfirmed());
+                gearCard(activity).previous.performClick();assertEquals(3,guide.flow.step());assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).previous.performClick();gearCard(activity).previous.performClick();gearCard(activity).previous.performClick();assertNotNull(getField(restored,"wiringGuide"));
+                gearCard(activity).next.performClick();assertNull(getField(restored,"wiringGuide"));assertEquals(guide,getField(restored,"microcontrollerGuide"));assertEquals(1,guide.flow.step());assertTrue(gearCard(activity).next.isEnabled());
+            });
+        }
+    }
+
     @Test
     public void customMotorWireColorsRenderAtCompactAndExpandedPreviewSizes(){
         positionAt(4);
@@ -975,6 +1032,11 @@ public final class PhaseWorkflowInstrumentedTest {
         private long nextTimestamp() {
             timestamp = Math.max(timestamp + 100 * MILLIS, SystemClock.elapsedRealtimeNanos());
             return timestamp;
+        }
+
+        RecognitionResult nano(dev.chyken.assembl_ar.vision.Phase5Observation.State state){
+            RecognitionResult base=component(NeobotSeedData.MICROCONTROLLER,board,Collections.emptyList(),5,null,null);
+            return (RecognitionResult)call(base,"withPhase5Observation",new Class<?>[]{dev.chyken.assembl_ar.vision.Phase5Observation.class},new dev.chyken.assembl_ar.vision.Phase5Observation(state,40));
         }
 
         RecognitionResult driver(dev.chyken.assembl_ar.vision.Phase3Observation.State state){

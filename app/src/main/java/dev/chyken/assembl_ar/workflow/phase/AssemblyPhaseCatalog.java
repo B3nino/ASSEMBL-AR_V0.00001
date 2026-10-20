@@ -215,8 +215,8 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(MOTOR_ASSEMBLIES, MOTOR_DRIVER_MOUNT)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(MICROCONTROLLER_FIT, "Fit the microcontroller",
-                "Seat the Nano board straight into both socket rows with its USB toward the rear.")
+        phases.add(new PhaseBuilder(MICROCONTROLLER_FIT, "Install the Arduino Nano",
+                "Identify the Nano, follow its installation demo, verify USB orientation and check all pins.")
                 .whole(6)
                 .part(MICROCONTROLLER, 1, "Both header rows, no bent or offset pins.")
                 .context(MAIN_BOARD, 1, "Nano socket and FRONT marking.")

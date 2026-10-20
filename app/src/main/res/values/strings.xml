@@ -29,13 +29,13 @@
     <string name="choose_project_hint">The bundled catalog is limited to the NEOBOT Personal Robot Kit.</string>
     <string name="neobot_project">NEOBOT Personal Robot Kit</string>
     <string name="assembly_wiring">Assembly &amp; wiring</string>
-    <string name="project_summary">128 guided steps · 18 AR-verified manual sections · Fully offline</string>
+    <string name="project_summary">Guided assembly · Spoken instructions · Offline component scans</string>
     <string name="project_details">Project details</string>
     <string name="official_guide">Official 2026 assembly and wiring guide</string>
     <string name="resume_assembly">Resume assembly</string>
     <string name="begin_assembly">Begin assembly</string>
     <string name="restart_assembly">Restart progress</string>
-    <string name="assembly_steps">Manual assembly sections</string>
+    <string name="assembly_steps">Assembly phases</string>
     <string name="assembly_stage_number">Step %1$d</string>
     <string name="required_workspace">Before you begin</string>
     <string name="workspace_body">Use a flat, clean, non-metal table in a well-lit indoor space. Keep the NEOBOT kit and a Phillips screwdriver within reach.</string>

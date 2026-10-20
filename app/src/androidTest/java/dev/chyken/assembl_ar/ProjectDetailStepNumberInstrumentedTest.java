@@ -25,6 +25,23 @@ public final class ProjectDetailStepNumberInstrumentedTest {
         }
     }
 
+    @Test public void firstFivePhaseDescriptionsUseTheOverhauledStepCounts(){
+        try(ActivityScenario<ProjectDetailActivity> scenario=ActivityScenario.launch(ProjectDetailActivity.class)){
+            for(int attempt=0;attempt<40;attempt++){
+                boolean[] ready={false};scenario.onActivity(activity->{
+                    LinearLayout rows=activity.findViewById(R.id.stepsContainer);if(rows.getChildCount()<5)return;
+                    int[] counts={1,6,6,3,4};
+                    for(int index=0;index<counts.length;index++){
+                        View row=rows.getChildAt(index);String title=((TextView)row.findViewById(R.id.itemTitle)).getText().toString();String summary=((TextView)row.findViewById(R.id.itemSubtitle)).getText().toString();
+                        assertTrue(title.startsWith("Phase "+(index+1)));assertTrue(summary.startsWith(counts[index]+(counts[index]==1?" step":" steps")));
+                    }
+                    ready[0]=true;
+                });if(ready[0])return;SystemClock.sleep(100);
+            }
+            throw new AssertionError("Overhauled phase descriptions were not displayed");
+        }
+    }
+
     private static void assertEventually(ActivityScenario<ProjectDetailActivity> scenario) {
         for (int attempt = 0; attempt < 30; attempt++) {
             boolean[] verified = {false};

@@ -111,28 +111,32 @@ public final class ProjectDetailActivity extends AppCompatActivity {
         }
         stepsContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
-        for (AssemblyStep step : steps) {
+        for (dev.chyken.assembl_ar.workflow.phase.AssemblyPhase phase : dev.chyken.assembl_ar.workflow.phase.AssemblyPhaseCatalog.phases()) {
             View item = inflater.inflate(R.layout.item_assembly_step, stepsContainer, false);
             TextView number = item.findViewById(R.id.itemNumber);
             TextView title = item.findViewById(R.id.itemTitle);
             TextView subtitle = item.findViewById(R.id.itemSubtitle);
             ImageView status = item.findViewById(R.id.itemStatusIcon);
-            number.setText(String.valueOf(step.getStepNumber()));
-            number.setContentDescription(getString(
-                    R.string.assembly_stage_number, step.getStepNumber()));
-            title.setText(step.getTitle());
-            java.util.List<GuidedAssemblySequence.GuidedStep> guidedSteps =
-                    GuidedAssemblySequence.forManualStep(step);
-            String firstInstruction = guidedSteps.isEmpty()
-                    ? step.getSummary()
-                    : guidedSteps.get(0).getPrimaryInstruction().getText();
-            subtitle.setText(getResources().getQuantityString(
-                    R.plurals.guided_steps_in_section, guidedSteps.size(),
-                    guidedSteps.size(), firstInstruction));
-            StepStatus stepStatus = statusByStep.get(step.getId());
-            status.setVisibility(stepStatus == StepStatus.COMPLETED ? View.VISIBLE : View.GONE);
-            item.setAlpha(stepStatus == StepStatus.NOT_STARTED ? 0.72f : 1f);
-            stepsContainer.addView(item);
+            number.setText(String.valueOf(phase.getNumber()));
+            number.setContentDescription(getString(R.string.assembly_stage_number, phase.getNumber()));
+            title.setText("Phase "+phase.getNumber()+" · "+phase.getTitle());
+            if(dev.chyken.assembl_ar.workflow.phase.PhaseGuideMetadata.overhauled(phase)){
+                int count=dev.chyken.assembl_ar.workflow.phase.PhaseGuideMetadata.subSteps(phase).size();
+                subtitle.setText(count+(count==1?" step · ":" steps · ")+dev.chyken.assembl_ar.workflow.phase.PhaseGuideMetadata.summary(phase));
+            }else{
+                // Retain later-phase instructions until their new grouping is supplied.
+                subtitle.setText(phase.getSummary());
+            }
+            boolean anyStarted=false,sectionsDone=true;
+            for(int section:phase.getSections()){
+                for(AssemblyStep step:steps)if(step.getStepNumber()==section){
+                    StepStatus saved=statusByStep.get(step.getId());
+                    sectionsDone&=saved==StepStatus.COMPLETED;anyStarted|=saved!=null&&saved!=StepStatus.NOT_STARTED;
+                }
+            }
+            boolean complete=sectionsDone||PhaseProgressStore.records(this,NeobotSeedData.PROJECT_ID).isPhaseComplete(phase.getId());
+            status.setVisibility(complete?View.VISIBLE:View.GONE);
+            item.setAlpha(complete||anyStarted?1f:.72f);stepsContainer.addView(item);
         }
     }
 

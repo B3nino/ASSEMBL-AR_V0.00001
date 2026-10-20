@@ -236,6 +236,8 @@ public final class ReferenceDatabase implements AutoCloseable {
             spec=Phase2PhotoGeometry.resolve(spec,imageBytes,cacheFile);
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))
             spec=Phase3PhotoGeometry.resolve(spec,imageBytes);
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))
+            spec=Phase5PhotoGeometry.resolve(spec,imageBytes);
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
                 return preparedFromBlob(spec, readFully(input), config);
@@ -409,6 +411,7 @@ public final class ReferenceDatabase implements AutoCloseable {
                 + "_prep" + REFERENCE_PREPARATION_VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
             assetFingerprint+="_p2roi"+Phase2PhotoGeometry.CACHE_VERSION;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))assetFingerprint+="_p5roi"+Phase5PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))assetFingerprint+="_p3roi"+Phase3PhotoGeometry.VERSION;
         return new File(directory, safeId + "_" + assetFingerprint + ".asor");
     }
@@ -533,6 +536,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         try {
             Imgproc.fillConvexPoly(mask, polygon, new Scalar(255));
             if("assembly".equals(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
+            if(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
             List<List<VisionPoint>> featureRegions = spec.getFeatureRegionsNormalized();
             if (featureRegions.isEmpty()) {
                 return mask;

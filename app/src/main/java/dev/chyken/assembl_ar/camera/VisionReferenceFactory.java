@@ -36,6 +36,7 @@ public final class VisionReferenceFactory {
             android.content.res.AssetManager assets) {
         List<ComponentReferenceSpec> result = new ArrayList<>();
         Set<String> referenceIds = new HashSet<>();
+        if(assets!=null)for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase5(assets))if(referenceIds.add(spec.getReferenceId()))result.add(spec);
         if(assets!=null)for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase3(assets))if(referenceIds.add(spec.getReferenceId()))result.add(spec);
         if(assets!=null) for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase2(assets)) {
             if(referenceIds.add(spec.getReferenceId())) result.add(spec);

@@ -20,6 +20,14 @@ public final class RecognitionRequest {
     private Object requestTag;
     private boolean installedMotorInspection;
     private int phase2Stage;
+    private int phase5Stage;
+    public int getPhase5Stage(){return phase5Stage;}
+    public RecognitionRequest withPhase5Stage(int stage){
+        if((stage!=1&&stage!=3)||assemblyStepNumber!=5||expectation==null
+                ||!"arduino_nano_microcontroller".equals(expectation.getComponentId())||expectedInstanceCount!=1||spatialAnchorComponentId!=null)
+            throw new IllegalArgumentException("Phase 5 photo request requires the Nano and no AR anchor");
+        RecognitionRequest copy=copy();copy.phase5Stage=stage;return copy;
+    }
     private int phase3Stage;
     public int getPhase3Stage(){return phase3Stage;}
     public RecognitionRequest withPhase3Stage(int stage){
@@ -198,6 +206,7 @@ public final class RecognitionRequest {
         copy.installedMotorInspection = installedMotorInspection;
         copy.phase2Stage=phase2Stage;
         copy.phase3Stage=phase3Stage;
+        copy.phase5Stage=phase5Stage;
         return copy;
     }
 

@@ -64,11 +64,8 @@ final class DevStepSkipDialog {
         new AlertDialog.Builder(activity).setTitle("Select phase for sub-steps")
                 .setItems(names,(dialog,index)-> {
                     AssemblyPhase selected=catalog.get(index);
-                    if(selected.getNumber()>=2&&selected.getNumber()<=4){
-                        String[] labels={"2.1 · Four brackets","2.2 · Two TT motors","2.3 · Fasteners and tools",
-                                "2.4 · Video assembly","2.5 · Hardware verification","2.6 · Joint stability"};
-                        if(selected.getNumber()==3)labels=new String[]{"3.1 · Motor Driver front scan","3.2 · Screws and nuts","3.3 · Assembly demo","3.4 · Pre-screw placement","3.5 · Final assembly scan","3.6 · Joint stability"};
-                        if(selected.getNumber()==4)labels=new String[]{"4.1 · Select wire colors","4.2 · Custom wiring schematic","4.3 · Wire pull test"};
+                    if(dev.chyken.assembl_ar.workflow.phase.PhaseGuideMetadata.overhauled(selected)){
+                        String[] labels=dev.chyken.assembl_ar.workflow.phase.PhaseGuideMetadata.subSteps(selected).toArray(new String[0]);
                         new AlertDialog.Builder(activity).setTitle("Phase "+selected.getNumber()+" sub-steps")
                                 .setItems(labels,(child,step)->phases.devJumpToChapter(selected,step))
                                 .setNegativeButton(android.R.string.cancel,null).show();return;
