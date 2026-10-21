@@ -62,17 +62,6 @@
                         android:contentDescription="@string/neobot_project"
                         android:padding="10dp"
                         android:scaleType="fitCenter" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="top|start"
-                        android:layout_margin="12dp"
-                        android:background="@drawable/bg_pill"
-                        android:text="@string/offline_ready"
-                        android:textColor="@color/primary_dark"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
                 </FrameLayout>
 
                 <LinearLayout

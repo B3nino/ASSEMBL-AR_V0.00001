@@ -140,6 +140,7 @@ public final class UiUtils {
             Intent intent = new Intent(activity, destination)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             activity.startActivity(intent);
+            activity.overridePendingTransition(BrandingAssets.motion()?R.anim.tab_enter:0,BrandingAssets.motion()?R.anim.tab_exit:0);
 
             // Keep the landing page as the stable task root, but replace peer tab Activities.
             // This prevents Back from walking through every previous tab selection.

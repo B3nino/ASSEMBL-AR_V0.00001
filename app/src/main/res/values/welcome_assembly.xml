@@ -1,0 +1,5 @@
+<resources>
+<string name="welcome_assembly_title">Let’s build your NEOBOT</string>
+<string name="welcome_assembly_body">Welcome to ASSEMBL-AR! Prepare your workstation, components, and tools before starting.</string>
+<string name="welcome_assembly_check">Clean, non-metal surface\nComponents and tools within reach\nBattery disconnected while assembling</string>
+</resources>

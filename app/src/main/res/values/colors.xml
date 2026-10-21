@@ -9,10 +9,10 @@
     <!-- Accessible application surfaces and content colors. -->
     <color name="ink">@color/brand_charcoal</color>
     <color name="ink_soft">#606060</color>
-    <color name="canvas">#F7F8F6</color>
+    <color name="canvas">#E5F1EB</color>
     <color name="surface">#FFFFFFFF</color>
-    <color name="surface_muted">#F2F3F1</color>
-    <color name="line">#D8DED4</color>
+    <color name="surface_muted">#F0F5F1</color>
+    <color name="line">#CDDCD2</color>
     <color name="control_outline">#8A9185</color>
     <color name="primary">@color/brand_green_dark</color>
     <color name="primary_dark">#315F10</color>

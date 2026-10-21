@@ -134,7 +134,7 @@ public final class ProjectDetailActivity extends AppCompatActivity {
                     sectionsDone&=saved==StepStatus.COMPLETED;anyStarted|=saved!=null&&saved!=StepStatus.NOT_STARTED;
                 }
             }
-            boolean complete=sectionsDone||PhaseProgressStore.records(this,NeobotSeedData.PROJECT_ID).isPhaseComplete(phase.getId());
+            boolean complete=sectionsDone||phase.getSections().size()==1&&PhaseProgressStore.records(this,NeobotSeedData.PROJECT_ID).isPhaseComplete(phase.getId());
             status.setVisibility(complete?View.VISIBLE:View.GONE);
             item.setAlpha(complete||anyStarted?1f:.72f);stepsContainer.addView(item);
         }

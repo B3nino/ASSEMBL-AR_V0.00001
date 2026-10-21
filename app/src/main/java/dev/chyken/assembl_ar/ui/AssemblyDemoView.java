@@ -74,7 +74,25 @@ public final class AssemblyDemoView extends View {
     @Nullable private java.util.function.Consumer<Terminal> wireSelected;
     private Terminal selectedWire=Terminal.LEFT_POSITIVE;
     @Nullable private MotorWiringArtworkRenderer wiringArtwork;
-    private boolean wireTouch;
+    private boolean wireTouch,expandedSchematic;
+    @Nullable private dev.chyken.assembl_ar.model.DriverWireColorConfig driverWireColors;
+    @Nullable private DriverSchematicRenderer driverArtwork;
+    private dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire selectedDriverWire=dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire.VCC;
+    @Nullable private java.util.function.Consumer<dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire> driverWireSelected;
+    private int driverFocus;
+    public void setExpandedSchematic(boolean value){expandedSchematic=value;invalidate();}
+    public void setDriverWireFocus(int focus){driverFocus=focus;invalidate();}
+    public void setDriverWireColors(@NonNull dev.chyken.assembl_ar.model.DriverWireColorConfig colors){
+        boolean entering=driverWireColors==null;driverWireColors=colors;motorWireColors=null;demo=null;reference=null;imageGeneration++;
+        if(driverArtwork==null)driverArtwork=new DriverSchematicRenderer(this);
+        StringBuilder text=new StringBuilder("Driver to Arduino Nano. USB connector at bottom. ");
+        for(dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire wire:dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire.values())text.append(wire.spoken()).append(", ").append(colors.swatch(wire).label).append(" wire. ");
+        setContentDescription(text);if(entering){animator.cancel();progress=0;animator.setRepeatCount(ValueAnimator.INFINITE);}startOrResume();invalidate();
+    }
+    public void setSelectedDriverWire(dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire value){selectedDriverWire=value;invalidate();}
+    public void setOnDriverWireSelected(@Nullable java.util.function.Consumer<dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire> listener){driverWireSelected=listener;setClickable(listener!=null||hasOnClickListeners());}
+    public List<PinConnection> getDriverWireConnections(){return dev.chyken.assembl_ar.data.NeobotSeedData.getPhase6PinConnections(driverWireColors==null?dev.chyken.assembl_ar.model.DriverWireColorConfig.defaults():driverWireColors);}
+    public boolean isDriverArtworkReady(){return driverArtwork!=null&&driverArtwork.ready();}
 
     public AssemblyDemoView(@NonNull Context context) { this(context, null); }
 
@@ -97,7 +115,7 @@ public final class AssemblyDemoView extends View {
     /** Replaces the instruction and starts its demonstration from the beginning when visible. */
     public void setDemo(@Nullable Demo value) {
         animator.cancel();
-        motorWireColors=null;motorConnections=java.util.Collections.emptyList();wireSelected=null;setClickable(false);animator.setRepeatCount(0);
+        driverWireColors=null;driverWireSelected=null;motorWireColors=null;motorConnections=java.util.Collections.emptyList();wireSelected=null;setClickable(false);animator.setRepeatCount(0);
         demo = value;
         progress = 0f;
         reference = null;
@@ -158,7 +176,7 @@ public final class AssemblyDemoView extends View {
     }
 
     private void startOrResume() {
-        if (demo == null && motorWireColors==null || explicitlyPaused) return;
+        if (demo == null && motorWireColors==null && driverWireColors==null || explicitlyPaused) return;
         if (reduceMotion()) {
             animator.cancel();
             progress = 1f;
@@ -167,7 +185,7 @@ public final class AssemblyDemoView extends View {
         }
         if (!isAttachedToWindow() || !isShown() || getWindowVisibility() != VISIBLE) return;
         if (animator.isPaused()) animator.resume();
-        else if (!animator.isStarted() && (progress < 1f || motorWireColors!=null)) animator.start();
+        else if (!animator.isStarted() && (progress < 1f || motorWireColors!=null || driverWireColors!=null)) animator.start();
     }
 
     @Override protected void onAttachedToWindow() {
@@ -205,6 +223,7 @@ public final class AssemblyDemoView extends View {
         super.onDraw(canvas);
         fill(BACKGROUND);
         canvas.drawRoundRect(0, 0, getWidth(), getHeight(), dp(14), dp(14), paint);
+        if(driverWireColors!=null){driverArtwork.draw(canvas,getWidth(),getHeight(),driverWireColors,selectedDriverWire,driverFocus,progress,!reduceMotion());return;}
         if(motorWireColors!=null){drawMotorWiring(canvas);return;}
         if (demo == null || getWidth() < dp(80) || getHeight() < dp(90)) return;
         float inset = dp(12);
@@ -227,7 +246,7 @@ public final class AssemblyDemoView extends View {
 
     /** Independent custom schematic; never projected onto the live camera or played as a video. */
     public void setMotorWireColors(@NonNull MotorWireColorConfig colors){
-        boolean entering=motorWireColors==null;motorWireColors=colors;motorConnections=NeobotSeedData.getPhase4PinConnections(colors);demo=null;reference=null;imageGeneration++;
+        boolean entering=motorWireColors==null;driverWireColors=null;motorWireColors=colors;motorConnections=NeobotSeedData.getPhase4PinConnections(colors);demo=null;reference=null;imageGeneration++;
         StringBuilder description=new StringBuilder("Motor wiring using component illustrations. Green screw blocks toward you; six small header pins away. Inner motor tabs face the board center. Motor tabs have no marked polarity. ");
         for(Terminal t:Terminal.values())description.append(t.spoken()).append(", ").append(colors.swatch(t).label).append(" wire to ").append(t.output).append(". ");
         if(wiringArtwork==null)wiringArtwork=new MotorWiringArtworkRenderer(this);
@@ -237,6 +256,11 @@ public final class AssemblyDemoView extends View {
     public void setOnMotorWireSelected(@Nullable java.util.function.Consumer<Terminal> listener){wireSelected=listener;setClickable(listener!=null);}
     public List<PinConnection> getMotorWireConnections(){return motorConnections;}
     @Override public boolean onTouchEvent(MotionEvent event){
+        if(driverWireColors!=null&&driverWireSelected!=null){
+            if(event.getActionMasked()==MotionEvent.ACTION_DOWN){wireTouch=driverArtwork.hit(event.getX(),event.getY())!=null;return wireTouch;}
+            if(event.getActionMasked()==MotionEvent.ACTION_UP&&wireTouch){wireTouch=false;dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire wire=driverArtwork.hit(event.getX(),event.getY());if(wire!=null){selectedDriverWire=wire;performClick();driverWireSelected.accept(wire);invalidate();}return true;}
+            if(event.getActionMasked()==MotionEvent.ACTION_CANCEL)wireTouch=false;return true;
+        }
         if(motorWireColors==null||wireSelected==null)return super.onTouchEvent(event);
         if(event.getActionMasked()==MotionEvent.ACTION_DOWN){wireTouch=hitWire(event.getX(),event.getY())!=null;return wireTouch;}
         if(event.getActionMasked()==MotionEvent.ACTION_UP&&wireTouch){wireTouch=false;Terminal terminal=hitWire(event.getX(),event.getY());if(terminal!=null){selectedWire=terminal;performClick();wireSelected.accept(terminal);invalidate();}return true;}
@@ -247,7 +271,7 @@ public final class AssemblyDemoView extends View {
     /** Artwork and pin hit targets share the same fitted/cropped/rotated transform. */
     private void drawMotorWiring(Canvas canvas){
         if(wiringArtwork!=null)wiringArtwork.draw(canvas,getWidth(),getHeight(),motorWireColors,
-                selectedWire,wireSelected!=null,progress,!reduceMotion());
+                selectedWire,wireSelected!=null,progress,!reduceMotion(),expandedSchematic);
     }
     public boolean isMotorWiringArtworkReady(){return wiringArtwork!=null&&wiringArtwork.isReady();}
 

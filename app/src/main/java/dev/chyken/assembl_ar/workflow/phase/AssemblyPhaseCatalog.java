@@ -27,20 +27,20 @@ import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.VisualTarget;
 import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
 
 /**
- * The NEOBOT guide grouped into 18 learner-visible phases.
+ * The NEOBOT guide grouped into 17 learner-visible phases.
  *
  * <p>All 18 manual sections and their 152 source instructions are preserved. Sections 4–5
- * form one motor-lead job; driver power and control have independent phases. Section 11 is split between mounting
+ * form one motor-lead job; driver power and control share Phase 6. Section 11 is split between mounting
  * the distance sensor and wiring every sensor. Every camera target reuses an existing
  * recognition path, so a phase checks the same installed evidence the per-card guide did, once
  * the group is finished. Direct checks repeat every manual CHECK and section validation prompt
  * verbatim; authored lines consolidate fastening and seating facts the camera cannot see.</p>
  */
 public final class AssemblyPhaseCatalog {
-    /** Planned roadmap. Phase 3–11 membership awaits the user's revised grouping. */
+    /** Planned roadmap. Later phase membership awaits the user's revised grouping. */
     public static final int ROADMAP_PHASE_COUNT=11;
     /** Bump whenever phase membership, targets or checklists change; shown in the build stamp. */
-    public static final int REVISION = 2;
+    public static final int REVISION = 3;
 
     public static final String BOARD_PREPARATION = "board_preparation";
     public static final String MOTOR_ASSEMBLIES = "motor_assemblies";
@@ -69,6 +69,7 @@ public final class AssemblyPhaseCatalog {
 
     @Nullable
     public static AssemblyPhase byId(String id) {
+        if(DRIVER_CONTROL.equals(id))id=DRIVER_WIRING; // Saved pre-overhaul sessions retain their destination.
         for (AssemblyPhase phase : PHASES) {
             if (phase.getId().equals(id)) return phase;
         }
@@ -227,24 +228,15 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(BOARD_PREPARATION)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(DRIVER_WIRING, "Wire driver power",
-                "Connect the two driver power leads to VIN and GND.")
-                .whole(7)
-                .checklistPart(JUMPER_WIRE, 2, "Two power leads.")
-                .context(MOTOR_DRIVER, 1, "VCC, GND and the four signal inputs.")
-                .context(MICROCONTROLLER, 1, "VIN, GND, D5, D9, D6 and D10.")
-                .pinCheck(7, 1, 2)
+        phases.add(new PhaseBuilder(DRIVER_WIRING, "Connect the Nano and motor driver",
+                "Select six wire colors, connect power and PWM signals, then check every header.")
+                .whole(7).whole(8)
+                .context(MICROCONTROLLER, 1, "Already identified and installed in Phase 5.")
+                .checklistPart(JUMPER_WIRE, 6, "Two power and four PWM control leads.")
+                .context(MOTOR_DRIVER, 1, "VCC, GND, A-IA, A-IB, B-IA and B-IB.")
+                .pinCheck(7, 1, 2).pinCheck(8, 1, 2, 3, 4)
+                .check("All six jumper housings are fully seated with no adjacent cross-connections.")
                 .dependsOn(MOTOR_DRIVER_MOUNT, MICROCONTROLLER_FIT)
-                .build(phases));
-
-        phases.add(new PhaseBuilder(DRIVER_CONTROL, "Wire driver control signals",
-                "Connect the four PWM control leads to D5, D9, D6 and D10.")
-                .whole(8)
-                .checklistPart(JUMPER_WIRE, 4, "Four control signal leads.")
-                .context(MOTOR_DRIVER, 1, "Four signal inputs.")
-                .context(MICROCONTROLLER, 1, "D5, D9, D6 and D10.")
-                .pinCheck(8, 1, 2, 3, 4)
-                .dependsOn(DRIVER_WIRING)
                 .build(phases));
 
         phases.add(new PhaseBuilder(CASTER_FIT, "Fit the caster",

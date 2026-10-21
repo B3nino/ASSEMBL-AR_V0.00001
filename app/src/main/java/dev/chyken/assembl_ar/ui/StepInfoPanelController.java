@@ -190,6 +190,8 @@ public final class StepInfoPanelController {
         int preferredWidth = tablet ? activity.getResources().getDimensionPixelSize(
                 R.dimen.tablet_camera_panel_width) : dp(340);
         int panelWidth = Math.min(tablet ? Math.max(preferredWidth, dp(440)) : preferredWidth,Math.round(safeWidth*.46f));
+        WiringWorkspace wiring=WiringWorkspace.active(activity);
+        if(wiring!=null)panelWidth=safeWidth>=dp(640)?WiringWorkspace.railWidth(activity,safeWidth):safeWidth-2*edge;
         int maxGuideWidth=Math.max(1,safeWidth-panelWidth-3*edge);
         guideWidth=Math.max(Math.min(dp(170),maxGuideWidth),Math.min(maxGuideWidth,guideWidth==0?Math.round(safeWidth*.34f):guideWidth));
         int guideTop=Math.max(toolbar.getBottom(),banner.getBottom())+dp(8);
@@ -213,6 +215,9 @@ public final class StepInfoPanelController {
         double areaLimit=safeWidth*(double)safeHeight*.22;
         if(targetPreviewWidth*(double)targetPreviewHeight>areaLimit) {
             targetPreviewHeight=(int)Math.max(dp(150),areaLimit/targetPreviewWidth);
+        }
+        if(wiring!=null&&safeWidth>=dp(640)){
+            targetPreviewWidth=panelWidth;targetPreviewHeight=Math.min(dp(286),Math.round(safeHeight*.40f));
         }
         previewWidth=targetPreviewWidth;
         previewHeight=targetPreviewHeight;
@@ -244,6 +249,7 @@ public final class StepInfoPanelController {
         }
 
         int reservedTop = Math.max(bannerTop+banner.getHeight(),previewTop+targetPreviewHeight)+dp(12);
+        if(wiring!=null&&safeWidth<dp(640))reservedTop=(int)(wiring.getY()+wiring.getHeight()+dp(10));
         int availableHeight = root.getHeight() - bars.bottom - edge - reservedTop;
         int preferredHeight = activity.getResources().getDimensionPixelSize(
                 R.dimen.assembly_info_panel_height);
@@ -297,9 +303,12 @@ public final class StepInfoPanelController {
         WindowInsetsCompat windowInsets=ViewCompat.getRootWindowInsets(root);
         Insets bars=windowInsets==null ? Insets.NONE : windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+        WiringWorkspace wiring=WiringWorkspace.active(activity);
         float minimumX=bars.left+dp(8)-panel.getLeft();
+        if(wiring!=null&&root.getWidth()-bars.left-bars.right>=dp(640))minimumX=Math.max(minimumX,wiring.getRight()+dp(12)-panel.getLeft());
         float maximumX=root.getWidth()-bars.right-dp(8)-panel.getRight();
         float minimumY=toolbar.getBottom()+dp(8)-panel.getTop();
+        if(wiring!=null&&root.getWidth()-bars.left-bars.right<dp(640))minimumY=Math.max(minimumY,wiring.getBottom()+dp(8)-panel.getTop());
         float maximumY=root.getHeight()-bars.bottom-dp(8)-panel.getBottom();
         panel.setTranslationX(Math.max(minimumX,Math.min(maximumX,panel.getTranslationX())));
         panel.setTranslationY(Math.max(minimumY,Math.min(maximumY,panel.getTranslationY())));

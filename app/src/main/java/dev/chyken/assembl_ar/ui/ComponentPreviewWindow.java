@@ -20,6 +20,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private final FrameLayout viewport;
     private final TextView title, hint;
     private final TextView resizeHandle;
+    private final TextView resizeCaption;
     private final android.widget.ImageButton contentAction;
     private final Outline outline;
     private HomeRobotSurfaceView surface;
@@ -60,7 +61,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         hintParams.topMargin=UiUtils.dp(context,32);
         hintParams.leftMargin=UiUtils.dp(context,10);
         addView(hint,hintParams);
-        TextView resizeCaption=new TextView(context);
+        resizeCaption=new TextView(context);
         resizeCaption.setText(R.string.preview_resize_visible); resizeCaption.setTextSize(11);
         resizeCaption.setTextColor(0xFF47534C); resizeCaption.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
         LayoutParams captionParams=new LayoutParams(-1,UiUtils.dp(context,38),Gravity.BOTTOM);
@@ -99,7 +100,13 @@ public final class ComponentPreviewWindow extends FrameLayout {
 
     public void setResizeListener(@Nullable ResizeListener listener) { resizeListener=listener; }
     public void showInteractionHint(){hint.animate().cancel();hint.setAlpha(1);removeCallbacks(fadeHint);postDelayed(fadeHint,3_000);}
+    public void setLegendMode(boolean value){
+        outline.legend=value;outline.invalidate();
+        resizeHandle.setVisibility(value?GONE:VISIBLE);resizeCaption.setVisibility(value?GONE:VISIBLE);hint.setVisibility(value?GONE:VISIBLE);
+        LayoutParams p=(LayoutParams)viewport.getLayoutParams();p.topMargin=UiUtils.dp(getContext(),value?36:58);p.bottomMargin=UiUtils.dp(getContext(),value?6:38);viewport.setLayoutParams(p);
+    }
     public void showContent(View content,String name){
+        setLegendMode(false);
         contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
         if(surface!=null)surface.onPause();surface=null;componentId=null;
@@ -109,6 +116,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     }
 
     public void showComponent(String id, String name) {
+        setLegendMode(false);
         contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
         if (id == null || !ComponentModelCatalog.hasModel(id)) { setVisibility(GONE); return; }
@@ -143,11 +151,13 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private static final class Outline extends View {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         ArHudView.HudState state=ArHudView.HudState.SEARCHING;
+        boolean legend;
         Outline(Context context) { super(context); paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(UiUtils.dp(context,3)); }
         @Override protected void onDraw(Canvas canvas) {
             boolean warning=state==ArHudView.HudState.MISMATCH || state==ArHudView.HudState.WRONG_ORIENTATION
                     || state==ArHudView.HudState.POLARITY_ERROR;
-            paint.setColor(warning ? 0xFFFF5252 : state==ArHudView.HudState.MATCHED ? 0xFF47E597 : 0xFF72B6C2);
+            paint.setStrokeWidth(UiUtils.dp(getContext(),legend?1:3));
+            paint.setColor(legend?0xFFBACDBC:warning ? 0xFFFF5252 : state==ArHudView.HudState.MATCHED ? 0xFF47E597 : 0xFF72B6C2);
             paint.setAlpha(warning ? (int)(145+110*Math.sin(android.os.SystemClock.uptimeMillis()/150.0)) : 255);
             canvas.drawRoundRect(2,2,getWidth()-2,getHeight()-2,12,12,paint);
             if(warning && isShown()) postInvalidateOnAnimation();

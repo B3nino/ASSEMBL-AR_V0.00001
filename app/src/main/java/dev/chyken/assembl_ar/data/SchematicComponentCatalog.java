@@ -34,7 +34,17 @@ public final class SchematicComponentCatalog {
         }
         String[] headers={"B-IA","B-IB","GND","VCC","A-IA","A-IB"};
         for(int i=0;i<headers.length;i++)driver.pin(headers[i],headers[i],i==2?PinKind.GROUND_HEADER:i==3?PinKind.POWER_HEADER:PinKind.CONTROL_HEADER,185+i*85,946);
-        result.put(driver.id,driver.build());COMPONENTS=Collections.unmodifiableMap(result);
+        result.put(driver.id,driver.build());
+        Builder nano=new Builder(NeobotSeedData.MICROCONTROLLER,"arduino_nano.png",1496,1102);
+        String[] top={"D12","D11","D10","D9","D8","D7","D6","D5","D4","D3","D2","GND","RST_TOP","RX","TX"};
+        String[] bottom={"D13","3V3","AREF","A0","A1","A2","A3","A4","A5","A6","A7","5V","RST_BOTTOM","GND_BOTTOM","VIN"};
+        for(int i=0;i<15;i++){
+            double x=378+i*(769.0/14);
+            nano.pin(top[i],top[i],top[i].equals("GND")?PinKind.GROUND_HEADER:PinKind.CONTROL_HEADER,x,357);
+            String name=bottom[i];PinKind kind=name.equals("GND_BOTTOM")?PinKind.GROUND_HEADER:name.equals("VIN")||name.equals("5V")||name.equals("3V3")?PinKind.POWER_HEADER:PinKind.CONTROL_HEADER;
+            nano.pin(name,name,kind,x,694);
+        }
+        result.put(nano.id,nano.build());COMPONENTS=Collections.unmodifiableMap(result);
     }
     private SchematicComponentCatalog(){}
     public static Component component(String id){Component c=COMPONENTS.get(id);if(c==null)throw new IllegalArgumentException("Unknown schematic component "+id);return c;}

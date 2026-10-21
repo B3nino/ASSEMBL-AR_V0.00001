@@ -41,14 +41,13 @@ public final class AssemblyPhaseCatalogTest {
             new VisionPoint(1, 0), new VisionPoint(1, 1), new VisionPoint(0, 1));
 
     @Test
-    public void eighteenPhasesPreserveExistingIdentifiersAndSeparateDriverControl() {
+    public void mergedDriverPhasePreservesAllOtherPhaseIdentifiers() {
         List<AssemblyPhase> phases = AssemblyPhaseCatalog.phases();
-        assertEquals(18, phases.size());
+        assertEquals(17, phases.size());
         List<String> expected = Arrays.asList(
                 AssemblyPhaseCatalog.BOARD_PREPARATION, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES,
                 AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT, AssemblyPhaseCatalog.MOTOR_LEADS,
                 AssemblyPhaseCatalog.MICROCONTROLLER_FIT, AssemblyPhaseCatalog.DRIVER_WIRING,
-                AssemblyPhaseCatalog.DRIVER_CONTROL,
                 AssemblyPhaseCatalog.CASTER_FIT, AssemblyPhaseCatalog.LINE_TRACKERS,
                 AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT, AssemblyPhaseCatalog.SENSOR_WIRING,
                 AssemblyPhaseCatalog.CENTER_STANDOFF, AssemblyPhaseCatalog.WHEEL_PAIR,
@@ -105,9 +104,9 @@ public final class AssemblyPhaseCatalogTest {
         assertEquals(Arrays.asList(11), AssemblyPhaseCatalog.sectionsCompletedBy(wiring));
         assertEquals(Arrays.asList(4, 5), AssemblyPhaseCatalog.sectionsCompletedBy(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_LEADS)));
-        assertEquals(Arrays.asList(7), AssemblyPhaseCatalog.sectionsCompletedBy(
+        assertEquals(Arrays.asList(7,8), AssemblyPhaseCatalog.sectionsCompletedBy(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_WIRING)));
-        assertEquals(Arrays.asList(8), AssemblyPhaseCatalog.sectionsCompletedBy(
+        assertEquals(Arrays.asList(7,8), AssemblyPhaseCatalog.sectionsCompletedBy(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DRIVER_CONTROL)));
     }
 
@@ -139,7 +138,7 @@ public final class AssemblyPhaseCatalogTest {
                 }
                 if (JUMPER_WIRE.equals(required.getComponentId()) && (section.getStepNumber() == 7
                         || section.getStepNumber() == 8)) {
-                    assertEquals("Independent power/control phase", required.getQuantity(), listed);
+                    assertEquals("Combined power and signal phase", 6, listed);
                 } else {
                     assertEquals("Section " + section.getStepNumber() + " "
                             + required.getComponentId(), required.getQuantity(), listed);

@@ -19,6 +19,7 @@ import dev.chyken.assembl_ar.ui.UiUtils;
 
 public final class MainActivity extends AppCompatActivity {
     private HomeRobotSurfaceView robotModelView;
+    private dev.chyken.assembl_ar.ui.BrandLaunchOverlay launch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,12 +31,18 @@ public final class MainActivity extends AppCompatActivity {
         robotModelView = findViewById(R.id.robotModelView);
         styleHeaderWordmark();
         configureTabletHero();
+        android.view.ViewGroup content=findViewById(android.R.id.content);
+        launch=new dev.chyken.assembl_ar.ui.BrandLaunchOverlay(this,content.getChildAt(0));
+        content.addView(launch,new android.view.ViewGroup.LayoutParams(-1,-1));
+        robotModelView.setOnModelReady(()->{if(launch!=null)launch.modelReady();});
 
         findViewById(R.id.startAssemblyButton).setOnClickListener(view ->
                 startActivity(new Intent(this, ProjectSelectionActivity.class)));
         findViewById(R.id.resetRobotViewButton).setOnClickListener(view ->
                 robotModelView.resetView());
     }
+
+    @Override protected void onDestroy(){if(robotModelView!=null)robotModelView.setOnModelReady(null);if(launch!=null)launch.close();super.onDestroy();}
 
     private void styleHeaderWordmark() {
         TextView wordmark = findViewById(R.id.headerWordmark);
@@ -83,6 +90,7 @@ public final class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if(launch!=null)launch.resume();
         if (robotModelView != null) {
             robotModelView.onResume();
         }
@@ -90,6 +98,7 @@ public final class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        if(launch!=null)launch.pause();
         if (robotModelView != null) {
             robotModelView.onPause();
         }

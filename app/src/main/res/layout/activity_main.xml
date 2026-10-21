@@ -62,20 +62,6 @@
                         android:textColor="@color/ink_soft"
                         android:textSize="11sp"
                         android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_pill"
-                        android:paddingStart="10dp"
-                        android:paddingTop="6dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="6dp"
-                        android:text="@string/offline_ready"
-                        android:textColor="@color/ink"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 

@@ -37,6 +37,9 @@ public final class HomeRobotSurfaceView extends GLSurfaceView {
     private float lastY;
     private boolean dragging;
     private boolean modelGestureClaimed;
+    private boolean rendered;
+    private Runnable readyListener;
+    public void setOnModelReady(Runnable listener){readyListener=listener;if(rendered&&listener!=null)postOnAnimation(listener);}
 
     public HomeRobotSurfaceView(@NonNull Context context) {
         this(context, null);
@@ -69,6 +72,7 @@ public final class HomeRobotSurfaceView extends GLSurfaceView {
         setEGLConfigChooser(8, 8, 8, 0, 16, 0);
         getHolder().setFormat(PixelFormat.OPAQUE);
         setPreserveEGLContextOnPause(true);
+        robotRenderer.setOnFirstFrame(()->postOnAnimation(()->postOnAnimation(()->{rendered=true;if(readyListener!=null)readyListener.run();})));
         setRenderer(robotRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
 

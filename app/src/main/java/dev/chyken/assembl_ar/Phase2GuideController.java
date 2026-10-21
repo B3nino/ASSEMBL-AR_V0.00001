@@ -178,12 +178,12 @@ final class Phase2GuideController implements AutoCloseable {
     }
     private void firmness(){
         if(dialog!=null)dialog.dismiss();
-        LinearLayout body=new LinearLayout(activity);body.setOrientation(1);body.setPadding(28,12,28,12);
+        LinearLayout body=PhysicalCheckUi.body(activity);
+        TextView introduction=PhysicalCheckUi.prompt(activity,"Lightly wiggle each installed motor. Check both sides before continuing.");introduction.setPadding(0,0,0,UiUtils.dp(activity,12));body.addView(introduction);
         RadioGroup[] answers=new RadioGroup[2];
         for(int i=0;i<2;i++){
-            TextView label=new TextView(activity);label.setText(i==0?"Left motor joint":"Right motor joint");body.addView(label);
-            answers[i]=new RadioGroup(activity);answers[i].setOrientation(0);
-            for(String option:new String[]{"Firm","Jiggling"}){RadioButton b=new RadioButton(activity);b.setId(View.generateViewId());b.setText(option);answers[i].addView(b);}
+            TextView label=new TextView(activity);label.setTextSize(16);label.setTextColor(0xFF263B30);label.setText(i==0?"Left motor joint":"Right motor joint");body.addView(label);
+            answers[i]=PhysicalCheckUi.choices(activity,i==0?"Left motor joint":"Right motor joint");
             body.addView(answers[i]);
         }
         dialog=new AlertDialog.Builder(activity).setTitle("Joint Stability Check").setView(body)
@@ -196,7 +196,7 @@ final class Phase2GuideController implements AutoCloseable {
             message=left&&right?"Both motor joints are firm.":"Tighten the 30mm screws with the screwdriver, then re-check both joints.";
             if(activity.isActivityResumed())activity.voiceGuide().speak(message,"phase2:joints:"+now());
             render();save();
-        }));dialog.show();
+        }));dialog.show();PhysicalCheckUi.style(dialog);
     }
     void render(){
         if(closed)return;
@@ -220,9 +220,10 @@ final class Phase2GuideController implements AutoCloseable {
         card.action.setText(step==3?"I Have These":step==4?(videoError?"Retry demo":"Done Assembling"):"Check joint stability");
         card.action.setEnabled(!saving&&(step!=4||videosReady||videoError));
         if(saving){card.next.setEnabled(false);card.next.setText("Saving…");plan=null;}
-        if(step==6){card.next.setEnabled(!saving&&flow.canFinish(developer));if(developer&&!reviewing)card.next.setText("Next phase (DEV) →");}
+        if(step==6){card.next.setEnabled(!saving&&flow.canFinish(developer));if(!reviewing)card.next.setText("Continue to Phase 3 →");}
         card.returnToCurrent.setVisibility(reviewing&&!(step==6&&flow.allComplete())?View.VISIBLE:View.GONE);
         if(reviewing&&step==6)card.next.setText("Return to current phase");
+        ((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(plan!=null);
         alignment.setInstruction(step==5&&!flow.currentHardwareViewComplete()?"Scan "+flow.hardwareViewNumber()+" / 3 · "+viewName(flow.expectedHardwareView()):null);
         alignment.showGuide(flow.scanning()?Phase2AssetCatalog.guide(activity.getAssets(),2,step,flow.expectedHardwareView()):null);
         if(step==5)card.next.setText(flow.hardwareViewNumber()==1?"Next: Scan left side →":flow.hardwareViewNumber()==2?"Next: Scan right side →":"Joint Stability Check →");

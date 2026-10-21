@@ -48,6 +48,8 @@ public final class PhaseFlow {
     private final AssemblyPhase phase;
     private Phase2GearMotorFlow gearMotorFlow;
     private Phase3MotorDriverFlow driverFlow;
+    private Phase6DriverWiringFlow driverWiringFlow;
+    public void attachDriverWiringFlow(Phase6DriverWiringFlow flow){if(!AssemblyPhaseCatalog.DRIVER_WIRING.equals(phase.getId()))throw new IllegalStateException();driverWiringFlow=Objects.requireNonNull(flow);}
     private Phase5MicrocontrollerFlow microcontrollerFlow;
     public void attachMicrocontrollerFlow(Phase5MicrocontrollerFlow flow){if(!AssemblyPhaseCatalog.MICROCONTROLLER_FIT.equals(phase.getId()))throw new IllegalStateException();microcontrollerFlow=Objects.requireNonNull(flow);}
     private Phase4MotorWiringFlow wiringFlow;
@@ -89,17 +91,18 @@ public final class PhaseFlow {
     }
 
     public AssemblyPhase getPhase() { return phase; }
-    public Mode getMode() { return microcontrollerFlow!=null?microcontrollerFlow.mode():wiringFlow!=null?wiringFlow.mode():driverFlow!=null?driverFlow.mode():gearMotorFlow==null?mode:gearMotorFlow.mode(); }
-    public int getGeneration() { return microcontrollerFlow!=null?microcontrollerFlow.tag().getGeneration():wiringFlow!=null?wiringFlow.tag().getGeneration():driverFlow!=null?driverFlow.tag().getGeneration():gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
+    public Mode getMode() { return driverWiringFlow!=null?driverWiringFlow.mode():microcontrollerFlow!=null?microcontrollerFlow.mode():wiringFlow!=null?wiringFlow.mode():driverFlow!=null?driverFlow.mode():gearMotorFlow==null?mode:gearMotorFlow.mode(); }
+    public int getGeneration() { return driverWiringFlow!=null?driverWiringFlow.tag().getGeneration():microcontrollerFlow!=null?microcontrollerFlow.tag().getGeneration():wiringFlow!=null?wiringFlow.tag().getGeneration():driverFlow!=null?driverFlow.tag().getGeneration():gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
     /** A demo opened from part scanning; it returns to scanning without skipping inventory. */
     public boolean isPreviewing() { return previewing; }
-    public boolean isInventoryComplete() { return microcontrollerFlow!=null?microcontrollerFlow.step()>1:wiringFlow!=null||(driverFlow!=null?driverFlow.step()>1:gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete()); }
+    public boolean isInventoryComplete() { return driverWiringFlow!=null?driverWiringFlow.step()>1:microcontrollerFlow!=null?microcontrollerFlow.step()>1:wiringFlow!=null||(driverFlow!=null?driverFlow.step()>1:gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete()); }
     @Nullable public String getCorrectionTargetId() { return correctionTargetId; }
 
-    public ScanTag tag() { return microcontrollerFlow!=null?microcontrollerFlow.tag():wiringFlow!=null?wiringFlow.tag():driverFlow!=null?driverFlow.tag():gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
+    public ScanTag tag() { return driverWiringFlow!=null?driverWiringFlow.tag():microcontrollerFlow!=null?microcontrollerFlow.tag():wiringFlow!=null?wiringFlow.tag():driverFlow!=null?driverFlow.tag():gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
 
     /** Camera analysis is needed only while identifying parts or verifying the finished group. */
     public boolean collectsEvidence() {
+        if(driverWiringFlow!=null)return driverWiringFlow.scanning();
         if(microcontrollerFlow!=null)return microcontrollerFlow.scanning();
         if(wiringFlow!=null)return false;
         if(driverFlow!=null)return driverFlow.scanning();
@@ -109,6 +112,7 @@ public final class PhaseFlow {
 
     /** Scan is offered while the learner watches, assembles, or has just seen a correction. */
     public boolean canScan() {
+        if(driverWiringFlow!=null)return false;
         if(microcontrollerFlow!=null)return false;
         if(wiringFlow!=null)return false;
         if(driverFlow!=null)return false;
@@ -121,6 +125,7 @@ public final class PhaseFlow {
      * window opened and newer than every frame already used. Duplicates and reordered frames fail.
      */
     public boolean accept(@Nullable ScanTag resultTag, long frameNanos) {
+        if(driverWiringFlow!=null)return driverWiringFlow.accepts(resultTag,frameNanos);
         if(microcontrollerFlow!=null)return microcontrollerFlow.accepts(resultTag,frameNanos);
         if(wiringFlow!=null)return false;
         if(driverFlow!=null)return driverFlow.accepts(resultTag,frameNanos);
@@ -136,6 +141,7 @@ public final class PhaseFlow {
      * next verification group, so frames requested for the previous subject cannot be reused.
      */
     public void restartEvidence(long nowNanos) {
+        if(driverWiringFlow!=null){driverWiringFlow.resume(nowNanos);return;}
         if(microcontrollerFlow!=null){microcontrollerFlow.resume(nowNanos);return;}
         if(wiringFlow!=null){wiringFlow.interrupt();return;}
         if(driverFlow!=null){driverFlow.resume(nowNanos);return;}
@@ -233,6 +239,7 @@ public final class PhaseFlow {
 
     /** Activity pause/navigation: in-flight evidence is discarded and a Scan must be repeated. */
     public void interrupt(long nowNanos) {
+        if(driverWiringFlow!=null){driverWiringFlow.pause();return;}
         if(microcontrollerFlow!=null){microcontrollerFlow.pause();return;}
         if(wiringFlow!=null){wiringFlow.interrupt();return;}
         if(driverFlow!=null){driverFlow.pause();return;}
@@ -246,6 +253,7 @@ public final class PhaseFlow {
 
     /** Resuming part scanning accepts only frames captured after the resume. */
     public void resume(long nowNanos) {
+        if(driverWiringFlow!=null){driverWiringFlow.resume(nowNanos);return;}
         if(microcontrollerFlow!=null){microcontrollerFlow.resume(nowNanos);return;}
         if(wiringFlow!=null){wiringFlow.interrupt();return;}
         if(driverFlow!=null){driverFlow.resume(nowNanos);return;}
@@ -255,6 +263,7 @@ public final class PhaseFlow {
 
     /** Restart this phase from its first mode, discarding every result of the current attempt. */
     public void restart(long nowNanos) {
+        if(driverWiringFlow!=null){driverWiringFlow.restart(nowNanos);return;}
         if(microcontrollerFlow!=null){microcontrollerFlow.restart(nowNanos);return;}
         if(wiringFlow!=null){wiringFlow.restart();return;}
         if(driverFlow!=null){driverFlow.restart(nowNanos);return;}
@@ -274,7 +283,7 @@ public final class PhaseFlow {
 
     /** Restores a saved UI checkpoint; camera evidence always starts with a new generation/window. */
     public void restoreSession(Mode savedMode,boolean partsComplete,boolean preview,long nowNanos){
-        if(gearMotorFlow!=null||driverFlow!=null||wiringFlow!=null||microcontrollerFlow!=null)throw new IllegalStateException("Specialized flow owns its checkpoint");
+        if(gearMotorFlow!=null||driverFlow!=null||wiringFlow!=null||microcontrollerFlow!=null||driverWiringFlow!=null)throw new IllegalStateException("Specialized flow owns its checkpoint");
         inventoryComplete=partsComplete||phase.getCameraInventory().isEmpty();
         previewing=preview&&!inventoryComplete&&savedMode==Mode.DEMO;
         correctionTargetId=null;

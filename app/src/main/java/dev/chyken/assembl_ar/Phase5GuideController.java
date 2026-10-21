@@ -107,11 +107,11 @@ final class Phase5GuideController implements AutoCloseable {
         ScrollView scroll=new ScrollView(activity);scroll.addView(text);
         dialog=new AlertDialog.Builder(activity).setTitle("Arduino Nano · View Info").setView(scroll).setPositiveButton("Back to step",null).create();
         dialog.setOnDismissListener(d->{infoShowing=false;if(!closed&&!paused){flow.resume(now());render();say(flow.complete()?"Scan successful. Next is unlocked.":SPOKEN[flow.step()],"info-closed:"+(++sequence));}});
-        dialog.show();say(INFO,"info:"+(++sequence));
+        dialog.show();PhysicalCheckUi.style(dialog);say(INFO,"info:"+(++sequence));
     }
     private void stability(){
         if(closed||paused||saving||reviewing||flow.step()!=4||flow.complete()||dialog!=null&&dialog.isShowing())return;
-        TextView prompt=new TextView(activity);prompt.setTextSize(17);int pad=UiUtils.dp(activity,24);prompt.setPadding(pad,pad/2,pad,pad);
+        TextView prompt=PhysicalCheckUi.prompt(activity,"");
         dialog=new AlertDialog.Builder(activity).setTitle("Pin alignment & stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm",null).create();
         dialog.setOnShowListener(d->{
             updateChecklist(prompt,false);
@@ -124,7 +124,7 @@ final class Phase5GuideController implements AutoCloseable {
                 finishing=true;completionKey="complete:"+(++sequence);say("Phase 5 complete! Microcontroller installed successfully.",completionKey);
                 AssemblyVoiceGuide.Status voice=activity.voiceGuide().getStatus();if(voice==AssemblyVoiceGuide.Status.MUTED||voice==AssemblyVoiceGuide.Status.UNAVAILABLE)advance();else main.postDelayed(this::advance,16000);
             });
-        });dialog.show();
+        });dialog.show();PhysicalCheckUi.style(dialog);
     }
     private String checklistQuestion(){return flow.firmConfirmed()?"Are all 30 pins inside the female headers with none hanging outside?":"Is the Arduino Nano firmly seated without wobbling?";}
     private void updateChecklist(TextView prompt){updateChecklist(prompt,true);}
@@ -141,7 +141,7 @@ final class Phase5GuideController implements AutoCloseable {
         boolean unlocked=flow.complete()&&(step!=4||reviewing||flow.canFinish(developer));
         String details=INFO+"\n\nMatch both header rows before pressing evenly. The camera checks visible Nano placement and orientation; it cannot certify all hidden pins or physical firmness. Confirm those in Step 5.4.";
         card.render(50+step,"Phase 5 · Step 5."+step+" of 4",HUD[step],details,message,unlocked,true,!reviewing&&flow.complete()&&(step==1||step==3));
-        card.next.setText(step==4?reviewing?"Return to current phase":developer?"Next phase (DEV) →":"Continue to Phase 6 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
+        card.next.setText(step==4?reviewing?"Return to current phase":"Continue to Phase 6 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
         card.action.setVisibility(step==1||(step==2||step==4)&&!flow.complete()&&!reviewing?View.VISIBLE:View.GONE);
         card.action.setText(step==1?"View Info":step==2?videoError?"Retry demo":"Ready to Scan":"Check pins & stability");
         card.action.setEnabled(!saving&&(step!=2||videosReady||videoError));card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
@@ -176,5 +176,5 @@ final class Phase5GuideController implements AutoCloseable {
     void devSkip(){developer=true;flow.devSkip();render();save();}
     void devComplete(){developer=true;flow.devComplete();render();save();}
     void restart(){flow.restart(now());videosReady=false;resumeClip=0;resumePosition=0;previewStep=-1;changed();}
-    @Override public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(true);}
+    @Override public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);}
 }

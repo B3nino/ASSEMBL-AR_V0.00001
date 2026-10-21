@@ -65,13 +65,13 @@ final class MotorWiringArtworkRenderer {
     boolean isReady(){return motorImage!=null&&driverImage!=null;}
 
     void draw(Canvas canvas,int width,int height,MotorWireColorConfig colors,Terminal selected,
-              boolean interactive,float progress,boolean motion){
+              boolean interactive,float progress,boolean motion,boolean forceFull){
         hits.clear();endpoints.clear();wireSegments.clear();
         if(width<dp(100)||height<dp(70))return;
         if(!isReady()){
             label(canvas,failed?"Component images unavailable":"Loading component images…",dp(12),height/2f,width-dp(24),12,false);return;
         }
-        boolean full=width>=dp(540)&&height>=dp(300);
+        boolean full=forceFull||width>=dp(540)&&height>=dp(300);
         if(full){
             label(canvas,"MOTOR WIRING",dp(14),dp(22),width-dp(28),13,true);
             label(canvas,"Green blocks toward you · six small pins away",dp(14),dp(42),width-dp(28),11,false);

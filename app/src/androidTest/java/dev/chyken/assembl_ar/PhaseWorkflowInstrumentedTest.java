@@ -575,7 +575,7 @@ public final class PhaseWorkflowInstrumentedTest {
             assertEquals(StepStatus.COMPLETED, statusOf(5));
             assertEquals(StepStatus.IN_PROGRESS, statusOf(6));
             scenario.onActivity(activity ->
-                    assertEquals("Phase 5 of 18", text(activity, R.id.stepCounter)));
+                    assertEquals("Phase 5 of "+AssemblyPhaseCatalog.phases().size(), text(activity, R.id.stepCounter)));
         }
     }
 
@@ -778,7 +778,7 @@ public final class PhaseWorkflowInstrumentedTest {
         try (ActivityScenario<AssemblyActivity> scenario = launch()) {
             awaitPhase(scenario, AssemblyPhaseCatalog.SENSOR_WIRING);
             scenario.onActivity(activity ->
-                    assertEquals("Phase 11 of 18", text(activity, R.id.stepCounter)));
+                    assertEquals("Phase "+AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.SENSOR_WIRING).getNumber()+" of "+AssemblyPhaseCatalog.phases().size(), text(activity, R.id.stepCounter)));
         }
     }
 
@@ -911,6 +911,52 @@ public final class PhaseWorkflowInstrumentedTest {
         if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)collectRadioGroups(((ViewGroup)view).getChildAt(i),groups);
     }
 
+
+    @Test public void phaseSixColorsAndPowerConfirmationResumeAndFinalChecksSaveBothSections(){
+        positionAt(7);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.DRIVER_WIRING);
+            scenario.onActivity(activity->{
+                activity.voiceGuide().setMuted(true);
+                Phase6GuideController guide=(Phase6GuideController)getField(controller,"driverWiringGuide");
+                assertFalse(((ArHudView)activity.findViewById(R.id.arHudView)).isScanningEnabled());
+                assertTrue(controller.isAnalysisSuspended());assertNull(controller.requestFor(null));assertEquals(1,guide.flow.step());
+                call(guide,"colors",new Class<?>[0]);
+                dev.chyken.assembl_ar.ui.DriverWireColorPickerDialog picker=(dev.chyken.assembl_ar.ui.DriverWireColorPickerDialog)getField(guide,"picker");
+                android.widget.GridLayout palette=picker.findViewById(R.id.motorWireSwatches),slots=picker.findViewById(R.id.motorWireSlots);
+                assertEquals(6,slots.getChildCount());assertEquals(10,palette.getChildCount());palette.getChildAt(6).performClick();
+                picker.findViewById(R.id.applyWireColors).performClick();assertEquals(2,guide.flow.step());assertEquals(0xFF0000FF,guide.flow.colors().vccWireColor);
+                assertNotNull(dev.chyken.assembl_ar.ui.WiringWorkspace.active(activity));assertTrue(controller.isAnalysisSuspended());
+                gearCard(activity).action.performClick();AlertDialog check=(AlertDialog)getField(guide,"dialog");
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertTrue(gearCard(activity).next.isEnabled());
+            });
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity->{
+                View pane=dev.chyken.assembl_ar.ui.WiringWorkspace.active(activity),card=gearCard(activity),legend=activity.findViewById(R.id.componentPreviewWindow);
+                if(activity.getResources().getConfiguration().screenWidthDp>=640){
+                    assertTrue(pane.getRight()<=card.getX());assertTrue(pane.getRight()<=legend.getX());
+                    assertTrue(legend.getY()+legend.getHeight()<=card.getY());
+                }
+            });
+            capture(scenario,"phase6-power-schematic");
+        }
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.DRIVER_WIRING);
+            scenario.onActivity(activity->{
+                activity.voiceGuide().setMuted(true);
+                Phase6GuideController guide=(Phase6GuideController)getField(controller,"driverWiringGuide");
+                assertEquals(2,guide.flow.step());assertEquals(0xFF0000FF,guide.flow.colors().vccWireColor);assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).next.performClick();assertEquals(3,guide.flow.step());gearCard(activity).action.performClick();
+                gearCard(activity).next.performClick();assertEquals(4,guide.flow.step());gearCard(activity).action.performClick();
+                AlertDialog check=(AlertDialog)getField(guide,"dialog");check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertFalse(gearCard(activity).next.isEnabled());check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertFalse(guide.flow.seated());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            });
+            awaitPhase(scenario,AssemblyPhaseCatalog.CASTER_FIT);
+            assertEquals(StepStatus.COMPLETED,statusOf(7));assertEquals(StepStatus.COMPLETED,statusOf(8));assertEquals(StepStatus.IN_PROGRESS,statusOf(9));
+        }
+    }
+
     // ---- Fixtures ------------------------------------------------------------------------------
 
     private static void positionAt(int section) {
@@ -1035,7 +1081,7 @@ public final class PhaseWorkflowInstrumentedTest {
         }
 
         RecognitionResult nano(dev.chyken.assembl_ar.vision.Phase5Observation.State state){
-            RecognitionResult base=component(NeobotSeedData.MICROCONTROLLER,board,Collections.emptyList(),5,null,null);
+            RecognitionResult base=component(NeobotSeedData.MICROCONTROLLER,board,Collections.emptyList(),controller.getPhase().getNumber(),null,null);
             return (RecognitionResult)call(base,"withPhase5Observation",new Class<?>[]{dev.chyken.assembl_ar.vision.Phase5Observation.class},new dev.chyken.assembl_ar.vision.Phase5Observation(state,40));
         }
 

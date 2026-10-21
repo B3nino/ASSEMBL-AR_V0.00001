@@ -42,6 +42,13 @@ public final class NeobotSeedData {
         }
         return Collections.unmodifiableList(pins);
     }
+    /** Six user-colored routes. Driver I/1 spelling aliases share one physical header anchor. */
+    public static List<PinConnection> getPhase6PinConnections(dev.chyken.assembl_ar.model.DriverWireColorConfig colors){
+        List<PinConnection> pins=new ArrayList<>();
+        for(dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire wire:dev.chyken.assembl_ar.model.DriverWireColorConfig.Wire.values())
+            pins.add(new PinConnection(wire.ordinal()+1,MOTOR_DRIVER,wire.driverPin,MICROCONTROLLER,wire.nanoPin,colors.swatch(wire).hex(),wire.power()?"Power":"PWM control","Match the highlighted physical pins. A-1A/A-1B and B-1A/B-1B are printed A-IA/A-IB and B-IA/B-IB in the supplied driver artwork."));
+        return Collections.unmodifiableList(pins);
+    }
     public static final String PROJECT_ID = "neobot_personal_robot_kit_2026";
     public static final String ASSEMBLY_DOCUMENT_ID = "neobot_assembly_wiring_2026";
     public static final String LEARNING_DOCUMENT_ID = "neobot_personal_robot_manual_2026";

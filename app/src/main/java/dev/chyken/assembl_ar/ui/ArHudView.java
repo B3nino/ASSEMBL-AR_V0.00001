@@ -63,7 +63,7 @@ public final class ArHudView extends View {
     private final int labelBackgroundColor;
     private HudState state = HudState.SEARCHING;
     private boolean targetGuideVisible;
-    private boolean scanningEnabled=true;
+    private boolean scanningEnabled=false;
     public void setScanningEnabled(boolean enabled){if(scanningEnabled!=enabled){scanningEnabled=enabled;invalidate();}}
     public boolean isScanningEnabled(){return scanningEnabled;}
     public void setTargetGuideVisible(boolean visible){if(targetGuideVisible!=visible){targetGuideVisible=visible;invalidate();}}
@@ -139,7 +139,7 @@ public final class ArHudView extends View {
     public HudState getHudState() { return state; }
 
     public void reset() {
-        scanningEnabled=true;
+        scanningEnabled=false;
         boardCorners = null;
         clearAssemblyTargets();
         update(HudState.SEARCHING, "", null);
@@ -172,7 +172,7 @@ public final class ArHudView extends View {
         drawAssemblyTarget(canvas, boardCorners, false);
         if (normalizedCorners == null && detectedParts.isEmpty()
                 && boardCorners == null) {
-            if(scanningEnabled&&!targetGuideVisible)drawScanner(canvas);
+            if(scanningEnabled)drawScanner(canvas);
         } else if (!detectedParts.isEmpty()) {
             for (DetectedPart part : detectedParts) {
                 int color = part.status == PartStatus.INVALID ? dangerColor
@@ -189,7 +189,7 @@ public final class ArHudView extends View {
         }
         drawAssemblyTarget(canvas, leftTarget, leftAccepted);
         drawAssemblyTarget(canvas, rightTarget, rightAccepted);
-        if (scanningEnabled && !targetGuideVisible && (state == HudState.SEARCHING || state == HudState.TRACKING)) {
+        if (scanningEnabled && normalizedCorners==null && detectedParts.isEmpty() && boardCorners==null) {
             postInvalidateDelayed(32L);
         }
     }

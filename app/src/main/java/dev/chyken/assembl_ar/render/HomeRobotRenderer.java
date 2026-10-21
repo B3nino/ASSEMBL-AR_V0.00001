@@ -47,6 +47,9 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
     private final OrbitController orbitController;
     @Nullable private final String previewComponentId;
     private volatile boolean showBack;
+    private Runnable firstFrame;
+    private boolean frameDelivered;
+    void setOnFirstFrame(Runnable listener){firstFrame=listener;}
     private final float[] projection = new float[16];
     private final float[] view = new float[16];
     private final float[] model = new float[16];
@@ -81,6 +84,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        frameDelivered=false;
         if (previewComponentId == null) GLES20.glClearColor(1f, 1f, 1f, 1f);
         else GLES20.glClearColor(.94f, .94f, .94f, 1f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
@@ -186,6 +190,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
             drawHorizontal(boardModel, SHADOW, 0f, -0.435f, 0.04f, 2.05f, 1.78f, 0.04f);
             GLES20.glDepthMask(true);
         }
+        if(!frameDelivered){frameDelivered=true;GLES20.glFinish();if(firstFrame!=null)firstFrame.run();}
     }
     private void drawPreviewPart(ObjModel part,float x,float size){
         OrbitController.Snapshot orbit=orbitController.snapshot();

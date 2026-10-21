@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="20dp" android:background="@color/camera_panel">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/driver_wire_picker_title" android:textColor="@color/white" android:textSize="20sp" android:textStyle="bold" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/resetWireColors"
+            style="?attr/borderlessButtonStyle" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:minHeight="48dp" android:text="@string/wire_picker_reset" android:textColor="@color/white_secondary" />
+    </LinearLayout>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingBottom="16dp"
+        android:text="@string/driver_wire_picker_intro" android:textColor="@color/white_secondary" android:textSize="14sp" />
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+        <LinearLayout android:id="@+id/wirePickerColumns" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:baselineAligned="false">
+            <dev.chyken.assembl_ar.ui.AssemblyDemoView android:id="@+id/wirePickerDiagram"
+                android:layout_width="0dp" android:layout_height="310dp" android:layout_weight="1"
+                android:importantForAccessibility="no" />
+            <LinearLayout android:id="@+id/wirePickerControls" android:layout_width="320dp" android:layout_height="wrap_content"
+                android:layout_marginStart="16dp" android:orientation="vertical">
+                <TextView android:id="@+id/activeMotorWire" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:minHeight="48dp" android:gravity="center_vertical" android:textColor="@color/white" android:textSize="16sp" android:textStyle="bold"
+                    android:accessibilityLiveRegion="polite" />
+                <GridLayout android:id="@+id/motorWireSlots" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="2" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="16dp" android:paddingBottom="8dp"
+                    android:text="@string/wire_picker_palette" android:textColor="@color/white_secondary" android:textSize="12sp" />
+                <GridLayout android:id="@+id/motorWireSwatches" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="5" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/previousMotorWire" style="?attr/borderlessButtonStyle"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minHeight="48dp"
+                        android:text="@string/wire_picker_previous" android:textColor="@color/white_secondary" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/nextMotorWire" style="?attr/borderlessButtonStyle"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minHeight="48dp"
+                        android:text="@string/wire_picker_next" android:textColor="@color/white_secondary" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/cancelWireColors" style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@android:string/cancel"
+            android:textColor="@color/white_secondary" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/applyWireColors"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minHeight="48dp"
+            android:text="@string/wire_picker_apply" />
+    </LinearLayout>
+</LinearLayout>

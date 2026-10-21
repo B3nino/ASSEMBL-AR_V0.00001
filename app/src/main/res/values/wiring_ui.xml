@@ -1,0 +1,3 @@
+<resources>
+    <item name="wiringWorkspace" type="id" />
+<string name="driver_wire_picker_title">Jumper wire colors</string><string name="driver_wire_picker_intro">Match each connection to your physical wire. Select a connection, then choose its color.</string></resources>

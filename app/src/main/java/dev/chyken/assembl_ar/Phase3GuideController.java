@@ -100,8 +100,8 @@ final class Phase3GuideController implements AutoCloseable {
     }
     private void stability(){
         if(closed||paused||flow.step()!=6||flow.complete()||dialog!=null&&dialog.isShowing())return;
-        LinearLayout body=new LinearLayout(activity);body.setOrientation(1);body.setPadding(24,12,24,12);
-        TextView prompt=new TextView(activity);prompt.setText("Is the motor driver firmly screwed in?");body.addView(prompt);
+        LinearLayout body=PhysicalCheckUi.body(activity);
+        TextView prompt=PhysicalCheckUi.prompt(activity,"Lightly press and wiggle the motor driver. Is it firmly screwed in?");prompt.setPadding(0,0,0,UiUtils.dp(activity,16));body.addView(prompt);
         CheckBox hardware=new CheckBox(activity);hardware.setText("Both 10mm screws and both M3 nuts are installed");body.addView(hardware);
         dialog=new AlertDialog.Builder(activity).setTitle("Joint stability check").setView(body).setNeutralButton("Check later",null)
                 .setNegativeButton("Still Jiggling",null).setPositiveButton("Firm & Secure",null).create();
@@ -115,7 +115,7 @@ final class Phase3GuideController implements AutoCloseable {
                 AssemblyVoiceGuide.Status status=activity.voiceGuide().getStatus();
                 if(status==AssemblyVoiceGuide.Status.MUTED||status==AssemblyVoiceGuide.Status.UNAVAILABLE)advance();else main.postDelayed(this::advance,16000);
             });
-        });dialog.show();
+        });dialog.show();PhysicalCheckUi.style(dialog);
     }
     private void advance(){if(!closed&&!paused&&!saving&&finishing&&flow.canFinish(developer)){finishing=false;main.removeCallbacksAndMessages(null);finish.run();}}
     void render(){
@@ -124,10 +124,11 @@ final class Phase3GuideController implements AutoCloseable {
         String details=HUD[step]+"\n\nThe driver controls the two motors. Align its header row with the board sockets. Check placement before adding screws. The camera checks the module and board orientation; the final hands-on check confirms the screws, hidden nuts and firmness.";
         boolean unlocked=flow.complete()&&(step!=6||flow.canFinish(developer)||reviewing);
         card.render(30+step,"Phase 3 · Step 3."+step+" of 6",summary,details,message,unlocked,true,flow.complete()&&(step==1||step==4||step==5));
-        card.next.setText(step==6?reviewing?"Return to current phase":developer?"Next phase (DEV) →":"Continue to Phase 4 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
+        card.next.setText(step==6?reviewing?"Return to current phase":"Continue to Phase 4 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
         card.action.setVisibility((step==2||step==3||step==6)&&!flow.complete()?View.VISIBLE:View.GONE);
         card.action.setText(step==2?"I Have These":step==3?videoError?"Retry demo":"Ready for Placement Scan":"Check joint stability");card.action.setEnabled(!saving&&(step!=3||videosReady||videoError));
         card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
+        ((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(plan!=null);
         alignment.setInstruction(step==1?"Motor Driver · Front face":"Motor Driver · Top view");alignment.showGuide(flow.scanning()?Phase3AssetCatalog.guide(activity.getAssets(),step):null);
         if(previewStep!=step){stopVideo();previewStep=step;if(step==2)preview.showFasteners(true);else if(step==3)startVideo();else preview.showComponent(NeobotSeedData.MOTOR_DRIVER,"Motor Driver");}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:lastWarning!=null?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);

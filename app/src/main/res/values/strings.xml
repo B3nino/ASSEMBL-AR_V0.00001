@@ -17,7 +17,6 @@
     <string name="nav_learning">Learn</string>
     <string name="nav_components">Parts</string>
     <string name="nav_admin">Admin</string>
-    <string name="offline_ready">Offline ready</string>
     <string name="main_hero_title">Your robot, assembled one verified step at a time.</string>
     <string name="main_hero_body">Point your camera at a NEOBOT part for live recognition, spatial guidance, and beginner-friendly checks.</string>
     <string name="start_assembly">Start assembly</string>

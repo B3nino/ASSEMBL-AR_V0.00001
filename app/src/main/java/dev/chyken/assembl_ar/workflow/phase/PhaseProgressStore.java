@@ -16,8 +16,8 @@ import dev.chyken.assembl_ar.workflow.GuidedStepProgressStore;
  * that does not finish its manual section (mounting the distance sensor before its wiring).
  */
 public final class PhaseProgressStore {
-    /** Version 2 separates power/control wiring while retaining revision-1 records. */
-    public static final int SCHEMA_VERSION = 2;
+    /** Version 3 combines driver power/control; manual section progress remains authoritative. */
+    public static final int SCHEMA_VERSION = 3;
     private static final String PREFERENCES = "assembly_phase_progress";
     private static final String KEY_SCHEMA = "schema_version";
     private static final String KEY_WORKFLOW = "workflow_mode";
@@ -57,6 +57,8 @@ public final class PhaseProgressStore {
             editor.remove(inventoryKey(projectId, phaseId));
             if(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":gear_v1");
             if(AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":driver_v1");
+            if(AssemblyPhaseCatalog.MICROCONTROLLER_FIT.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":nano_v1");
+            if(AssemblyPhaseCatalog.DRIVER_WIRING.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":six_wire_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.DRIVER_CONTROL));}
             if(AssemblyPhaseCatalog.MOTOR_LEADS.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":wiring_v1");
         }
         return editor.commit();
@@ -80,6 +82,8 @@ public final class PhaseProgressStore {
     public static String gearMotorState(Context context,String projectId){
         return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",null);
     }
+    public static String driverWiringState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.DRIVER_WIRING)+":six_wire_v1",null);}
+    public static void saveDriverWiringState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.DRIVER_WIRING)+":six_wire_v1",state).apply();}
     public static String microcontrollerState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MICROCONTROLLER_FIT)+":nano_v1",null);}
     public static void saveMicrocontrollerState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.MICROCONTROLLER_FIT)+":nano_v1",state).apply();}
     public static String driverState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT)+":driver_v1",null);}
@@ -134,11 +138,19 @@ public final class PhaseProgressStore {
             SharedPreferences.Editor migration=preferences.edit();
             // Revision 1's combined power/control phase certified both new phases. Keep every
             // project record and inventory result when separating the two wiring sections.
-            for(Map.Entry<String,?> entry:preferences.getAll().entrySet()) {
+            if(preferences.getInt(KEY_SCHEMA,0)<2)for(Map.Entry<String,?> entry:preferences.getAll().entrySet()) {
                 if(entry.getKey().endsWith(SEPARATOR+AssemblyPhaseCatalog.DRIVER_WIRING)
                         && Boolean.TRUE.equals(entry.getValue())) {
                     String prefix=entry.getKey().substring(0,entry.getKey().length()-AssemblyPhaseCatalog.DRIVER_WIRING.length());
                     migration.putBoolean(prefix+AssemblyPhaseCatalog.DRIVER_CONTROL,true);
+                }
+            }
+            // A version-2 power-only certificate must not mark the new six-wire phase complete.
+            for(Map.Entry<String,?> entry:preferences.getAll().entrySet()){
+                if(entry.getKey().endsWith(SEPARATOR+AssemblyPhaseCatalog.DRIVER_WIRING)&&Boolean.TRUE.equals(entry.getValue())){
+                    String prefix=entry.getKey().substring(0,entry.getKey().length()-AssemblyPhaseCatalog.DRIVER_WIRING.length());
+                    boolean controls=preferences.getInt(KEY_SCHEMA,0)<2||preferences.getBoolean(prefix+AssemblyPhaseCatalog.DRIVER_CONTROL,false);
+                    migration.putBoolean(entry.getKey(),controls);
                 }
             }
             migration.putInt(KEY_SCHEMA, SCHEMA_VERSION).apply();
