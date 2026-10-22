@@ -92,6 +92,22 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/wiringReviewButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_live_pill"
+            android:clickable="true"
+            android:focusable="true"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:paddingHorizontal="10dp"
+            android:text="@string/wiring_review_badge"
+            android:contentDescription="@string/wiring_review_description"
+            android:textColor="@color/white"
+            android:textSize="13sp" />
+
+        <TextView
             android:id="@+id/devButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

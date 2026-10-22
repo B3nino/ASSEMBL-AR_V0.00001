@@ -60,6 +60,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     private final Phase2ReferenceMatcher phase2Matcher;
     private final Phase7ReferenceMatcher phase7Matcher;
     private final Phase8ReferenceMatcher phase8Matcher;
+    private final Phase9ReferenceMatcher phase9Matcher;
     private final Phase5ReferenceMatcher phase5Matcher;
     private final Phase3ReferenceMatcher phase3Matcher;
     private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -92,6 +93,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         phase2Matcher=new Phase2ReferenceMatcher(database,config);
         phase3Matcher=new Phase3ReferenceMatcher(database,config);
         phase8Matcher=new Phase8ReferenceMatcher(database,config);
+        phase9Matcher=new Phase9ReferenceMatcher(database,config);
         phase5Matcher=new Phase5ReferenceMatcher(database,config);
         phase7Matcher=new Phase7ReferenceMatcher(database,config);
     }
@@ -100,6 +102,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     }
     synchronized RecognitionResult inspectPhase7(Mat gray,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase7(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,rgb,timestamp,step);}
+    synchronized RecognitionResult inspectPhase9(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return phase9Matcher.inspect(gray,rgb,timestamp,stage);}
     synchronized RecognitionResult inspectPhase8(Mat gray,long timestamp,int step){ensureOpen();return phase8Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase5(Mat gray,long timestamp,int step){ensureOpen();return phase5Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase3(Mat gray,long timestamp,int step){ensureOpen();return phase3Matcher.inspect(gray,timestamp,step);}
@@ -840,7 +843,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             matchingExecutor.close();
             phase2Matcher.close();
             phase3Matcher.close();
-            phase8Matcher.close();phase5Matcher.close();phase7Matcher.close();
+            phase9Matcher.close();phase8Matcher.close();phase5Matcher.close();phase7Matcher.close();
             descriptorBatches.close();
             frameCache.release();
             clahe.collectGarbage();
@@ -1557,6 +1560,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX)) return false;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))return false;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX)) return false;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX)) return false;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX)) return false;
         if (spec.isInstalledBracketView()
                 && (request == null || request.getGuidedBracketSlot() == 0)) return false;
@@ -1580,6 +1584,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX)
                 && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX)
                 && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX)
+                && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX)
                 && !spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX)
                 && !spec.isAutomaticBoardGeometry()
                 && spec.getAssemblyStepNumber() > 0;

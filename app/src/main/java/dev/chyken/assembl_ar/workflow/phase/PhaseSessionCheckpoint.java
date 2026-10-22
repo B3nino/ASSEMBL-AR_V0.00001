@@ -13,6 +13,7 @@ public final class PhaseSessionCheckpoint {
             throw new IllegalArgumentException("Invalid assembly session");
         if(gearState!=null&&gearState.indexOf(';')>=0)throw new IllegalArgumentException("Invalid gear state");
         if(AssemblyPhaseCatalog.SENSOR_WIRING.equals(phaseId)&&(gearState==null||gearState.isEmpty()))gearState="legacyMount";
+        if(AssemblyPhaseCatalog.WHEEL_PAIR.equals(phaseId)&&(gearState==null||gearState.isEmpty()))gearState=inventoryComplete?"legacyWheels":"legacyStandoff";
         this.phaseId=AssemblyPhaseCatalog.byId(phaseId).getId();this.developer=developer;this.mode=mode;this.chapter=chapter;
         this.inventoryIndex=inventoryIndex;this.inventoryComplete=inventoryComplete;this.previewing=previewing;
         this.gearState=gearState==null?"":gearState;

@@ -65,7 +65,7 @@ final class Phase4GuideController implements AutoCloseable {
     private void bindControls(){
         card.previous.setOnClickListener(v->{if(saving)return;if(flow.step()==1)previousPhase.run();else if(flow.previous())changed();});
         card.next.setOnClickListener(v->{if(saving)return;if(flow.step()==3){if(reviewing||flow.canFinish(developer))finish.run();}else if(flow.next())changed();});
-        card.action.setOnClickListener(v->{if(saving)return;switch(flow.step()){
+        card.action.setOnClickListener(v->{if(saving)return;if(flow.step()>=2&&(reviewing||flow.complete())){finishing=false;completionKey=null;main.removeCallbacksAndMessages(null);activity.voiceGuide().stop();workspace.expand();return;}switch(flow.step()){
             case 1:openPicker();break;
             case 2:if(developer)flow.devSkip();else flow.confirmWired();message="Wiring marked done · Next unlocked";render();save();say("Wiring marked done. The next step is unlocked. Continue when you are ready for the pull test.","wired:"+(++speechSequence));break;
             case 3:pullTest();break;
@@ -125,8 +125,8 @@ final class Phase4GuideController implements AutoCloseable {
         more.append("\nThe four large openings are for motor wires. The six small header pins are separate control and power connections. Copper motor tabs are unmarked: this illustration does not establish positive or negative polarity. Wire colors identify your own leads. Tap a connection to inspect it, or expand to see all four.");
         card.render(40+step,"Phase 4 · Step 4."+step+" of 3",HUD[step],more.toString(),message,unlocked,true,false);
         card.next.setText(step==3?reviewing?"Return to current phase":"Continue to Phase 5 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
-        card.action.setVisibility(!reviewing&&!flow.complete()?View.VISIBLE:View.GONE);card.action.setEnabled(!saving);
-        card.action.setText(step==1?"Select wire colors":step==2?"Done Wiring":"Check wires");card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
+        card.action.setVisibility(flow.step()>=2||!reviewing&&!flow.complete()?View.VISIBLE:View.GONE);card.action.setEnabled(!saving);
+        card.action.setText(step>=2&&(reviewing||flow.complete())?"Review wiring diagram":step==1?"Select wire colors":step==2?"Done Wiring":"Check wires");card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
         ((TargetAlignmentBoxView)activity.findViewById(R.id.targetAlignmentBox)).showGuide(null);activity.hideGuidance();
         ((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);
         workspace.setMotorColors(flow.colors());

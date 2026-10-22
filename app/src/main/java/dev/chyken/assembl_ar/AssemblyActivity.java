@@ -435,9 +435,11 @@ public final class AssemblyActivity extends AppCompatActivity {
             setDiagnosticsVisible(!diagnosticsVisible);
             return true;
         });
+        findViewById(R.id.wiringReviewButton).setOnClickListener(v->reviewWiringDiagrams());
         findViewById(R.id.devButton).setOnClickListener(view ->
                 DevStepSkipDialog.show(this, phaseController,
                         diagnosticsVisible, this::setDiagnosticsVisible));
+        recognitionBanner.setOnClickListener(v->{if(failedReferenceScope!=null){failedReferenceScope=null;refreshReferenceScope();}else if(!visionInitializationStarted)initializeVision();});
         findViewById(R.id.viewReferenceButton).setOnClickListener(view -> showManualReference());
         manualThumbnail.setOnClickListener(view -> showManualReference());
         findViewById(R.id.requiredPartReference).setOnClickListener(view -> {
@@ -579,89 +581,104 @@ public final class AssemblyActivity extends AppCompatActivity {
         cameraPermissionPanel.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
-    private void initializeVision() {
-        if (visionInitializationStarted || destroyed) {
-            return;
-        }
-        visionInitializationStarted = true;
-        int generation = ++visionGeneration;
-        setBanner("Preparing component recognition…", true, R.drawable.bg_live_pill);
-        // Preview has no OpenCV dependency. Open it before any photo decoding/ORB work.
-        startCamera(generation);
-        try {
-            visionLoaderExecutor.execute(() -> {
-                ReferenceDatabase loadedDatabase = null;
-                ComponentRecognizer loadedRecognizer = null;
-                ModelBasedPartRecognizer loadedModelRecognizer = null;
-                try {
-                    if (destroyed || generation != visionGeneration) {
-                        return;
-                    }
-                    if (!OpenCVLoader.initLocal()) {
-                        throw new IllegalStateException("OpenCV native runtime is unavailable");
-                    }
-                    VisionConfig loadedConfig = VisionConfig.defaults();
-                    List<ComponentReferenceSpec> specs = VisionReferenceFactory.build(repository, getAssets());
-                    File descriptorCache = new File(
-                            getNoBackupFilesDir(), "orb_reference_cache_v3");
-                    loadedDatabase = ReferenceDatabase.load(
-                            getAssets(), specs, loadedConfig, descriptorCache,
-                            () -> !destroyed && generation == visionGeneration);
-                    loadedRecognizer = new ComponentRecognizer(loadedConfig, loadedDatabase);
-                    try {
-                        loadedModelRecognizer = new ModelBasedPartRecognizer(getAssets());
-                    } catch (Exception failure) {
-                        Log.w("AssemblyActivity", "Model templates unavailable", failure);
-                    }
-                    if (destroyed || generation != visionGeneration) {
-                        closeVisionResources(loadedRecognizer, loadedDatabase);
-                        return;
-                    }
-                    ReferenceDatabase readyDatabase = loadedDatabase;
-                    ComponentRecognizer readyRecognizer = loadedRecognizer;
-                    ModelBasedPartRecognizer readyModelRecognizer = loadedModelRecognizer;
-                    runOnUiThread(() -> installVisionResources(
-                            generation, loadedConfig, readyDatabase, readyRecognizer,
-                            readyModelRecognizer));
-                } catch (Throwable failure) {
-                    closeVisionResources(loadedRecognizer, loadedDatabase);
-                    Log.e("AssemblyActivity", "Vision initialization failed", failure);
-                    runOnUiThread(() -> {
-                        if (isVisionGenerationActive(generation)) {
-                            visionInitializationStarted = false;
-                            setBanner("Recognition unavailable · automatic validation is required",
-                                    false, R.drawable.bg_camera_warning);
-                        }
-                    });
-                }
-            });
-        } catch (RejectedExecutionException ignored) {
-            visionInitializationStarted = false;
-        }
+    private volatile dev.chyken.assembl_ar.ui.WiringDiagramReviewDialog wiringReviewDialog;
+    private void reviewWiringDiagrams(){
+        if(destroyed||wiringReviewDialog!=null&&wiringReviewDialog.isShowing())return;
+        PhaseAssemblyController phases=phaseController;
+        dev.chyken.assembl_ar.workflow.phase.WiringDiagramState state=phases!=null?phases.wiringDiagramState():dev.chyken.assembl_ar.workflow.phase.WiringDiagramState.fromCheckpoints(
+            dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.wiringState(this,NeobotSeedData.PROJECT_ID),dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.driverWiringState(this,NeobotSeedData.PROJECT_ID),dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.sensorWiringState(this,NeobotSeedData.PROJECT_ID));
+        if(phases!=null)phases.onPause();voiceGuide.stop();assemblyVisibilityGeneration++;arHudView.setScanningEnabled(false);
+        wiringReviewDialog=new dev.chyken.assembl_ar.ui.WiringDiagramReviewDialog(this,state,phases==null?8:phases.displayedPhaseNumber(),text->voiceGuide.speak(text,"wiring-review:"+SystemClock.elapsedRealtimeNanos()));
+        wiringReviewDialog.setOnDismissListener(d->{wiringReviewDialog=null;assemblyVisibilityGeneration++;if(!destroyed&&activityResumed){if(phaseController!=null)phaseController.onResume();refreshReferenceScope();}});wiringReviewDialog.show();
+        voiceGuide.speak("Wiring diagrams. Select a phase to revisit its schematic. Your assembly progress is preserved.","wiring-review:open");
     }
-
-    private void installVisionResources(
-            int generation,
-            VisionConfig loadedConfig,
-            ReferenceDatabase loadedDatabase,
-            ComponentRecognizer loadedRecognizer,
-            @Nullable ModelBasedPartRecognizer loadedModelRecognizer) {
-        if (!isVisionGenerationActive(generation)) {
-            closeVisionResources(loadedRecognizer, loadedDatabase);
+    private volatile List<ComponentReferenceSpec> referenceCatalog;
+    private volatile String loadedReferenceScope,loadingReferenceScope;
+    // Bank epochs change independently of the bound camera and reject stale native results.
+    private volatile int referenceBankGeneration;
+    private String failedReferenceScope,referencePreparationMessage;
+    private long lastReferenceProgress;
+    private final Runnable referenceScopeMonitor=new Runnable(){public void run(){
+        if(destroyed)return;
+        if(visionInitializationStarted&&referenceCatalog!=null&&activityResumed)refreshReferenceScope();
+        if(recognitionText!=null)recognitionText.postDelayed(this,250);
+    }};
+    private RecognitionRequest activeReferenceRequest(){
+        if(wiringReviewDialog!=null&&wiringReviewDialog.isShowing())return null;
+        PhaseAssemblyController phases=phaseController;
+        if(phases!=null)return phases.isAnalysisSuspended()?null:phases.requestFor(null);
+        AssemblyStep step=currentStep;if(step==null)return null;
+        String target=activeCheckpoint==null?primaryComponentId(step):activeCheckpoint.getComponentId();
+        return new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(target),null,null,spatialAnchorComponentId(step),1,step.getStepNumber());
+    }
+    private void initializeVision() {
+        if(visionInitializationStarted||destroyed)return;
+        visionInitializationStarted=true;int generation=++visionGeneration;
+        startCamera(generation);
+        recognitionText.removeCallbacks(referenceScopeMonitor);recognitionText.post(referenceScopeMonitor);
+        visionLoaderExecutor.execute(()->{
+            try{
+                if(!OpenCVLoader.initLocal())throw new IllegalStateException("OpenCV native runtime is unavailable");
+                long catalogStarted=SystemClock.elapsedRealtime();
+                VisionConfig config=VisionConfig.defaults();List<ComponentReferenceSpec> catalog=VisionReferenceFactory.build(repository,getAssets());
+                ModelBasedPartRecognizer models=null;try{models=new ModelBasedPartRecognizer(getAssets());}catch(Exception failure){Log.w("AssemblyActivity","Model templates unavailable",failure);}
+                Log.i("AssemblyActivity","Reference catalog indexed photos="+catalog.size()+" ms="+(SystemClock.elapsedRealtime()-catalogStarted));
+                ModelBasedPartRecognizer readyModels=models;
+                runOnUiThread(()->{
+                    if(!isVisionGenerationActive(generation))return;
+                    visionConfig=config;referenceCatalog=catalog;modelPartRecognizer=readyModels;
+                    java.util.Set<String> supported=new java.util.HashSet<>();for(ComponentReferenceSpec spec:catalog)supported.add(spec.getComponentId());
+                    if(readyModels!=null)supported.addAll(readyModels.supportedComponentIds());availableRecognitionIds=java.util.Collections.unmodifiableSet(supported);
+                    refreshReferenceScope();
+                });
+            }catch(Throwable failure){Log.e("AssemblyActivity","Vision catalog initialization failed",failure);runOnUiThread(()->{if(isVisionGenerationActive(generation)){visionInitializationStarted=false;setBanner("Recognition preparation failed · tap to retry",false,R.drawable.bg_camera_warning);}});}
+        });
+    }
+    private boolean referenceBankMatchesRequest(){
+        String wanted=dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(activeReferenceRequest());
+        return wanted!=null&&wanted.equals(loadedReferenceScope);
+    }
+    private void refreshReferenceScope(){
+        if(destroyed||referenceCatalog==null)return;
+        RecognitionRequest request=activeReferenceRequest();String scope=dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request);
+        if(scope==null){
+            if(loadingReferenceScope!=null){referenceBankGeneration++;loadingReferenceScope=null;referencePreparationMessage=null;}
             return;
         }
-        visionConfig = loadedConfig;
-        referenceDatabase = loadedDatabase;
-        java.util.Set<String> supportedIds = new java.util.HashSet<>(loadedDatabase.getComponentIds());
-        modelPartRecognizer = loadedModelRecognizer;
-        if (modelPartRecognizer != null) supportedIds.addAll(modelPartRecognizer.supportedComponentIds());
-        availableRecognitionIds = java.util.Collections.unmodifiableSet(supportedIds);
-        recognizer = loadedRecognizer;
-        PhaseAssemblyController phases = phaseController;
-        if (phases != null) phases.onRecognitionReady();
-        showCurrentGuidedStepBanner();
-        // Attach to the existing use case without unbinding/restarting the visible preview.
-        attachVisionAnalyzer(generation);
+        if(scope.equals(loadedReferenceScope)||scope.equals(loadingReferenceScope)||scope.equals(failedReferenceScope))return;
+        int bank=++referenceBankGeneration;int cameraGeneration=visionGeneration;loadingReferenceScope=scope;failedReferenceScope=null;
+        List<ComponentReferenceSpec> specs=dev.chyken.assembl_ar.camera.ActiveReferenceScope.select(referenceCatalog,request);
+        detachReferenceBank();referencePreparationMessage="Preparing this scan · 0/"+specs.size()+" reference photos";setBanner(referencePreparationMessage,true,R.drawable.bg_live_pill);
+        visionLoaderExecutor.execute(()->{
+            ReferenceDatabase db=null;ComponentRecognizer worker=null;long started=SystemClock.elapsedRealtime();
+            try{
+                db=ReferenceDatabase.load(getAssets(),specs,visionConfig,new File(getNoBackupFilesDir(),"orb_reference_cache_v3"),
+                    ()->!destroyed&&bank==referenceBankGeneration,(done,total)->{
+                        long now=SystemClock.elapsedRealtime();if(done!=total&&now-lastReferenceProgress<200)return;lastReferenceProgress=now;
+                        runOnUiThread(()->{if(bank==referenceBankGeneration&&!destroyed){referencePreparationMessage="Preparing this scan · "+done+"/"+total+" reference photos";setBanner(referencePreparationMessage,true,R.drawable.bg_live_pill);}});
+                    });
+                if(destroyed||bank!=referenceBankGeneration){db.close();return;}
+                worker=new ComponentRecognizer(visionConfig,db);ReferenceDatabase readyDb=db;ComponentRecognizer readyWorker=worker;
+                Log.i("AssemblyActivity","Reference bank ready scope="+scope+" photos="+db.size()+" ms="+(SystemClock.elapsedRealtime()-started));
+                runOnUiThread(()->{
+                    if(destroyed||bank!=referenceBankGeneration){closeVisionResources(readyWorker,readyDb);return;}
+                    referenceDatabase=readyDb;recognizer=readyWorker;loadedReferenceScope=scope;loadingReferenceScope=null;referencePreparationMessage=null;
+                    PhaseAssemblyController phases=phaseController;if(phases!=null)phases.onRecognitionReady();showCurrentGuidedStepBanner();attachVisionAnalyzer(cameraGeneration);
+                });
+            }catch(Throwable failure){
+                closeVisionResources(worker,db);
+                if(destroyed||bank!=referenceBankGeneration)return;
+                Log.e("AssemblyActivity","Active scan preparation failed: "+scope,failure);
+                runOnUiThread(()->{if(!destroyed&&bank==referenceBankGeneration){loadingReferenceScope=null;referencePreparationMessage=null;failedReferenceScope=scope;setBanner("Recognition preparation failed · tap to retry",false,R.drawable.bg_camera_warning);}});
+            }
+        });
+    }
+    private void detachReferenceBank(){
+        loadedReferenceScope=null;
+        if(imageAnalysis!=null)imageAnalysis.clearAnalyzer();
+        if(analyzer!=null){analyzer.close();analyzer=null;}
+        ComponentRecognizer old=recognizer;ReferenceDatabase oldDb=referenceDatabase;recognizer=null;referenceDatabase=null;
+        if(old!=null||oldDb!=null)cameraExecutor.execute(()->closeVisionResources(old,oldDb));
     }
 
     private boolean isVisionGenerationActive(int generation) {
@@ -745,6 +762,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private void attachVisionAnalyzer(int generation) {
         if (!isVisionGenerationActive(generation) || recognizer == null
                 || imageAnalysis == null || analyzer != null) return;
+        final int bankGeneration=referenceBankGeneration;
         analyzer = new AssemblyVisionAnalyzer(recognizer,
                 new AssemblyVisionAnalyzer.RequestProvider() {
                     @Override
@@ -756,7 +774,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                     @Override
                     public boolean isAnalysisSuspended() {
                         PhaseAssemblyController phases = phaseController;
-                        return phases != null && phases.isAnalysisSuspended();
+                        return !referenceBankMatchesRequest() || phases != null && phases.isAnalysisSuspended();
                     }
                 },
                 new AssemblyVisionAnalyzer.Callback() {
@@ -765,7 +783,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                         long completedAt = SystemClock.elapsedRealtimeNanos();
                         int resultVisibilityGeneration = assemblyVisibilityGeneration;
                         runOnUiThread(() -> {
-                            if (isVisionGenerationActive(generation)) {
+                            if (isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration) {
                                 // Do not restore board/component evidence queued
                                 // before a pause/resume transition in any step.
                                 if (resultVisibilityGeneration
@@ -779,9 +797,9 @@ public final class AssemblyActivity extends AppCompatActivity {
                     public void onError(Throwable failure) {
                         runOnUiThread(() -> {
                             PhaseAssemblyController phases = phaseController;
-                            if (phases != null && isVisionGenerationActive(generation)) {
+                            if (phases != null && isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration) {
                                 phases.onAnalysisError();
-                            } else if (isVisionGenerationActive(generation)) {
+                            } else if (isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration) {
                                 if (isOnFinalGuidedStep()) {
                                     setBanner("Hold steady while recognition recovers…",
                                             true, R.drawable.bg_live_pill);
@@ -2776,6 +2794,9 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     void setBanner(String text, boolean spinning, int backgroundResource) {
+        if(referencePreparationMessage!=null&&loadingReferenceScope!=null&&activeReferenceRequest()!=null){text=referencePreparationMessage;spinning=true;backgroundResource=R.drawable.bg_live_pill;}
+        else if(failedReferenceScope!=null&&failedReferenceScope.equals(dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(activeReferenceRequest()))){text="Recognition preparation failed · tap to retry";spinning=false;backgroundResource=R.drawable.bg_camera_warning;}
+
         if (!text.contentEquals(recognitionText.getText())) {
             recognitionText.setText(text);
             if (trialLog != null) trialLog.event("banner", text);
@@ -2949,6 +2970,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if(visionInitializationStarted){recognitionText.removeCallbacks(referenceScopeMonitor);recognitionText.post(referenceScopeMonitor);}
         assemblyVisibilityGeneration++;
         activityResumed = true;
         if(componentPreview!=null) componentPreview.resume();
@@ -2957,7 +2979,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                 && !currentCheckpointComplete)) assemblyDemo.resume();
         acceptRecognitionAfterNanos = SystemClock.elapsedRealtimeNanos();
         PhaseAssemblyController phases = phaseController;
-        if (phases != null) phases.onResume();
+        if (phases != null && (wiringReviewDialog==null||!wiringReviewDialog.isShowing())) phases.onResume();
         if (arGlView != null) {
             arGlView.onResume();
         }
@@ -2972,6 +2994,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        recognitionText.removeCallbacks(referenceScopeMonitor);
         activityResumed = false;
         if(componentPreview!=null) componentPreview.pause();
         calibrationByFrame.clear();
@@ -3004,6 +3027,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         destroyed = true;
+        if(wiringReviewDialog!=null)wiringReviewDialog.dismiss();
         if(componentPreview!=null) componentPreview.dispose();
         boundCamera = null;
         PhaseAssemblyController phases = phaseController;
@@ -3016,7 +3040,8 @@ public final class AssemblyActivity extends AppCompatActivity {
         recognitionText.removeCallbacks(expireMotorReadiness);
         recognitionText.removeCallbacks(expireSectionReadiness);
         if (stepInfoPanel != null) stepInfoPanel.dispose();
-        visionGeneration++;
+        visionGeneration++;referenceBankGeneration++;
+        recognitionText.removeCallbacks(referenceScopeMonitor);
         visionInitializationStarted = false;
         // Stop obsolete loads on exit/recreation so a resumed screen does not compete with them.
         visionLoaderExecutor.shutdownNow();

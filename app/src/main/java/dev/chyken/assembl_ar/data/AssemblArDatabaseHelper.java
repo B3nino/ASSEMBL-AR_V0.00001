@@ -65,6 +65,12 @@ final class AssemblArDatabaseHelper extends SQLiteOpenHelper {
             refreshCanonicalAssemblyContent(database);
             oldVersion = 5;
         }
+        if(oldVersion==5&&newVersion>=6){
+            // Phase 9 now removes and saves the standoff top screw. Refresh canonical text
+            // for existing installs; stable section IDs retain progress and custom references.
+            refreshCanonicalAssemblyContent(database);
+            oldVersion=6;
+        }
         if (oldVersion != newVersion) {
             throw new IllegalStateException(
                     "No database migration from version " + oldVersion + " to " + newVersion);

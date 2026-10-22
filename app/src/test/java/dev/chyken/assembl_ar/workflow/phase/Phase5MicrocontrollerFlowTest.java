@@ -45,8 +45,8 @@ public final class Phase5MicrocontrollerFlowTest {
             Phase5MicrocontrollerFlow f=Phase5MicrocontrollerFlow.restore(bad,10);assertEquals(1,f.step());assertTrue(f.scanning());assertFalse(f.complete());
         }
     }
-    @Test public void projectMetadataListsTheOverhauledStepsForTheFirstSixPhases(){
-        int[] counts={1,6,6,3,4,4,6,14};for(int i=0;i<counts.length;i++){AssemblyPhase p=AssemblyPhaseCatalog.phases().get(i);assertEquals(counts[i],PhaseGuideMetadata.subSteps(p).size());assertFalse(PhaseGuideMetadata.summary(p).isEmpty());}
-        assertFalse(PhaseGuideMetadata.overhauled(AssemblyPhaseCatalog.phases().get(8)));
+    @Test public void projectMetadataListsTheOverhauledStepsForTheFirstNinePhases(){
+        int[] counts={1,6,6,3,4,4,6,14,10};for(int i=0;i<counts.length;i++){AssemblyPhase p=AssemblyPhaseCatalog.phases().get(i);assertEquals(counts[i],PhaseGuideMetadata.subSteps(p).size());assertFalse(PhaseGuideMetadata.summary(p).isEmpty());}
+        assertFalse(PhaseGuideMetadata.overhauled(AssemblyPhaseCatalog.phases().get(9)));
     }
 }

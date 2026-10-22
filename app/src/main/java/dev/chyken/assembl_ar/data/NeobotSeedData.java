@@ -197,7 +197,7 @@ public final class NeobotSeedData {
         result.add(component(STANDOFF, "Center circuit-board standoff", ComponentCategory.STRUCTURAL, 1,
                 "Single center spacer with lower nut and removable upper screw.",
                 "Holds the two PCBs apart while leaving wiring quickly accessible.",
-                "Secure in the center hole with a nut and threadlocker; leave the top screw available for step 16.",
+                "Secure in the center hole with an M3 nut; remove and save the top screw for the extension board.",
                 "Metallic part should use contour/shape plus synthetic-lighting references.", 21, 26));
         result.add(component(WHEEL, "Drive wheel", ComponentCategory.STRUCTURAL, 2,
                 "Black rubber tire with white hub sized for the gear-motor output shaft.",
@@ -887,9 +887,9 @@ public final class NeobotSeedData {
                         OverlayType.SPATIAL_HIGHLIGHT, OverlayType.ORIENTATION_MARKER)));
 
         result.add(step(12, "Install the standoff",
-                "Fit the single center standoff while keeping its upper screw available.",
+                "Fit the center standoff and remove and save its upper screw for the extension board.",
                 ValidationType.WIGGLE_TEST,
-                "Wiggle the standoff and confirm it is locked upright while its top screw remains available.",
+                "Confirm the standoff is locked upright with its lower nut tight and the top screw removed and saved.",
                 21, 21,
                 list(
                         ins(1, InstructionType.NOTE,
@@ -904,14 +904,14 @@ public final class NeobotSeedData {
                         ins(5, InstructionType.ACTION,
                                 "Apply threadlocker to the standoff's retaining nut.", 21),
                         ins(6, InstructionType.ACTION,
-                                "Leave the upper screw on the standoff for the extension board.", 21),
+                                "Remove the upper screw from the standoff and save it for the extension board.", 21),
                         ins(7, InstructionType.NOTE,
                                 "You may use additional standoffs (not included) if you need to.", 21)),
                 list(
                         req(STANDOFF, 1, "Use the center hole."),
                         req(NUT, 1, "Secure under the robot."),
                         req(THREADLOCKER, 1, "Lock lower fastener."),
-                        req(PHILLIPS_SCREWDRIVER, 1, "Tighten while retaining upper screw.")),
+                        req(PHILLIPS_SCREWDRIVER, 1, "Tighten the lower fastener; remove and save the upper screw.")),
                 Collections.emptyList(),
                 overlays(OverlayType.GHOST_COMPONENT, OverlayType.TARGET_GLOW_RING,
                         OverlayType.DYNAMIC_ARROW)));
@@ -1035,7 +1035,7 @@ public final class NeobotSeedData {
                         ins(7, InstructionType.NOTE,
                                 "The four motor brackets stabilize the extension board by supporting both sides.", 26),
                         ins(8, InstructionType.ACTION,
-                                "Insert the screw retained on the center standoff through the extension board.", 26),
+                                "Insert the top screw saved from the center standoff through the extension board.", 26),
                         ins(9, InstructionType.ACTION,
                                 "Tighten the center screw to secure the extension board.", 26),
                         ins(10, InstructionType.CHECK,

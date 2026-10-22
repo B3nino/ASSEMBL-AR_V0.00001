@@ -21,6 +21,18 @@ import static org.junit.Assert.assertTrue;
 /** Guards progress-preserving canonical-content refreshes across deployed database versions. */
 @RunWith(AndroidJUnit4.class)
 public final class AssemblArDatabaseMigrationInstrumentedTest {
+    @Test public void versionFiveRefreshesTopScrewInstructionAndKeepsVerifiedProgress(){
+        Context context=ApplicationProvider.getApplicationContext();AssemblArDatabaseHelper helper=new AssemblArDatabaseHelper(context);SQLiteDatabase db=SQLiteDatabase.create(null);
+        try{
+            helper.onConfigure(db);helper.onCreate(db);
+            db.execSQL("UPDATE "+AssemblArContract.Instructions.TABLE+" SET "+AssemblArContract.Instructions.TEXT+" = ? WHERE "+AssemblArContract.Instructions.STEP_ID+" = ? AND "+AssemblArContract.Instructions.ORDER_INDEX+" = 6",new Object[]{"Leave the upper screw on the standoff for the extension board.","neobot_step_12"});
+            db.execSQL("UPDATE "+AssemblArContract.Progress.TABLE+" SET "+AssemblArContract.Progress.STATUS+" = ?, "+AssemblArContract.Progress.VALIDATION_CONFIRMED+" = 1 WHERE "+AssemblArContract.Progress.STEP_ID+" = ?",new Object[]{StepStatus.COMPLETED.name(),"neobot_step_12"});
+            insertCustomRegistration(db,"phase9_migration_reference");helper.onUpgrade(db,5,AssemblArContract.DATABASE_VERSION);
+            assertEquals(1,DatabaseUtils.longForQuery(db,"SELECT COUNT(*) FROM "+AssemblArContract.Instructions.TABLE+" WHERE "+AssemblArContract.Instructions.STEP_ID+" = ? AND "+AssemblArContract.Instructions.TEXT+" LIKE ?",new String[]{"neobot_step_12","Remove the upper screw%"}));
+            assertEquals(1,DatabaseUtils.longForQuery(db,"SELECT COUNT(*) FROM "+AssemblArContract.Progress.TABLE+" WHERE "+AssemblArContract.Progress.STEP_ID+" = ? AND "+AssemblArContract.Progress.STATUS+" = ? AND "+AssemblArContract.Progress.VALIDATION_CONFIRMED+" = 1",new String[]{"neobot_step_12",StepStatus.COMPLETED.name()}));
+            assertEquals(1,DatabaseUtils.longForQuery(db,"SELECT COUNT(*) FROM "+AssemblArContract.Registrations.TABLE+" WHERE "+AssemblArContract.Registrations.ID+" = ?",new String[]{"phase9_migration_reference"}));
+        }finally{db.close();helper.close();}
+    }
     @Test
     public void upgradeFromVersionOneToCurrentRefreshesCardsWithoutDiscardingUserState() {
         Context context = ApplicationProvider.getApplicationContext();

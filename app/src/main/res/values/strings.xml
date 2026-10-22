@@ -1,4 +1,6 @@
 <resources>
+    <string name="wiring_review_badge">Wiring</string>
+    <string name="wiring_review_description">Review saved wiring diagrams</string>
     <string name="recognition_reference_unavailable">No usable camera reference for %1$s. Add clear, measured views in Administrator tools to enable verification. The manual remains available.</string>
     <string name="motor_inspection_initial">Base: searching · Left: waiting · Right: waiting</string>
     <string name="motor_inspection_status">Base: %1$s · Left: %2$s · Right: %3$s</string>

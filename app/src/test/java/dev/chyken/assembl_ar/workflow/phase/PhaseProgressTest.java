@@ -83,11 +83,11 @@ public final class PhaseProgressTest {
     public void redoReopensThePhaseAndInvalidatesEveryLaterPhase() {
         PhaseProgress.Redo redo = PhaseProgress.redoFrom(phase(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES));
         assertEquals(2, redo.getReopenSection());
-        assertEquals(14, redo.getClearedPhaseIds().size());
+        assertEquals(13, redo.getClearedPhaseIds().size());
         assertEquals(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES, redo.getClearedPhaseIds().get(0));
-        assertEquals(AssemblyPhaseCatalog.BATTERY_FIT, redo.getClearedPhaseIds().get(13));
+        assertEquals(AssemblyPhaseCatalog.BATTERY_FIT, redo.getClearedPhaseIds().get(12));
         PhaseProgress.Redo wiring = PhaseProgress.redoFrom(phase(AssemblyPhaseCatalog.SENSOR_WIRING));
         assertEquals(11, wiring.getReopenSection());
-        assertEquals(8, wiring.getClearedPhaseIds().size());
+        assertEquals(7, wiring.getClearedPhaseIds().size());
     }
 }

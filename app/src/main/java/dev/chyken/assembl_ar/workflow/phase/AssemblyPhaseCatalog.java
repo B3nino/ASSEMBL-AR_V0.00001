@@ -27,7 +27,7 @@ import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.VisualTarget;
 import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
 
 /**
- * The NEOBOT guide grouped into 15 learner-visible phases.
+ * The NEOBOT guide grouped into 14 learner-visible phases.
  *
  * <p>All 18 manual sections and their 152 source instructions are preserved. Sections 4–5
  * form one motor-lead job; driver power and control share Phase 6; sections 9–10 share
@@ -41,7 +41,7 @@ public final class AssemblyPhaseCatalog {
     /** Planned roadmap. Later phase membership awaits the user's revised grouping. */
     public static final int ROADMAP_PHASE_COUNT=11;
     /** Bump whenever phase membership, targets or checklists change; shown in the build stamp. */
-    public static final int REVISION = 6;
+    public static final int REVISION = 7;
 
     public static final String BOARD_PREPARATION = "board_preparation";
     public static final String MOTOR_ASSEMBLIES = "motor_assemblies";
@@ -70,6 +70,7 @@ public final class AssemblyPhaseCatalog {
 
     @Nullable
     public static AssemblyPhase byId(String id) {
+        if(WHEEL_PAIR.equals(id))id=CENTER_STANDOFF;
         if(SENSOR_WIRING.equals(id))id=DISTANCE_SENSOR_MOUNT;
         if(LINE_TRACKERS.equals(id))id=CASTER_FIT;
         if(DRIVER_CONTROL.equals(id))id=DRIVER_WIRING; // Saved pre-overhaul sessions retain their destination.
@@ -289,31 +290,23 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(BOARD_PREPARATION, MICROCONTROLLER_FIT, CASTER_FIT)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(CENTER_STANDOFF, "Fit the center standoff",
-                "Lock the standoff in the center hole and keep its upper screw for later.")
-                .whole(12)
-                .checklistPart(STANDOFF, 1, "Center hole; keep its upper screw.")
-                .checklistPart(NUT, 1, "Secured under the robot.")
+        phases.add(new PhaseBuilder(CENTER_STANDOFF, "Install the standoff and wheels",
+                "Identify the standoff and two wheels, follow both demos, verify installation and check the fasteners and axle grip.")
+                .whole(12).whole(13)
+                .part(STANDOFF, 1, "Center hole; remove and save its top screw for the extension board.")
+                .part(WHEEL, 2, "One on each gear-motor shaft; either hub face is accepted for identification.")
+                .checklistPart(NUT, 1, "Lock underneath the center standoff.")
                 .context(MAIN_BOARD, 1, "Center mounting hole.")
-                .tool(THREADLOCKER, 1, "Lock the lower fastener.")
-                .tool(PHILLIPS_SCREWDRIVER, 1, "Tighten while keeping the upper screw.")
-                .placement(12, "center_standoff", STANDOFF, MAIN_BOARD, "center standoff",
-                        Arrays.asList(2, 3))
-                .check("The standoff passes through the center hole from the top, its nut is "
-                        + "tightened underneath and threadlocker is applied.")
-                .check("The upper screw is kept on the standoff for the extension board.")
-                .dependsOn(BOARD_PREPARATION)
-                .build(phases));
-
-        phases.add(new PhaseBuilder(WHEEL_PAIR, "Fit the wheel pair",
-                "Press one wheel fully onto each motor shaft.")
-                .whole(13)
-                .part(WHEEL, 2, "One on each gear-motor shaft.")
-                .context(GEAR_MOTOR, 2, "Motor shafts must be unobstructed.")
+                .context(GEAR_MOTOR, 2, "Align the flat shafts with the wheel hubs.")
+                .tool(THREADLOCKER, 1, "Lock the lower fastener after tightening.")
+                .tool(PHILLIPS_SCREWDRIVER, 1, "Tighten the standoff fastener; save its top screw.")
+                .placement(12, "center_standoff", STANDOFF, MAIN_BOARD, "center standoff", Arrays.asList(2, 3))
                 .placement(13, "left_wheel", WHEEL, MAIN_BOARD, "left wheel", Arrays.asList(1, 2))
                 .placement(13, "right_wheel", WHEEL, MAIN_BOARD, "right wheel", Arrays.asList(3, 4))
-                .check("Each wheel hub is pressed fully onto its motor shaft.")
-                .dependsOn(MOTOR_ASSEMBLIES)
+                .check("The center standoff is locked tightly with its lower M3 nut.")
+                .check("The top screw is removed and saved for the extension board.")
+                .check("Both wheel hubs are fully seated on the motor shafts without slipping.")
+                .dependsOn(BOARD_PREPARATION, MOTOR_ASSEMBLIES)
                 .build(phases));
 
         phases.add(new PhaseBuilder(OLED_PROTECTOR_FIT, "Fit the OLED protector",

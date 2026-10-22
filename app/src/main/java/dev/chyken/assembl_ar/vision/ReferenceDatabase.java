@@ -84,6 +84,10 @@ public final class ReferenceDatabase implements AutoCloseable {
                                          VisionConfig config,
                                          File descriptorCacheDirectory,
                                          java.util.function.BooleanSupplier isActive) throws IOException {
+        return load(assetManager,specs,config,descriptorCacheDirectory,isActive,(done,total)->{});
+    }
+    public static ReferenceDatabase load(AssetManager assetManager,List<ComponentReferenceSpec> specs,VisionConfig config,
+            File descriptorCacheDirectory,java.util.function.BooleanSupplier isActive,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException {
         if (assetManager == null) {
             throw new IllegalArgumentException("AssetManager is required");
         }
@@ -100,6 +104,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         CLAHE clahe = OpenCvVisionUtils.createClahe(config);
         List<PreparedReference> prepared = new ArrayList<>();
         Set<String> referenceIds = new HashSet<>();
+        int attempted=0;
         try {
             for (ComponentReferenceSpec spec : specs) {
                 checkLoadActive(isActive);
@@ -121,13 +126,14 @@ public final class ReferenceDatabase implements AutoCloseable {
                             perSpecFailure);
                     // skip this reference and continue with others
                 }
+                progress.accept(++attempted,specs.size());
             }
             checkLoadActive(isActive);
             if (prepared.isEmpty()) {
                 throw new IOException("No valid references available for offline recognition");
             }
             return new ReferenceDatabase(prepared);
-        } catch (IOException | RuntimeException failure) {
+        } catch (IOException | RuntimeException | Error failure) {
             for (PreparedReference reference : prepared) {
                 reference.release();
             }
@@ -253,11 +259,14 @@ public final class ReferenceDatabase implements AutoCloseable {
         }
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
             spec=Phase2PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        final ComponentReferenceSpec geometrySource=spec;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))
-            spec=Phase3PhotoGeometry.resolve(spec,imageBytes);
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))spec=Phase8PhotoGeometry.resolve(spec,imageBytes);
+            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,3,28,37,()->Phase3PhotoGeometry.resolve(geometrySource,imageBytes));
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))
+            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,8,45,20,()->Phase8PhotoGeometry.resolve(geometrySource,imageBytes));
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX))spec=Phase9PhotoGeometry.resolve(spec,imageBytes,cacheFile);
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))
-            spec=Phase5PhotoGeometry.resolve(spec,imageBytes);
+            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,5,18,45,()->Phase5PhotoGeometry.resolve(geometrySource,imageBytes));
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))spec=Phase7PhotoGeometry.resolve(spec,imageBytes,cacheFile);
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
@@ -315,8 +324,9 @@ public final class ReferenceDatabase implements AutoCloseable {
                         dev.chyken.assembl_ar.camera.Phase7AssetCatalog.referenceRole(spec.getReferenceId()))
                         ||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))
                     phase7Orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
-                variants = ReferenceDescriptorPyramid.forReference(spec,
-                        grayscale, mask, phase7Orb!=null?phase7Orb:orb, clahe);
+                variants = spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX)
+                        ?Phase9DescriptorSampler.compute(spec,grayscale,mask,clahe)
+                        :ReferenceDescriptorPyramid.forReference(spec,grayscale,mask,phase7Orb!=null?phase7Orb:orb,clahe);
             }
             validateTexturedVariants(spec, variants, config, "Reference image");
             if (cacheFile != null && !variants.isEmpty()) {
@@ -442,6 +452,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
             assetFingerprint+="_p2roi"+Phase2PhotoGeometry.CACHE_VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))assetFingerprint+="_p8roi"+Phase8PhotoGeometry.VERSION;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX))assetFingerprint+="_p9roi"+Phase9PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))assetFingerprint+="_p5roi"+Phase5PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))assetFingerprint+="_p7roi"+Phase7PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))assetFingerprint+="_p3roi"+Phase3PhotoGeometry.VERSION;

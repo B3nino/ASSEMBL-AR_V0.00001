@@ -65,7 +65,7 @@ final class Phase6GuideController implements AutoCloseable {
     private void bind(){
         card.previous.setOnClickListener(v->{if(saving)return;if(flow.step()==1)previousPhase.run();else if(flow.previous(now()))changed();});
         card.next.setOnClickListener(v->{if(saving)return;if(flow.step()==4){if(reviewing||flow.canFinish(developer))finish.run();}else if(flow.next(now()))changed();});
-        card.action.setOnClickListener(v->{if(saving)return;switch(flow.step()){
+        card.action.setOnClickListener(v->{if(saving)return;if(flow.step()>=2&&(reviewing||flow.complete())){finishing=false;completionKey=null;main.removeCallbacksAndMessages(null);activity.voiceGuide().stop();workspace.expand();return;}switch(flow.step()){
             case 1:colors();break;case 2:check();break;
             case 3:flow.confirmSignals();status("Signal connections placed · Next unlocked");render();save();break;case 4:check();break;
         }});
@@ -133,8 +133,8 @@ final class Phase6GuideController implements AutoCloseable {
         StringBuilder details=new StringBuilder(INFO).append("\n\nYour wire colors:\n");for(Wire wire:Wire.values())details.append(wire.label()).append(" · ").append(flow.colors().swatch(wire).label).append('\n');
         card.render(60+step,"Phase 6 · Step 6."+step+" of 4",instruction(),details.toString(),message,unlocked,true,false);
         card.next.setText(step==4?reviewing?"Return to current phase":"Continue to Phase 7 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
-        card.action.setVisibility(!reviewing&&(step==1||!flow.complete())?View.VISIBLE:View.GONE);card.action.setEnabled(!saving);
-        card.action.setText(step==1?"Select wire colors":step==2?"Check power wires":step==3?"Connections placed":"Check all six wires");card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
+        card.action.setVisibility(step>=2||!reviewing&&(step==1||!flow.complete())?View.VISIBLE:View.GONE);card.action.setEnabled(!saving);
+        card.action.setText(step>=2&&(reviewing||flow.complete())?"Review wiring diagram":step==1?"Select wire colors":step==2?"Check power wires":step==3?"Connections placed":"Check all six wires");card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
         ((TargetAlignmentBoxView)activity.findViewById(R.id.targetAlignmentBox)).showGuide(null);activity.hideGuidance();((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);
         if(step>=2){workspace.setDriverColors(flow.colors(),step==2?1:step==3?2:0);workspace.show();if(!paused)workspace.resume();else workspace.pause();}
         else{workspace.hide();preview.showComponent(NeobotSeedData.MICROCONTROLLER,"Arduino Nano");}

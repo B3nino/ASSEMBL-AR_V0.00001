@@ -33,6 +33,13 @@ public final class RecognitionRequest {
         if((stage!=1&&stage!=2)||assemblyStepNumber!=8||expectation==null||!"ultrasonic_distance_sensor".equals(expectation.getComponentId())||expectedInstanceCount!=1||spatialAnchorComponentId!=null)throw new IllegalArgumentException("Phase 8 requires sensor photos and no AR anchor");
         RecognitionRequest copy=copy();copy.phase8Stage=stage;return copy;
     }
+    private int phase9Stage;
+    public int getPhase9Stage(){return phase9Stage;}
+    public RecognitionRequest withPhase9Stage(int stage){
+        String target=stage==1?"center_standoff":stage==2?"drive_wheel":"main_board";
+        if(stage<1||stage>4||assemblyStepNumber!=9||expectation==null||!target.equals(expectation.getComponentId())||expectedInstanceCount!=(stage==2?2:1)||spatialAnchorComponentId!=null)throw new IllegalArgumentException("Phase 9 requires its photo target/count and no AR anchor");
+        RecognitionRequest copy=copy();copy.phase9Stage=stage;return copy;
+    }
     private int phase5Stage;
     public int getPhase5Stage(){return phase5Stage;}
     public RecognitionRequest withPhase5Stage(int stage){
@@ -220,6 +227,7 @@ public final class RecognitionRequest {
         copy.phase2Stage=phase2Stage;
         copy.phase3Stage=phase3Stage;
         copy.phase8Stage=phase8Stage;
+        copy.phase9Stage=phase9Stage;
         copy.phase5Stage=phase5Stage;
         copy.phase7Stage=phase7Stage;
         return copy;
