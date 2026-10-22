@@ -1,0 +1,8 @@
+package dev.chyken.assembl_ar.vision;
+import java.util.*;import org.junit.Test;import static org.junit.Assert.*;
+public final class Phase11RecognitionTest {
+ private List<VisionPoint> square(double shift){return Arrays.asList(new VisionPoint(shift,0),new VisionPoint(100+shift,0),new VisionPoint(100+shift,100),new VisionPoint(shift,100));}
+ @Test public void raisedOledAllowsSmallProjectionErrorButRejectsMovedAndReversedModules(){assertEquals(Phase5Observation.State.PLACED,Phase11ReferenceMatcher.placement(square(0),square(15)));assertEquals(Phase5Observation.State.MISALIGNED,Phase11ReferenceMatcher.placement(square(0),square(35)));List<VisionPoint> reversed=new ArrayList<>(square(0));Collections.rotate(reversed,2);assertEquals(Phase5Observation.State.BACKWARD,Phase11ReferenceMatcher.placement(square(0),reversed));}
+ @Test public void boardOnlyEvidenceNeverUnlocksOledVerification(){Phase11Observation o=new Phase11Observation(Phase11Observation.State.BOARD_LOCATED,0,80);assertFalse(o.accepted());assertFalse(o.warning());assertEquals(80,o.boardInliers);assertEquals(Phase11Observation.State.SEARCHING,Phase11Observation.classify(3,0,0,0,0));}
+ @Test public void analysisMetadataCopiesKeepOledAndBoardEvidence(){Phase11Observation o=new Phase11Observation(Phase11Observation.State.ASSEMBLY,42,80);RecognitionResult result=RecognitionResult.builder(1).build().withPhase11Observation(o).withAssemblyInspection(11,null,false,null).withRequestTag("current");assertSame(o,result.getPhase11Observation());assertEquals("current",result.getRequestTag());assertEquals(11,result.getAssemblyStepNumber());}
+}

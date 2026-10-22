@@ -70,6 +70,7 @@ public final class AssemblyPhaseCatalog {
 
     @Nullable
     public static AssemblyPhase byId(String id) {
+        if(BATTERY_FIT.equals(id))id=OLED_FIT;
         if(RIBBON_CABLE.equals(id)||UPPER_BOARD.equals(id))id=OLED_PROTECTOR_FIT;
         if(WHEEL_PAIR.equals(id))id=CENTER_STANDOFF;
         if(SENSOR_WIRING.equals(id))id=DISTANCE_SENSOR_MOUNT;
@@ -331,32 +332,20 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(MOTOR_ASSEMBLIES, CENTER_STANDOFF, DISTANCE_SENSOR_MOUNT)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(OLED_FIT, "Fit the OLED display",
-                "Seat the OLED straight into its protected four-pin socket.")
-                .whole(17)
-                .part(OLED_DISPLAY, 1, "Match GND, VCC, SCL and SDA to the socket.")
-                .context(OLED_PROTECTOR, 1, "Installed on the extension board.")
-                .context(EXTENSION_BOARD, 1, "I2C/OLED footprint.")
-                .placement(17, "oled_display", OLED_DISPLAY, EXTENSION_BOARD, "OLED display",
-                        Arrays.asList(2, 3, 4))
-                .pinCheck(17, 1, 2, 3, 4)
-                .check("The OLED is pressed straight in and all four pins are fully seated.")
-                .dependsOn(OLED_PROTECTOR_FIT)
-                .build(phases));
-
-        phases.add(new PhaseBuilder(BATTERY_FIT, "Fit the battery",
-                "Secure a compatible 7–12 V pack on the extension board, clear of moving parts.")
-                .whole(18)
-                .part(BATTERY_PACK, 1, "A compatible 7–12 V pack.")
-                .tool(DOUBLE_SIDED_TAPE, 1, "Or a separately made 3D-printed holder.",
-                        BATTERY_HOLDER)
-                .context(EXTENSION_BOARD, 1, "Battery mounting surface.")
-                .placement(18, "battery", BATTERY_PACK, EXTENSION_BOARD, "battery pack",
-                        Arrays.asList(3, 4))
-                .check("The battery is held by double-sided tape or a prepared holder and cannot "
-                        + "move into nearby components.")
-                .dependsOn(OLED_PROTECTOR_FIT)
-                .build(phases));
+        phases.add(new PhaseBuilder(OLED_FIT, "Install OLED display and battery",
+                "Seat the OLED, secure the battery beside it on the upper Extension Board and complete the power check.")
+                .whole(17).whole(18)
+                .part(OLED_DISPLAY, 1, "Match all four pins to the protected socket.")
+                .part(BATTERY_PACK, 1, "A compatible 7–12 V pack; keep the switch OFF while connecting.")
+                .tool(DOUBLE_SIDED_TAPE, 1, "Or a securing strap / prepared holder.", BATTERY_HOLDER)
+                .context(OLED_PROTECTOR, 1, "Installed OLED support.")
+                .context(EXTENSION_BOARD, 1, "Mount the battery beside the OLED as shown in the demo.")
+                .placement(17, "oled_display", OLED_DISPLAY, EXTENSION_BOARD, "OLED display", Arrays.asList(2,3,4))
+                .pinCheck(17,1,2,3,4)
+                .placement(18,"battery",BATTERY_PACK,EXTENSION_BOARD,"battery pack",Arrays.asList(3,4))
+                .check("The OLED is straight and all four pins are seated inside the socket.")
+                .check("The battery is secured clear of moving parts and the power plug is fully inserted.")
+                .dependsOn(OLED_PROTECTOR_FIT).build(phases));
         return Collections.unmodifiableList(phases);
     }
 

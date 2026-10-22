@@ -14,7 +14,8 @@ public final class PhaseGuideMetadata {
         {"7.1a · Scan caster wheel","7.1b · Caster screws and nuts","7.2a · Scan two line trackers","7.2b · Tracker screws, spacers and nuts","7.3 · Caster demos, bottom scan and stability","7.4 · Tracker demos, bottom scan and stability"},
         java.util.Arrays.stream(Phase8SensorWiringFlow.Screen.values()).map(Phase8SensorWiringFlow.Screen::label).toArray(String[]::new),
         java.util.Arrays.stream(Phase9StandoffWheelsFlow.Screen.values()).map(Phase9StandoffWheelsFlow.Screen::label).toArray(String[]::new),
-        java.util.Arrays.stream(Phase10ExtensionBoardFlow.Screen.values()).map(Phase10ExtensionBoardFlow.Screen::label).toArray(String[]::new)
+        java.util.Arrays.stream(Phase10ExtensionBoardFlow.Screen.values()).map(Phase10ExtensionBoardFlow.Screen::label).toArray(String[]::new),
+        java.util.Arrays.stream(Phase11OledBatteryFlow.Screen.values()).map(Phase11OledBatteryFlow.Screen::label).toArray(String[]::new)
     };
     private static final String[] SUMMARIES={
         "Prepare a clean workstation, identify the main board and confirm its front side.",
@@ -26,7 +27,8 @@ public final class PhaseGuideMetadata {
         "Scan each component set, confirm its hardware on a dedicated 3D preparation screen, then follow the demos and verify both bottom-view installations.",
         "Scan and mount the sensor, verify its outward orientation, personalize ten signal and tracker wires, then confirm seating and routing.",
         "Scan the standoff and wheel pair, confirm hardware, follow separate demos, verify both installations and complete the nut, saved-screw and wheel-grip checks.",
-        "Identify the cable, extension board and protector, prepare the fasteners, follow four isolated demos, verify both assemblies and complete the cable and stability checks."
+        "Identify the cable, extension board and protector, prepare the fasteners, follow four isolated demos, verify both assemblies and complete the cable and stability checks.",
+        "Identify the OLED and battery, prepare securing materials, follow isolated demos, verify OLED placement, confirm seating and battery power, then explore programming and assembly principles."
     };
     private PhaseGuideMetadata(){}
     public static boolean overhauled(AssemblyPhase phase){return phase.getNumber()>=1&&phase.getNumber()<=STEPS.length;}

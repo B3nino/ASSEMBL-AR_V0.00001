@@ -76,6 +76,7 @@ final class AssemblArDatabaseHelper extends SQLiteOpenHelper {
             // Canonical refresh retains progress, administrator references and stable section IDs.
             refreshCanonicalAssemblyContent(database);oldVersion=7;
         }
+        if(oldVersion==7&&newVersion>=8){refreshCanonicalAssemblyContent(database);oldVersion=8;}
         if (oldVersion != newVersion) {
             throw new IllegalStateException(
                     "No database migration from version " + oldVersion + " to " + newVersion);

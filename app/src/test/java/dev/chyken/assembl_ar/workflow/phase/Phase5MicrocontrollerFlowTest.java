@@ -47,6 +47,6 @@ public final class Phase5MicrocontrollerFlowTest {
     }
     @Test public void projectMetadataListsTheOverhauledStepsForTheFirstTenPhases(){
         int[] counts={1,6,6,3,4,4,6,14,10,15};for(int i=0;i<counts.length;i++){AssemblyPhase p=AssemblyPhaseCatalog.phases().get(i);assertEquals(counts[i],PhaseGuideMetadata.subSteps(p).size());assertFalse(PhaseGuideMetadata.summary(p).isEmpty());}
-        assertFalse(PhaseGuideMetadata.overhauled(AssemblyPhaseCatalog.phases().get(10)));
+        assertTrue(PhaseGuideMetadata.overhauled(AssemblyPhaseCatalog.phases().get(10)));
     }
 }

@@ -15,6 +15,7 @@ public final class PhaseSessionCheckpoint {
         if((AssemblyPhaseCatalog.RIBBON_CABLE.equals(phaseId)||AssemblyPhaseCatalog.UPPER_BOARD.equals(phaseId))&&(gearState==null||gearState.isEmpty()))gearState="legacy:"+(AssemblyPhaseCatalog.UPPER_BOARD.equals(phaseId)?16:15);
         if(AssemblyPhaseCatalog.SENSOR_WIRING.equals(phaseId)&&(gearState==null||gearState.isEmpty()))gearState="legacyMount";
         if(AssemblyPhaseCatalog.WHEEL_PAIR.equals(phaseId)&&(gearState==null||gearState.isEmpty()))gearState=inventoryComplete?"legacyWheels":"legacyStandoff";
+        if(AssemblyPhaseCatalog.BATTERY_FIT.equals(phaseId)&&(gearState==null||gearState.isEmpty()))gearState="legacyBattery";
         this.phaseId=AssemblyPhaseCatalog.byId(phaseId).getId();this.developer=developer;this.mode=mode;this.chapter=chapter;
         this.inventoryIndex=inventoryIndex;this.inventoryComplete=inventoryComplete;this.previewing=previewing;
         this.gearState=gearState==null?"":gearState;

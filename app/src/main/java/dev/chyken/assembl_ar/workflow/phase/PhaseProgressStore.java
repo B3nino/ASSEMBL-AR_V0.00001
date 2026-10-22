@@ -58,6 +58,7 @@ public final class PhaseProgressStore {
         for (String phaseId : phaseIds) {
             editor.remove(key(projectId, phaseId));
             editor.remove(inventoryKey(projectId, phaseId));
+            if(AssemblyPhaseCatalog.OLED_FIT.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":oled_battery_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.BATTERY_FIT));}
             if(AssemblyPhaseCatalog.OLED_PROTECTOR_FIT.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":extension_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.RIBBON_CABLE));editor.remove(key(projectId,AssemblyPhaseCatalog.UPPER_BOARD));}
             if(AssemblyPhaseCatalog.CENTER_STANDOFF.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":standoff_wheels_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.WHEEL_PAIR));editor.remove(inventoryKey(projectId,AssemblyPhaseCatalog.WHEEL_PAIR));}
             if(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":gear_v1");
@@ -89,6 +90,8 @@ public final class PhaseProgressStore {
     public static String gearMotorState(Context context,String projectId){
         return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",null);
     }
+    public static String oledBatteryState(Context context,String projectId){SharedPreferences p=preferences(context);String state=p.getString(inventoryKey(projectId,AssemblyPhaseCatalog.OLED_FIT)+":oled_battery_v1",null);return state!=null?state:p.getBoolean(key(projectId,AssemblyPhaseCatalog.OLED_FIT),false)?"legacyBattery":null;}
+    public static void saveOledBatteryState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.OLED_FIT)+":oled_battery_v1",state).apply();}
     public static String extensionBoardState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.OLED_PROTECTOR_FIT)+":extension_v1",null);}
     public static void saveExtensionBoardState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.OLED_PROTECTOR_FIT)+":extension_v1",state).apply();}
     public static String standoffWheelsState(Context context,String projectId){SharedPreferences p=preferences(context);String state=p.getString(inventoryKey(projectId,AssemblyPhaseCatalog.CENTER_STANDOFF)+":standoff_wheels_v1",null);return state!=null?state:p.getBoolean(key(projectId,AssemblyPhaseCatalog.CENTER_STANDOFF),false)?(p.getBoolean(inventoryKey(projectId,AssemblyPhaseCatalog.WHEEL_PAIR),false)?"legacyWheels":"legacyStandoff"):null;}

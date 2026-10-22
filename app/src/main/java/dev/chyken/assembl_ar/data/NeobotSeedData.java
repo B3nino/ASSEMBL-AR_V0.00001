@@ -1077,18 +1077,18 @@ public final class NeobotSeedData {
                         OverlayType.ORIENTATION_MARKER, OverlayType.TARGET_GLOW_RING)));
 
         result.add(step(18, "Install the battery",
-                "Secure an allowed 7-12 V battery pack on the extension board.",
+                "Secure a compatible 7-12 V battery pack beside the OLED on the upper extension board.",
                 ValidationType.WIGGLE_TEST,
                 "Gently press and wiggle the unpowered battery pack. Confirm its mount is secure and it cannot "
                         + "obstruct the wheels, OLED, buttons, or ribbon cable.", 29, 30,
                 list(
                         ins(1, InstructionType.ACTION,
-                                "Choose a battery-retention method: double-sided tape or a separately made "
+                                "Choose a battery-retention method: securing tape, a strap or a separately made "
                                         + "3D-printed holder.", 29),
                         ins(2, InstructionType.ACTION,
                                 "Apply the tape to the battery, or seat the battery in its prepared holder.", 29),
                         ins(3, InstructionType.ACTION,
-                                "Position the battery on the extension board as shown.", 29),
+                                "Position the battery on the upper extension board beside the OLED as shown.", 29),
                         ins(4, InstructionType.ACTION,
                                 "Press or secure the battery so it cannot move into nearby components.", 29),
                         ins(5, InstructionType.NOTE,

@@ -42,7 +42,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="9dp"
             android:gravity="center"
-            android:text="@string/assembly_complete"
+            android:id="@+id/completionTitle"
+            android:text="Congratulations! Neobot Assembly Complete!"
             android:textSize="32sp" />
 
         <TextView
@@ -51,7 +52,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/completion_body" />
+            android:id="@+id/completionBody"
+            android:text="You built your Neobot from the ground up. Locate the ON/OFF switch shown below, then choose what to explore next." />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -74,19 +76,30 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="@string/verified_stages"
+                android:id="@+id/completionVerification"
+                android:text="11 phases · Assembly checks complete"
                 android:textColor="@color/primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <dev.chyken.assembl_ar.ui.PowerSwitchGuideView
+            android:layout_width="match_parent" android:layout_height="220dp"
+            android:layout_marginTop="20dp" android:background="@drawable/bg_card" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:textColor="@color/ink" android:textSize="15sp"
+            android:text="Mainboard ON/OFF switch · Small slider immediately left of the barrel power socket. OFF left, ON right. The photograph shows the board before assembly." />
+        <com.google.android.material.button.MaterialButton android:id="@+id/programmingPracticeButton"
+            style="@style/Widget.ASSEMBLAR.Button.Primary" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="22dp"
+            android:text="Start Programming Lessons" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/reviewProjectButton"
             style="@style/Widget.ASSEMBLAR.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
-            android:text="@string/review_project" />
+            android:text="View Assembly Retrospective" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/homeButton"

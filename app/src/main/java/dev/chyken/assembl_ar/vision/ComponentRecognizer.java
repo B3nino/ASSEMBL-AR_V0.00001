@@ -61,6 +61,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     private final Phase7ReferenceMatcher phase7Matcher;
     private final Phase8ReferenceMatcher phase8Matcher;
     private final Phase9ReferenceMatcher phase9Matcher;
+    private final Phase11ReferenceMatcher phase11Matcher;
     private final Phase10ReferenceMatcher phase10Matcher;
     private final Phase5ReferenceMatcher phase5Matcher;
     private final Phase3ReferenceMatcher phase3Matcher;
@@ -94,7 +95,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         phase2Matcher=new Phase2ReferenceMatcher(database,config);
         phase3Matcher=new Phase3ReferenceMatcher(database,config);
         phase8Matcher=new Phase8ReferenceMatcher(database,config);
-        phase9Matcher=new Phase9ReferenceMatcher(database,config);phase10Matcher=new Phase10ReferenceMatcher(database,config);
+        phase9Matcher=new Phase9ReferenceMatcher(database,config);phase10Matcher=new Phase10ReferenceMatcher(database,config);phase11Matcher=new Phase11ReferenceMatcher(database,config);
         phase5Matcher=new Phase5ReferenceMatcher(database,config);
         phase7Matcher=new Phase7ReferenceMatcher(database,config);
     }
@@ -103,6 +104,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     }
     synchronized RecognitionResult inspectPhase7(Mat gray,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase7(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,rgb,timestamp,step);}
+    synchronized RecognitionResult inspectPhase11(Mat gray,long timestamp,int stage){ensureOpen();return phase11Matcher.inspect(gray,timestamp,stage);}
     synchronized RecognitionResult inspectPhase10(Mat gray,long timestamp,int stage){ensureOpen();return phase10Matcher.inspect(gray,timestamp,stage);}
     synchronized RecognitionResult inspectPhase9(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return phase9Matcher.inspect(gray,rgb,timestamp,stage);}
     synchronized RecognitionResult inspectPhase8(Mat gray,long timestamp,int step){ensureOpen();return phase8Matcher.inspect(gray,timestamp,step);}
@@ -845,7 +847,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             matchingExecutor.close();
             phase2Matcher.close();
             phase3Matcher.close();
-            phase10Matcher.close();phase9Matcher.close();phase8Matcher.close();phase5Matcher.close();phase7Matcher.close();
+            phase11Matcher.close();phase10Matcher.close();phase9Matcher.close();phase8Matcher.close();phase5Matcher.close();phase7Matcher.close();
             descriptorBatches.close();
             frameCache.release();
             clahe.collectGarbage();

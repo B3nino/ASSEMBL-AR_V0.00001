@@ -171,6 +171,21 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                         (SystemClock.elapsedRealtimeNanos()-now)/1e6,capture);
                 if(!closed.get())deliverResult(inspected);return;
             }
+            if(request!=null&&request.getPhase11Stage()>0){
+                RecognitionResult inspected=recognizer.inspectPhase11(analyzed,metadata.getTimestampNanos(),request.getPhase11Stage()).withAssemblyInspection(11,null,false,null).withRequestTag(requestTag);
+                FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);
+                if(snapshot!=null){rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());}
+                // Phase 11 returns before the shared diagnostics path. Preserve opt-in real
+                // camera captures here as well; source photos cannot reproduce camera scale.
+                String capture=null;
+                if(measurements.captureDue(metadata.getTimestampNanos())){
+                    if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
+                    capture=measurements.capture(rgb,metadata.getTimestampNanos());
+                }
+                if(MeasurementRecorder.enabled())measurements.log(metadata,request,inspected,
+                        (SystemClock.elapsedRealtimeNanos()-now)/1e6,capture);
+                if(!closed.get())deliverResult(inspected);return;
+            }
             if(request!=null&&request.getPhase10Stage()>0){
                 RecognitionResult inspected=recognizer.inspectPhase10(analyzed,metadata.getTimestampNanos(),request.getPhase10Stage()).withAssemblyInspection(10,null,false,null).withRequestTag(requestTag);
                 FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);

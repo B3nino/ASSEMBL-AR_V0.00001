@@ -43,7 +43,7 @@ public final class AssemblyPhaseCatalogTest {
     @Test
     public void mergedDriverPhasePreservesAllOtherPhaseIdentifiers() {
         List<AssemblyPhase> phases = AssemblyPhaseCatalog.phases();
-        assertEquals(12, phases.size());
+        assertEquals(11, phases.size());
         List<String> expected = Arrays.asList(
                 AssemblyPhaseCatalog.BOARD_PREPARATION, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES,
                 AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT, AssemblyPhaseCatalog.MOTOR_LEADS,
@@ -51,8 +51,7 @@ public final class AssemblyPhaseCatalogTest {
                 AssemblyPhaseCatalog.CASTER_FIT,
                 AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT,
                 AssemblyPhaseCatalog.CENTER_STANDOFF,
-                AssemblyPhaseCatalog.OLED_PROTECTOR_FIT, AssemblyPhaseCatalog.OLED_FIT,
-                AssemblyPhaseCatalog.BATTERY_FIT);
+                AssemblyPhaseCatalog.OLED_PROTECTOR_FIT, AssemblyPhaseCatalog.OLED_FIT);
         for (int index = 0; index < phases.size(); index++) {
             assertEquals(expected.get(index), phases.get(index).getId());
             assertEquals(index + 1, phases.get(index).getNumber());
@@ -321,7 +320,7 @@ public final class AssemblyPhaseCatalogTest {
         }
         assertTrue(dependents.containsAll(Arrays.asList(AssemblyPhaseCatalog.MOTOR_LEADS,
                 AssemblyPhaseCatalog.CENTER_STANDOFF, AssemblyPhaseCatalog.OLED_PROTECTOR_FIT,
-                AssemblyPhaseCatalog.OLED_FIT, AssemblyPhaseCatalog.BATTERY_FIT)));
+                AssemblyPhaseCatalog.OLED_FIT)));
         assertFalse(dependents.contains(AssemblyPhaseCatalog.CASTER_FIT));
         assertFalse(dependents.contains(AssemblyPhaseCatalog.DRIVER_WIRING));
     }

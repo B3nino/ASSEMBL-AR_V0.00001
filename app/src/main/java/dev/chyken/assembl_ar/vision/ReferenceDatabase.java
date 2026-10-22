@@ -224,12 +224,46 @@ public final class ReferenceDatabase implements AutoCloseable {
         }
     }
 
+    private static ComponentReferenceSpec resolveGeometry(ComponentReferenceSpec spec,byte[] imageBytes,File cacheFile)throws IOException{
+        if (spec.isAutomaticBoardGeometry()) {
+            spec = BoardPhotoGeometry.resolve(spec, imageBytes, cacheFile);
+        }
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
+            spec=Phase2PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        final ComponentReferenceSpec geometrySource=spec;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))
+            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,3,28,37,()->Phase3PhotoGeometry.resolve(geometrySource,imageBytes));
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))
+            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,8,45,20,()->Phase8PhotoGeometry.resolve(geometrySource,imageBytes));
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX))spec=Phase10PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX))spec=Phase9PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))
+            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,5,18,45,()->Phase5PhotoGeometry.resolve(geometrySource,imageBytes));
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))spec=Phase7PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase11AssetCatalog.PREFIX))spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,11,spec.getPhysicalWidthMm(),spec.getPhysicalHeightMm(),()->Phase11PhotoGeometry.resolve(geometrySource,imageBytes));
+        return spec;
+    }
+    /** Stream a whole-build preparation pass without retaining a catalog's native matrices. */
+    public static void prepareLibrary(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory,ReferenceCacheIndex index,java.util.function.BooleanSupplier active,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException{
+        ORB orb=OpenCvVisionUtils.createOrb(config);CLAHE clahe=OpenCvVisionUtils.createClahe(config);int done=0;
+        try{for(ComponentReferenceSpec spec:specs){checkLoadActive(active);if(!index.terminal(spec,config)){
+            PreparedReference ready=null;
+            try{ready=prepareReference(assets,spec,orb,clahe,config,directory);if(spec.getAdminDescriptorBlob()!=null)index.administrator(spec,config);}
+            catch(IOException|RuntimeException unusable){Log.w("ReferenceLibrary","Unusable reference: "+spec.getReferenceId(),unusable);index.skipped(spec,config);}
+            finally{if(ready!=null)ready.release();}
+            if(!index.terminal(spec,config))throw new IOException("Compiled reference could not be saved. Check available app storage.");
+        }progress.accept(++done,specs.size());}checkLoadActive(active);}finally{orb.clear();clahe.clear();}
+    }
+    public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":"+Phase5PhotoGeometry.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION;}
+
     private static PreparedReference prepareReference(AssetManager assetManager,
                                                       ComponentReferenceSpec spec,
                                                       ORB orb,
                                                       CLAHE clahe,
                                                       VisionConfig config,
                                                       File descriptorCacheDirectory) throws IOException {
+        ComponentReferenceSpec registeredSpec=spec;ReferenceCacheIndex index=ReferenceCacheIndex.active(assetManager,descriptorCacheDirectory);
+        if(index!=null){File compiled=index.compiled(spec,config);if(compiled!=null&&compiled.isFile())try(InputStream in=new FileInputStream(compiled)){return preparedFromBlob(resolveGeometry(spec,null,compiled),readFully(in),config);}catch(IOException|RuntimeException corrupt){/* Repair only this source from its retained photo. */}}
         byte[] storedBlob = spec.getAdminDescriptorBlob();
         // A current precompiled blob avoids repeating ORB extraction at startup. Legacy/corrupt
         // administrator blobs deliberately fall through to their retained app-private image.
@@ -254,24 +288,10 @@ public final class ReferenceDatabase implements AutoCloseable {
         String sourceLabel = spec.getJpegAssetPath() != null
                 ? spec.getJpegAssetPath() : spec.getLocalImageFilePath();
         File cacheFile = cacheFile(descriptorCacheDirectory, spec, imageBytes);
-        if (spec.isAutomaticBoardGeometry()) {
-            spec = BoardPhotoGeometry.resolve(spec, imageBytes, cacheFile);
-        }
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX))
-            spec=Phase2PhotoGeometry.resolve(spec,imageBytes,cacheFile);
-        final ComponentReferenceSpec geometrySource=spec;
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))
-            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,3,28,37,()->Phase3PhotoGeometry.resolve(geometrySource,imageBytes));
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))
-            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,8,45,20,()->Phase8PhotoGeometry.resolve(geometrySource,imageBytes));
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX))spec=Phase10PhotoGeometry.resolve(spec,imageBytes,cacheFile);
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX))spec=Phase9PhotoGeometry.resolve(spec,imageBytes,cacheFile);
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))
-            spec=PhotoGeometryCache.resolve(geometrySource,cacheFile,5,18,45,()->Phase5PhotoGeometry.resolve(geometrySource,imageBytes));
-        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))spec=Phase7PhotoGeometry.resolve(spec,imageBytes,cacheFile);
+        spec=resolveGeometry(spec,imageBytes,cacheFile);
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
-                return preparedFromBlob(spec, readFully(input), config);
+                PreparedReference ready=preparedFromBlob(spec,readFully(input),config);if(index!=null)try{index.remember(registeredSpec,config,cacheFile);}catch(IOException ignored){}return ready;
             } catch (IOException | IllegalArgumentException staleOrCorruptCache) {
                 // Rebuild below. The retained image remains the source of truth.
             }
@@ -324,9 +344,11 @@ public final class ReferenceDatabase implements AutoCloseable {
                 if(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.installed(
                         dev.chyken.assembl_ar.camera.Phase7AssetCatalog.referenceRole(spec.getReferenceId()))
                         ||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX)
-                        ||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX))
+                        ||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX)||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase11AssetCatalog.PREFIX))
                     phase7Orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
-                variants = spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX)
+                variants = Phase11DescriptorSampler.installed(spec)
+                        ?Phase11DescriptorSampler.compute(spec,grayscale,mask,phase7Orb,clahe)
+                        :spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX)
                         ?Phase9DescriptorSampler.compute(spec,grayscale,mask,clahe)
                         :ReferenceDescriptorPyramid.forReference(spec,grayscale,mask,phase7Orb!=null?phase7Orb:orb,clahe);
             }
@@ -341,8 +363,9 @@ public final class ReferenceDatabase implements AutoCloseable {
                     // Cache failure must never make the packaged offline catalog unavailable.
                 }
             }
-            return new PreparedReference(spec, grayscale.cols(), grayscale.rows(),
-                    variants);
+            PreparedReference ready=new PreparedReference(spec,grayscale.cols(),grayscale.rows(),variants);
+            if(index!=null)try{index.remember(registeredSpec,config,cacheFile);}catch(IOException ignored){}
+            return ready;
         } finally {
             if(phase7Orb!=null)phase7Orb.clear();
             releaseDescriptorVariants(variants);
@@ -456,6 +479,8 @@ public final class ReferenceDatabase implements AutoCloseable {
             assetFingerprint+="_p2roi"+Phase2PhotoGeometry.CACHE_VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX))assetFingerprint+="_p8roi"+Phase8PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX))assetFingerprint+="_p9roi"+Phase9PhotoGeometry.VERSION;
+        if(Phase11DescriptorSampler.installed(spec))assetFingerprint+="_oledDetail"+Phase11DescriptorSampler.VERSION;
+        if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase11AssetCatalog.PREFIX))assetFingerprint+="_p11roi"+Phase11PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX))assetFingerprint+="_p10roi"+Phase10PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))assetFingerprint+="_p5roi"+Phase5PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))assetFingerprint+="_p7roi"+Phase7PhotoGeometry.VERSION;
@@ -583,6 +608,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         try {
             Imgproc.fillConvexPoly(mask, polygon, new Scalar(255));
             if("assembly".equals(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
+            if(Phase11DescriptorSampler.installed(spec))mask.setTo(new Scalar(255));
             if(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
             if(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
             if(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.referenceRole(spec.getReferenceId()))){mask.setTo(new Scalar(255));return mask;}

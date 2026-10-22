@@ -11,6 +11,8 @@ import java.util.Locale;
 import dev.chyken.assembl_ar.ui.UiUtils;
 
 public final class CompletionActivity extends AppCompatActivity {
+    private dev.chyken.assembl_ar.ui.AssemblyVoiceGuide voice;
+    public static final String EXTRA_VERIFIED="verified";
     public static final String EXTRA_ELAPSED_MILLIS = "elapsed_millis";
 
     @Override
@@ -23,8 +25,14 @@ public final class CompletionActivity extends AppCompatActivity {
         TextView time = findViewById(R.id.completionTime);
         time.setText(elapsed > 0 ? formatDuration(elapsed) : "100% complete");
 
+        boolean verified=getIntent().getBooleanExtra(EXTRA_VERIFIED,true);
+        if(!verified){((TextView)findViewById(R.id.completionTitle)).setText("Completion preview · DEV");((TextView)findViewById(R.id.completionVerification)).setText("Preview only · Learner completion was not recorded");time.setText("Developer preview");}
+        voice=new dev.chyken.assembl_ar.ui.AssemblyVoiceGuide(this,status->{});
+        voice.speak(verified?"Congratulations! You have successfully assembled your Neobot! Locate the power switch to turn on your robot, and choose where to go next.":"Developer preview of the completion hub. Learner completion was not recorded.","completion:welcome");
+        if(dev.chyken.assembl_ar.ui.BrandingAssets.motion()){findViewById(R.id.completionTitle).setAlpha(0);findViewById(R.id.completionTitle).animate().alpha(1).setDuration(650).start();}
+        findViewById(R.id.programmingPracticeButton).setOnClickListener(v->startActivity(new Intent(this,ProgrammingPracticeActivity.class)));
         findViewById(R.id.reviewProjectButton).setOnClickListener(view -> {
-            Intent intent = new Intent(this, ProjectDetailActivity.class);
+            Intent intent = new Intent(this, AssemblyRetrospectiveActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             finish();
@@ -37,6 +45,8 @@ public final class CompletionActivity extends AppCompatActivity {
         });
     }
 
+    @Override protected void onPause(){if(voice!=null)voice.stop();super.onPause();}
+    @Override protected void onDestroy(){if(voice!=null)voice.close();super.onDestroy();}
     private static String formatDuration(long elapsedMillis) {
         long totalMinutes = elapsedMillis / 60_000L;
         long hours = totalMinutes / 60L;

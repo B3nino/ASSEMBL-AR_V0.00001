@@ -48,6 +48,8 @@ public final class PhaseFlow {
     private final AssemblyPhase phase;
     private Phase2GearMotorFlow gearMotorFlow;
     private Phase3MotorDriverFlow driverFlow;
+    private Phase11OledBatteryFlow oledBatteryFlow;
+    public void attachOledBatteryFlow(Phase11OledBatteryFlow flow){if(!AssemblyPhaseCatalog.OLED_FIT.equals(phase.getId()))throw new IllegalStateException();oledBatteryFlow=Objects.requireNonNull(flow);}
     private Phase10ExtensionBoardFlow extensionBoardFlow;
     private Phase9StandoffWheelsFlow standoffWheelsFlow;
     public void attachExtensionBoardFlow(Phase10ExtensionBoardFlow flow){if(!AssemblyPhaseCatalog.OLED_PROTECTOR_FIT.equals(phase.getId()))throw new IllegalStateException();extensionBoardFlow=Objects.requireNonNull(flow);}
@@ -99,17 +101,18 @@ public final class PhaseFlow {
     }
 
     public AssemblyPhase getPhase() { return phase; }
-    public Mode getMode() { return extensionBoardFlow!=null?extensionBoardFlow.mode():standoffWheelsFlow!=null?standoffWheelsFlow.mode():sensorWiringFlow!=null?sensorWiringFlow.mode():casterTrackerFlow!=null?casterTrackerFlow.mode():driverWiringFlow!=null?driverWiringFlow.mode():microcontrollerFlow!=null?microcontrollerFlow.mode():wiringFlow!=null?wiringFlow.mode():driverFlow!=null?driverFlow.mode():gearMotorFlow==null?mode:gearMotorFlow.mode(); }
-    public int getGeneration() { return extensionBoardFlow!=null?extensionBoardFlow.tag().getGeneration():standoffWheelsFlow!=null?standoffWheelsFlow.tag().getGeneration():sensorWiringFlow!=null?sensorWiringFlow.tag().getGeneration():casterTrackerFlow!=null?casterTrackerFlow.tag().getGeneration():driverWiringFlow!=null?driverWiringFlow.tag().getGeneration():microcontrollerFlow!=null?microcontrollerFlow.tag().getGeneration():wiringFlow!=null?wiringFlow.tag().getGeneration():driverFlow!=null?driverFlow.tag().getGeneration():gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
+    public Mode getMode() { return oledBatteryFlow!=null?oledBatteryFlow.mode():extensionBoardFlow!=null?extensionBoardFlow.mode():standoffWheelsFlow!=null?standoffWheelsFlow.mode():sensorWiringFlow!=null?sensorWiringFlow.mode():casterTrackerFlow!=null?casterTrackerFlow.mode():driverWiringFlow!=null?driverWiringFlow.mode():microcontrollerFlow!=null?microcontrollerFlow.mode():wiringFlow!=null?wiringFlow.mode():driverFlow!=null?driverFlow.mode():gearMotorFlow==null?mode:gearMotorFlow.mode(); }
+    public int getGeneration() { return oledBatteryFlow!=null?oledBatteryFlow.tag().getGeneration():extensionBoardFlow!=null?extensionBoardFlow.tag().getGeneration():standoffWheelsFlow!=null?standoffWheelsFlow.tag().getGeneration():sensorWiringFlow!=null?sensorWiringFlow.tag().getGeneration():casterTrackerFlow!=null?casterTrackerFlow.tag().getGeneration():driverWiringFlow!=null?driverWiringFlow.tag().getGeneration():microcontrollerFlow!=null?microcontrollerFlow.tag().getGeneration():wiringFlow!=null?wiringFlow.tag().getGeneration():driverFlow!=null?driverFlow.tag().getGeneration():gearMotorFlow==null?generation:gearMotorFlow.tag().getGeneration(); }
     /** A demo opened from part scanning; it returns to scanning without skipping inventory. */
     public boolean isPreviewing() { return previewing; }
-    public boolean isInventoryComplete() { return extensionBoardFlow!=null?extensionBoardFlow.inventoryComplete():standoffWheelsFlow!=null?standoffWheelsFlow.inventoryComplete():sensorWiringFlow!=null?sensorWiringFlow.step()>2:casterTrackerFlow!=null?casterTrackerFlow.step()>2:driverWiringFlow!=null?driverWiringFlow.step()>1:microcontrollerFlow!=null?microcontrollerFlow.step()>1:wiringFlow!=null||(driverFlow!=null?driverFlow.step()>1:gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete()); }
+    public boolean isInventoryComplete() { return oledBatteryFlow!=null?oledBatteryFlow.inventoryComplete():extensionBoardFlow!=null?extensionBoardFlow.inventoryComplete():standoffWheelsFlow!=null?standoffWheelsFlow.inventoryComplete():sensorWiringFlow!=null?sensorWiringFlow.step()>2:casterTrackerFlow!=null?casterTrackerFlow.step()>2:driverWiringFlow!=null?driverWiringFlow.step()>1:microcontrollerFlow!=null?microcontrollerFlow.step()>1:wiringFlow!=null||(driverFlow!=null?driverFlow.step()>1:gearMotorFlow==null?inventoryComplete:gearMotorFlow.partsComplete()); }
     @Nullable public String getCorrectionTargetId() { return correctionTargetId; }
 
-    public ScanTag tag() { return extensionBoardFlow!=null?extensionBoardFlow.tag():standoffWheelsFlow!=null?standoffWheelsFlow.tag():sensorWiringFlow!=null?sensorWiringFlow.tag():casterTrackerFlow!=null?casterTrackerFlow.tag():driverWiringFlow!=null?driverWiringFlow.tag():microcontrollerFlow!=null?microcontrollerFlow.tag():wiringFlow!=null?wiringFlow.tag():driverFlow!=null?driverFlow.tag():gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
+    public ScanTag tag() { return oledBatteryFlow!=null?oledBatteryFlow.tag():extensionBoardFlow!=null?extensionBoardFlow.tag():standoffWheelsFlow!=null?standoffWheelsFlow.tag():sensorWiringFlow!=null?sensorWiringFlow.tag():casterTrackerFlow!=null?casterTrackerFlow.tag():driverWiringFlow!=null?driverWiringFlow.tag():microcontrollerFlow!=null?microcontrollerFlow.tag():wiringFlow!=null?wiringFlow.tag():driverFlow!=null?driverFlow.tag():gearMotorFlow==null?new ScanTag(phase.getId(), mode, generation):gearMotorFlow.tag(); }
 
     /** Camera analysis is needed only while identifying parts or verifying the finished group. */
     public boolean collectsEvidence() {
+        if(oledBatteryFlow!=null)return oledBatteryFlow.scanning();
         if(extensionBoardFlow!=null)return extensionBoardFlow.scanning();
         if(standoffWheelsFlow!=null)return standoffWheelsFlow.scanning();
         if(sensorWiringFlow!=null)return sensorWiringFlow.scanning();
@@ -124,6 +127,7 @@ public final class PhaseFlow {
 
     /** Scan is offered while the learner watches, assembles, or has just seen a correction. */
     public boolean canScan() {
+        if(oledBatteryFlow!=null)return false;
         if(extensionBoardFlow!=null)return false;
         if(standoffWheelsFlow!=null)return false;
         if(sensorWiringFlow!=null)return false;
@@ -141,6 +145,7 @@ public final class PhaseFlow {
      * window opened and newer than every frame already used. Duplicates and reordered frames fail.
      */
     public boolean accept(@Nullable ScanTag resultTag, long frameNanos) {
+        if(oledBatteryFlow!=null)return oledBatteryFlow.accepts(resultTag,frameNanos);
         if(extensionBoardFlow!=null)return extensionBoardFlow.accepts(resultTag,frameNanos);
         if(standoffWheelsFlow!=null)return standoffWheelsFlow.accepts(resultTag,frameNanos);
         if(sensorWiringFlow!=null)return sensorWiringFlow.accepts(resultTag,frameNanos);
@@ -161,6 +166,7 @@ public final class PhaseFlow {
      * next verification group, so frames requested for the previous subject cannot be reused.
      */
     public void restartEvidence(long nowNanos) {
+        if(oledBatteryFlow!=null){oledBatteryFlow.resume(nowNanos);return;}
         if(extensionBoardFlow!=null){extensionBoardFlow.resume(nowNanos);return;}
         if(standoffWheelsFlow!=null){standoffWheelsFlow.resume(nowNanos);return;}
         if(sensorWiringFlow!=null){sensorWiringFlow.resume(nowNanos);return;}
@@ -263,6 +269,7 @@ public final class PhaseFlow {
 
     /** Activity pause/navigation: in-flight evidence is discarded and a Scan must be repeated. */
     public void interrupt(long nowNanos) {
+        if(oledBatteryFlow!=null){oledBatteryFlow.pause();return;}
         if(extensionBoardFlow!=null){extensionBoardFlow.pause();return;}
         if(standoffWheelsFlow!=null){standoffWheelsFlow.pause();return;}
         if(sensorWiringFlow!=null){sensorWiringFlow.pause();return;}
@@ -281,6 +288,7 @@ public final class PhaseFlow {
 
     /** Resuming part scanning accepts only frames captured after the resume. */
     public void resume(long nowNanos) {
+        if(oledBatteryFlow!=null){oledBatteryFlow.resume(nowNanos);return;}
         if(extensionBoardFlow!=null){extensionBoardFlow.resume(nowNanos);return;}
         if(standoffWheelsFlow!=null){standoffWheelsFlow.resume(nowNanos);return;}
         if(sensorWiringFlow!=null){sensorWiringFlow.resume(nowNanos);return;}
@@ -295,6 +303,7 @@ public final class PhaseFlow {
 
     /** Restart this phase from its first mode, discarding every result of the current attempt. */
     public void restart(long nowNanos) {
+        if(oledBatteryFlow!=null){oledBatteryFlow.restart(nowNanos);return;}
         if(extensionBoardFlow!=null){extensionBoardFlow.restart(nowNanos);return;}
         if(standoffWheelsFlow!=null){standoffWheelsFlow.restart(nowNanos);return;}
         if(sensorWiringFlow!=null){sensorWiringFlow.restart(nowNanos);return;}
@@ -319,7 +328,7 @@ public final class PhaseFlow {
 
     /** Restores a saved UI checkpoint; camera evidence always starts with a new generation/window. */
     public void restoreSession(Mode savedMode,boolean partsComplete,boolean preview,long nowNanos){
-        if(gearMotorFlow!=null||driverFlow!=null||wiringFlow!=null||microcontrollerFlow!=null||driverWiringFlow!=null||casterTrackerFlow!=null||sensorWiringFlow!=null||standoffWheelsFlow!=null||extensionBoardFlow!=null)throw new IllegalStateException("Specialized flow owns its checkpoint");
+        if(gearMotorFlow!=null||driverFlow!=null||wiringFlow!=null||microcontrollerFlow!=null||driverWiringFlow!=null||casterTrackerFlow!=null||sensorWiringFlow!=null||standoffWheelsFlow!=null||extensionBoardFlow!=null||oledBatteryFlow!=null)throw new IllegalStateException("Specialized flow owns its checkpoint");
         inventoryComplete=partsComplete||phase.getCameraInventory().isEmpty();
         previewing=preview&&!inventoryComplete&&savedMode==Mode.DEMO;
         correctionTargetId=null;

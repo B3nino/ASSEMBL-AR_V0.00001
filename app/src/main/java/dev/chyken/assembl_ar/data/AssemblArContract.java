@@ -3,7 +3,7 @@ package dev.chyken.assembl_ar.data;
 /** SQLite schema shared by the helper and repository. */
 final class AssemblArContract {
     static final String DATABASE_NAME = "assembl_ar.db";
-    static final int DATABASE_VERSION = 7;
+    static final int DATABASE_VERSION = 8;
 
     private AssemblArContract() {
     }

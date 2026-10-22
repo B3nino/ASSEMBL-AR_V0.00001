@@ -392,7 +392,7 @@ public final class AdminDescriptorBlobCodec {
         }
     }
 
-    private static long configFingerprint(VisionConfig config) {
+    static long configFingerprint(VisionConfig config) {
         long hash = 0xcbf29ce484222325L;
         hash = mix(hash, PHOTOMETRIC_PIPELINE_VERSION);
         hash = mix(hash, config.getOrbFeatureCount());

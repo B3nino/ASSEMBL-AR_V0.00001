@@ -101,7 +101,7 @@
     <string name="drag_info_window">Drag this header to move the information window</string>
     <string name="drag_info_window_visible">Hold to move</string>
     <string name="phase_one_move">Hold here to move</string>
-    <string name="phase_one_heading">Phase 1 of 18 · Main Board</string>
+    <string name="phase_one_heading">Phase 1 of 11 · Main Board</string>
     <string name="phase_one_progress_scan">Progress: 0 of 1 parts identified</string>
     <string name="phase_one_progress_done">Progress: 1 of 1 parts identified</string>
     <string name="phase_one_bring_board">1. Bring out the Main Board.</string>
