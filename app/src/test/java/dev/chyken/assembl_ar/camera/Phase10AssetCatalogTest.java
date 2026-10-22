@@ -1,0 +1,14 @@
+package dev.chyken.assembl_ar.camera;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+import java.util.*;
+import dev.chyken.assembl_ar.vision.*;
+
+public final class Phase10AssetCatalogTest {
+    @Test public void folderAliasesAndFutureNegativeSetsResolve(){assertEquals("protector",Phase10AssetCatalog.role("ISTEP10_1OLEDPROTECTORSCAN"));assertEquals("protector",Phase10AssetCatalog.role("STEP10_1OLEDPROTECTORSCAN"));assertEquals("extensionbad",Phase10AssetCatalog.role("STEP10_1EXTENSIONBOARDSCAN _INVALID"));assertEquals("protected",Phase10AssetCatalog.role("ISTEP10_3OLEDPROTECTORASSEMBLYSCAN"));assertEquals("protectorbad",Phase10AssetCatalog.role("ISTEP10_1OLEDPROTECTORSCAN_INVALID"));}
+    @Test public void guidanceIsNotRecognitionAndAllPhotosAreRegistered(){String root=Phase10AssetCatalog.ROOT+"/";List<ComponentReferenceSpec> all=Phase10AssetCatalog.referencesForPaths(Arrays.asList(root+"STEP10_1DATACABLESCANNING/a.jpg",root+"STEP10_1EXTENSIONBOARDSCAN/a.png",root+"STEP10_1OLEDPROTECTORSCAN/a.jpg",root+"STEP10_3OLEDPROTECTORASSEMBLYSCAN/a.jpg",root+"STEP10_4EXTENSIONBOARDMOUNTINGSCAN/a.jpg",root+"P10_SCANNINGGUIDE/a.jpg",root+"P10_VIDEOGUIDE/a.mp4"));assertEquals(5,all.size());for(ComponentReferenceSpec s:all)assertEquals(10,s.getAssemblyStepNumber());}
+    @Test public void eachScanLoadsOnlyItsEvidenceAndRejectsArAnchor(){String root=Phase10AssetCatalog.ROOT+"/";List<ComponentReferenceSpec> all=Phase10AssetCatalog.referencesForPaths(Arrays.asList(root+"STEP10_1EXTENSIONBOARDSCAN/a.jpg",root+"STEP10_1EXTENSIONBOARDSCAN _INVALID/b.jpg",root+"STEP10_3OLEDPROTECTORASSEMBLYSCAN/c.jpg"));RecognitionRequest r=new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(Phase10AssetCatalog.target(2)),null,null,null,1,10).withPhase10Stage(2);assertEquals(2,ActiveReferenceScope.select(all,r).size());assertEquals(2,r.withRequestTag("new").getPhase10Stage());assertEquals("p10:2",ActiveReferenceScope.key(r));try{new RecognitionRequest(r.getExpectation(),null,null,"main_board",1,10).withPhase10Stage(2);fail();}catch(IllegalArgumentException expected){}}
+    @Test public void guideAndExactVideoNamesResolve(){String root=Phase10AssetCatalog.ROOT+"/";assertEquals(1,Phase10AssetCatalog.videosForPaths(Arrays.asList(root+"P10_VIDEOGUIDE/P10_LASTEXTENSIONCABLECONNECTION.mp4"),3).size());assertEquals(root+"P10_SCANNINGGUIDE/GUIDEFOREXTENSIONBOARDSCANNNING.jpg",Phase10AssetCatalog.guideForPaths(Arrays.asList(root+"P10_SCANNINGGUIDE/GUIDEFOREXTENSIONBOARDSCANNNING.jpg"),2));}
+    @Test public void absentOrAmbiguousEvidenceNeverInventsFlip(){assertEquals(Phase10Observation.State.SEARCHING,Phase10Observation.classify(2,0,0));assertEquals(Phase10Observation.State.SEARCHING,Phase10Observation.classify(2,20,20));assertEquals(Phase10Observation.State.FLIPPED,Phase10Observation.classify(2,0,20));assertEquals(Phase10Observation.State.ASSEMBLY_CONFIRMED,Phase10Observation.classify(4,20,0));}
+}

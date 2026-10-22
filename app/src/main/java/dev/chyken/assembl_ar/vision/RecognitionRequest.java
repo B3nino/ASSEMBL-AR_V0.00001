@@ -33,6 +33,12 @@ public final class RecognitionRequest {
         if((stage!=1&&stage!=2)||assemblyStepNumber!=8||expectation==null||!"ultrasonic_distance_sensor".equals(expectation.getComponentId())||expectedInstanceCount!=1||spatialAnchorComponentId!=null)throw new IllegalArgumentException("Phase 8 requires sensor photos and no AR anchor");
         RecognitionRequest copy=copy();copy.phase8Stage=stage;return copy;
     }
+    private int phase10Stage;
+    public int getPhase10Stage(){return phase10Stage;}
+    public RecognitionRequest withPhase10Stage(int stage){
+        if(stage<1||stage>5||assemblyStepNumber!=10||expectation==null||!dev.chyken.assembl_ar.camera.Phase10AssetCatalog.target(stage).equals(expectation.getComponentId())||expectedInstanceCount!=1||spatialAnchorComponentId!=null)throw new IllegalArgumentException("Phase 10 requires its photo target and no live AR anchor");
+        RecognitionRequest copy=copy();copy.phase10Stage=stage;return copy;
+    }
     private int phase9Stage;
     public int getPhase9Stage(){return phase9Stage;}
     public RecognitionRequest withPhase9Stage(int stage){
@@ -227,7 +233,7 @@ public final class RecognitionRequest {
         copy.phase2Stage=phase2Stage;
         copy.phase3Stage=phase3Stage;
         copy.phase8Stage=phase8Stage;
-        copy.phase9Stage=phase9Stage;
+        copy.phase9Stage=phase9Stage;copy.phase10Stage=phase10Stage;
         copy.phase5Stage=phase5Stage;
         copy.phase7Stage=phase7Stage;
         return copy;

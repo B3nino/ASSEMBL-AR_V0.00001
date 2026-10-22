@@ -100,8 +100,8 @@ public final class NeobotSeedData {
             PROJECT_ID,
             "NEOBOT Personal Robot Kit Assembly",
             "NEOBOT Personal Robot Kit",
-            "The manuscript-delimited offline prototype project. Follow 128 focused guided steps "
-                    + "across all 18 ordered assembly and wiring sections before using the "
+            "Build the NEOBOT robot with component identification, demonstrations and physical checks. Follow the current phase guide "
+                    + "across assembly and wiring before exploring the "
                     + "learning activities.",
             assemblyRef(1, 30),
             ASSEMBLY_STEPS);
@@ -940,7 +940,7 @@ public final class NeobotSeedData {
                 overlays(OverlayType.GHOST_COMPONENT, OverlayType.DYNAMIC_ARROW)));
 
         result.add(step(14, "Install the OLED protector",
-                "Secure the display protector on the extension PCB.",
+                "Fit the OLED protector to the extension board using two 20mm screws and M3 nuts.",
                 ValidationType.WIGGLE_TEST,
                 "Gently wiggle the protector and confirm it is firmly mounted over the OLED footprint.", 23, 23,
                 list(
@@ -951,9 +951,9 @@ public final class NeobotSeedData {
                         ins(3, InstructionType.ACTION,
                                 "Align both protector mounting holes with the two holes shown on the board.", 23),
                         ins(4, InstructionType.ACTION,
-                                "Insert the first mounting fastener through the protector and board.", 23),
+                                "Insert the first 20mm screw through the protector and board.", 23),
                         ins(5, InstructionType.ACTION,
-                                "Insert the second mounting fastener through the protector and board.", 23),
+                                "Insert the second 20mm screw through the protector and board.", 23),
                         ins(6, InstructionType.ACTION,
                                 "Fit the first fastener's nut on the reverse side of the board.", 23),
                         ins(7, InstructionType.ACTION,
@@ -965,8 +965,7 @@ public final class NeobotSeedData {
                 list(
                         req(OLED_PROTECTOR, 1, "Mount over the extension-board OLED footprint."),
                         req(EXTENSION_BOARD, 1, "The 'other PCB' in the guide."),
-                        req(MOUNTING_SCREW, 2, "Use the two attachment points shown on page 23; the guide does "
-                                + "not state the supplied fastener type or size."),
+                        req(SCREW_20MM, 2, "Two 20mm screws through the protector and extension board."),
                         req(NUT, 2, "Fit one on the reverse side of each protector fastener."),
                         req(THREADLOCKER, 1, "Prevent loosening.")),
                 Collections.emptyList(),

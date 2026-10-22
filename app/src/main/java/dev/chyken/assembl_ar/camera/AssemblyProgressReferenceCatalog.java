@@ -15,6 +15,7 @@ import dev.chyken.assembl_ar.vision.VisionPoint;
  */
 public final class AssemblyProgressReferenceCatalog {
     private AssemblyProgressReferenceCatalog() { }
+    public static List<ComponentReferenceSpec> dynamicPhase10(android.content.res.AssetManager assets){return Phase10AssetCatalog.references(assets);}
     public static List<ComponentReferenceSpec> dynamicPhase9(android.content.res.AssetManager assets){return Phase9AssetCatalog.references(assets);}
     public static List<ComponentReferenceSpec> dynamicPhase8(android.content.res.AssetManager assets){return Phase8AssetCatalog.references(assets);}
     public static List<ComponentReferenceSpec> dynamicPhase7(android.content.res.AssetManager assets){return Phase7AssetCatalog.references(assets);}

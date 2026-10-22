@@ -89,6 +89,7 @@ public final class RecognitionResult {
     private final Phase7Observation phase7Observation;
     private final Phase8Observation phase8Observation;
     private final Phase9Observation phase9Observation;
+    private final Phase10Observation phase10Observation;
     private final Phase5Observation phase5Observation;
     private final Phase3Observation phase3Observation;
 
@@ -96,7 +97,7 @@ public final class RecognitionResult {
         phase2Observation=builder.phase2Observation;
         phase7Observation=builder.phase7Observation;
         phase8Observation=builder.phase8Observation;
-        phase9Observation=builder.phase9Observation;
+        phase9Observation=builder.phase9Observation;phase10Observation=builder.phase10Observation;
         phase5Observation=builder.phase5Observation;
         phase3Observation=builder.phase3Observation;
         frameTimestampNanos = builder.frameTimestampNanos;
@@ -262,6 +263,8 @@ public final class RecognitionResult {
     public Phase7Observation getPhase7Observation(){return phase7Observation;}
     RecognitionResult withPhase7Observation(Phase7Observation observation){Builder copy=copyBuilder();copy.phase7Observation=observation;return copy.build();}
     public Phase8Observation getPhase8Observation(){return phase8Observation;}
+    public Phase10Observation getPhase10Observation(){return phase10Observation;}
+    RecognitionResult withPhase10Observation(Phase10Observation observation){Builder copy=copyBuilder();copy.phase10Observation=observation;return copy.build();}
     public Phase9Observation getPhase9Observation(){return phase9Observation;}
     RecognitionResult withPhase8Observation(Phase8Observation observation){Builder copy=copyBuilder();copy.phase8Observation=observation;return copy.build();}
     RecognitionResult withPhase9Observation(Phase9Observation observation){Builder copy=copyBuilder();copy.phase9Observation=observation;return copy.build();}
@@ -358,7 +361,7 @@ public final class RecognitionResult {
         copy.phase3Observation=phase3Observation;
         copy.phase7Observation=phase7Observation;
         copy.phase8Observation=phase8Observation;
-        copy.phase9Observation=phase9Observation;
+        copy.phase9Observation=phase9Observation;copy.phase10Observation=phase10Observation;
         copy.phase5Observation=phase5Observation;
         return copy;
     }
@@ -407,6 +410,7 @@ public final class RecognitionResult {
         private Phase7Observation phase7Observation;
         private Phase8Observation phase8Observation;
         private Phase9Observation phase9Observation;
+        private Phase10Observation phase10Observation;
         private Phase5Observation phase5Observation;
         private Phase3Observation phase3Observation;
         private final long frameTimestampNanos;

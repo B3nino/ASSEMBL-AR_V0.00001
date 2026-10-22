@@ -9,6 +9,7 @@ public final class ActiveReferenceScope {
     private ActiveReferenceScope(){}
     public static String key(RecognitionRequest r){
         if(r==null)return null;
+        if(r.getPhase10Stage()>0)return "p10:"+r.getPhase10Stage();
         if(r.getPhase9Stage()>0)return "p9:"+(r.getPhase9Stage()>=3?3:r.getPhase9Stage());
         if(r.getPhase8Stage()>0)return "p8:"+r.getPhase8Stage();
         if(r.getPhase7Stage()>0)return "p7:"+r.getPhase7Stage();
@@ -23,7 +24,8 @@ public final class ActiveReferenceScope {
         Set<String> targets=new HashSet<>(Arrays.asList(expected,r.getSpatialAnchorComponentId(),MAIN_BOARD,EXTENSION_BOARD));
         for(ComponentReferenceSpec s:catalog){
             String id=s.getReferenceId();boolean take;
-            if(r.getPhase9Stage()>0){String role=Phase9AssetCatalog.referenceRole(id);int stage=r.getPhase9Stage();take=role!=null&&(stage==1?role.equals("standoff"):stage==2?role.equals("wheel")||role.equals("pair"):Phase9AssetCatalog.installed(role));}
+            if(r.getPhase10Stage()>0){take=Phase10AssetCatalog.eligible(Phase10AssetCatalog.referenceRole(id),r.getPhase10Stage());}
+            else if(r.getPhase9Stage()>0){String role=Phase9AssetCatalog.referenceRole(id);int stage=r.getPhase9Stage();take=role!=null&&(stage==1?role.equals("standoff"):stage==2?role.equals("wheel")||role.equals("pair"):Phase9AssetCatalog.installed(role));}
             else if(r.getPhase8Stage()>0){String role=Phase8AssetCatalog.referenceRole(id);take=role!=null&&((r.getPhase8Stage()==1)!=Phase8AssetCatalog.installed(role));}
             else if(r.getPhase7Stage()>0){String role=Phase7AssetCatalog.referenceRole(id);take=Phase7AssetCatalog.eligible(role,r.getPhase7Stage())||r.getPhase7Stage()==4&&"trackers".equals(role);}
             else if(r.getPhase5Stage()>0){String role=Phase5AssetCatalog.referenceRole(id);take=role!=null&&((r.getPhase5Stage()==1)!=Phase5AssetCatalog.installed(role));}
@@ -42,5 +44,5 @@ public final class ActiveReferenceScope {
         }
         return Collections.unmodifiableList(result);
     }
-    private static boolean specialized(String id){return id.startsWith(Phase2AssetCatalog.PREFIX)||id.startsWith(Phase3AssetCatalog.PREFIX)||id.startsWith(Phase5AssetCatalog.PREFIX)||id.startsWith(Phase7AssetCatalog.PREFIX)||id.startsWith(Phase8AssetCatalog.PREFIX)||id.startsWith(Phase9AssetCatalog.PREFIX);}
+    private static boolean specialized(String id){return id.startsWith(Phase10AssetCatalog.PREFIX)||id.startsWith(Phase2AssetCatalog.PREFIX)||id.startsWith(Phase3AssetCatalog.PREFIX)||id.startsWith(Phase5AssetCatalog.PREFIX)||id.startsWith(Phase7AssetCatalog.PREFIX)||id.startsWith(Phase8AssetCatalog.PREFIX)||id.startsWith(Phase9AssetCatalog.PREFIX);}
 }

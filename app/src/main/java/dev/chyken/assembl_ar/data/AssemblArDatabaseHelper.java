@@ -71,6 +71,11 @@ final class AssemblArDatabaseHelper extends SQLiteOpenHelper {
             refreshCanonicalAssemblyContent(database);
             oldVersion=6;
         }
+        if(oldVersion==6&&newVersion>=7){
+            // Phase 10 specifies 20mm protector screws and the combined extension-board flow.
+            // Canonical refresh retains progress, administrator references and stable section IDs.
+            refreshCanonicalAssemblyContent(database);oldVersion=7;
+        }
         if (oldVersion != newVersion) {
             throw new IllegalStateException(
                     "No database migration from version " + oldVersion + " to " + newVersion);

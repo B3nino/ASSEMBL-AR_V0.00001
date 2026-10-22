@@ -70,6 +70,7 @@ public final class AssemblyPhaseCatalog {
 
     @Nullable
     public static AssemblyPhase byId(String id) {
+        if(RIBBON_CABLE.equals(id)||UPPER_BOARD.equals(id))id=OLED_PROTECTOR_FIT;
         if(WHEEL_PAIR.equals(id))id=CENTER_STANDOFF;
         if(SENSOR_WIRING.equals(id))id=DISTANCE_SENSOR_MOUNT;
         if(LINE_TRACKERS.equals(id))id=CASTER_FIT;
@@ -309,46 +310,25 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(BOARD_PREPARATION, MOTOR_ASSEMBLIES)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(OLED_PROTECTOR_FIT, "Fit the OLED protector",
-                "Fasten the protector over the OLED footprint on the loose extension board.")
-                .whole(14)
-                .checklistPart(OLED_PROTECTOR, 1, "Over the extension-board OLED footprint.")
-                .part(EXTENSION_BOARD, 1, "The 'other PCB' in the guide; the work surface here.")
-                .checklistPart(MOUNTING_SCREW, 2, "The two attachment points on page 23; the guide "
-                        + "does not state their size.")
-                .checklistPart(NUT, 2, "One on the reverse side of each fastener.")
-                .tool(THREADLOCKER, 1, "Prevent loosening.")
-                .placement(14, "oled_protector", OLED_PROTECTOR, EXTENSION_BOARD, "OLED protector",
-                        Arrays.asList(2, 3))
-                .check("Both protector fasteners pass through the protector and board, with nuts on "
-                        + "the reverse side, tightened.")
-                .check("Threadlocker is applied to both OLED-protector nuts.")
-                .build(phases));
-
-        phases.add(new PhaseBuilder(RIBBON_CABLE, "Connect the ribbon cable",
-                "Seat both keyed connectors, keeping the red stripe direction and no twist.")
-                .whole(15)
-                .checklistPart(DATA_CABLE, 1, "Both keyed connectors; red edge stripe for direction.")
-                .context(MAIN_BOARD, 1, "Lower connector.")
-                .context(EXTENSION_BOARD, 1, "Upper connector.")
-                .check("The main-board connector is fully and evenly seated in its header.")
-                .check("The extension-board connector is fully seated with the red-edge stripe in "
-                        + "the direction shown on page 25.")
-                .dependsOn(OLED_PROTECTOR_FIT, DISTANCE_SENSOR_MOUNT)
-                .build(phases));
-
-        phases.add(new PhaseBuilder(UPPER_BOARD, "Fit the upper board",
-                "Route the wiring inside, rest the extension board on the brackets and fasten it.")
-                .whole(16)
-                .context(EXTENSION_BOARD, 1, "The prepared upper cover.")
-                .context(STANDOFF, 1, "Use the screw kept in the standoff phase.")
-                .context(MOTOR_BRACKET, 4, "Their upper edges support the board.")
-                .tool(PHILLIPS_SCREWDRIVER, 1, "Tighten the center screw.")
-                .placement(16, "extension_board", EXTENSION_BOARD, MAIN_BOARD, "extension board",
-                        Arrays.asList(2, 4, 6))
-                .check("The retained center screw passes through the extension board into the "
-                        + "standoff and is tightened.")
-                .dependsOn(MOTOR_ASSEMBLIES, CENTER_STANDOFF, RIBBON_CABLE)
+        phases.add(new PhaseBuilder(OLED_PROTECTOR_FIT, "Place and connect the extension board",
+                "Scan the cable, board and protector; gather hardware, follow four demos, verify both assemblies and confirm secure connections.")
+                .whole(14).whole(15).whole(16)
+                .cameraPart(DATA_CABLE, 1, "Both keyed connectors; keep the red edge stripe oriented as shown.")
+                .part(EXTENSION_BOARD, 1, "Front face up; upper board and OLED footprint.")
+                .cameraPart(OLED_PROTECTOR, 1, "Front face up; align both mounting holes.")
+                .checklistPart(SCREW_20MM, 2, "Fasten the OLED protector through the extension board.")
+                .checklistPart(NUT, 2, "One underneath each protector fastener.")
+                .context(MAIN_BOARD, 1, "Lower cable header and chassis.")
+                .context(STANDOFF, 1, "Reuse the top screw saved in Phase 9.")
+                .context(MOTOR_BRACKET, 4, "Support the extension board evenly.")
+                .tool(THREADLOCKER, 1, "Prevent protector nuts loosening.")
+                .tool(PHILLIPS_SCREWDRIVER, 1, "Tighten protector hardware and center screw.")
+                .placement(14, "oled_protector", OLED_PROTECTOR, EXTENSION_BOARD, "OLED protector", Arrays.asList(2,3))
+                .placement(16, "extension_board", EXTENSION_BOARD, MAIN_BOARD, "extension board", Arrays.asList(2,4,6))
+                .check("Both protector screws and M3 nuts are tight and the protector does not jiggle.")
+                .check("Both data cable connectors are fully seated in the orientation shown.")
+                .check("The top board is firm and level on its supports with no pinched wires.")
+                .dependsOn(MOTOR_ASSEMBLIES, CENTER_STANDOFF, DISTANCE_SENSOR_MOUNT)
                 .build(phases));
 
         phases.add(new PhaseBuilder(OLED_FIT, "Fit the OLED display",
@@ -361,7 +341,7 @@ public final class AssemblyPhaseCatalog {
                         Arrays.asList(2, 3, 4))
                 .pinCheck(17, 1, 2, 3, 4)
                 .check("The OLED is pressed straight in and all four pins are fully seated.")
-                .dependsOn(OLED_PROTECTOR_FIT, UPPER_BOARD)
+                .dependsOn(OLED_PROTECTOR_FIT)
                 .build(phases));
 
         phases.add(new PhaseBuilder(BATTERY_FIT, "Fit the battery",
@@ -375,7 +355,7 @@ public final class AssemblyPhaseCatalog {
                         Arrays.asList(3, 4))
                 .check("The battery is held by double-sided tape or a prepared holder and cannot "
                         + "move into nearby components.")
-                .dependsOn(UPPER_BOARD)
+                .dependsOn(OLED_PROTECTOR_FIT)
                 .build(phases));
         return Collections.unmodifiableList(phases);
     }
@@ -421,6 +401,8 @@ public final class AssemblyPhaseCatalog {
                     InventoryEvidence.CAMERA_COUNT, Collections.emptyList(), note));
             return this;
         }
+
+        PhaseBuilder cameraPart(String componentId,int quantity,String note){parts.add(new Part(componentId,quantity,PartRole.NEW_PART,InventoryEvidence.CAMERA_IDENTITY,Collections.emptyList(),note));return this;}
 
         PhaseBuilder checklistPart(String componentId, int quantity, String note,
                                    String... alternatives) {
