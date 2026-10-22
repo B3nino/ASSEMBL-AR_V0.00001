@@ -30,7 +30,9 @@ public final class PhaseTargetClassifierTest {
     private static AssemblyPhase phase(String id) { return AssemblyPhaseCatalog.byId(id); }
 
     private static List<VisualTarget> trackerTargets() {
-        return phase(AssemblyPhaseCatalog.LINE_TRACKERS).getTargets();
+        List<VisualTarget> targets=new ArrayList<>();
+        for(VisualTarget target:phase(AssemblyPhaseCatalog.CASTER_FIT).getTargets())if(target.getSection()==10)targets.add(target);
+        return targets;
     }
 
     private static List<VisionPoint> target(String id) {

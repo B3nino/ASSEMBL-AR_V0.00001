@@ -154,6 +154,38 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             RecognitionRequest request = requestProvider.requestFor(metadata);
             Object requestTag = request == null ? null : request.getRequestTag();
             int assemblyStep = request == null ? 0 : request.getAssemblyStepNumber();
+            if(request!=null&&request.getPhase7Stage()>0){
+                // Color proposes separate module search windows only in the dual-tracker check.
+                // Each window still needs geometric ORB identity and board mounting evidence.
+                if(request.getPhase7Stage()==4)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
+                RecognitionResult inspected=recognizer.inspectPhase7(analyzed,rgb,metadata.getTimestampNanos(),request.getPhase7Stage()).withAssemblyInspection(7,null,false,null).withRequestTag(requestTag);
+                FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);if(snapshot!=null){if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());}
+                // The isolated Phase 7 path returns before the shared recorder below. Keep its
+                // existing opt-in ADB diagnostics available for real camera regression captures.
+                String capture=null;
+                if(measurements.captureDue(metadata.getTimestampNanos())){
+                    if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
+                    capture=measurements.capture(rgb,metadata.getTimestampNanos());
+                }
+                if(MeasurementRecorder.enabled())measurements.log(metadata,request,inspected,
+                        (SystemClock.elapsedRealtimeNanos()-now)/1e6,capture);
+                if(!closed.get())deliverResult(inspected);return;
+            }
+            if(request!=null&&request.getPhase8Stage()>0){
+                RecognitionResult inspected=recognizer.inspectPhase8(analyzed,metadata.getTimestampNanos(),request.getPhase8Stage()).withAssemblyInspection(8,null,false,null).withRequestTag(requestTag);
+                FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);
+                if(snapshot!=null){rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());}
+                // Phase 8 returns before the shared diagnostics path. Preserve opt-in real
+                // camera captures here as well; source photos cannot reproduce camera scale.
+                String capture=null;
+                if(measurements.captureDue(metadata.getTimestampNanos())){
+                    if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
+                    capture=measurements.capture(rgb,metadata.getTimestampNanos());
+                }
+                if(MeasurementRecorder.enabled())measurements.log(metadata,request,inspected,
+                        (SystemClock.elapsedRealtimeNanos()-now)/1e6,capture);
+                if(!closed.get())deliverResult(inspected);return;
+            }
             if(request!=null&&request.getPhase5Stage()>0){
                 RecognitionResult inspected=recognizer.inspectPhase5(analyzed,metadata.getTimestampNanos(),request.getPhase5Stage())
                         .withAssemblyInspection(5,null,false,null).withRequestTag(requestTag);

@@ -161,6 +161,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private volatile Phase4GuideController wiringGuide;
     private volatile Phase5GuideController microcontrollerGuide;
     private volatile Phase6GuideController driverWiringGuide;
+    private volatile Phase7GuideController casterTrackerGuide;
+    private volatile Phase8GuideController sensorWiringGuide;
     private AlertDialog welcomeDialog;
     private AlertDialog phaseOneRescanDialog;
     private String phaseOneGuideAsset;
@@ -307,6 +309,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.close();wiringGuide=null;}
         if(microcontrollerGuide!=null){microcontrollerGuide.close();microcontrollerGuide=null;}
         if(driverWiringGuide!=null){driverWiringGuide.close();driverWiringGuide=null;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.close();casterTrackerGuide=null;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.close();sensorWiringGuide=null;}
         PhaseSessionCheckpoint restored=pendingSession;
         pendingSession=null;
         restoringSession=restored!=null&&restored.phaseId.equals(next.getId());
@@ -319,8 +323,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         phase = next;
         phaseOneScanConfirmed=false;
         phaseOneGuide.reset();
-        activity.setPhaseTwoGuideActive(next.getNumber()>=2&&next.getNumber()<=6);
-        if(next.getNumber()<=6)activity.hideGuidance();
+        activity.setPhaseTwoGuideActive(next.getNumber()>=2&&next.getNumber()<=8);
+        if(next.getNumber()<=8)activity.hideGuidance();
         activity.setPhaseOneGuideActive(next.getNumber()==1);
         dev.chyken.assembl_ar.ui.TargetAlignmentBoxView alignment=activity.findViewById(R.id.targetAlignmentBox);
         alignment.showGuide(null);
@@ -338,7 +342,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         correctionOverlayTargets = null;
         inventoryIndex = 0;
         inventoryDone.clear();
-        if(restoringSession&&next.getNumber()!=2&&next.getNumber()!=3&&next.getNumber()!=4&&next.getNumber()!=5&&next.getNumber()!=6){
+        if(restoringSession&&next.getNumber()!=2&&next.getNumber()!=3&&next.getNumber()!=4&&next.getNumber()!=5&&next.getNumber()!=6&&next.getNumber()!=7){
             inventoryIndex=Math.min(restored.inventoryIndex,next.getCameraInventory().size());
             for(int i=0;i<inventoryIndex;i++)inventoryDone.put(next.getCameraInventory().get(i).getComponentId(),true);
             flow.restoreSession(restored.mode,restored.inventoryComplete||restored.developer&&restored.mode!=Mode.SCAN_PARTS,
@@ -382,6 +386,20 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
                 ()->reviewPhase(AssemblyPhaseCatalog.phases().get(4),true),restoringSession?restored.gearState:null,this::persistSession);
             flow.attachDriverWiringFlow(driverWiringGuide.flow);driverWiringGuide.start();restoringSession=false;persistSession();return;
         }
+        if(next.getNumber()==7){
+            plan=RequestPlan.NONE;
+            String state=restoringSession?restored.gearState:PhaseProgressStore.casterTrackerState(activity,NeobotSeedData.PROJECT_ID);
+            if((state==null||state.isEmpty())&&currentSection>=10)state="legacyCaster";
+            casterTrackerGuide=new Phase7GuideController(activity,devNavigationActive,this::finishCasterTrackerPhase,
+                ()->reviewPhase(AssemblyPhaseCatalog.phases().get(5),true),state,this::persistSession);
+            flow.attachCasterTrackerFlow(casterTrackerGuide.flow);casterTrackerGuide.start();restoringSession=false;persistSession();return;
+        }
+        if(next.getNumber()==8){
+            plan=RequestPlan.NONE;
+            sensorWiringGuide=new Phase8GuideController(activity,devNavigationActive,this::finishSensorWiringPhase,
+                ()->reviewPhase(AssemblyPhaseCatalog.phases().get(6),true),restoringSession?restored.gearState:null,this::persistSession);
+            flow.attachSensorWiringFlow(sensorWiringGuide.flow);sensorWiringGuide.start();restoringSession=false;persistSession();return;
+        }
         enterMode();
         if(restoringSession&&script!=null&&!script.getChapters().isEmpty()){
             int chapter=Math.min(restored.chapter,script.getChapters().size()-1);
@@ -394,7 +412,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private void persistSession(){
         if(restoringSession||savingPhase||phase==null||flow==null)return;
         int chapter=reviewScript!=null?pausedChapter:shownChapter==null?0:shownChapter.getIndex();
-        String gearState=phase.getNumber()==6&&driverWiringGuide!=null?driverWiringGuide.checkpointState():phase.getNumber()==5&&microcontrollerGuide!=null?microcontrollerGuide.checkpointState():phase.getNumber()==4&&wiringGuide!=null?wiringGuide.checkpointState():phase.getNumber()==3&&driverGuide!=null?driverGuide.checkpointState():phase.getNumber()==2&&gearGuide!=null?gearGuide.checkpointState():null;
+        String gearState=phase.getNumber()==8&&sensorWiringGuide!=null?sensorWiringGuide.checkpointState():phase.getNumber()==7&&casterTrackerGuide!=null?casterTrackerGuide.checkpointState():phase.getNumber()==6&&driverWiringGuide!=null?driverWiringGuide.checkpointState():phase.getNumber()==5&&microcontrollerGuide!=null?microcontrollerGuide.checkpointState():phase.getNumber()==4&&wiringGuide!=null?wiringGuide.checkpointState():phase.getNumber()==3&&driverGuide!=null?driverGuide.checkpointState():phase.getNumber()==2&&gearGuide!=null?gearGuide.checkpointState():null;
         PhaseProgressStore.saveSession(activity,NeobotSeedData.PROJECT_ID,new PhaseSessionCheckpoint(
                 phase.getId(),devNavigationActive,flow.getMode(),chapter,inventoryIndex,
                 flow.isInventoryComplete(),flow.isPreviewing(),gearState));
@@ -407,6 +425,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private void finishWiringPhase(){if(devNavigationActive){devJumpToPhase(AssemblyPhaseCatalog.phases().get(4));return;}completePhase();}
     private void finishMicrocontrollerPhase(){if(devNavigationActive){devJumpToPhase(AssemblyPhaseCatalog.phases().get(5));return;}completePhase();}
     private void finishDriverWiringPhase(){if(devNavigationActive){devJumpToPhase(AssemblyPhaseCatalog.phases().get(6));return;}completePhase();}
+    private void finishCasterTrackerPhase(){if(devNavigationActive){devJumpToPhase(AssemblyPhaseCatalog.phases().get(7));return;}completePhase();}
+    private void finishSensorWiringPhase(){if(devNavigationActive){devJumpToPhase(AssemblyPhaseCatalog.phases().get(8));return;}completePhase();}
     boolean isDeveloperSession(){return devNavigationActive;}
     void returnToSavedAssembly(){
         if(!devNavigationActive||savingPhase)return;
@@ -419,6 +439,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
                 if(wiringGuide!=null){wiringGuide.close();wiringGuide=null;}
                 if(microcontrollerGuide!=null){microcontrollerGuide.close();microcontrollerGuide=null;}
                 if(driverWiringGuide!=null){driverWiringGuide.close();driverWiringGuide=null;}
+                if(casterTrackerGuide!=null){casterTrackerGuide.close();casterTrackerGuide=null;}
+                if(sensorWiringGuide!=null){sensorWiringGuide.close();sensorWiringGuide=null;}
                 PhaseProgressStore.clearSession(activity,NeobotSeedData.PROJECT_ID);
                 activity.onPhaseSectionsSaved(saved);
                 load(steps,saved);
@@ -456,6 +478,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null)wiringGuide.setSaving(true);
         if(microcontrollerGuide!=null)microcontrollerGuide.setSaving(true);
         if(driverWiringGuide!=null)driverWiringGuide.setSaving(true);
+        if(casterTrackerGuide!=null)casterTrackerGuide.setSaving(true);
+        if(sensorWiringGuide!=null)sensorWiringGuide.setSaving(true);
         if(phase.getNumber()==1) phaseOneGuide.setScanned(true,true,!phaseOneScanConfirmed);
         plan = RequestPlan.NONE;
         activity.setBanner(activity.getString(R.string.phase_saving), true, R.drawable.bg_live_pill);
@@ -508,6 +532,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.setSaving(false);activity.setBanner(activity.getString(R.string.progress_save_failed),false,R.drawable.bg_camera_warning);return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.setSaving(false);activity.setBanner(activity.getString(R.string.progress_save_failed),false,R.drawable.bg_camera_warning);return;}
         if(driverWiringGuide!=null){driverWiringGuide.setSaving(false);activity.setBanner(activity.getString(R.string.progress_save_failed),false,R.drawable.bg_camera_warning);return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.setSaving(false);activity.setBanner(activity.getString(R.string.progress_save_failed),false,R.drawable.bg_camera_warning);return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.setSaving(false);activity.setBanner(activity.getString(R.string.progress_save_failed),false,R.drawable.bg_camera_warning);return;}
         flow.completionSaveFailed(SystemClock.elapsedRealtimeNanos());
         if (flow.getMode() == Mode.COMPLETE) {
             // Board preparation: rescan to retry, it has no checklist to reopen.
@@ -604,6 +630,24 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private void reviewPhase(AssemblyPhase earlier, boolean lastChapter) {
         if(microcontrollerGuide!=null&&phase!=null&&phase.getNumber()==5)microcontrollerGuide.prepareForReview();
         if(driverWiringGuide!=null&&phase!=null&&phase.getNumber()==6)driverWiringGuide.prepareForReview();
+        if(casterTrackerGuide!=null&&phase!=null&&phase.getNumber()==7)casterTrackerGuide.prepareForReview();
+        if(sensorWiringGuide!=null&&phase!=null&&phase.getNumber()==8)sensorWiringGuide.prepareForReview();
+        if(earlier.getNumber()==8&&phase!=null&&phase.getNumber()>8){
+            if(reviewScript==null)pausedChapter=shownChapter==null?0:shownChapter.getIndex();
+            handler.removeCallbacks(budgetPoll);plan=RequestPlan.NONE;clearOverlay();player.pause();reviewScript=null;activity.setPhaseTwoGuideActive(true);
+            sensorWiringGuide=new Phase8GuideController(activity,true,()->{if(sensorWiringGuide!=null){sensorWiringGuide.close();sensorWiringGuide=null;}activity.setPhaseTwoGuideActive(false);returnFromReview();},
+                ()->{if(sensorWiringGuide!=null){sensorWiringGuide.close();sensorWiringGuide=null;}activity.setPhaseTwoGuideActive(false);reviewPhase(AssemblyPhaseCatalog.phases().get(6),true);},
+                PhaseProgressStore.sensorWiringState(activity,NeobotSeedData.PROJECT_ID),()->{});
+            sensorWiringGuide.startReview(lastChapter);return;
+        }
+        if(earlier.getNumber()==7&&phase!=null&&phase.getNumber()>7){
+            if(reviewScript==null)pausedChapter=shownChapter==null?0:shownChapter.getIndex();
+            handler.removeCallbacks(budgetPoll);plan=RequestPlan.NONE;clearOverlay();player.pause();reviewScript=null;activity.setPhaseTwoGuideActive(true);
+            casterTrackerGuide=new Phase7GuideController(activity,true,()->{if(casterTrackerGuide!=null){casterTrackerGuide.close();casterTrackerGuide=null;}activity.setPhaseTwoGuideActive(false);returnFromReview();},
+                ()->{if(casterTrackerGuide!=null){casterTrackerGuide.close();casterTrackerGuide=null;}activity.setPhaseTwoGuideActive(false);reviewPhase(AssemblyPhaseCatalog.phases().get(5),true);},
+                PhaseProgressStore.casterTrackerState(activity,NeobotSeedData.PROJECT_ID),()->{});
+            casterTrackerGuide.startReview(lastChapter);return;
+        }
         if(earlier.getNumber()==6&&phase!=null&&phase.getNumber()>6){
             if(reviewScript==null)pausedChapter=shownChapter==null?0:shownChapter.getIndex();
             handler.removeCallbacks(budgetPoll);plan=RequestPlan.NONE;clearOverlay();player.pause();reviewScript=null;activity.setPhaseTwoGuideActive(true);
@@ -674,6 +718,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     private void returnFromReview() {
         if(microcontrollerGuide!=null&&phase!=null&&phase.getNumber()==5){player.release();reviewScript=null;activity.setPhaseTwoGuideActive(true);microcontrollerGuide.resume();return;}
         if(driverWiringGuide!=null&&phase!=null&&phase.getNumber()==6){player.release();reviewScript=null;activity.setPhaseTwoGuideActive(true);driverWiringGuide.resume();return;}
+        if(casterTrackerGuide!=null&&phase!=null&&phase.getNumber()==7){player.release();reviewScript=null;activity.setPhaseTwoGuideActive(true);casterTrackerGuide.resume();return;}
+        if(sensorWiringGuide!=null&&phase!=null&&phase.getNumber()==8){player.release();reviewScript=null;activity.setPhaseTwoGuideActive(true);sensorWiringGuide.resume();return;}
         if(wiringGuide!=null&&phase!=null&&phase.getNumber()==4){player.release();reviewScript=null;activity.setPhaseTwoGuideActive(true);wiringGuide.resume();return;}
         if(driverGuide!=null&&phase!=null&&phase.getNumber()==3){player.release();reviewScript=null;activity.setPhaseTwoGuideActive(true);driverGuide.resume();return;}
         player.release();
@@ -695,6 +741,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.restart();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.restart();return;}
         if(driverWiringGuide!=null){driverWiringGuide.restart();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.restart();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.restart();return;}
         log("action", "restart phase");
         confirmedChapters.removeIf(key->key.startsWith(phase.getId()+":")); persistReview();
         PhaseProgressStore.setInventoryComplete(activity, NeobotSeedData.PROJECT_ID, phase.getId(), false);
@@ -719,6 +767,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if (section < 1 || section > 18) return;
         for (AssemblyPhase candidate : AssemblyPhaseCatalog.phases()) {
             if (candidate.getSections().contains(section)) {
+                if(candidate.getNumber()==7){devJumpToChapter(candidate,section==9?4:5);return;}
                 if(candidate.getNumber()==6){devJumpToChapter(candidate,section==7?1:2);return;}
                 if(candidate.getNumber()==4){devJumpToChapter(candidate,section==4?0:1);return;}
                 PhaseDemoScript target=PhaseDemoScript.forPhase(candidate);
@@ -737,6 +786,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){devNavigationActive=true;wiringGuide.devComplete();return;}
         if(microcontrollerGuide!=null){devNavigationActive=true;microcontrollerGuide.devComplete();return;}
         if(driverWiringGuide!=null){devNavigationActive=true;driverWiringGuide.devComplete();return;}
+        if(casterTrackerGuide!=null){devNavigationActive=true;casterTrackerGuide.devComplete();return;}
+        if(sensorWiringGuide!=null){devNavigationActive=true;sensorWiringGuide.devComplete();return;}
         reviewScript=null; devNavigationActive=true;
         flow.devComplete(SystemClock.elapsedRealtimeNanos());
         plan=RequestPlan.NONE; player.stop(); clearOverlay();
@@ -752,6 +803,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.devJump(chapter+1);return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.devJump(chapter+1);return;}
         if(driverWiringGuide!=null){driverWiringGuide.devJump(chapter+1);return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.devJump(chapter+1);return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.devJump(chapter+1);return;}
         if(script==null || chapter<0 || chapter>=script.getChapters().size()) return;
         for(int i=0;i<chapter;i++) confirmedChapters.add(chapterKey(phase,script.getChapters().get(i)));
         persistReview();
@@ -765,6 +818,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){devNavigationActive=true;wiringGuide.devSkip();return;}
         if(microcontrollerGuide!=null){devNavigationActive=true;microcontrollerGuide.devSkip();return;}
         if(driverWiringGuide!=null){devNavigationActive=true;driverWiringGuide.devSkip();return;}
+        if(casterTrackerGuide!=null){devNavigationActive=true;casterTrackerGuide.devSkip();return;}
+        if(sensorWiringGuide!=null){devNavigationActive=true;sensorWiringGuide.devSkip();return;}
         if(reviewScript!=null) returnFromReview();
         if(shownChapter==null || flow.getMode()==Mode.SCAN_PARTS) {
             devJumpToChapter(phase,0);
@@ -897,6 +952,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.render();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.render();return;}
         if(driverWiringGuide!=null){driverWiringGuide.render();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.render();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.render();return;}
         if (flow == null || phase == null || script == null) return;
         handler.removeCallbacks(budgetPoll);
         Mode mode = flow.getMode();
@@ -1175,6 +1232,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.onSpeechFinished(key);return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.onSpeechFinished(key);return;}
         if(driverWiringGuide!=null){driverWiringGuide.onSpeechFinished(key);return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.onSpeechFinished(key);return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.onSpeechFinished(key);return;}
         player.onSpeechFinished(key);
         if(isLivePhaseOne() && flow.getMode()==Mode.SCAN_PARTS
                 && key.equals("phase1:bring:"+flow.getGeneration())) {
@@ -1199,6 +1258,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         else if(wiringGuide!=null)wiringGuide.onVoiceStatusChanged();
         else if(microcontrollerGuide!=null)microcontrollerGuide.onVoiceStatusChanged();
         else if(driverWiringGuide!=null)driverWiringGuide.onVoiceStatusChanged();
+        else if(casterTrackerGuide!=null)casterTrackerGuide.onVoiceStatusChanged();
+        else if(sensorWiringGuide!=null)sensorWiringGuide.onVoiceStatusChanged();
         else player.onVoiceModeChanged();
     }
 
@@ -1210,6 +1271,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null)return true;
         if(microcontrollerGuide!=null)return !microcontrollerGuide.scanning();
         if(driverWiringGuide!=null)return !driverWiringGuide.scanning();
+        if(casterTrackerGuide!=null)return !casterTrackerGuide.scanning();
+        if(sensorWiringGuide!=null)return !sensorWiringGuide.scanning();
         return plan.kind == RequestPlan.Kind.NONE;
     }
 
@@ -1220,6 +1283,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null)return null;
         if(microcontrollerGuide!=null)return microcontrollerGuide.request(calibration);
         if(driverWiringGuide!=null)return driverWiringGuide.request(calibration);
+        if(casterTrackerGuide!=null)return casterTrackerGuide.request(calibration);
+        if(sensorWiringGuide!=null)return sensorWiringGuide.request(calibration);
         RequestPlan current = plan;
         switch (current.kind) {
             case INVENTORY:
@@ -1321,6 +1386,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.render();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.render();return;}
         if(driverWiringGuide!=null){driverWiringGuide.render();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.render();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.render();return;}
         if(reviewScript!=null) return;
         if (flow == null) return;
         if (flow.getMode() == Mode.SCAN_PARTS && !flow.isPreviewing()) planInventory();
@@ -1337,6 +1404,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null)return;
         if(microcontrollerGuide!=null){microcontrollerGuide.onResult(result);return;}
         if(driverWiringGuide!=null){driverWiringGuide.onResult(result);return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.onResult(result);return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.onResult(result);return;}
         Object tag = result.getRequestTag();
         PhaseFlow.ScanTag scanTag = tag instanceof PhaseFlow.ScanTag ? (PhaseFlow.ScanTag) tag : null;
         if (flow.getMode() == Mode.CORRECTION) {
@@ -1781,6 +1850,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.pause();hud.reset();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.pause();hud.reset();return;}
         if(driverWiringGuide!=null){driverWiringGuide.pause();hud.reset();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.pause();hud.reset();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.pause();hud.reset();return;}
         player.pause();
         if (flow != null) {
             Mode before = flow.getMode();
@@ -1806,6 +1877,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.resume();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.resume();return;}
         if(driverWiringGuide!=null){driverWiringGuide.resume();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.resume();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.resume();return;}
         if(reviewScript!=null) { player.resume(); return; }
         flow.resume(SystemClock.elapsedRealtimeNanos());
         Mode mode = flow.getMode();
@@ -1827,6 +1900,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.close();wiringGuide=null;}
         if(microcontrollerGuide!=null){microcontrollerGuide.close();microcontrollerGuide=null;}
         if(driverWiringGuide!=null){driverWiringGuide.close();driverWiringGuide=null;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.close();casterTrackerGuide=null;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.close();sensorWiringGuide=null;}
         handler.removeCallbacksAndMessages(null);
         dismissChecklist();
         player.release();
@@ -1840,6 +1915,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.render();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.render();return;}
         if(driverWiringGuide!=null){driverWiringGuide.render();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.render();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.render();return;}
         if(reviewScript!=null) {
             activity.setBanner(activity.getString(R.string.review_preserves_progress),false,R.drawable.bg_live_pill);
             return;
@@ -1918,6 +1995,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null){wiringGuide.render();return;}
         if(microcontrollerGuide!=null){microcontrollerGuide.render();return;}
         if(driverWiringGuide!=null){driverWiringGuide.render();return;}
+        if(casterTrackerGuide!=null){casterTrackerGuide.render();return;}
+        if(sensorWiringGuide!=null){sensorWiringGuide.render();return;}
         if (flow == null || phase == null) return;
         Mode mode = flow.getMode();
         hud.setScanningEnabled(flow.collectsEvidence()&&!savingPhase&&reviewScript==null&&activity.isActivityResumed());
@@ -2208,6 +2287,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null)return wiringGuide.flow.tag();
         if(microcontrollerGuide!=null)return microcontrollerGuide.flow.tag();
         if(driverWiringGuide!=null)return driverWiringGuide.flow.tag();
+        if(casterTrackerGuide!=null)return casterTrackerGuide.flow.tag();
+        if(sensorWiringGuide!=null)return sensorWiringGuide.flow.tag();
         return flow == null ? null : flow.tag();
     }
 
@@ -2217,6 +2298,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(wiringGuide!=null)return false;
         if(microcontrollerGuide!=null)return microcontrollerGuide.current(result);
         if(driverWiringGuide!=null)return driverWiringGuide.current(result);
+        if(casterTrackerGuide!=null)return casterTrackerGuide.current(result);
+        if(sensorWiringGuide!=null)return sensorWiringGuide.current(result);
         return reviewScript==null && flow!=null
                 && result.getFrameTimestampNanos()>=phaseStartedAtNanos
                 && java.util.Objects.equals(result.getRequestTag(),flow.tag());

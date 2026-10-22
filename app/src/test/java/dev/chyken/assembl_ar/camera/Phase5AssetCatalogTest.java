@@ -21,7 +21,7 @@ public final class Phase5AssetCatalogTest {
     }
     @Test public void guideAndVideoAssetsCannotBecomeRecognitionReferences()throws Exception{
         List<String> paths=paths();assertEquals(1,Phase5AssetCatalog.videosForPaths(paths).size());assertTrue(Phase5AssetCatalog.videosForPaths(paths).get(0).endsWith("PHASE5_VIDS.mp4"));
-        assertTrue(Phase5AssetCatalog.guideForPaths(paths,1).endsWith("GUIDEMICROCONTROLLERCOMPSCANNING.jpg"));assertTrue(Phase5AssetCatalog.guideForPaths(paths,3).endsWith("GUIDEFORMICROCONTROLLERHARDWARESCANNING.jpg"));
+        assertTrue(Phase5AssetCatalog.guideForPaths(paths,1).endsWith("GUIDEMICROCONTROLLERCOMPSCANNING.jpg"));assertTrue(Phase5AssetCatalog.guideForPaths(paths,3).endsWith("GUIDEFORMICROCONTROLLERHARDWARESCANNING.png"));
         assertNull(Phase5AssetCatalog.guideForPaths(paths,2));assertNull(Phase5AssetCatalog.guideForPaths(paths,4));
         assertNotNull(Phase5AssetCatalog.guideForPaths(Collections.singletonList("references/Phase5/P5 SCANNINGGUIDE/GUIDEHARDWARE.png"),3));
         assertNull(Phase5AssetCatalog.role("P5_VIDEOGUIDE"));assertNull(Phase5AssetCatalog.role("P5_SCANNINGGUIDE"));

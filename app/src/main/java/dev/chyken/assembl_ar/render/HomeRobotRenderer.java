@@ -68,6 +68,7 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
     @Nullable private ObjModel wiringModel;
     @Nullable private ObjModel componentModel;
     @Nullable private ObjModel companionModel;
+    @Nullable private ObjModel spacerModel;
     private float componentScale = 1f;
 
     HomeRobotRenderer(Context context, OrbitController orbitController) {
@@ -118,8 +119,11 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
             componentModel = path == null ? null : ObjModel.load(context, path);
             if (componentModel != null) componentScale = previewScale(componentModel);
             materialRenderer.prepare(componentModel);
-            if(ComponentModelCatalog.SHORT_FASTENERS.equals(previewComponentId)||ComponentModelCatalog.LONG_FASTENERS.equals(previewComponentId)){
+            if(ComponentModelCatalog.isFastenerGroup(previewComponentId)){
                 companionModel=ObjModel.load(context,"models/hex_nut.obj");materialRenderer.prepare(companionModel);
+                if(ComponentModelCatalog.TRACKER_FASTENERS.equals(previewComponentId)){
+                    spacerModel=ObjModel.load(context,ComponentModelCatalog.assetPath(dev.chyken.assembl_ar.data.NeobotSeedData.PLASTIC_SPACER));materialRenderer.prepare(spacerModel);
+                }
             }
         }
     }
@@ -156,6 +160,12 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
         if (previewComponentId != null) {
             if (componentModel == null) return;
             if(companionModel!=null){
+                if(spacerModel!=null){
+                    drawPreviewPart(componentModel,-1.05f,.44f);
+                    drawPreviewPart(companionModel,0,.32f);
+                    drawPreviewPart(spacerModel,1.05f,.38f);
+                    return;
+                }
                 drawPreviewPart(componentModel,-.65f,.60f);
                 drawPreviewPart(companionModel,.65f,.45f);
                 return;

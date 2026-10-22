@@ -32,6 +32,7 @@ final class Phase4GuideController implements AutoCloseable {
     private final AssemblyDemoView schematic;
     private final FrameLayout previewContent;
     private final WiringWorkspace workspace;
+    private boolean preparationAccepted,preparing;
     private WireColorPickerDialog picker;
     private AlertDialog pullDialog;
     private MotorWireColorConfig pickerDraft;
@@ -46,9 +47,11 @@ final class Phase4GuideController implements AutoCloseable {
         this.activity=activity;this.developer=developer;this.finish=finish;this.previousPhase=previousPhase;this.checkpointChanged=checkpointChanged;
         card=activity.findViewById(R.id.phaseTwoGuide);preview=activity.findViewById(R.id.componentPreviewWindow);
         if((saved==null||saved.isEmpty())&&!developer)saved=PhaseProgressStore.wiringState(activity,NeobotSeedData.PROJECT_ID);
+        if(saved!=null&&saved.contains("^")){int divider=saved.lastIndexOf('^');preparationAccepted=saved.substring(divider+1).equals("true");saved=saved.substring(0,divider);}
         String[] checkpoint=saved==null?new String[0]:saved.split("~",-1);
         flow=Phase4MotorWiringFlow.restore(checkpoint.length>0?checkpoint[0]:null);paused=!activity.isActivityResumed();
         if(checkpoint.length==3)try{pickerDraft=MotorWireColorConfig.decode(checkpoint[1]);pickerTerminal=Terminal.values()[Integer.parseInt(checkpoint[2])];reopenPicker=true;}catch(RuntimeException bad){pickerDraft=null;pickerTerminal=Terminal.LEFT_POSITIVE;}
+        if(flow.step()>1)preparationAccepted=true;
         schematic=new AssemblyDemoView(activity);
         schematic.setOnMotorWireSelected(terminal->{
             String text=terminal.spoken()+": "+flow.colors().swatch(terminal).label+" wire to "+terminal.output+".";
@@ -84,6 +87,11 @@ final class Phase4GuideController implements AutoCloseable {
     }
     private void openPicker(){
         if(closed||paused||saving||reviewing||picker!=null&&picker.isShowing())return;
+        if(!preparationAccepted){
+            if(preparing)return;preparing=true;
+            pullDialog=JumperWirePreparationDialog.show(activity,4,true,"Use the four motor leads and stripped ends for the screw terminals. Female-to-female jumper sockets are for header pins, not these screw openings.","Select Colors / Next",()->{preparationAccepted=true;save();render();main.post(this::openPicker);});
+            pullDialog.setOnDismissListener(d->preparing=false);say("Prepare the four motor wire leads. Their stripped ends go into the driver screw terminals. "+JumperWirePreparationDialog.DISCLAIMER,"wire-preparation");return;
+        }
         if(pullDialog!=null)pullDialog.dismiss();
         picker=new WireColorPickerDialog(activity,pickerDraft==null?flow.colors():pickerDraft,new WireColorPickerDialog.Listener(){
             @Override public void onApply(MotorWireColorConfig colors){if(closed||paused||saving)return;pickerDraft=null;reopenPicker=false;pickerTerminal=Terminal.LEFT_POSITIVE;flow.applyColors(colors);dismissDialogs();changed();}
@@ -123,27 +131,27 @@ final class Phase4GuideController implements AutoCloseable {
         ((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);
         workspace.setMotorColors(flow.colors());
         if(step>=2){previewAttached=false;workspace.show();if(!paused)workspace.resume();else workspace.pause();}else workspace.hide();
-        schematic.setMotorWireColors(flow.colors());if(step==1&&!previewAttached){preview.showContent(previewContent,"Motor wiring · Component view");previewAttached=true;}
-        if(step==1)preview.setContentAction("Expand motor wiring diagram",this::expandDiagram);
+        schematic.setMotorWireColors(flow.colors());if(step==1&&!preparationAccepted){preview.showComponent(NeobotSeedData.GEAR_MOTOR,"Prepare four motor leads");previewAttached=false;}else if(step==1&&!previewAttached){preview.showContent(previewContent,"Motor wiring · Component view");previewAttached=true;}
+        if(step==1&&preparationAccepted)preview.setContentAction("Expand motor wiring diagram",this::expandDiagram);
         if(!paused)schematic.resume();else schematic.pause();
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next unlocked":message.isEmpty()?HUD[step].split("\n")[0]:message,false,flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
     }
     String checkpointState(){
         if(picker!=null&&picker.isShowing()){pickerDraft=picker.draftColors();pickerTerminal=picker.selectedTerminal();reopenPicker=true;}
-        return flow.snapshot()+(pickerDraft==null?"":"~"+pickerDraft.encode()+"~"+pickerTerminal.ordinal());
+        return flow.snapshot()+(pickerDraft==null?"":"~"+pickerDraft.encode()+"~"+pickerTerminal.ordinal())+"^"+preparationAccepted;
     }
     private void save(){String state=checkpointState();if(!state.equals(savedState)){savedState=state;if(!developer&&!reviewing)PhaseProgressStore.saveWiringState(activity,NeobotSeedData.PROJECT_ID,state);checkpointChanged.run();}}
     void onSpeechFinished(String key){if(finishing&&("phase4:"+completionKey).equals(key))advance();}
     void onVoiceStatusChanged(){AssemblyVoiceGuide.Status status=activity.voiceGuide().getStatus();if(finishing&&(status==AssemblyVoiceGuide.Status.MUTED||status==AssemblyVoiceGuide.Status.UNAVAILABLE))advance();}
     void setSaving(boolean value){boolean failed=saving&&!value;saving=value;if(failed){message="Progress could not be saved. Choose Continue to retry.";say(message,"save-retry:"+(++speechSequence));}render();}
-    private void dismissDialogs(){if(picker!=null){picker.dismiss();picker=null;}if(pullDialog!=null){pullDialog.dismiss();pullDialog=null;}}
+    private void dismissDialogs(){preparing=false;if(picker!=null){picker.dismiss();picker=null;}if(pullDialog!=null){pullDialog.dismiss();pullDialog=null;}}
     void pause(){paused=true;main.removeCallbacksAndMessages(null);flow.interrupt();schematic.pause();workspace.pause();workspace.hide();previewAttached=false;activity.voiceGuide().stop();card.setOnDetailsChanged(null);save();dismissDialogs();}
     void resume(){paused=false;flow.interrupt();bindControls();changed();}
     void prepareForReview(){pause();previewAttached=false;}
     void devJump(int step){developer=true;flow.devJump(step);changed();}
     void devSkip(){developer=true;flow.devSkip();render();save();}
     void devComplete(){developer=true;flow.devComplete();render();save();}
-    void restart(){dismissDialogs();pickerDraft=null;reopenPicker=false;flow.restart();changed();}
+    void restart(){dismissDialogs();pickerDraft=null;reopenPicker=false;preparationAccepted=false;flow.restart();changed();}
     @Override public void close(){if(closed)return;pause();closed=true;workspace.close();schematic.setOnMotorWireSelected(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);}
 }

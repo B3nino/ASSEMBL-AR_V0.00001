@@ -520,31 +520,74 @@ public final class PhaseWorkflowInstrumentedTest {
         }
     }
 
-    @Test
-    public void aPassedPlacementScanOpensTheDirectChecklistAndSavesThePhase() {
+    @Test public void phaseSevenRequiresHardwareThenBottomScansAndPhysicalChecksBeforePhaseEight(){
         positionAt(9);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.CASTER_FIT);
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                for (int index = 0; index < 4; index++) frames.deliver(frames.looseCaster(), null);
-                assertEquals(Mode.DEMO, controller.getFlow().getMode());
-                controller.onFinished();
-                activity.findViewById(R.id.scanAssemblyButton).performClick();
-                RecognitionRequest request = controller.requestFor(CameraCalibration.pinhole(500, 500, 320, 240));
-                assertEquals(NeobotSeedData.CASTER_WHEEL, request.getExpectation().getComponentId());
-                assertEquals(NeobotSeedData.MAIN_BOARD, request.getSpatialAnchorComponentId());
-                for (int index = 0; index < 10 && controller.getFlow().getMode() == Mode.VERIFY; index++) {
-                    frames.deliver(frames.installedCaster(), null);
-                }
-                assertEquals(Mode.PHYSICAL_CHECK, controller.getFlow().getMode());
-                assertTrue(text(activity, R.id.phaseResults).contains("✓ Front caster"));
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.CASTER_FIT);
+            scenario.onActivity(activity->{
+                activity.voiceGuide().setMuted(true);
+                Phase7GuideController guide=(Phase7GuideController)getField(controller,"casterTrackerGuide");
+                Frames frames=new Frames(activity,controller);
+                frames.deliver(frames.phaseSeven(1,false),null);assertTrue(gearCard(activity).next.isEnabled());
+                assertEquals(View.GONE,gearCard(activity).action.getVisibility());gearCard(activity).next.performClick();
+                assertTrue(guide.flow.preparingHardware());assertFalse(guide.scanning());
+                Object preview=activity.findViewById(R.id.componentPreviewWindow);
+                assertEquals(dev.chyken.assembl_ar.render.ComponentModelCatalog.CASTER_FASTENERS,getField(preview,"componentId"));
+                assertEquals("20mm screw",((TextView)getField(preview,"screwLabel")).getText().toString());
+                assertEquals(View.GONE,((View)getField(preview,"spacerLabel")).getVisibility());
+                gearCard(activity).action.performClick();
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();assertEquals(2,guide.flow.step());
+                for(int i=0;i<4;i++)frames.deliver(frames.phaseSeven(1,false),null);
+                assertFalse(gearCard(activity).next.isEnabled());frames.deliver(frames.phaseSeven(2,false),null);
+                assertTrue(gearCard(activity).next.isEnabled());gearCard(activity).next.performClick();assertTrue(guide.flow.preparingHardware());
+                assertFalse(gearCard(activity).next.isEnabled());assertFalse(guide.scanning());
+                assertEquals(dev.chyken.assembl_ar.render.ComponentModelCatalog.TRACKER_FASTENERS,getField(preview,"componentId"));
+                assertEquals("10mm screw",((TextView)getField(preview,"screwLabel")).getText().toString());
+                assertEquals(View.VISIBLE,((View)getField(preview,"spacerLabel")).getVisibility());
+                gearCard(activity).action.performClick();gearCard(activity).next.performClick();assertEquals(3,guide.flow.step());
+                assertTrue(controller.isAnalysisSuspended());assertFalse(((ArHudView)activity.findViewById(R.id.arHudView)).isScanningEnabled());
+                call(guide,"stopVideo",new Class<?>[0]);guide.flow.demoFinished();guide.render();
+                assertEquals("Scan Work",gearCard(activity).action.getText().toString());assertFalse(guide.scanning());
+                gearCard(activity).action.performClick();RecognitionRequest request=controller.requestFor(CameraCalibration.pinhole(500,500,320,240));
+                assertEquals(3,request.getPhase7Stage());assertNull(request.getSpatialAnchorComponentId());
+                frames.deliver(frames.phaseSeven(0,true),null);assertFalse(gearCard(activity).next.isEnabled());
+                frames.deliver(frames.phaseSeven(1,false),null);assertFalse(gearCard(activity).next.isEnabled());
+                call(guide,"checklist",new Class<?>[0]);AlertDialog check=(AlertDialog)getField(guide,"dialog");
+                check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertTrue(check.isShowing());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertTrue(guide.flow.sandwiched());assertFalse(guide.flow.complete());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();assertTrue(gearCard(activity).next.isEnabled());
+                gearCard(activity).next.performClick();assertEquals(4,guide.flow.step());
+                call(guide,"stopVideo",new Class<?>[0]);guide.flow.demoFinished();guide.render();gearCard(activity).action.performClick();
+                frames.deliver(frames.phaseSeven(1,false),null);call(guide,"checklist",new Class<?>[0]);
+                check=(AlertDialog)getField(guide,"dialog");check.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();assertFalse(guide.flow.complete());
+                check.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             });
-            capture(scenario, "phase-caster-checklist");
-            completeChecklist(scenario, controller);
-            awaitPhase(scenario, AssemblyPhaseCatalog.LINE_TRACKERS);
-            assertEquals(StepStatus.COMPLETED, statusOf(9));
-            assertEquals(StepStatus.IN_PROGRESS, statusOf(10));
+            awaitPhase(scenario,AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT);
+            assertEquals(StepStatus.COMPLETED,statusOf(9));assertEquals(StepStatus.COMPLETED,statusOf(10));assertEquals(StepStatus.IN_PROGRESS,statusOf(11));
+        }
+    }
+
+    @Test public void phaseSevenResumesPartialPhysicalAnswersAndReviewPreservesThem(){
+        positionAt(9);
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.CASTER_FIT);
+            scenario.onActivity(activity->{
+                Phase7GuideController guide=(Phase7GuideController)getField(controller,"casterTrackerGuide");
+                guide.flow.devSkip();guide.flow.next(SystemClock.elapsedRealtimeNanos());guide.flow.devSkip();guide.flow.next(SystemClock.elapsedRealtimeNanos());
+                guide.flow.demoFinished();guide.flow.armScan(SystemClock.elapsedRealtimeNanos());guide.render();
+                Frames frames=new Frames(activity,controller);frames.deliver(frames.phaseSeven(1,false),null);
+                call(guide,"checklist",new Class<?>[0]);((AlertDialog)getField(guide,"dialog")).getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            });
+            scenario.recreate();PhaseAssemblyController restored=awaitPhase(scenario,AssemblyPhaseCatalog.CASTER_FIT);
+            scenario.onActivity(activity->{
+                Phase7GuideController guide=(Phase7GuideController)getField(restored,"casterTrackerGuide");assertEquals(3,guide.flow.step());assertTrue(guide.flow.sandwiched());assertFalse(guide.flow.swivels());
+                assertTrue(guide.flow.scanned());assertFalse(guide.scanning());
+                gearCard(activity).previous.performClick();assertEquals(3,guide.flow.step());assertNotNull(getField(guide,"video"));
+                for(int i=0;i<5;i++)gearCard(activity).previous.performClick();
+                assertNotNull(getField(restored,"driverWiringGuide"));gearCard(activity).next.performClick();
+                assertNull(getField(restored,"driverWiringGuide"));assertEquals(guide,getField(restored,"casterTrackerGuide"));assertEquals(1,guide.flow.step());
+                for(int i=0;i<4;i++)gearCard(activity).next.performClick();assertTrue(guide.flow.sandwiched());assertFalse(guide.flow.swivels());
+            });
         }
     }
 
@@ -782,85 +825,25 @@ public final class PhaseWorkflowInstrumentedTest {
         }
     }
 
-    @Test
-    public void aSideLoadedClipWithChapterTimesReplacesTheSchematicDemo() throws IOException {
+    @Test public void phaseSevenPreviousReopensItsOwnDemoAndReturnsToScanWithoutLosingChecks(){
         positionAt(9);
-        File[] files = sideLoadCasterClip(12);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.CASTER_FIT);
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                for (int index = 0; index < 4; index++) frames.deliver(frames.looseCaster(), null);
-                assertEquals(Mode.DEMO, controller.getFlow().getMode());
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.phaseVideo).getVisibility());
-                assertEquals(View.GONE, activity.findViewById(R.id.assemblyDemo).getVisibility());
+        try(ActivityScenario<AssemblyActivity> scenario=launch()){
+            PhaseAssemblyController controller=awaitPhase(scenario,AssemblyPhaseCatalog.CASTER_FIT);
+            scenario.onActivity(activity->{
+                activity.voiceGuide().setMuted(true);Phase7GuideController guide=(Phase7GuideController)getField(controller,"casterTrackerGuide");
+                guide.flow.devSkip();guide.flow.next(SystemClock.elapsedRealtimeNanos());guide.flow.devSkip();guide.flow.next(SystemClock.elapsedRealtimeNanos());
+                guide.flow.devSkip();guide.flow.next(SystemClock.elapsedRealtimeNanos());call(guide,"changed",new Class<?>[0]);
+                assertEquals(4,guide.flow.step());assertNotNull(getField(guide,"video"));assertFalse(guide.scanning());
+                call(guide,"stopVideo",new Class<?>[0]);guide.flow.demoFinished();guide.render();gearCard(activity).action.performClick();assertTrue(guide.scanning());
+                PhaseFlow.ScanTag old=guide.flow.tag();gearCard(activity).previous.performClick();
+                assertEquals("Previous from tracker verification must reopen TRACKER videos",4,guide.flow.step());assertTrue(guide.flow.viewingDemo());assertNotNull(getField(guide,"video"));assertFalse(guide.scanning());assertFalse(guide.flow.accepts(old,SystemClock.elapsedRealtimeNanos()));
+                gearCard(activity).action.performClick();assertTrue(guide.scanning());assertEquals(4,guide.flow.step());
+                Frames frames=new Frames(activity,controller);frames.deliver(frames.phaseSeven(1,false),null);assertTrue(guide.flow.scanned());
+                call(guide,"dismiss",new Class<?>[0]);gearCard(activity).previous.performClick();assertEquals(4,guide.flow.step());assertTrue(guide.flow.scanned());
+                assertNotNull(getField(guide,"video"));assertEquals("Return to verification",gearCard(activity).action.getText().toString());
+                gearCard(activity).action.performClick();assertTrue(guide.flow.scanned());assertNull(getField(guide,"video"));assertFalse(guide.scanning());
             });
-            // Chapter captions follow the clip's authored start times (one second apart here).
-            awaitText(scenario, R.id.demoStage, "step 4 of 12", 15_000L);
-            capture(scenario, "phase-caster-video");
-            for (int attempt = 0; attempt < 200; attempt++) {
-                Mode[] mode = new Mode[1];
-                scenario.onActivity(activity -> mode[0] = controller.getFlow().getMode());
-                if (mode[0] == Mode.ASSEMBLE) break;
-                SystemClock.sleep(100L);
-            }
-            scenario.onActivity(activity -> {
-                assertEquals("The end of the clip leaves the learner assembling",
-                        Mode.ASSEMBLE, controller.getFlow().getMode());
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.scanAssemblyButton).getVisibility());
-            });
-        } finally {
-            for (File file : files) file.delete();
         }
-    }
-
-    @Test
-    public void aClipWhoseChapterTimesDoNotFitFallsBackToTheSchematic() throws IOException {
-        positionAt(9);
-        File[] files = sideLoadCasterClip(11);
-        try (ActivityScenario<AssemblyActivity> scenario = launch()) {
-            PhaseAssemblyController controller = awaitPhase(scenario, AssemblyPhaseCatalog.CASTER_FIT);
-            scenario.onActivity(activity -> {
-                Frames frames = new Frames(activity, controller);
-                for (int index = 0; index < 4; index++) frames.deliver(frames.looseCaster(), null);
-                assertEquals(Mode.DEMO, controller.getFlow().getMode());
-                assertEquals(View.GONE, activity.findViewById(R.id.phaseVideo).getVisibility());
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.assemblyDemo).getVisibility());
-                assertTrue(text(activity, R.id.demoStage).contains("step 1 of 12"));
-            });
-        } finally {
-            for (File file : files) file.delete();
-        }
-    }
-
-    /** Writes the synthetic 12-second test clip and a manifest with {@code chapters} start times. */
-    private static File[] sideLoadCasterClip(int chapters) throws IOException {
-        Context context = ApplicationProvider.getApplicationContext();
-        File media = context.getExternalFilesDir(
-                dev.chyken.assembl_ar.workflow.phase.PhaseMediaCatalog.SIDELOAD_DIRECTORY);
-        assertNotNull(media);
-        assertTrue(media.isDirectory() || media.mkdirs());
-        File video = new File(media, "phase_" + AssemblyPhaseCatalog.CASTER_FIT + ".mp4");
-        File manifest = new File(media, "phase_" + AssemblyPhaseCatalog.CASTER_FIT + ".json");
-        try (java.io.InputStream input = InstrumentationRegistry.getInstrumentation().getContext()
-                .getAssets().open("phase_media/synthetic_phase_clip.mp4");
-             FileOutputStream output = new FileOutputStream(video)) {
-            byte[] buffer = new byte[16 * 1024];
-            for (int read = input.read(buffer); read > 0; read = input.read(buffer)) {
-                output.write(buffer, 0, read);
-            }
-        }
-        StringBuilder starts = new StringBuilder();
-        for (int chapter = 0; chapter < chapters; chapter++) {
-            if (chapter > 0) starts.append(',');
-            starts.append(chapter * 1_000L);
-        }
-        try (FileOutputStream output = new FileOutputStream(manifest)) {
-            output.write(("{\"chapterStartMillis\":[" + starts + "],\"durationMillis\":12000,"
-                    + "\"provenance\":\"synthetic test pattern\"}")
-                    .getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        }
-        return new File[] {video, manifest};
     }
 
     private static void awaitText(ActivityScenario<AssemblyActivity> scenario, int id, String expected,
@@ -1078,6 +1061,11 @@ public final class PhaseWorkflowInstrumentedTest {
         private long nextTimestamp() {
             timestamp = Math.max(timestamp + 100 * MILLIS, SystemClock.elapsedRealtimeNanos());
             return timestamp;
+        }
+
+        RecognitionResult phaseSeven(int count,boolean invalid){
+            RecognitionResult base=component(NeobotSeedData.MAIN_BOARD,board,Collections.emptyList(),7,null,null);
+            return (RecognitionResult)call(base,"withPhase7Observation",new Class<?>[]{dev.chyken.assembl_ar.vision.Phase7Observation.class},new dev.chyken.assembl_ar.vision.Phase7Observation(count,invalid,40));
         }
 
         RecognitionResult nano(dev.chyken.assembl_ar.vision.Phase5Observation.State state){

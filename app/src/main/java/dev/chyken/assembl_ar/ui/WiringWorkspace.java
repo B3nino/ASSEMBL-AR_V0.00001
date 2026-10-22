@@ -21,6 +21,7 @@ public final class WiringWorkspace extends LinearLayout implements AutoCloseable
     private final Consumer<String> instruction;
     private final android.view.ViewTreeObserver.OnGlobalLayoutListener layout=this::fit;
     private MotorWireColorConfig motor;private DriverWireColorConfig driver;
+    private ComponentWiringColorConfig component;private ComponentWiringColorConfig.Wire selectedComponent=ComponentWiringColorConfig.Wire.TRIGGER;private int section;
     private Terminal selectedMotor=Terminal.LEFT_POSITIVE;private Wire selectedDriver=Wire.VCC;
     private Dialog full;private AssemblyDemoView fullDiagram;private boolean closed,legendOnPreview,paused;private int focus;
     public WiringWorkspace(Activity activity,Consumer<String> instruction){
@@ -33,15 +34,17 @@ public final class WiringWorkspace extends LinearLayout implements AutoCloseable
     }
     public static WiringWorkspace active(Activity activity){View root=activity.findViewById(R.id.assemblyRoot);Object tag=root==null?null:root.getTag(R.id.wiringWorkspace);return tag instanceof WiringWorkspace&&((WiringWorkspace)tag).getVisibility()==VISIBLE?(WiringWorkspace)tag:null;}
     public static int railWidth(android.content.Context context,int width){return Math.min(Math.max(UiUtils.dp(context,300),Math.round(width*.34f)),Math.round(width*.44f));}
-    public void setMotorColors(MotorWireColorConfig colors){motor=colors;driver=null;diagram.setMotorWireColors(colors);diagram.setSelectedMotorWire(selectedMotor);legend();}
-    public void setDriverColors(DriverWireColorConfig colors,int focus){driver=colors;motor=null;this.focus=focus;
+    public void setMotorColors(MotorWireColorConfig colors){component=null;motor=colors;driver=null;diagram.setMotorWireColors(colors);diagram.setSelectedMotorWire(selectedMotor);legend();}
+    public void setDriverColors(DriverWireColorConfig colors,int focus){component=null;driver=colors;motor=null;this.focus=focus;
         if(focus==2&&selectedDriver.power())selectedDriver=Wire.A1A;if(focus==1&&!selectedDriver.power())selectedDriver=Wire.VCC;
         diagram.setDriverWireColors(colors);diagram.setDriverWireFocus(focus);diagram.setSelectedDriverWire(selectedDriver);legend();}
+    public void setComponentColors(ComponentWiringColorConfig colors,int section){component=colors;driver=null;motor=null;this.section=section;if(selectedComponent.section!=section)selectedComponent=section==1?ComponentWiringColorConfig.Wire.TRIGGER:section==2?ComponentWiringColorConfig.Wire.LED:ComponentWiringColorConfig.Wire.LEFT_VCC;diagram.setComponentWireColors(colors,section);diagram.setSelectedComponentWire(selectedComponent);legend();}
     public void show(){if(closed)return;WiringWorkspace other=active(activity);if(other!=null&&other!=this)other.hide();root.setTag(R.id.wiringWorkspace,this);setVisibility(VISIBLE);activity.findViewById(R.id.recognitionBanner).setVisibility(GONE);fit();if(!paused)diagram.resume();}
     public void hide(){setVisibility(GONE);diagram.pause();if(root.getTag(R.id.wiringWorkspace)==this){root.setTag(R.id.wiringWorkspace,null);activity.findViewById(R.id.recognitionBanner).setVisibility(VISIBLE);}if(full!=null)full.dismiss();}
     private void legend(){
         slots.removeAllViews();
-        if(driver!=null)for(Wire wire:Wire.values())slot(wire.label(),driver.swatch(wire).label,driver.color(wire),wire==selectedDriver,()->{selectedDriver=wire;diagram.setSelectedDriverWire(wire);legend();instruction.accept(wire.spoken()+", "+driver.swatch(wire).label+" wire.");});
+        if(component!=null)for(ComponentWiringColorConfig.Wire wire:ComponentWiringColorConfig.Wire.values()){if(wire.section==section)slot(wire.label(),component.swatch(wire).label,component.color(wire),wire==selectedComponent,()->{selectedComponent=wire;diagram.setSelectedComponentWire(wire);legend();instruction.accept(wire.label()+", "+component.swatch(wire).label+" wire.");});}
+        else if(driver!=null)for(Wire wire:Wire.values())slot(wire.label(),driver.swatch(wire).label,driver.color(wire),wire==selectedDriver,()->{selectedDriver=wire;diagram.setSelectedDriverWire(wire);legend();instruction.accept(wire.spoken()+", "+driver.swatch(wire).label+" wire.");});
         else if(motor!=null)for(Terminal terminal:Terminal.values())slot(terminal.shortLabel+" tab",motor.swatch(terminal).label,motor.color(terminal),terminal==selectedMotor,()->{selectedMotor=terminal;diagram.setSelectedMotorWire(terminal);legend();instruction.accept(terminal.spoken()+", "+motor.swatch(terminal).label+" wire to "+terminal.output+".");});
     }
     private void slot(String label,String colorName,int color,boolean selected,Runnable click){
@@ -69,7 +72,8 @@ public final class WiringWorkspace extends LinearLayout implements AutoCloseable
     public void expand(){
         if(closed||paused||full!=null&&full.isShowing())return;
         fullDiagram=new AssemblyDemoView(activity);fullDiagram.setExpandedSchematic(true);
-        if(driver!=null){fullDiagram.setDriverWireColors(driver);fullDiagram.setDriverWireFocus(focus);fullDiagram.setSelectedDriverWire(selectedDriver);fullDiagram.setOnDriverWireSelected(wire->{selectedDriver=wire;diagram.setSelectedDriverWire(wire);legend();fullDiagram.setSelectedDriverWire(wire);instruction.accept(wire.spoken()+", "+driver.swatch(wire).label+" wire.");});}
+        if(component!=null){fullDiagram.setComponentWireColors(component,section);fullDiagram.setSelectedComponentWire(selectedComponent);fullDiagram.setOnComponentWireSelected(wire->{selectedComponent=wire;diagram.setSelectedComponentWire(wire);legend();fullDiagram.setSelectedComponentWire(wire);instruction.accept(wire.label()+", "+component.swatch(wire).label+" wire.");});}
+        else if(driver!=null){fullDiagram.setDriverWireColors(driver);fullDiagram.setDriverWireFocus(focus);fullDiagram.setSelectedDriverWire(selectedDriver);fullDiagram.setOnDriverWireSelected(wire->{selectedDriver=wire;diagram.setSelectedDriverWire(wire);legend();fullDiagram.setSelectedDriverWire(wire);instruction.accept(wire.spoken()+", "+driver.swatch(wire).label+" wire.");});}
         else{fullDiagram.setMotorWireColors(motor);fullDiagram.setSelectedMotorWire(selectedMotor);fullDiagram.setOnMotorWireSelected(terminal->{selectedMotor=terminal;diagram.setSelectedMotorWire(terminal);legend();fullDiagram.setSelectedMotorWire(terminal);instruction.accept(terminal.spoken()+", "+motor.swatch(terminal).label+" wire to "+terminal.output+".");});}
         LinearLayout body=new LinearLayout(activity);body.setOrientation(VERTICAL);body.setBackgroundColor(0xFFF1F6F1);
         LinearLayout header=new LinearLayout(activity);header.setGravity(Gravity.CENTER_VERTICAL);TextView title=new TextView(activity);title.setText("Wiring diagram · Pinch to zoom");title.setTextSize(16);title.setTextColor(0xFF253D30);title.setPadding(dp(16),0,0,0);header.addView(title,new LinearLayout.LayoutParams(0,dp(56),1));

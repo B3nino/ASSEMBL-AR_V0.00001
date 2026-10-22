@@ -43,13 +43,13 @@ public final class AssemblyPhaseCatalogTest {
     @Test
     public void mergedDriverPhasePreservesAllOtherPhaseIdentifiers() {
         List<AssemblyPhase> phases = AssemblyPhaseCatalog.phases();
-        assertEquals(17, phases.size());
+        assertEquals(15, phases.size());
         List<String> expected = Arrays.asList(
                 AssemblyPhaseCatalog.BOARD_PREPARATION, AssemblyPhaseCatalog.MOTOR_ASSEMBLIES,
                 AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT, AssemblyPhaseCatalog.MOTOR_LEADS,
                 AssemblyPhaseCatalog.MICROCONTROLLER_FIT, AssemblyPhaseCatalog.DRIVER_WIRING,
-                AssemblyPhaseCatalog.CASTER_FIT, AssemblyPhaseCatalog.LINE_TRACKERS,
-                AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT, AssemblyPhaseCatalog.SENSOR_WIRING,
+                AssemblyPhaseCatalog.CASTER_FIT,
+                AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT,
                 AssemblyPhaseCatalog.CENTER_STANDOFF, AssemblyPhaseCatalog.WHEEL_PAIR,
                 AssemblyPhaseCatalog.OLED_PROTECTOR_FIT, AssemblyPhaseCatalog.RIBBON_CABLE,
                 AssemblyPhaseCatalog.UPPER_BOARD, AssemblyPhaseCatalog.OLED_FIT,
@@ -96,11 +96,10 @@ public final class AssemblyPhaseCatalogTest {
         AssemblyPhase mount = AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT);
         AssemblyPhase wiring = AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.SENSOR_WIRING);
         for (int order = 1; order <= 16; order++) {
-            boolean mounting = order >= 2 && order <= 4;
-            assertEquals(mounting, mount.contains(11, order));
-            assertEquals(!mounting, wiring.contains(11, order));
+            assertSame(mount,wiring);
+            assertTrue(mount.contains(11, order));
         }
-        assertTrue(AssemblyPhaseCatalog.sectionsCompletedBy(mount).isEmpty());
+        assertEquals(Arrays.asList(11),AssemblyPhaseCatalog.sectionsCompletedBy(mount));
         assertEquals(Arrays.asList(11), AssemblyPhaseCatalog.sectionsCompletedBy(wiring));
         assertEquals(Arrays.asList(4, 5), AssemblyPhaseCatalog.sectionsCompletedBy(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.MOTOR_LEADS)));
@@ -139,6 +138,10 @@ public final class AssemblyPhaseCatalogTest {
                 if (JUMPER_WIRE.equals(required.getComponentId()) && (section.getStepNumber() == 7
                         || section.getStepNumber() == 8)) {
                     assertEquals("Combined power and signal phase", 6, listed);
+                } else if (JUMPER_WIRE.equals(required.getComponentId())&&section.getStepNumber()==11) {
+                    assertEquals("Ten installed leads plus two spare jumpers",12,listed);
+                } else if (NUT.equals(required.getComponentId()) && (section.getStepNumber()==9 || section.getStepNumber()==10)) {
+                    assertEquals("Combined caster and tracker hardware",6,listed);
                 } else {
                     assertEquals("Section " + section.getStepNumber() + " "
                             + required.getComponentId(), required.getQuantity(), listed);

@@ -35,16 +35,22 @@ public final class SchematicComponentCatalog {
         String[] headers={"B-IA","B-IB","GND","VCC","A-IA","A-IB"};
         for(int i=0;i<headers.length;i++)driver.pin(headers[i],headers[i],i==2?PinKind.GROUND_HEADER:i==3?PinKind.POWER_HEADER:PinKind.CONTROL_HEADER,185+i*85,946);
         result.put(driver.id,driver.build());
-        Builder nano=new Builder(NeobotSeedData.MICROCONTROLLER,"arduino_nano.png",1496,1102);
+        Builder nano=new Builder(NeobotSeedData.MICROCONTROLLER,"arduino_nano.png",1672,940);
         String[] top={"D12","D11","D10","D9","D8","D7","D6","D5","D4","D3","D2","GND","RST_TOP","RX","TX"};
         String[] bottom={"D13","3V3","AREF","A0","A1","A2","A3","A4","A5","A6","A7","5V","RST_BOTTOM","GND_BOTTOM","VIN"};
         for(int i=0;i<15;i++){
-            double x=378+i*(769.0/14);
-            nano.pin(top[i],top[i],top[i].equals("GND")?PinKind.GROUND_HEADER:PinKind.CONTROL_HEADER,x,357);
+            double x=246+i*(1193.0/14);
+            nano.pin(top[i],top[i].replace("_TOP",""),top[i].equals("GND")?PinKind.GROUND_HEADER:PinKind.CONTROL_HEADER,x,127);
             String name=bottom[i];PinKind kind=name.equals("GND_BOTTOM")?PinKind.GROUND_HEADER:name.equals("VIN")||name.equals("5V")||name.equals("3V3")?PinKind.POWER_HEADER:PinKind.CONTROL_HEADER;
-            nano.pin(name,name,kind,x,694);
+            nano.pin(name,name.replace("_BOTTOM",""),kind,x,819);
         }
-        result.put(nano.id,nano.build());COMPONENTS=Collections.unmodifiableMap(result);
+        result.put(nano.id,nano.build());        Builder sensor=new Builder(NeobotSeedData.DISTANCE_SENSOR,"distance_sensor.png",1743,902);
+        String[] sensorPins={"VCC","Trigger","Echo","GND"};for(int i=0;i<4;i++)sensor.pin(sensorPins[i],sensorPins[i],i==0?PinKind.POWER_HEADER:i==3?PinKind.GROUND_HEADER:PinKind.CONTROL_HEADER,747+i*83.3,850);result.put(sensor.id,sensor.build());
+        Builder tracker=new Builder(NeobotSeedData.LINE_TRACKER,"line_tracker.png",1026,1533);
+        tracker.pin("G","G",PinKind.GROUND_HEADER,441,1440).pin("V+","V+",PinKind.POWER_HEADER,514,1440).pin("S","S",PinKind.CONTROL_HEADER,586,1440);result.put(tracker.id,tracker.build());
+        Builder power=new Builder("power_rail","power_rail.png",2152,731);for(int i=1;i<=10;i++)power.pin("5V_"+i,"5V "+i,PinKind.POWER_HEADER,289+(i-1)*174.8,344);result.put(power.id,power.build());
+        Builder ground=new Builder("ground_signal_rail","ground_signal_rail.png",2146,733);for(int i=1;i<=12;i++)ground.pin(i==11?"SPKR":i==12?"LED":"GND_"+i,i==11?"SPKR":i==12?"LED":"GND "+i,i<=10?PinKind.GROUND_HEADER:PinKind.CONTROL_HEADER,221+(i-1)*154.7,338);result.put(ground.id,ground.build());
+        COMPONENTS=Collections.unmodifiableMap(result);
     }
     private SchematicComponentCatalog(){}
     public static Component component(String id){Component c=COMPONENTS.get(id);if(c==null)throw new IllegalArgumentException("Unknown schematic component "+id);return c;}

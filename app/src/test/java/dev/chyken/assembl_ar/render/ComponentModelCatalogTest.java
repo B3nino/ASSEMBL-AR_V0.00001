@@ -18,6 +18,11 @@ public final class ComponentModelCatalogTest {
     @Test public void combinedFastenerPreviewsReuseRealScrewsWithoutAddingLibraryComponents(){
         assertTrue(ComponentModelCatalog.hasModel(ComponentModelCatalog.SHORT_FASTENERS));
         assertTrue(ComponentModelCatalog.hasModel(ComponentModelCatalog.LONG_FASTENERS));
+        assertTrue(ComponentModelCatalog.hasModel(ComponentModelCatalog.CASTER_FASTENERS));
+        assertTrue(ComponentModelCatalog.hasModel(ComponentModelCatalog.TRACKER_FASTENERS));
+        assertEquals(ComponentModelCatalog.assetPath(NeobotSeedData.SCREW_20MM),ComponentModelCatalog.assetPath(ComponentModelCatalog.CASTER_FASTENERS));
+        assertEquals(ComponentModelCatalog.assetPath(NeobotSeedData.SCREW_SHORT),ComponentModelCatalog.assetPath(ComponentModelCatalog.TRACKER_FASTENERS));
+        assertFalse(ComponentModelCatalog.assets().containsKey(ComponentModelCatalog.CASTER_FASTENERS));
         assertEquals(ComponentModelCatalog.assetPath(NeobotSeedData.SCREW_SHORT),ComponentModelCatalog.assetPath(ComponentModelCatalog.SHORT_FASTENERS));
         assertEquals(ComponentModelCatalog.assetPath(NeobotSeedData.SCREW_30MM),ComponentModelCatalog.assetPath(ComponentModelCatalog.LONG_FASTENERS));
         assertEquals("models/hex_nut.obj",ComponentModelCatalog.assetPath(NeobotSeedData.NUT));

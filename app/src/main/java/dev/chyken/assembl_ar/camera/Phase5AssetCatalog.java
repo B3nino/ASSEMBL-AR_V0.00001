@@ -48,8 +48,10 @@ public final class Phase5AssetCatalog {
     public static String guide(AssetManager assets,int step){return guideForPaths(Phase2AssetCatalog.files(assets,ROOT),step);}
     public static String guideForPaths(List<String> paths,int step){
         if(step!=1&&step!=3)return null;
-        List<String> sorted=new ArrayList<>(paths);Collections.sort(sorted);
+        List<String> sorted=new ArrayList<>(paths);
+        sorted.sort(Comparator.comparingInt((String p)->p.toLowerCase(Locale.ROOT).endsWith(".png")?0:1).thenComparing(p->p));
         for(String path:sorted){
+            if(Phase2AssetCatalog.normalize(path).contains("DUPE"))continue;
             if(!path.startsWith(ROOT+"/")||!Phase2AssetCatalog.image(path))continue;
             String folder=path.substring(ROOT.length()+1).split("/")[0];
             if(!Phase2AssetCatalog.normalize(folder).equals("P5SCANNINGGUIDE"))continue;

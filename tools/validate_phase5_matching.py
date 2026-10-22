@@ -11,6 +11,8 @@ if '--opencv-path' in sys.argv:
     sys.path.insert(0,sys.argv[sys.argv.index('--opencv-path')+1])
 import cv2 as cv
 import numpy as np
+from reference_sampling import reference_pyramid
+cv.setNumThreads(2)
 
 ROOT=Path(__file__).resolve().parents[1]
 ASSETS=ROOT/'app/src/main/assets/references/Phase5'
@@ -49,7 +51,7 @@ def prepare(path,role):
     mask=np.zeros((h,w),np.uint8)
     if role in ('assembly','invalid'):cv.rectangle(mask,(int(.02*w),int(.02*h)),(int(.98*w),int(.98*h)),255,-1)
     else:cv.rectangle(mask,(l,t),(r,b),255,-1)
-    variants=[features(im,REF_ORB,mask,inverted) for inverted in (False,True)]
+    variants=[reference_pyramid(im,REF_ORB,mask,inverted,features,(l,t,r,b)) for inverted in (False,True)]
     return dict(path=path,role=role,variants=variants,rect=(l,t,r,b),image=im)
 
 def homography(a,b,minimum,min_width=15,min_height=15):

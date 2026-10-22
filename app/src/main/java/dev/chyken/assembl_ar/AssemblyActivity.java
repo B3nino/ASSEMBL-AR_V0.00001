@@ -135,6 +135,12 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     private final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
+    // Descriptor extraction must never queue ahead of live camera frames or preview startup.
+    private final ExecutorService visionLoaderExecutor = Executors.newSingleThreadExecutor(task ->
+            new Thread(() -> {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                task.run();
+            }, "Assembly-References"));
     private final ActivityResultLauncher<String> cameraPermission = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(), granted -> {
                 if (granted) {
@@ -274,6 +280,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     @Nullable private Camera boundCamera;
+    private boolean cameraBindingInProgress;
     @Nullable private View.OnLayoutChangeListener cameraLayoutListener;
     private int cameraLayoutGeneration;
     private ImageAnalysis imageAnalysis;
@@ -563,6 +570,9 @@ public final class AssemblyActivity extends AppCompatActivity {
         // so the camera UI becomes available immediately without requiring an Activity restart.
         showCameraPermissionPanel(false);
         initializeVision();
+        // Also retries a failed bind when returning from settings or resuming the Activity.
+        // A bound camera is retained; CameraX resumes its stream through the lifecycle.
+        startCamera(visionGeneration);
     }
 
     private void showCameraPermissionPanel(boolean show) {
@@ -575,11 +585,14 @@ public final class AssemblyActivity extends AppCompatActivity {
         }
         visionInitializationStarted = true;
         int generation = ++visionGeneration;
-        setBanner("Preparing the offline component catalog…", true, R.drawable.bg_live_pill);
+        setBanner("Preparing component recognition…", true, R.drawable.bg_live_pill);
+        // Preview has no OpenCV dependency. Open it before any photo decoding/ORB work.
+        startCamera(generation);
         try {
-            cameraExecutor.execute(() -> {
+            visionLoaderExecutor.execute(() -> {
                 ReferenceDatabase loadedDatabase = null;
                 ComponentRecognizer loadedRecognizer = null;
+                ModelBasedPartRecognizer loadedModelRecognizer = null;
                 try {
                     if (destroyed || generation != visionGeneration) {
                         return;
@@ -592,16 +605,24 @@ public final class AssemblyActivity extends AppCompatActivity {
                     File descriptorCache = new File(
                             getNoBackupFilesDir(), "orb_reference_cache_v3");
                     loadedDatabase = ReferenceDatabase.load(
-                            getAssets(), specs, loadedConfig, descriptorCache);
+                            getAssets(), specs, loadedConfig, descriptorCache,
+                            () -> !destroyed && generation == visionGeneration);
                     loadedRecognizer = new ComponentRecognizer(loadedConfig, loadedDatabase);
+                    try {
+                        loadedModelRecognizer = new ModelBasedPartRecognizer(getAssets());
+                    } catch (Exception failure) {
+                        Log.w("AssemblyActivity", "Model templates unavailable", failure);
+                    }
                     if (destroyed || generation != visionGeneration) {
                         closeVisionResources(loadedRecognizer, loadedDatabase);
                         return;
                     }
                     ReferenceDatabase readyDatabase = loadedDatabase;
                     ComponentRecognizer readyRecognizer = loadedRecognizer;
+                    ModelBasedPartRecognizer readyModelRecognizer = loadedModelRecognizer;
                     runOnUiThread(() -> installVisionResources(
-                            generation, loadedConfig, readyDatabase, readyRecognizer));
+                            generation, loadedConfig, readyDatabase, readyRecognizer,
+                            readyModelRecognizer));
                 } catch (Throwable failure) {
                     closeVisionResources(loadedRecognizer, loadedDatabase);
                     Log.e("AssemblyActivity", "Vision initialization failed", failure);
@@ -623,7 +644,8 @@ public final class AssemblyActivity extends AppCompatActivity {
             int generation,
             VisionConfig loadedConfig,
             ReferenceDatabase loadedDatabase,
-            ComponentRecognizer loadedRecognizer) {
+            ComponentRecognizer loadedRecognizer,
+            @Nullable ModelBasedPartRecognizer loadedModelRecognizer) {
         if (!isVisionGenerationActive(generation)) {
             closeVisionResources(loadedRecognizer, loadedDatabase);
             return;
@@ -631,19 +653,15 @@ public final class AssemblyActivity extends AppCompatActivity {
         visionConfig = loadedConfig;
         referenceDatabase = loadedDatabase;
         java.util.Set<String> supportedIds = new java.util.HashSet<>(loadedDatabase.getComponentIds());
-        try {
-            modelPartRecognizer = new ModelBasedPartRecognizer(getAssets());
-            supportedIds.addAll(modelPartRecognizer.supportedComponentIds());
-        } catch (Exception failure) {
-            modelPartRecognizer = null;
-            Log.w("AssemblyActivity", "Model templates unavailable", failure);
-        }
+        modelPartRecognizer = loadedModelRecognizer;
+        if (modelPartRecognizer != null) supportedIds.addAll(modelPartRecognizer.supportedComponentIds());
         availableRecognitionIds = java.util.Collections.unmodifiableSet(supportedIds);
         recognizer = loadedRecognizer;
         PhaseAssemblyController phases = phaseController;
         if (phases != null) phases.onRecognitionReady();
         showCurrentGuidedStepBanner();
-        startCamera(generation);
+        // Attach to the existing use case without unbinding/restarting the visible preview.
+        attachVisionAnalyzer(generation);
     }
 
     private boolean isVisionGenerationActive(int generation) {
@@ -662,12 +680,18 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private void startCamera(int generation) {
-        if (!isVisionGenerationActive(generation)) {
+        if (!isVisionGenerationActive(generation) || !hasCameraPermission()) return;
+        if (boundCamera != null) {
+            attachVisionAnalyzer(generation);
             return;
         }
+        if (cameraBindingInProgress) return;
+        cameraBindingInProgress = true;
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             if (!isVisionGenerationActive(generation)) {
+                cameraBindingInProgress = false;
+                if (!destroyed) startCamera(visionGeneration);
                 return;
             }
             try {
@@ -682,68 +706,12 @@ public final class AssemblyActivity extends AppCompatActivity {
                 }
                 Preview preview = new Preview.Builder().build();
 
-                // If recognizer is available, attach the analyzer. Otherwise bind preview
-                // immediately so the camera feed appears even while recognition initializes.
-                ImageAnalysis analysis = null;
-                if (recognizer != null) {
-                    analysis = new ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-                            .build();
-                    imageAnalysis = analysis;
-                    analyzer = new AssemblyVisionAnalyzer(recognizer,
-                            new AssemblyVisionAnalyzer.RequestProvider() {
-                                @Override
-                                public RecognitionRequest requestFor(
-                                        AssemblyVisionAnalyzer.FrameMetadata metadata) {
-                                    return recognitionRequestFor(metadata);
-                                }
-
-                                @Override
-                                public boolean isAnalysisSuspended() {
-                                    PhaseAssemblyController phases = phaseController;
-                                    return phases != null && phases.isAnalysisSuspended();
-                                }
-                            },
-                            new AssemblyVisionAnalyzer.Callback() {
-                                @Override
-                                public void onResult(RecognitionResult result) {
-                                    long completedAt = SystemClock.elapsedRealtimeNanos();
-                                    int resultVisibilityGeneration = assemblyVisibilityGeneration;
-                                    runOnUiThread(() -> {
-                                        if (isVisionGenerationActive(generation)) {
-                                            // Do not restore board/component evidence queued
-                                            // before a pause/resume transition in any step.
-                                            if (resultVisibilityGeneration
-                                                    != assemblyVisibilityGeneration) return;
-                                            handleRecognition(result, completedAt);
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onError(Throwable failure) {
-                                    runOnUiThread(() -> {
-                                        PhaseAssemblyController phases = phaseController;
-                                        if (phases != null && isVisionGenerationActive(generation)) {
-                                            phases.onAnalysisError();
-                                        } else if (isVisionGenerationActive(generation)) {
-                                            if (isOnFinalGuidedStep()) {
-                                                setBanner("Hold steady while recognition recovers…",
-                                                        true, R.drawable.bg_live_pill);
-                                            } else {
-                                                showCurrentGuidedStepBanner();
-                                            }
-                                        }
-                                    });
-                                }
-                            }, visionConfig, true, modelPartRecognizer);
-                    analysis.setAnalyzer(cameraExecutor, analyzer);
-                } else {
-                    // No recognizer yet; ensure previous analysis state is cleared.
-                    imageAnalysis = null;
-                    analyzer = null;
-                }
+                // Bind analysis with Preview from the outset to keep their crop/timebase shared.
+                // CameraX discards analysis frames until the asynchronously prepared analyzer exists.
+                ImageAnalysis analysis = new ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                        .build();
 
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
                 provider.unbindAll();
@@ -753,13 +721,13 @@ public final class AssemblyActivity extends AppCompatActivity {
                         // Analyze PreviewView's exact crop so HUD and OpenGL coordinates describe
                         // the visible pixels, including FILL_CENTER aspect-ratio cropping.
                         .setViewPort(viewPort);
-                if (analysis != null) {
-                    useCases.addUseCase(analysis);
-                }
+                useCases.addUseCase(analysis);
                 Camera camera = provider.bindToLifecycle(
                         this, CameraSelector.DEFAULT_BACK_CAMERA, useCases.build());
                 boundCamera = camera;
+                imageAnalysis = analysis;
                 calibrationProvider = CameraCalibrationProvider.from(camera.getCameraInfo());
+                attachVisionAnalyzer(generation);
                 if (recognizer != null) showCurrentGuidedStepBanner();
             } catch (Exception failure) {
                 boundCamera = null;
@@ -768,8 +736,63 @@ public final class AssemblyActivity extends AppCompatActivity {
                     setBanner("Rear camera unavailable · automatic validation is required",
                             false, R.drawable.bg_camera_warning);
                 }
+            } finally {
+                cameraBindingInProgress = false;
             }
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void attachVisionAnalyzer(int generation) {
+        if (!isVisionGenerationActive(generation) || recognizer == null
+                || imageAnalysis == null || analyzer != null) return;
+        analyzer = new AssemblyVisionAnalyzer(recognizer,
+                new AssemblyVisionAnalyzer.RequestProvider() {
+                    @Override
+                    public RecognitionRequest requestFor(
+                            AssemblyVisionAnalyzer.FrameMetadata metadata) {
+                        return recognitionRequestFor(metadata);
+                    }
+
+                    @Override
+                    public boolean isAnalysisSuspended() {
+                        PhaseAssemblyController phases = phaseController;
+                        return phases != null && phases.isAnalysisSuspended();
+                    }
+                },
+                new AssemblyVisionAnalyzer.Callback() {
+                    @Override
+                    public void onResult(RecognitionResult result) {
+                        long completedAt = SystemClock.elapsedRealtimeNanos();
+                        int resultVisibilityGeneration = assemblyVisibilityGeneration;
+                        runOnUiThread(() -> {
+                            if (isVisionGenerationActive(generation)) {
+                                // Do not restore board/component evidence queued
+                                // before a pause/resume transition in any step.
+                                if (resultVisibilityGeneration
+                                        != assemblyVisibilityGeneration) return;
+                                handleRecognition(result, completedAt);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(Throwable failure) {
+                        runOnUiThread(() -> {
+                            PhaseAssemblyController phases = phaseController;
+                            if (phases != null && isVisionGenerationActive(generation)) {
+                                phases.onAnalysisError();
+                            } else if (isVisionGenerationActive(generation)) {
+                                if (isOnFinalGuidedStep()) {
+                                    setBanner("Hold steady while recognition recovers…",
+                                            true, R.drawable.bg_live_pill);
+                                } else {
+                                    showCurrentGuidedStepBanner();
+                                }
+                            }
+                        });
+                    }
+                }, visionConfig, true, modelPartRecognizer);
+        imageAnalysis.setAnalyzer(cameraExecutor, analyzer);
     }
 
     private boolean focusCamera(MotionEvent event) {
@@ -787,10 +810,9 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private void waitForPreviewViewPort(int generation) {
-        if (!isVisionGenerationActive(generation) || cameraLayoutListener != null) {
-            return;
-        }
+        if (!isVisionGenerationActive(generation)) return;
         cameraLayoutGeneration = generation;
+        if (cameraLayoutListener != null) return;
         cameraLayoutListener = (view, left, top, right, bottom,
                                 oldLeft, oldTop, oldRight, oldBottom) ->
                 resumeCameraWhenViewPortReady();
@@ -2996,6 +3018,8 @@ public final class AssemblyActivity extends AppCompatActivity {
         if (stepInfoPanel != null) stepInfoPanel.dispose();
         visionGeneration++;
         visionInitializationStarted = false;
+        // Stop obsolete loads on exit/recreation so a resumed screen does not compete with them.
+        visionLoaderExecutor.shutdownNow();
         if (imageAnalysis != null) {
             imageAnalysis.clearAnalyzer();
             imageAnalysis = null;

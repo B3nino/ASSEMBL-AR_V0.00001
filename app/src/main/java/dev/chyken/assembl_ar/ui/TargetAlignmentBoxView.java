@@ -38,8 +38,13 @@ public final class TargetAlignmentBoxView extends android.widget.FrameLayout {
     public void setAllowedBounds(float l,float t,float r,float b){bounds.set(l,t,r,b);post(this::clamp);}
     private void clamp(){if(bounds.isEmpty()||getWidth()==0)return;setX(Math.max(bounds.left,Math.min(bounds.right-getWidth(),getX())));setY(Math.max(bounds.top,Math.min(bounds.bottom-getHeight(),getY())));}
     public void showGuide(@Nullable String path){
+        showGuide(path,null);
+    }
+    public void showGuide(@Nullable String path,@Nullable android.graphics.RectF sourceRegion){
         ArHudView hud=getRootView().findViewById(dev.chyken.assembl_ar.R.id.arHudView);
         if(hud!=null)hud.setTargetGuideVisible(path!=null);
-        if(path==null){setVisibility(GONE);return;}setVisibility(VISIBLE);if(!path.equals(asset)){asset=path;AssetImageLoader.loadBounded(picture,path,960);}
+        if(path==null){setVisibility(GONE);return;}setVisibility(VISIBLE);
+        String key=path+(sourceRegion==null?"":sourceRegion.toString());
+        if(!key.equals(asset)){asset=key;AssetImageLoader.loadBounded(picture,path,sourceRegion==null?960:1920,sourceRegion);}
     }
 }

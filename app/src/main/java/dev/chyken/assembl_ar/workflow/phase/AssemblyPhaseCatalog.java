@@ -27,10 +27,11 @@ import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.VisualTarget;
 import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
 
 /**
- * The NEOBOT guide grouped into 17 learner-visible phases.
+ * The NEOBOT guide grouped into 15 learner-visible phases.
  *
  * <p>All 18 manual sections and their 152 source instructions are preserved. Sections 4–5
- * form one motor-lead job; driver power and control share Phase 6. Section 11 is split between mounting
+ * form one motor-lead job; driver power and control share Phase 6; sections 9–10 share
+ * the caster and line-tracker Phase 7. Section 11 is split between mounting
  * the distance sensor and wiring every sensor. Every camera target reuses an existing
  * recognition path, so a phase checks the same installed evidence the per-card guide did, once
  * the group is finished. Direct checks repeat every manual CHECK and section validation prompt
@@ -40,7 +41,7 @@ public final class AssemblyPhaseCatalog {
     /** Planned roadmap. Later phase membership awaits the user's revised grouping. */
     public static final int ROADMAP_PHASE_COUNT=11;
     /** Bump whenever phase membership, targets or checklists change; shown in the build stamp. */
-    public static final int REVISION = 3;
+    public static final int REVISION = 6;
 
     public static final String BOARD_PREPARATION = "board_preparation";
     public static final String MOTOR_ASSEMBLIES = "motor_assemblies";
@@ -69,6 +70,8 @@ public final class AssemblyPhaseCatalog {
 
     @Nullable
     public static AssemblyPhase byId(String id) {
+        if(SENSOR_WIRING.equals(id))id=DISTANCE_SENSOR_MOUNT;
+        if(LINE_TRACKERS.equals(id))id=CASTER_FIT;
         if(DRIVER_CONTROL.equals(id))id=DRIVER_WIRING; // Saved pre-overhaul sessions retain their destination.
         for (AssemblyPhase phase : PHASES) {
             if (phase.getId().equals(id)) return phase;
@@ -239,12 +242,12 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(MOTOR_DRIVER_MOUNT, MICROCONTROLLER_FIT)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(CASTER_FIT, "Fit the caster",
-                "Build two 20 mm screw posts, then lock the caster bracket onto them.")
-                .whole(9)
+        phases.add(new PhaseBuilder(CASTER_FIT, "Install the caster and line trackers",
+                "Scan the caster and two IR trackers, confirm hardware, follow both demos and verify the underside.")
+                .whole(9).whole(10)
                 .part(CASTER_WHEEL, 1, "Front-mounted with the ball facing down.")
                 .checklistPart(SCREW_20MM, 2, "Left and right posts.")
-                .checklistPart(NUT, 4, "Two lock the posts, two retain the caster.")
+                .checklistPart(NUT, 6, "Four caster nuts and two tracker nuts.")
                 .context(MAIN_BOARD, 1, "Front caster mounting holes.")
                 .tool(THREADLOCKER, 1, "Apply to both post assemblies.")
                 .tool(PHILLIPS_SCREWDRIVER, 1, "Tighten the screws.")
@@ -254,18 +257,10 @@ public final class AssemblyPhaseCatalog {
                         + "nuts with threadlocker.")
                 .check("The caster bracket sits over both posts and is held by two tightened "
                         + "retaining nuts with threadlocker.")
-                .dependsOn(BOARD_PREPARATION)
-                .build(phases));
-
-        phases.add(new PhaseBuilder(LINE_TRACKERS, "Fit the line-tracker pair",
-                "Mount one downward-facing tracker on each side, spaced off the board.")
-                .whole(10)
                 .part(LINE_TRACKER, 2, "One left and one right, sensing faces down.")
                 .checklistPart(PLASTIC_SPACER, 2, "One under each tracker; stacked nuts are allowed.",
                         NUT)
                 .checklistPart(MOUNTING_SCREW, 2, "Through tracker, spacer and board.")
-                .checklistPart(NUT, 2, "Lock the mounting screws.")
-                .context(MAIN_BOARD, 1, "Side mounting holes.")
                 .placement(10, "left_tracker", LINE_TRACKER, MAIN_BOARD, "left line tracker",
                         Arrays.asList(2, 3, 4, 6))
                 .placement(10, "right_tracker", LINE_TRACKER, MAIN_BOARD, "right line tracker",
@@ -276,32 +271,22 @@ public final class AssemblyPhaseCatalog {
                 .dependsOn(BOARD_PREPARATION)
                 .build(phases));
 
-        phases.add(new PhaseBuilder(DISTANCE_SENSOR_MOUNT, "Fit the distance sensor",
-                "Face both transducers forward and press all four pins into the front header.")
-                .orders(11, 2, 3, 4)
-                .part(DISTANCE_SENSOR, 1, "Front header, transducers facing forward.")
-                .context(MAIN_BOARD, 1, "Front four-pin header.")
-                .placement(11, "distance_sensor", DISTANCE_SENSOR, MAIN_BOARD,
-                        "front distance sensor", Arrays.asList(2, 3, 4))
-                .check("Both circular transducers face forward.")
-                .check("All four sensor pins are aligned with the front header and the sensor is "
-                        + "pressed evenly until fully seated.")
-                .dependsOn(BOARD_PREPARATION)
-                .build(phases));
-
-        phases.add(new PhaseBuilder(SENSOR_WIRING, "Wire the sensors and outputs",
-                "Ten jumper leads for the LED, speaker, distance sensor and both line trackers.")
-                .orders(11, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
-                .checklistPart(JUMPER_WIRE, 10, "One for each exposed mapping.")
-                .context(DISTANCE_SENSOR, 1, "Trigger and Echo pins.")
-                .context(LINE_TRACKER, 2, "Already mounted left and right.")
+        phases.add(new PhaseBuilder(DISTANCE_SENSOR_MOUNT, "Install and wire the distance sensor",
+                "Identify the sensor, verify outward installation, then wire signals, indicators and both trackers using your own colors.")
+                .whole(11)
+                .part(DISTANCE_SENSOR, 1, "Front socket; both transducers face outward.")
+                .checklistPart(JUMPER_WIRE, 12, "Ten connections and two spares. Sensor VCC/GND connect through the PCB.")
+                .context(LINE_TRACKER, 2, "Already mounted in Phase 7.")
                 .context(LED, 1, "Integrated in the main board.")
                 .context(SPEAKER, 1, "Integrated in the main board.")
-                .context(MICROCONTROLLER, 1, "D2, D3, D4, A1, A2, A3, 5V and GND.")
+                .context(MICROCONTROLLER, 1, "D2, D3, D4, A1, A2 and A3.")
+                .context(MAIN_BOARD, 1, "Sensor socket, 5V and GND/signal rails.")
+                .placement(11, "distance_sensor", DISTANCE_SENSOR, MAIN_BOARD, "front distance sensor", Arrays.asList(2, 3, 4))
                 .pinCheck(11, 1, 2, 3, 4, 7, 8, 9, 10, 11, 12)
-                .check("No extra wire was added for distance-sensor VCC/GND or LED/speaker ground; "
-                        + "the main-board PCB already connects them.")
-                .dependsOn(MICROCONTROLLER_FIT, LINE_TRACKERS, DISTANCE_SENSOR_MOUNT)
+                .check("Sensor eyes face outward and all four pins are fully seated.")
+                .check("No extra wires are needed for sensor VCC/GND or LED/speaker grounds; the PCB connects them.")
+                .check("All ten jumper housings are seated, with the tracker leads routed through the PCB holes.")
+                .dependsOn(BOARD_PREPARATION, MICROCONTROLLER_FIT, CASTER_FIT)
                 .build(phases));
 
         phases.add(new PhaseBuilder(CENTER_STANDOFF, "Fit the center standoff",
@@ -356,7 +341,7 @@ public final class AssemblyPhaseCatalog {
                 .check("The main-board connector is fully and evenly seated in its header.")
                 .check("The extension-board connector is fully seated with the red-edge stripe in "
                         + "the direction shown on page 25.")
-                .dependsOn(OLED_PROTECTOR_FIT, SENSOR_WIRING)
+                .dependsOn(OLED_PROTECTOR_FIT, DISTANCE_SENSOR_MOUNT)
                 .build(phases));
 
         phases.add(new PhaseBuilder(UPPER_BOARD, "Fit the upper board",

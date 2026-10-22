@@ -36,7 +36,7 @@ final class DriverSchematicRenderer {
         float ox=(width-940*scale)/2,oy=top+(bottom-top-600*scale)/2;
         int save=canvas.save();canvas.translate(ox,oy);canvas.scale(scale,scale);
         SchematicPlacement board=SchematicPlacement.fit(driver,40,145,350,265,3);
-        SchematicPlacement target=SchematicPlacement.fitCrop(nano,620,20,230,560,3,277.0/1496,329.0/1102,1230.0/1496,720.0/1102);
+        SchematicPlacement target=SchematicPlacement.fitCrop(nano,620,20,230,560,3,.034,.024,.979,.948);
         SchematicArtworkCache.draw(canvas,driverImage,board,paint,matrix);SchematicArtworkCache.draw(canvas,nanoImage,target,paint,matrix);
         // Source order is physical; draw the inspected wire last so crossings remain unambiguous.
         List<Wire> order=new ArrayList<>(Arrays.asList(Wire.values()));order.remove(selected);order.add(selected);

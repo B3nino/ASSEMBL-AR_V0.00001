@@ -20,6 +20,19 @@ public final class RecognitionRequest {
     private Object requestTag;
     private boolean installedMotorInspection;
     private int phase2Stage;
+    private int phase7Stage;
+    public int getPhase7Stage(){return phase7Stage;}
+    public RecognitionRequest withPhase7Stage(int step){
+        String target=step==1?"caster_wheel":step==2?"line_tracker_module":"main_board";
+        if(step<1||step>4||assemblyStepNumber!=7||expectation==null||!target.equals(expectation.getComponentId())||expectedInstanceCount!=(step==2?2:1)||spatialAnchorComponentId!=null)throw new IllegalArgumentException("Phase 7 requires the correct photo target/count and no AR anchor");
+        RecognitionRequest copy=copy();copy.phase7Stage=step;return copy;
+    }
+    private int phase8Stage;
+    public int getPhase8Stage(){return phase8Stage;}
+    public RecognitionRequest withPhase8Stage(int stage){
+        if((stage!=1&&stage!=2)||assemblyStepNumber!=8||expectation==null||!"ultrasonic_distance_sensor".equals(expectation.getComponentId())||expectedInstanceCount!=1||spatialAnchorComponentId!=null)throw new IllegalArgumentException("Phase 8 requires sensor photos and no AR anchor");
+        RecognitionRequest copy=copy();copy.phase8Stage=stage;return copy;
+    }
     private int phase5Stage;
     public int getPhase5Stage(){return phase5Stage;}
     public RecognitionRequest withPhase5Stage(int stage){
@@ -206,7 +219,9 @@ public final class RecognitionRequest {
         copy.installedMotorInspection = installedMotorInspection;
         copy.phase2Stage=phase2Stage;
         copy.phase3Stage=phase3Stage;
+        copy.phase8Stage=phase8Stage;
         copy.phase5Stage=phase5Stage;
+        copy.phase7Stage=phase7Stage;
         return copy;
     }
 

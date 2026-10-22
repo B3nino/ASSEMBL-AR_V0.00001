@@ -11,6 +11,7 @@ import dev.chyken.assembl_ar.data.NeobotSeedData;
 /** Packaged standalone models keyed by the same component IDs as the library. */
 public final class ComponentModelCatalog {
     public static final String SHORT_FASTENERS="preview_short_fasteners",LONG_FASTENERS="preview_long_fasteners";
+    public static final String CASTER_FASTENERS="preview_caster_fasteners",TRACKER_FASTENERS="preview_tracker_fasteners";
     private static final Map<String, String> ASSETS;
 
     static {
@@ -58,12 +59,14 @@ public final class ComponentModelCatalog {
     }
 
     public static boolean hasModel(String componentId) {
-        return SHORT_FASTENERS.equals(componentId)||LONG_FASTENERS.equals(componentId)||ASSETS.containsKey(componentId);
+        return isFastenerGroup(componentId)||ASSETS.containsKey(componentId);
     }
+    public static boolean isFastenerGroup(String id){return SHORT_FASTENERS.equals(id)||LONG_FASTENERS.equals(id)||CASTER_FASTENERS.equals(id)||TRACKER_FASTENERS.equals(id);}
 
     @Nullable public static String assetPath(String componentId) {
-        if(SHORT_FASTENERS.equals(componentId))return ASSETS.get(NeobotSeedData.SCREW_SHORT);
+        if(SHORT_FASTENERS.equals(componentId)||TRACKER_FASTENERS.equals(componentId))return ASSETS.get(NeobotSeedData.SCREW_SHORT);
         if(LONG_FASTENERS.equals(componentId))return ASSETS.get(NeobotSeedData.SCREW_30MM);
+        if(CASTER_FASTENERS.equals(componentId))return ASSETS.get(NeobotSeedData.SCREW_20MM);
         return ASSETS.get(componentId);
     }
 

@@ -61,7 +61,7 @@ public final class AdminDescriptorBlobCodec {
         CLAHE clahe = OpenCvVisionUtils.createClahe(config);
         List<DescriptorVariant> variants = Collections.emptyList();
         try {
-            variants = computeVariants(grayscale, mask, orb, clahe);
+            variants = ReferenceDescriptorPyramid.compute(grayscale, mask, orb, clahe);
             validateRegistrationCapacity(variants, config);
             return encode(grayscale.cols(), grayscale.rows(), variants, config);
         } finally {

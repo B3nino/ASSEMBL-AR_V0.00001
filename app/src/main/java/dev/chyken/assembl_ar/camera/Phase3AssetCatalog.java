@@ -44,7 +44,10 @@ public final class Phase3AssetCatalog {
         return guideForPaths(Phase2AssetCatalog.files(assets,ROOT),step);
     }
     public static String guideForPaths(List<String> paths,int step){
-        for(String path:paths){
+        List<String> sorted=new ArrayList<>(paths);
+        sorted.sort(Comparator.comparingInt((String p)->p.toLowerCase(Locale.ROOT).endsWith(".png")?0:1).thenComparing(p->p));
+        for(String path:sorted){
+            if(Phase2AssetCatalog.normalize(path).contains("DUPE"))continue;
             if(!path.startsWith(ROOT+"/"))continue;
             String relative=path.substring(ROOT.length()+1),folder=Phase2AssetCatalog.normalize(relative.split("/")[0]);
             // The provided directory is P3_SCANNINGUIDE (one G); also accept the requested spelling.

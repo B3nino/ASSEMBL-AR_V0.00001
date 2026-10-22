@@ -59,6 +59,8 @@ public final class PhaseProgressStore {
             if(AssemblyPhaseCatalog.MOTOR_DRIVER_MOUNT.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":driver_v1");
             if(AssemblyPhaseCatalog.MICROCONTROLLER_FIT.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":nano_v1");
             if(AssemblyPhaseCatalog.DRIVER_WIRING.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":six_wire_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.DRIVER_CONTROL));}
+            if(AssemblyPhaseCatalog.CASTER_FIT.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":caster_trackers_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.LINE_TRACKERS));}
+            if(AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT.equals(phaseId)){editor.remove(inventoryKey(projectId,phaseId)+":sensor_wiring_v1");editor.remove(key(projectId,AssemblyPhaseCatalog.SENSOR_WIRING));}
             if(AssemblyPhaseCatalog.MOTOR_LEADS.equals(phaseId))editor.remove(inventoryKey(projectId,phaseId)+":wiring_v1");
         }
         return editor.commit();
@@ -82,6 +84,10 @@ public final class PhaseProgressStore {
     public static String gearMotorState(Context context,String projectId){
         return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MOTOR_ASSEMBLIES)+":gear_v1",null);
     }
+    public static String sensorWiringState(Context context,String projectId){SharedPreferences p=preferences(context);String state=p.getString(inventoryKey(projectId,AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT)+":sensor_wiring_v1",null);return state!=null?state:p.getBoolean(key(projectId,AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT),false)?"legacyMount":null;}
+    public static void saveSensorWiringState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT)+":sensor_wiring_v1",state).apply();}
+    public static String casterTrackerState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.CASTER_FIT)+":caster_trackers_v1",null);}
+    public static void saveCasterTrackerState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.CASTER_FIT)+":caster_trackers_v1",state).apply();}
     public static String driverWiringState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.DRIVER_WIRING)+":six_wire_v1",null);}
     public static void saveDriverWiringState(Context context,String projectId,String state){preferences(context).edit().putString(inventoryKey(projectId,AssemblyPhaseCatalog.DRIVER_WIRING)+":six_wire_v1",state).apply();}
     public static String microcontrollerState(Context context,String projectId){return preferences(context).getString(inventoryKey(projectId,AssemblyPhaseCatalog.MICROCONTROLLER_FIT)+":nano_v1",null);}

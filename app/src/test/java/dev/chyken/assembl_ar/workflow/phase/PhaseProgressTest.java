@@ -71,7 +71,7 @@ public final class PhaseProgressTest {
     public void finishingAPhaseSavesOnlyTheSectionsItCompletes() {
         assertEquals(Arrays.asList(4, 5), PhaseProgress.sectionsToSave(phase(AssemblyPhaseCatalog.MOTOR_LEADS), 4));
         assertEquals(Arrays.asList(5), PhaseProgress.sectionsToSave(phase(AssemblyPhaseCatalog.MOTOR_LEADS), 5));
-        assertEquals(Collections.emptyList(),
+        assertEquals(Arrays.asList(11),
                 PhaseProgress.sectionsToSave(phase(AssemblyPhaseCatalog.DISTANCE_SENSOR_MOUNT), 11));
         assertEquals(Arrays.asList(11),
                 PhaseProgress.sectionsToSave(phase(AssemblyPhaseCatalog.SENSOR_WIRING), 11));
@@ -83,9 +83,9 @@ public final class PhaseProgressTest {
     public void redoReopensThePhaseAndInvalidatesEveryLaterPhase() {
         PhaseProgress.Redo redo = PhaseProgress.redoFrom(phase(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES));
         assertEquals(2, redo.getReopenSection());
-        assertEquals(16, redo.getClearedPhaseIds().size());
+        assertEquals(14, redo.getClearedPhaseIds().size());
         assertEquals(AssemblyPhaseCatalog.MOTOR_ASSEMBLIES, redo.getClearedPhaseIds().get(0));
-        assertEquals(AssemblyPhaseCatalog.BATTERY_FIT, redo.getClearedPhaseIds().get(15));
+        assertEquals(AssemblyPhaseCatalog.BATTERY_FIT, redo.getClearedPhaseIds().get(13));
         PhaseProgress.Redo wiring = PhaseProgress.redoFrom(phase(AssemblyPhaseCatalog.SENSOR_WIRING));
         assertEquals(11, wiring.getReopenSection());
         assertEquals(8, wiring.getClearedPhaseIds().size());

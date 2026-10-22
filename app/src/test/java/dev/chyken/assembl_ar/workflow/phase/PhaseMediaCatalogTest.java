@@ -46,15 +46,16 @@ public final class PhaseMediaCatalogTest {
 
     @Test
     public void sideLoadedClipsMustTimeEveryDemoChapter() {
+        int count=PhaseDemoScript.forPhase(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.CASTER_FIT)).getChapters().size();
         java.util.List<Long> twelve = new java.util.ArrayList<>();
-        for (long chapter = 0; chapter < 12; chapter++) twelve.add(chapter * 2_000L);
+        for (long chapter = 0; chapter < count; chapter++) twelve.add(chapter * 2_000L);
         PhaseMediaCatalog.Clip caster = PhaseMediaCatalog.describe(AssemblyPhaseCatalog.CASTER_FIT,
-                twelve, 24_000L, " ");
+                twelve, count*2_000L, " ");
         assertEquals("side-loaded", caster.getProvenance());
         assertEquals(22_000L, (long) caster.getChapterStartMillis().get(11));
         assertThrows(() -> PhaseMediaCatalog.describe(AssemblyPhaseCatalog.CASTER_FIT,
-                twelve.subList(0, 11), 24_000L, "short"));
-        assertThrows(() -> PhaseMediaCatalog.describe("no_such_phase", twelve, 24_000L, "x"));
+                twelve.subList(0, count-1), count*2_000L, "short"));
+        assertThrows(() -> PhaseMediaCatalog.describe("no_such_phase", twelve, count*2_000L, "x"));
     }
 
     private static void assertThrows(Runnable runnable) {

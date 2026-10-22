@@ -64,11 +64,16 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
         List<MatOfDMatch> pairs=new ArrayList<>(); List<Point> source=new ArrayList<>(),target=new ArrayList<>();
         try {
             matcher.knnMatch(variant.descriptors,descriptors,pairs,2);
-            Set<Integer> used=new HashSet<>();
+            List<DMatch> good=new ArrayList<>();
             for(MatOfDMatch pair:pairs) {
                 DMatch[] p=pair.toArray();
-                if(p.length<2||p[0].distance>64||p[0].distance>=p[1].distance*.76||!used.add(p[0].trainIdx)) continue;
-                source.add(variant.keypoints[p[0].queryIdx].pt); target.add(live[p[0].trainIdx].pt);
+                if(p.length<2||p[0].distance>64||p[0].distance>=p[1].distance*.76) continue;
+                good.add(p[0]);
+            }
+            // Sampling alternatives are not additional objects. Keep the best descriptor
+            // for each physical live keypoint, independently of extraction-level order.
+            for(DMatch m:ComponentRecognizer.uniqueFrameMatches(good)){
+                source.add(variant.keypoints[m.queryIdx].pt);target.add(live[m.trainIdx].pt);
             }
         } finally {for(Mat p:pairs)p.release();}
         if(source.size()<16)return null;

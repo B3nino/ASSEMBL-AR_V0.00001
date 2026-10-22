@@ -49,6 +49,13 @@ public final class NeobotSeedData {
             pins.add(new PinConnection(wire.ordinal()+1,MOTOR_DRIVER,wire.driverPin,MICROCONTROLLER,wire.nanoPin,colors.swatch(wire).hex(),wire.power()?"Power":"PWM control","Match the highlighted physical pins. A-1A/A-1B and B-1A/B-1B are printed A-IA/A-IB and B-IA/B-IB in the supplied driver artwork."));
         return Collections.unmodifiableList(pins);
     }
+    public static List<PinConnection> getPhase8PinConnections(dev.chyken.assembl_ar.model.ComponentWiringColorConfig colors){
+        List<PinConnection> result=new ArrayList<>();for(dev.chyken.assembl_ar.model.ComponentWiringColorConfig.Wire w:dev.chyken.assembl_ar.model.ComponentWiringColorConfig.Wire.values()){
+            String source=w.section==1?DISTANCE_SENSOR:w==dev.chyken.assembl_ar.model.ComponentWiringColorConfig.Wire.LED?LED:w==dev.chyken.assembl_ar.model.ComponentWiringColorConfig.Wire.SPEAKER?SPEAKER:LINE_TRACKER;
+            String target=w.target.startsWith("5V")||w.target.startsWith("GND rail")?MAIN_BOARD:MICROCONTROLLER;
+            result.add(new PinConnection(w.ordinal()+1,source,w.source,target,w.target,colors.swatch(w).hex(),"Sensor wiring","Physical left/right are defined from above. Sensor VCC/GND already connect through PCB."));
+        }return Collections.unmodifiableList(result);
+    }
     public static final String PROJECT_ID = "neobot_personal_robot_kit_2026";
     public static final String ASSEMBLY_DOCUMENT_ID = "neobot_assembly_wiring_2026";
     public static final String LEARNING_DOCUMENT_ID = "neobot_personal_robot_manual_2026";

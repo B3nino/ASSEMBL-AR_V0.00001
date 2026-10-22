@@ -129,7 +129,8 @@ public final class PhaseVerificationSessionTest {
         PhaseVerificationSession session = new PhaseVerificationSession(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.CASTER_FIT), 0, 50 * MS);
         assertEquals(Verdict.IN_PROGRESS, session.checkBudget(40 * MS));
-        assertEquals(Verdict.INCONCLUSIVE, session.checkBudget(60 * MS));
+        assertEquals(Verdict.IN_PROGRESS, session.checkBudget(60 * MS));
+        assertEquals(Verdict.INCONCLUSIVE,session.checkBudget(120 * MS));
         assertEquals(Outcome.UNOBSERVABLE, session.getResult("caster").getOutcome());
     }
 
@@ -151,6 +152,8 @@ public final class PhaseVerificationSessionTest {
     public void pairedTargetsPassOnlyTogetherFromTheirSharedGroup() {
         PhaseVerificationSession session = new PhaseVerificationSession(
                 AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.LINE_TRACKERS), 0);
+        assertEquals("section_9",session.getActiveGroup());
+        session.observe(0,Collections.singletonList(Observation.ready("caster")));
         assertEquals("section_10", session.getActiveGroup());
         assertEquals(2, session.getActiveTargets().size());
         session.observe(1 * MS, Collections.singletonList(Observation.ready("left_tracker")));

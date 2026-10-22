@@ -30,12 +30,18 @@ public final class AssetImageLoader {
         loadBounded(target,assetPath,0);
     }
     public static void loadBounded(ImageView target,@Nullable String assetPath,int maximumDimension) {
+        loadBounded(target,assetPath,maximumDimension,null);
+    }
+    /** Crop only the displayed aid; recognition continues to use the raw camera frame. */
+    public static void loadBounded(ImageView target,@Nullable String assetPath,int maximumDimension,@Nullable android.graphics.RectF sourceRegion) {
         if (assetPath == null || assetPath.isEmpty()) {
             target.setTag(null);
             target.setImageDrawable(null);
             return;
         }
-        String key=maximumDimension>0?assetPath+"#"+maximumDimension:assetPath;
+        android.graphics.RectF crop=sourceRegion==null?null:new android.graphics.RectF(sourceRegion);
+        if(crop!=null&&(crop.left<0||crop.top<0||crop.right>1||crop.bottom>1||crop.isEmpty()))throw new IllegalArgumentException("Normalized image region required");
+        String key=(maximumDimension>0?assetPath+"#"+maximumDimension:assetPath)+(crop==null?"":crop.toString());
         target.setTag(key);
         Bitmap cached = CACHE.get(key);
         if (cached != null && !cached.isRecycled()) {
@@ -48,16 +54,23 @@ public final class AssetImageLoader {
         target.setImageDrawable(null);
         WeakReference<ImageView> targetReference = new WeakReference<>(target);
         EXECUTOR.execute(() -> {
-            Bitmap bitmap = maximumDimension>0?decodeBounded(applicationContext,assetPath,maximumDimension):decode(applicationContext, assetPath);
+            Bitmap decoded = maximumDimension>0?decodeBounded(applicationContext,assetPath,maximumDimension):decode(applicationContext, assetPath);
+            Bitmap bitmap=decoded;
+            if(decoded!=null&&crop!=null){
+                int l=Math.min(decoded.getWidth()-1,Math.round(crop.left*decoded.getWidth())),t=Math.min(decoded.getHeight()-1,Math.round(crop.top*decoded.getHeight()));
+                int r=Math.min(decoded.getWidth(),Math.max(l+1,Math.round(crop.right*decoded.getWidth()))),b=Math.min(decoded.getHeight(),Math.max(t+1,Math.round(crop.bottom*decoded.getHeight())));
+                bitmap=Bitmap.createBitmap(decoded,l,t,r-l,b-t);if(bitmap!=decoded)decoded.recycle();
+            }
             if (bitmap == null) {
                 return;
             }
             CACHE.put(key, bitmap);
             ImageView imageView = targetReference.get();
             if (imageView != null) {
+                Bitmap result=bitmap;
                 imageView.post(() -> {
                     if (key.equals(imageView.getTag())) {
-                        imageView.setImageBitmap(bitmap);
+                        imageView.setImageBitmap(result);
                     }
                 });
             }

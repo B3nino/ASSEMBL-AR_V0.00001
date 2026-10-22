@@ -25,7 +25,8 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private final Outline outline;
     private HomeRobotSurfaceView surface;
     private final android.widget.LinearLayout pairLabels;
-    private final TextView screwLabel;
+    private final TextView screwLabel,nutLabel,spacerLabel;
+    private android.widget.PopupMenu modelChoices;
     private String componentId;
     private boolean resumed;
     @Nullable private ResizeListener resizeListener;
@@ -46,8 +47,8 @@ public final class ComponentPreviewWindow extends FrameLayout {
         modelParams.bottomMargin=UiUtils.dp(context,38);
         addView(viewport,modelParams);
         pairLabels=new android.widget.LinearLayout(context);
-        screwLabel=new TextView(context);TextView nutLabel=new TextView(context);nutLabel.setText("M3 nut");
-        for(TextView label:new TextView[]{screwLabel,nutLabel}){label.setTextSize(12);label.setTextColor(0xFF26332D);label.setGravity(Gravity.CENTER);pairLabels.addView(label,new android.widget.LinearLayout.LayoutParams(0,-1,1));}
+        screwLabel=new TextView(context);nutLabel=new TextView(context);nutLabel.setText("M3 nut");spacerLabel=new TextView(context);spacerLabel.setText("Nylon spacer");
+        for(TextView label:new TextView[]{screwLabel,nutLabel,spacerLabel}){label.setTextSize(12);label.setTextColor(0xFF26332D);label.setGravity(Gravity.CENTER);pairLabels.addView(label,new android.widget.LinearLayout.LayoutParams(0,-1,1));}spacerLabel.setVisibility(GONE);
         LayoutParams labelsParams=new LayoutParams(-1,UiUtils.dp(context,26),Gravity.BOTTOM);labelsParams.bottomMargin=UiUtils.dp(context,36);addView(pairLabels,labelsParams);pairLabels.setVisibility(GONE);
         title=new TextView(context);
         title.setTextColor(0xFF26332D); title.setTextSize(13); title.setMaxLines(1);
@@ -106,7 +107,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         LayoutParams p=(LayoutParams)viewport.getLayoutParams();p.topMargin=UiUtils.dp(getContext(),value?36:58);p.bottomMargin=UiUtils.dp(getContext(),value?6:38);viewport.setLayoutParams(p);
     }
     public void showContent(View content,String name){
-        setLegendMode(false);
+        hideModelChoices();setLegendMode(false);
         contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
         if(surface!=null)surface.onPause();surface=null;componentId=null;
@@ -116,7 +117,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     }
 
     public void showComponent(String id, String name) {
-        setLegendMode(false);
+        hideModelChoices();setLegendMode(false);
         contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
         if (id == null || !ComponentModelCatalog.hasModel(id)) { setVisibility(GONE); return; }
@@ -133,9 +134,32 @@ public final class ComponentPreviewWindow extends FrameLayout {
         outline.state=ArHudView.HudState.SEARCHING;
         showInteractionHint();
     }
+    private void hideModelChoices(){
+        if(modelChoices!=null){modelChoices.dismiss();modelChoices=null;}
+        title.setOnClickListener(null);title.setFocusable(false);title.setContentDescription(null);
+    }
+    /** Select one rotatable model without taking height away from a small preview window. */
+    public void showModelChoices(String[] ids,String[] names,int selected,java.util.function.Consumer<String> speak){
+        if(ids.length!=names.length||ids.length==0||selected<0||selected>=ids.length)throw new IllegalArgumentException();
+        showComponent(ids[selected],names[selected]);
+        title.setText(names[selected]+" ▾");title.setFocusable(true);
+        title.setContentDescription(names[selected]+". Select component or fastener preview.");
+        modelChoices=new android.widget.PopupMenu(getContext(),title);
+        for(int i=0;i<ids.length;i++)modelChoices.getMenu().add(0,i,i,names[i]).setCheckable(true).setChecked(i==selected);
+        modelChoices.setOnMenuItemClickListener(item->{
+            int index=item.getItemId();showModelChoices(ids,names,index,speak);
+            if(speak!=null)speak.accept(names[index]+". Touch and drag to rotate.");return true;
+        });
+        title.setOnClickListener(v->{if(modelChoices!=null)modelChoices.show();});
+    }
     public void showFasteners(boolean shortScrew){
         showComponent(shortScrew?ComponentModelCatalog.SHORT_FASTENERS:ComponentModelCatalog.LONG_FASTENERS,"Fasteners · Touch to rotate");
-        screwLabel.setText(shortScrew?"10mm screw":"30mm screw");pairLabels.setVisibility(VISIBLE);
+        screwLabel.setText(shortScrew?"10mm screw":"30mm screw");spacerLabel.setVisibility(GONE);pairLabels.setVisibility(VISIBLE);
+    }
+    public void showPhase7Hardware(boolean caster){
+        showComponent(caster?ComponentModelCatalog.CASTER_FASTENERS:ComponentModelCatalog.TRACKER_FASTENERS,caster?"Caster mounting hardware":"Line tracker mounting hardware");
+        screwLabel.setText(caster?"20mm screw":"10mm screw");nutLabel.setText("M3 nut");
+        spacerLabel.setVisibility(caster?GONE:VISIBLE);pairLabels.setVisibility(VISIBLE);
     }
     public void setContentAction(String label,Runnable action){contentAction.setContentDescription(label);contentAction.setOnClickListener(v->action.run());contentAction.setVisibility(VISIBLE);}
 
@@ -146,7 +170,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
 
     public void resume() { resumed=true; if(surface!=null) surface.onResume(); }
     public void pause() { resumed=false; if(surface!=null) surface.onPause(); }
-    public void dispose() { removeCallbacks(fadeHint); hint.animate().cancel(); pause(); viewport.removeAllViews(); surface=null; }
+    public void dispose() { hideModelChoices(); removeCallbacks(fadeHint); hint.animate().cancel(); pause(); viewport.removeAllViews(); surface=null; }
 
     private static final class Outline extends View {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);

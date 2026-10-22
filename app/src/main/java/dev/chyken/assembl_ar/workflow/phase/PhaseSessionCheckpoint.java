@@ -12,6 +12,7 @@ public final class PhaseSessionCheckpoint {
         if(AssemblyPhaseCatalog.byId(phaseId)==null||mode==null||chapter<0||chapter>1000||inventoryIndex<0||inventoryIndex>100)
             throw new IllegalArgumentException("Invalid assembly session");
         if(gearState!=null&&gearState.indexOf(';')>=0)throw new IllegalArgumentException("Invalid gear state");
+        if(AssemblyPhaseCatalog.SENSOR_WIRING.equals(phaseId)&&(gearState==null||gearState.isEmpty()))gearState="legacyMount";
         this.phaseId=AssemblyPhaseCatalog.byId(phaseId).getId();this.developer=developer;this.mode=mode;this.chapter=chapter;
         this.inventoryIndex=inventoryIndex;this.inventoryComplete=inventoryComplete;this.previewing=previewing;
         this.gearState=gearState==null?"":gearState;

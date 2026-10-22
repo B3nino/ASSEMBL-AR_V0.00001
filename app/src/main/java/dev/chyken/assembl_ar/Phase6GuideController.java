@@ -32,6 +32,7 @@ final class Phase6GuideController implements AutoCloseable {
     private final Handler main=new Handler(Looper.getMainLooper());
     private final Runnable finish,previousPhase,checkpointChanged;
     final Phase6DriverWiringFlow flow;
+    private boolean preparationAccepted,preparing;
     private DriverWireColorPickerDialog picker;
     private DriverWireColorConfig draft;
     private Wire selected=Wire.VCC;
@@ -45,9 +46,11 @@ final class Phase6GuideController implements AutoCloseable {
         this.activity=activity;this.developer=developer;this.finish=finish;this.previousPhase=previousPhase;this.checkpointChanged=changed;
         card=activity.findViewById(R.id.phaseTwoGuide);preview=activity.findViewById(R.id.componentPreviewWindow);
         if((saved==null||saved.isEmpty())&&!developer)saved=PhaseProgressStore.driverWiringState(activity,NeobotSeedData.PROJECT_ID);
+        if(saved!=null&&saved.contains("^")){int divider=saved.lastIndexOf('^');preparationAccepted=saved.substring(divider+1).equals("true");saved=saved.substring(0,divider);}
         String[] fields=saved==null?new String[0]:saved.split("~",-1);
         flow=Phase6DriverWiringFlow.restore(fields.length>0?fields[0]:null,createdAt);
         if(fields.length==3)try{draft=DriverWireColorConfig.decode(fields[1]);selected=Wire.values()[Integer.parseInt(fields[2])];reopenPicker=true;}catch(RuntimeException bad){draft=null;selected=Wire.VCC;}
+        if(flow.step()>1)preparationAccepted=true;
         paused=!activity.isActivityResumed();if(paused)flow.pause();
         workspace=new WiringWorkspace(activity,text->say(text,"diagram:"+(++sequence)));
         bind();
@@ -85,6 +88,11 @@ final class Phase6GuideController implements AutoCloseable {
     void onResult(RecognitionResult result){/* Phase 5 owns Nano recognition. */}
     private void colors(){
         if(closed||paused||saving||reviewing||picker!=null&&picker.isShowing())return;
+        if(!preparationAccepted){
+            if(preparing)return;preparing=true;
+            dialog=JumperWirePreparationDialog.show(activity,6,false,"Two leads for VCC/VIN and ground, plus four PWM control leads. Keep battery power disconnected.","Select Colors / Next",()->{preparationAccepted=true;save();main.post(this::colors);});
+            dialog.setOnDismissListener(d->preparing=false);say("Prepare six female to female jumper wires. "+JumperWirePreparationDialog.DISCLAIMER,"wire-preparation");return;
+        }
         picker=new DriverWireColorPickerDialog(activity,draft==null?flow.colors():draft,new DriverWireColorPickerDialog.Listener(){
             public void onApply(DriverWireColorConfig value){if(closed||paused||saving)return;draft=null;reopenPicker=false;flow.applyColors(value,now());changed();}
             public void onInstruction(String text){if(!closed&&!paused){say(text,"picker:"+(++sequence));save();}}
@@ -133,19 +141,19 @@ final class Phase6GuideController implements AutoCloseable {
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next unlocked":message.isEmpty()?instruction().split("\n")[0]:message,false,flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
     }
-    String checkpointState(){if(picker!=null&&picker.isShowing()){draft=picker.draftColors();selected=picker.selectedWire();reopenPicker=true;}return flow.snapshot()+(draft==null?"":"~"+draft.encode()+"~"+selected.ordinal());}
+    String checkpointState(){if(picker!=null&&picker.isShowing()){draft=picker.draftColors();selected=picker.selectedWire();reopenPicker=true;}return flow.snapshot()+(draft==null?"":"~"+draft.encode()+"~"+selected.ordinal())+"^"+preparationAccepted;}
     private void save(){String state=checkpointState();if(!state.equals(savedState)){savedState=state;if(!developer&&!reviewing)PhaseProgressStore.saveDriverWiringState(activity,NeobotSeedData.PROJECT_ID,state);checkpointChanged.run();}}
     void onSpeechFinished(String key){if(finishing&&("phase6:"+completionKey).equals(key))advance();}
     void onVoiceStatusChanged(){AssemblyVoiceGuide.Status s=activity.voiceGuide().getStatus();if(finishing&&(s==AssemblyVoiceGuide.Status.MUTED||s==AssemblyVoiceGuide.Status.UNAVAILABLE))advance();}
     void setSaving(boolean value){boolean failed=saving&&!value;saving=value;if(failed)status("Progress could not be saved. Choose Continue to retry.");render();}
-    private void dismiss(){if(picker!=null){picker.dismiss();picker=null;}if(dialog!=null){dialog.setOnDismissListener(null);dialog.dismiss();dialog=null;}}
+    private void dismiss(){preparing=false;if(picker!=null){picker.dismiss();picker=null;}if(dialog!=null){dialog.setOnDismissListener(null);dialog.dismiss();dialog=null;}}
     void pause(){paused=true;main.removeCallbacksAndMessages(null);flow.pause();workspace.pause();workspace.hide();activity.voiceGuide().stop();card.setOnDetailsChanged(null);save();dismiss();}
     void resume(){paused=false;flow.resume(now());bind();changed();}
     void prepareForReview(){pause();}
     void devJump(int step){developer=true;flow.devJump(step,now());changed();}
     void devSkip(){developer=true;flow.devSkip();render();save();}
     void devComplete(){developer=true;flow.devComplete();render();save();}
-    void restart(){draft=null;reopenPicker=false;flow.restart(now());changed();}
+    void restart(){draft=null;reopenPicker=false;preparationAccepted=false;flow.restart(now());changed();}
     @Override public void close(){if(closed)return;pause();closed=true;workspace.close();}
 }
 

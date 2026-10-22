@@ -86,11 +86,15 @@ public final class RecognitionResult {
     private final RejectionEvidence rejectionEvidence;
     private final Object requestTag;
     private final Phase2Observation phase2Observation;
+    private final Phase7Observation phase7Observation;
+    private final Phase8Observation phase8Observation;
     private final Phase5Observation phase5Observation;
     private final Phase3Observation phase3Observation;
 
     private RecognitionResult(Builder builder) {
         phase2Observation=builder.phase2Observation;
+        phase7Observation=builder.phase7Observation;
+        phase8Observation=builder.phase8Observation;
         phase5Observation=builder.phase5Observation;
         phase3Observation=builder.phase3Observation;
         frameTimestampNanos = builder.frameTimestampNanos;
@@ -253,6 +257,10 @@ public final class RecognitionResult {
     }
 
     public Phase2Observation getPhase2Observation() { return phase2Observation; }
+    public Phase7Observation getPhase7Observation(){return phase7Observation;}
+    RecognitionResult withPhase7Observation(Phase7Observation observation){Builder copy=copyBuilder();copy.phase7Observation=observation;return copy.build();}
+    public Phase8Observation getPhase8Observation(){return phase8Observation;}
+    RecognitionResult withPhase8Observation(Phase8Observation observation){Builder copy=copyBuilder();copy.phase8Observation=observation;return copy.build();}
     public Phase5Observation getPhase5Observation(){return phase5Observation;}
     RecognitionResult withPhase5Observation(Phase5Observation observation){Builder copy=copyBuilder();copy.phase5Observation=observation;return copy.build();}
     public Phase3Observation getPhase3Observation(){return phase3Observation;}
@@ -344,6 +352,8 @@ public final class RecognitionResult {
         copy.requestTag = requestTag;
         copy.phase2Observation=phase2Observation;
         copy.phase3Observation=phase3Observation;
+        copy.phase7Observation=phase7Observation;
+        copy.phase8Observation=phase8Observation;
         copy.phase5Observation=phase5Observation;
         return copy;
     }
@@ -389,6 +399,8 @@ public final class RecognitionResult {
 
     static final class Builder {
         private Phase2Observation phase2Observation;
+        private Phase7Observation phase7Observation;
+        private Phase8Observation phase8Observation;
         private Phase5Observation phase5Observation;
         private Phase3Observation phase3Observation;
         private final long frameTimestampNanos;

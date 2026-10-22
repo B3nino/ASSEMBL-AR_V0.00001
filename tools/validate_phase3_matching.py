@@ -6,8 +6,11 @@ This is an algorithm check, not an Android camera/device benchmark.
 """
 from pathlib import Path
 import json, sys
+if "--opencv-path" in sys.argv:sys.path.insert(0,sys.argv[sys.argv.index("--opencv-path")+1])
 import cv2 as cv
 import numpy as np
+from reference_sampling import reference_pyramid
+cv.setNumThreads(2)
 
 ROOT=Path(__file__).resolve().parents[1]
 ASSETS=ROOT/'app/src/main/assets/references/Phase3'
@@ -42,7 +45,7 @@ def prepare(path,role):
     else:cv.rectangle(mask,(l,t),(r,b),255,-1)
     for x in (.12,.88):
         for y in (.18,.80):cv.circle(mask,(round(l+(r-l)*x),round(t+(b-t)*y)),max(3,int(min(r-l,b-t)*.105)),0,-1)
-    variants=[features(im,REF_ORB,mask,inverted) for inverted in (False,True)]
+    variants=[(features(im,REF_ORB,mask,inverted) if role=="assembly" else reference_pyramid(im,REF_ORB,mask,inverted,features,(l,t,r,b))) for inverted in (False,True)]
     return dict(path=path,role=role,variants=variants,rect=(l,t,r,b),image=im)
 
 def homography(a,b,minimum,min_width=15,min_height=15):

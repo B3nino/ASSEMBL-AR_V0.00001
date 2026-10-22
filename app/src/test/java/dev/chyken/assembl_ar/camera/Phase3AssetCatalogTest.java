@@ -24,7 +24,7 @@ public final class Phase3AssetCatalogTest {
     }
     @Test public void actualGuideTypoAndRequestedSpellingBothSelectCorrectArtwork()throws Exception{
         List<String> paths=paths();assertTrue(Phase3AssetCatalog.guideForPaths(paths,1).endsWith("GUIDEFORMOTORDRIVERSCANNING.jpg"));
-        assertTrue(Phase3AssetCatalog.guideForPaths(paths,4).endsWith("GUIDEFORMOTORDRIVERINSTALLATIONSCANNING.jpg"));
+        assertTrue(Phase3AssetCatalog.guideForPaths(paths,4).endsWith("GUIDEFORMOTORDRIVERINSTALLATIONSCANNING.png"));
         assertEquals(Phase3AssetCatalog.guideForPaths(paths,4),Phase3AssetCatalog.guideForPaths(paths,5));
         assertNull(Phase3AssetCatalog.guideForPaths(paths,2));
         assertNotNull(Phase3AssetCatalog.guideForPaths(Collections.singletonList("references/Phase3/P3_SCANNINGGUIDE/GUIDEFORMOTORDRIVERINSTALLATIONSCANNING.jpg"),4));
