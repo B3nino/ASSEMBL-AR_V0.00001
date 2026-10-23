@@ -105,7 +105,7 @@ final class Phase10GuideController implements AutoCloseable {
         if(closed||paused||saving||modal||reviewing||!flow.screen().preparation())return;modal=true;render();boolean screw=flow.screen()==Screen.STANDOFF_SCREW_PREP;
         String text=screw?"Locate the top screw removed from the center standoff in Phase 9. Keep it safe until the extension board mounting demo.":"Prepare two 20mm screws and two M3 nuts for the OLED protector. Inspect the rotatable models before continuing.";
         dialog=new AlertDialog.Builder(activity).setTitle(screw?"Saved standoff screw":"OLED protector hardware").setView(PhysicalCheckUi.prompt(activity,text)).setNegativeButton("Inspect first",null).setPositiveButton(screw?"I Have This":"I Have These",(d,w)->{flow.confirm();status("Hardware ready · Next step unlocked");render();save();}).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
     private void check(){
         if(closed||paused||saving||modal||reviewing&&!reviewScan||!flow.screen().check()||flow.complete())return;modal=true;render();Screen s=flow.screen();
@@ -113,14 +113,14 @@ final class Phase10GuideController implements AutoCloseable {
         String correction=s==Screen.PROTECTOR_CHECK?"Tighten both 20 millimeter screws and M3 nuts until the protector is secure.":s==Screen.BOARD_CHECK?"Please tighten the center standoff screw with your screwdriver. Make sure all bracket supports are level and the wires are clear.":"Push the cable connector firmly and evenly into the header socket in the orientation shown.";
         TextView prompt=PhysicalCheckUi.prompt(activity,question);
         dialog=new AlertDialog.Builder(activity).setTitle(s==Screen.BOARD_CHECK?"Top board stability":s==Screen.PROTECTOR_CHECK?"Protector stability":"Cable connection check").setView(prompt).setNeutralButton("Check later",null).setNegativeButton(s==Screen.BOARD_CHECK?"Wobbling":"Loose",null).setPositiveButton(s==Screen.BOARD_CHECK?"Firm & Level":s==Screen.PROTECTOR_CHECK?"Firm & Secure":"Firmly Plugged",null).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{flow.answerSecure(false);prompt.setText(correction+"\n\n"+question);say(correction,"correction:"+(++sequence));save();});
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{flow.answerSecure(true);dialog.dismiss();save();status("Connection secure · Next step unlocked");render();
                 if(flow.canFinish(developer)){finishing=true;completionKey="complete:"+(++sequence);say("Phase 10 complete! Extension circuit board placed and wired successfully.",completionKey);AssemblyVoiceGuide.Status voice=activity.voiceGuide().getStatus();if(voice==AssemblyVoiceGuide.Status.MUTED||voice==AssemblyVoiceGuide.Status.UNAVAILABLE)advance();else main.postDelayed(this::advance,16000);}
             });
-        });dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
+        });dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
-    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
+    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
     private int videoIndex(){return flow.screen().videoIndex();}
     private void startVideo(){
         final Screen screen=flow.screen();final int index=videoIndex();List<String> clips=Phase10AssetCatalog.videos(activity.getAssets(),index);

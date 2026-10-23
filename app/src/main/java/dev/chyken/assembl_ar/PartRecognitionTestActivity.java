@@ -102,6 +102,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     private final Set<String> readyPartIds = new HashSet<>();
     private PartRecognitionTestSession session;
     private int selectedIndex;
+    private volatile ComponentReferenceSpec selectedReference;
     private boolean testMode;
     private boolean catalogLoading;
     private boolean catalogReady;
@@ -111,6 +112,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     private volatile boolean destroyed;
     private volatile boolean testing;
     @Nullable private volatile ActiveTest activeTest;
+    private final java.util.concurrent.ConcurrentHashMap<Long,FrameContext> contexts=new java.util.concurrent.ConcurrentHashMap<>();
     @Nullable private volatile FrameContext frameContext;
     private volatile CameraCalibrationProvider calibrationProvider = CameraCalibrationProvider.approximate();
     @Nullable private CameraCalibration latestCalibration;
@@ -122,6 +124,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     @Nullable private Camera boundCamera;
     @Nullable private View.OnLayoutChangeListener layoutListener;
     private PreviewView preview;
+    private final dev.chyken.assembl_ar.ui.LatestUiTask outlineUpdates=new dev.chyken.assembl_ar.ui.LatestUiTask(task->runOnUiThread(task));
     private ArGlSurfaceView arView;
     private ArHudView hud;
     private TextView status;
@@ -160,6 +163,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         MeasurementRecorder.install(this);
+        dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.attach(this);
         UiUtils.configureStandardWindow(this);
         setContentView(R.layout.activity_part_recognition_test);
         UiUtils.applyStandardInsets(this);
@@ -183,7 +187,9 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         preview.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         preview.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         arView = findViewById(R.id.partTestArView);
+        arView.useDynamicOutlines();
         hud = findViewById(R.id.partTestHud);
+        hud.useDynamicOutlines();
         status = findViewById(R.id.partTestStatus);
         liveMetrics = findViewById(R.id.partTestLiveMetrics);
         totals = findViewById(R.id.partTestTotals);
@@ -198,7 +204,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         startButton.setOnClickListener(view -> { if (testing) pauseTest(); else startTest(); });
         findViewById(R.id.partTestResetButton).setOnClickListener(view -> resetSelectedPart());
         findViewById(R.id.partTestResultsButton).setOnClickListener(view -> showResults());
-        findViewById(R.id.partTestExportButton).setOnClickListener(view -> exportResults());
+        findViewById(R.id.partTestExportButton).setOnClickListener(view -> dev.chyken.assembl_ar.diagnostics.DiagnosticLogger.get(this).chooseExport(this,dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.report()));
+        findViewById(R.id.partTestBenchmarkButton).setOnClickListener(view->DevDiagnosticsFragment.showControls(this));
         captureButton.setOnClickListener(view -> captureSample());
         replayButton.setOnClickListener(view -> sampleImport.launch(new String[]{
                 "application/zip", "application/octet-stream"}));
@@ -219,11 +226,12 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     private void choosePart() {
+        if(selectedReference!=null&&(dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.assembly(selectedReference)||getIntent().getBooleanExtra("assembly_test",false))){startActivity(new Intent(this,DevDiagnosticsActivity.class));return;}
         pauseTest();
         String[] names = new String[components.size()];
         for (int index = 0; index < names.length; index++) {
             Component component = components.get(index);
-            names[index] = component.getName()
+            names[index] = component.getName()+" · "+dev.chyken.assembl_ar.vision.KeypointInventoryManager.INSTANCE.componentSummary(component.getId())
                     + (catalogReady && !readyPartIds.contains(component.getId()) ? " · no individual reference" : "");
         }
         new AlertDialog.Builder(this).setTitle(R.string.part_test_choose)
@@ -252,6 +260,9 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         arView.hideGuidance();
         startButton.setText(R.string.part_test_start);
         startButton.setEnabled(!catalogReady || readyPartIds.contains(component.getId()));
+        boolean assemblyTest=selectedReference!=null&&(dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.assembly(selectedReference)||getIntent().getBooleanExtra("assembly_test",false));
+        findViewById(R.id.partTestPreviousButton).setEnabled(!assemblyTest);findViewById(R.id.partTestNextButton).setEnabled(!assemblyTest);
+        if(catalogReady)referenceStatus.setText((assemblyTest?"Assembly reference · ":"Shared component catalog · ")+dev.chyken.assembl_ar.vision.KeypointInventoryManager.INSTANCE.componentSummary(component.getId())+(assemblyTest?"":"\nActive bank: up to 6 target views + 2 competing views; other photos stay in the shared disk cache."));
         captureButton.setEnabled(false);
         replayButton.setEnabled(catalogReady && recognizer != null);
         if (catalogReady && !readyPartIds.contains(component.getId())) status.setText(R.string.part_test_missing);
@@ -290,6 +301,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         long generation = session.selectPart(part.getId(), part.getName(), minimumAreaRatio);
         activeTest = new ActiveTest(generation, part.getId(), minimumAreaRatio);
         testing = true;
+        hud.setScanningEnabled(true);
+        ((dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView)findViewById(R.id.dynamicOutlineOverlay)).setCameraActive(true);
         if (analyzer != null && analysis != null) analysis.setAnalyzer(cameraExecutor, analyzer);
         startButton.setText(R.string.part_test_pause);
         captureButton.setEnabled(analyzer != null);
@@ -297,8 +310,13 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         renderTotals();
     }
 
+    boolean pauseForDiagnostics(){boolean active=testing;pauseTest();return active;}
+    void resumeAfterDiagnostics(){if(!destroyed&&resumed)startTest();}
     private void pauseTest() {
+        outlineUpdates.clear();
         testing = false;
+        dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView overlay=findViewById(R.id.dynamicOutlineOverlay);if(overlay!=null)overlay.setCameraActive(false);
+        if(outlineVoice!=null)outlineVoice.stop();
         activeTest = null;
         session.pause();
         if (analyzer != null) analyzer.cancelPendingFrameSnapshot();
@@ -331,11 +349,17 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
             ComponentRecognizer loadedRecognizer = null;
             try {
                 if (!OpenCVLoader.initLocal()) throw new IllegalStateException("OpenCV could not start");
-                VisionConfig config = IndividualPartTestCatalog.visionConfig();
-                List<ComponentReferenceSpec> specs = IndividualPartTestCatalog.withLegacyBaselines(
-                        VisionReferenceFactory.build(AssemblArRepository.getInstance(this), getAssets()));
-                database = ReferenceDatabase.load(getAssets(), specs, config,
-                        new File(getNoBackupFilesDir(), "individual_part_test_orb_v1"));
+                VisionConfig config = VisionConfig.defaults();
+                List<ComponentReferenceSpec> catalog = dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).catalog().get();
+                selectedReference=null;
+                for(ComponentReferenceSpec ref:catalog)if(ref.getReferenceId().equals(getIntent().getStringExtra("reference_id")))selectedReference=ref;
+                List<ComponentReferenceSpec> specs = selectedReference!=null&&(dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.assembly(selectedReference)||getIntent().getBooleanExtra("assembly_test",false))
+                    ? dev.chyken.assembl_ar.camera.ActiveReferenceScope.select(catalog,dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.request(selectedReference,null))
+                    : dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.individual(catalog);
+                boolean assemblyTest=selectedReference!=null&&(dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.assembly(selectedReference)||getIntent().getBooleanExtra("assembly_test",false));
+                File cache=new File(getNoBackupFilesDir(), "orb_reference_cache_v3");
+                database = assemblyTest?ReferenceDatabase.load(getAssets(),specs,config,cache,()->!destroyed)
+                        :ReferenceDatabase.loadIndividualBank(getAssets(),specs,components.get(selectedIndex).getId(),config,cache,()->!destroyed);
                 loadedRecognizer = new ComponentRecognizer(config, database);
                 ReferenceDatabase readyDatabase = database;
                 ComponentRecognizer readyRecognizer = loadedRecognizer;
@@ -390,8 +414,11 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 if (viewPort == null) return;
                 Preview cameraPreview = new Preview.Builder().build();
                 cameraPreview.setSurfaceProvider(preview.getSurfaceProvider());
+                // Request the complete VGA sensor buffer; PreviewView supplies its own
+                // crop. A 640x400 bound with LOWER fallback selected 320x240 on tablets
+                // offering 640x480, losing the small PCB features before ORB sees them.
                 ResolutionSelector analysisResolution = new ResolutionSelector.Builder()
-                        .setResolutionStrategy(new ResolutionStrategy(new Size(1280, 720),
+                        .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
                                 ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
                         .setResolutionFilter(PartRecognitionTestActivity::boundedSampleResolutions)
                         .build();
@@ -399,16 +426,33 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                         .setResolutionSelector(analysisResolution).build();
-                analyzer = new AssemblyVisionAnalyzer(recognizer, this::requestForFrame,
+                analyzer = new AssemblyVisionAnalyzer(recognizer, new AssemblyVisionAnalyzer.RequestProvider(){
+                    public RecognitionRequest requestFor(AssemblyVisionAnalyzer.FrameMetadata frame){return requestForFrame(frame);}
+                    public RecognitionRequest requestForTracking(AssemblyVisionAnalyzer.FrameMetadata frame){return requestForFrame(frame,false);}
+                    public boolean isAnalysisSuspended(){return !testing||!resumed;}
+                    public boolean isTrackingSuspended(){return !testing||!resumed;}
+                    public boolean requiresMetricTracking(){return dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.running();}
+                },
                         new AssemblyVisionAnalyzer.Callback() {
                             @Override public void onResult(RecognitionResult result) {
-                                FrameContext frame = frameContext;
-                                if (frame == null || result.getFrameTimestampNanos() != frame.timestamp) return;
+                                FrameContext frame = contexts.remove(result.getFrameTimestampNanos());
+                                if (frame == null) return;
                                 runOnUiThread(() -> {
                                     latestCalibration = frame.calibration;
                                     handleTestResult(frame.generation, result, frame.width, frame.height);
                                 });
                             }
+                            @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(resumed&&testing)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).setText(sample.hudText());});}
+                            @Override public void onTargetTracking(dev.chyken.assembl_ar.vision.TargetBoundingTracker.Target target,AssemblyVisionAnalyzer.FrameMetadata frame,Object tag){outlineUpdates.submit(()->{
+                                if(!resumed||!testing||activeTest==null||!java.util.Objects.equals(activeTest.generation,tag)||target!=null&&(analyzer==null||target.epoch!=analyzer.visualEpoch()))return;
+                                java.util.List<float[]> regions=new java.util.ArrayList<>();if(target!=null)for(java.util.List<VisionPoint> region:target.regions)regions.add(dev.chyken.assembl_ar.vision.PreviewOutlineCoordinates.normalize(region,frame.getAnalyzedWidth(),frame.getAnalyzedHeight(),preview.getWidth(),preview.getHeight()));
+                                ((dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView)findViewById(R.id.dynamicOutlineOverlay)).show(target,regions);
+                                if(target!=null&&!target.predicted&&target.state==dev.chyken.assembl_ar.vision.TargetBoundingTracker.State.WRONG&&!target.name.equals(target.expectedName)){
+                                    if(outlineVoice==null)outlineVoice=new dev.chyken.assembl_ar.ui.AssemblyVoiceGuide(PartRecognitionTestActivity.this,voiceStatus->{});
+                                    outlineVoice.speak("Incorrect item detected. You are scanning "+target.name+" instead of "+target.expectedName+".","outline-wrong:"+tag+":"+target.componentId);
+                                }
+                            });}
+                            @Override public void onTracking(RecognitionResult.SpatialAnchor anchor,AssemblyVisionAnalyzer.FrameMetadata frame,CameraCalibration calibration,boolean predicted,Object tag){runOnUiThread(()->{if(!resumed||!testing||activeTest==null||!java.util.Objects.equals(activeTest.generation,tag))return;dev.chyken.assembl_ar.render.ArOverlayRenderer.track(arView,anchor);});}
                             @Override public void onError(Throwable failure) {
                                 FrameContext frame = frameContext;
                                 runOnUiThread(() -> {
@@ -420,7 +464,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                                     }
                                 });
                             }
-                        }, IndividualPartTestCatalog.visionConfig(), true);
+                        }, VisionConfig.defaults(), true);
+                analyzer.attachMotion(this);
                 provider.unbindAll();
                 Camera camera = provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA,
                         new UseCaseGroup.Builder().addUseCase(cameraPreview).addUseCase(analysis)
@@ -459,13 +504,20 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     @Nullable private RecognitionRequest requestForFrame(AssemblyVisionAnalyzer.FrameMetadata metadata) {
+        return requestForFrame(metadata,true);
+    }
+    @Nullable private RecognitionRequest requestForFrame(AssemblyVisionAnalyzer.FrameMetadata metadata,boolean detection) {
         ActiveTest active = activeTest;
         if (!testing || active == null) return null;
         CameraCalibration calibration = calibrationProvider.forFrame(metadata);
-        frameContext = new FrameContext(active.generation, metadata.getTimestampNanos(),
-                metadata.getAnalyzedWidth(), metadata.getAnalyzedHeight(), calibration);
-        return IndividualPartTestCatalog.requestFor(
-                active.componentId, calibration, active.minimumAreaRatio);
+        FrameContext context = new FrameContext(active.generation, metadata.getTimestampNanos(),metadata.getAnalyzedWidth(), metadata.getAnalyzedHeight(), calibration);
+        // LK frames must not evict a slower detector's result context. Only a real
+        // recognition job owns a metrics/sample entry.
+        if(detection){frameContext=context;if(contexts.size()>128)contexts.clear();contexts.put(context.timestamp,context);}
+        RecognitionRequest request=selectedReference!=null&&(dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.assembly(selectedReference)||getIntent().getBooleanExtra("assembly_test",false))
+            ?dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.request(selectedReference,calibration)
+            :IndividualPartTestCatalog.requestFor(active.componentId, calibration, active.minimumAreaRatio);
+        return request.withRequestTag(active.generation);
     }
 
     private void handleTestResult(long generation, RecognitionResult result, int width, int height) {
@@ -477,7 +529,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         if (!session.observe(generation, result, corners)) return;
         Snapshot snapshot = session.getSnapshot(active.componentId);
         boolean detected = result.hasLocatedComponent();
-        boolean expected = detected && active.componentId.equals(result.getComponentId());
+        boolean expected = detected && active.componentId.equals(result.getComponentId())&&(result.getDiagnosticMetrics()==null||result.getDiagnosticMetrics().mismatch==null);
         String detectedName = detected ? componentName(result.getComponentId()) : "None";
         hud.update(!detected ? ArHudView.HudState.NOT_RECOGNIZED : !expected
                         ? ArHudView.HudState.MISMATCH : snapshot.isLocked()
@@ -508,6 +560,9 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                     rejection.getRequiredInlierRatio() * 100));
         }
         liveMetrics.setText(metrics);
+        dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView diagnostic=findViewById(R.id.devDiagnosticsOverlay);
+        dev.chyken.assembl_ar.diagnostics.DiagnosticSample latest=dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest;
+        diagnostic.setText(latest==null?"Waiting for diagnostic sample":latest.hudText());
         if (!detected) status.setText(rejection == null
                 ? "No detection · save a sample and try another angle"
                 : "No detection · " + rejectionLabel(rejection.getReason()));
@@ -646,6 +701,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                                 }
                                 deletePendingSampleFile(pendingSampleExportFile);
                                 pendingSampleExportFile = stagedSampleFile;
+                                dev.chyken.assembl_ar.diagnostics.DiagnosticLogger.get(PartRecognitionTestActivity.this).recordFrame(archive);
                                 sampleExport.launch("assembl-ar-" + requested.componentId + "-"
                                         + System.currentTimeMillis() + ".arpart.zip");
                             });
@@ -974,6 +1030,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         }
     }
 
+    private dev.chyken.assembl_ar.ui.AssemblyVoiceGuide outlineVoice;
     @Override protected void onPause() {
         pauseTest();
         resumed = false;
@@ -994,6 +1051,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     @Override protected void onDestroy() {
+        if(outlineVoice!=null)outlineVoice.close();
         destroyed = true;
         testing = false;
         if (layoutListener != null) preview.removeOnLayoutChangeListener(layoutListener);

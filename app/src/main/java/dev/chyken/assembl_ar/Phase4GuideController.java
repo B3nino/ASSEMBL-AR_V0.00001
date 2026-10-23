@@ -100,13 +100,14 @@ final class Phase4GuideController implements AutoCloseable {
         picker.setInitialTerminal(pickerTerminal);
         picker.setOnCancelListener(d->{if(picker!=d)return;picker=null;message="";pickerDraft=null;reopenPicker=false;render();save();say(SPOKEN[flow.step()],"picker-cancel:"+(++speechSequence));});picker.show();
     }
+    boolean schematicFocused(){return !closed&&!paused&&flow.step()>=2;}
     private void expandDiagram(){workspace.setMotorColors(flow.colors());workspace.expand();}
     private void pullTest(){
         if(closed||paused||saving||reviewing||flow.step()!=3||flow.complete()||pullDialog!=null&&pullDialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,"Gently tug each lead near its screw terminal. Are all four motor wires firmly screwed in?");
         pullDialog=new AlertDialog.Builder(activity).setTitle("Wire pull test").setView(prompt)
                 .setNeutralButton("Check later",null).setNegativeButton("Wire is Loose",null).setPositiveButton("All Wires Secure",null).create();
-        pullDialog.setOnShowListener(d->{
+        pullDialog.setOnShowListener(d->{if(pullDialog!=d||closed||paused)return;
             pullDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{flow.confirmPullTest(false);message=LOOSE;prompt.setText(LOOSE);render();save();say(LOOSE,"loose:"+(++speechSequence));});
             pullDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
                 flow.confirmPullTest(true);pullDialog.dismiss();message="All four wires secure";render();save();

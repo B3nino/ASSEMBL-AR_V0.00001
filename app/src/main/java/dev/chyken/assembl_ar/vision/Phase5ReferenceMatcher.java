@@ -13,7 +13,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     private final ReferenceDatabase database;
     private final ORB orb;
     private final CLAHE clahe;
-    private final BFMatcher matcher=BFMatcher.create(Core.NORM_HAMMING,false);
+    private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     Phase5ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);clahe=OpenCvVisionUtils.createClahe(config);}
     RecognitionResult inspect(Mat gray,long time,int step){
         long start=android.os.SystemClock.elapsedRealtimeNanos();Mat work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keypoints=new MatOfKeyPoint();
@@ -22,7 +22,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
         database.acquireForRecognition();
         try{
             if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);
-            clahe.apply(work,work);orb.detectAndCompute(work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();
+            DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
             Set<String> seen=new HashSet<>();
             if(!descriptors.empty())for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
                 String role=Phase5AssetCatalog.referenceRole(ref.spec.getReferenceId());
@@ -58,9 +58,9 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
                     .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase5Observation(result);
         }finally{database.releaseAfterRecognition();work.release();descriptors.release();empty.release();keypoints.release();}
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,boolean installed){
-        List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> candidates=new ArrayList<>();
-        try{matcher.knnMatch(variant.descriptors,descriptors,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.76)candidates.add(p[0]);}}finally{for(Mat m:pairs)m.release();}
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,boolean installed){DiagnosticHammingMatcher.context(ref.spec);
+        List<DMatch> candidates=new ArrayList<>();
+        candidates.addAll(matcher.ratioMatches(variant.descriptors,descriptors,.76,64));
         candidates.sort(Comparator.comparingDouble(p->p.distance));Set<Integer> used=new HashSet<>();
         List<Point> module=new ArrayList<>(),moduleLive=new ArrayList<>(),board=new ArrayList<>(),boardLive=new ArrayList<>();
         List<VisionPoint> c=ref.spec.getPlanarCornersNormalized();double l=c.get(0).getX()*ref.imageWidth,t=c.get(0).getY()*ref.imageHeight,r=c.get(2).getX()*ref.imageWidth,b=c.get(2).getY()*ref.imageHeight;
@@ -84,7 +84,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     }
     private Mat homography(List<Point> a,List<Point> b,int minimum,double minimumWidth,double minimumHeight){
         if(a.size()<minimum)return null;MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
-        try{src.fromList(a);dst.fromList(b);h=Calib3d.findHomography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
+        try{src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
             int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){h.release();return null;}
             double minX=Double.MAX_VALUE,minY=minX,maxX=-minX,maxY=-minX;
             for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){Point p=a.get(i);minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}

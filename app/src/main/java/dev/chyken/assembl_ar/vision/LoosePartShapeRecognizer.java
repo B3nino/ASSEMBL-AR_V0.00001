@@ -40,11 +40,12 @@ import dev.chyken.assembl_ar.data.NeobotSeedData;
  * loose-part/guided-card stability gate, not precision alignment of a non-planar motor.</p>
  */
 public final class LoosePartShapeRecognizer {
+    public static ComponentContourTemplates.Body contourProfile(String componentId){return ComponentContourTemplates.body(componentId);}
     private static final int MAX_WORKING_DIMENSION = 1280;
     private static final double DEFAULT_MINIMUM_AREA_RATIO = 0.002;
     private static final double MAXIMUM_AREA_RATIO = 0.70;
     private static final long MAX_SMOOTHING_GAP_NANOS = 300_000_000L;
-    private static final double SMOOTHING_ALPHA = 0.35;
+    private static final double SMOOTHING_ALPHA = 0.65;
     private static final double MAX_SMOOTHING_MOTION_RATIO = 0.20;
     private static final double MOTOR_LENGTH_MM = 70.0;
     private static final double MOTOR_WIDTH_MM = 25.0;
@@ -53,6 +54,8 @@ public final class LoosePartShapeRecognizer {
     private static final String MOTOR_REFERENCE_ID = "shape:loose-gear-motor-v1";
     private static final String DRIVER_REFERENCE_ID = "shape:loose-motor-driver-v1";
 
+    // Appearance fallbacks remain geometric helpers. Shared ORB evidence and identity competition
+    // belong to UnifiedReferenceCatalog/GlobalComponentRegistry, including the standalone tool.
     private String previousComponentId;
     private long previousTimestampNanos;
     private List<VisionPoint> previousCorners;
@@ -354,13 +357,14 @@ public final class LoosePartShapeRecognizer {
                 && corners.size() == previousCorners.size()
                 && cornerMotion(corners, previousCorners)
                 <= Math.hypot(frameWidth, frameHeight) * MAX_SMOOTHING_MOTION_RATIO;
+        double alpha=compatible?Math.max(SMOOTHING_ALPHA,Math.min(1.0,1-Math.exp(-(timestampNanos-previousTimestampNanos)/45_000_000.0))):1.0;
         List<VisionPoint> smoothed = new ArrayList<>(corners.size());
         for (int index = 0; index < corners.size(); index++) {
             VisionPoint current = corners.get(index);
             VisionPoint prior = compatible ? previousCorners.get(index) : current;
             smoothed.add(new VisionPoint(
-                    prior.getX() + SMOOTHING_ALPHA * (current.getX() - prior.getX()),
-                    prior.getY() + SMOOTHING_ALPHA * (current.getY() - prior.getY())));
+                    prior.getX() + alpha * (current.getX() - prior.getX()),
+                    prior.getY() + alpha * (current.getY() - prior.getY())));
         }
         previousComponentId = componentId;
         previousFrameWidth = frameWidth;

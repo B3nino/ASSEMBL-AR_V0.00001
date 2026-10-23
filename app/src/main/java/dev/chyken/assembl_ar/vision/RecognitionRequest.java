@@ -20,6 +20,12 @@ public final class RecognitionRequest {
     private Object requestTag;
     private boolean installedMotorInspection;
     private int phase2Stage;
+    private String phase2VerificationView;
+    public String getPhase2VerificationView(){return phase2VerificationView;}
+    public RecognitionRequest withPhase2VerificationView(String view){
+        if(phase2Stage!=5||!("top".equals(view)||"left".equals(view)||"right".equals(view)))throw new IllegalArgumentException("Phase 2 verification needs its authored camera view");
+        RecognitionRequest copy=copy();copy.phase2VerificationView=view;return copy;
+    }
     private int phase7Stage;
     public int getPhase7Stage(){return phase7Stage;}
     public RecognitionRequest withPhase7Stage(int step){
@@ -236,7 +242,7 @@ public final class RecognitionRequest {
         copy.guidedBracketWorkplane = guidedBracketWorkplane;
         copy.requestTag = requestTag;
         copy.installedMotorInspection = installedMotorInspection;
-        copy.phase2Stage=phase2Stage;
+        copy.phase2Stage=phase2Stage;copy.phase2VerificationView=phase2VerificationView;
         copy.phase3Stage=phase3Stage;
         copy.phase8Stage=phase8Stage;
         copy.phase9Stage=phase9Stage;copy.phase10Stage=phase10Stage;copy.phase11Stage=phase11Stage;

@@ -25,9 +25,17 @@ public final class Phase3AssetCatalogTest {
     @Test public void actualGuideTypoAndRequestedSpellingBothSelectCorrectArtwork()throws Exception{
         List<String> paths=paths();assertTrue(Phase3AssetCatalog.guideForPaths(paths,1).endsWith("GUIDEFORMOTORDRIVERSCANNING.jpg"));
         assertTrue(Phase3AssetCatalog.guideForPaths(paths,4).endsWith("GUIDEFORMOTORDRIVERINSTALLATIONSCANNING.png"));
-        assertEquals(Phase3AssetCatalog.guideForPaths(paths,4),Phase3AssetCatalog.guideForPaths(paths,5));
+        assertNull(Phase3AssetCatalog.guideForPaths(paths,5));
         assertNull(Phase3AssetCatalog.guideForPaths(paths,2));
         assertNotNull(Phase3AssetCatalog.guideForPaths(Collections.singletonList("references/Phase3/P3_SCANNINGGUIDE/GUIDEFORMOTORDRIVERINSTALLATIONSCANNING.jpg"),4));
     }
     @Test public void clipsUseAuthoredOrder(){assertEquals(0,Phase3AssetCatalog.clipOrder("P3_HOW2SEATMOTORDRIVER.mp4"));assertEquals(1,Phase3AssetCatalog.clipOrder("P3_SCREWPOSITIONSREMINDER.mp4"));}
+    @Test public void newPlacementWithWiresPhotosTrainInstalledGateEvenInsideLooseFolder(){
+        String path="references/Phase3/STEP3_1MOTORDRIVER/MOTORDRIVERPLACEMENTWITHWIREPERSPECTIVEREF (23).jpg";
+        List<ComponentReferenceSpec> refs=Phase3AssetCatalog.referencesForPaths(Collections.singletonList(path));
+        assertEquals("assembly",Phase3AssetCatalog.referenceRole(refs.get(0).getReferenceId()));
+        assertTrue(UnifiedReferenceCatalog.assembly(refs.get(0)));
+        assertEquals(4,UnifiedReferenceCatalog.request(refs.get(0),null).getPhase3Stage());
+        assertEquals("front",Phase3AssetCatalog.roleForPath("references/Phase3/STEP3_1MOTORDRIVER/front.jpg"));
+    }
 }

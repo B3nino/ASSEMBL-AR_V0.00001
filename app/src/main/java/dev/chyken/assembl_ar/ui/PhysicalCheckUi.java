@@ -38,6 +38,10 @@ public final class PhysicalCheckUi {
         styleChecks(dialog.getWindow().getDecorView(),context);
     }
     private static void styleChecks(View view,Context context){
+        // Camera activities use light text, but these dialogs deliberately use a light surface.
+        // Fix inherited titles/messages/radio labels as well as explicitly created checkboxes.
+        if(view instanceof TextView&&!(view instanceof Button))((TextView)view).setTextColor(0xFF263B30);
+        if(view instanceof RadioButton)((RadioButton)view).setTextColor(0xFF263B30);
         if(view instanceof CheckBox){CheckBox box=(CheckBox)view;box.setMinHeight(UiUtils.dp(context,60));box.setTextSize(16);box.setTextColor(0xFF263B30);box.setButtonTintList(ColorStateList.valueOf(0xFF4C7C41));}
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)styleChecks(group.getChildAt(i),context);}
     }

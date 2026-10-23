@@ -145,20 +145,20 @@ public final class AssemblyAnchorTrackerInstrumentedTest {
     }
 
     @Test
-    public void blankFrameHoldsVisualPoseForTenFramesThenExpires() {
+    public void blankFrameHoldsVisualPoseForAtMostOnePointFiveSeconds() {
         RecognitionResult.SpatialAnchor detection = anchor(INITIAL_CORNERS);
         assertNotNull(tracker.update(board, START_NANOS, detection, calibration));
 
         Mat blank = new Mat(HEIGHT, WIDTH, CvType.CV_8UC1, new Scalar(28.0));
         try {
-            for (int frame = 1; frame <= 10; frame++) {
+            for (int frame = 1; frame <= 45; frame++) {
                 RecognitionResult.SpatialAnchor held = tracker.update(
                         blank, START_NANOS + frame * 30_000_000L, null, calibration);
                 assertNotNull("Visual guidance should survive a brief blur", held);
                 assertTrue(tracker.isHeld());
                 assertFalse("Held geometry is not fresh tracking evidence", tracker.isTracked());
             }
-            assertNull(tracker.update(blank, START_NANOS + 330_000_000L,
+            assertNull(tracker.update(blank, START_NANOS + 1_510_000_000L,
                     null, calibration));
             assertFalse(tracker.isHeld());
         } finally {

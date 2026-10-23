@@ -102,27 +102,27 @@ final class HomeRobotRenderer implements GLSurfaceView.Renderer {
 
         materialRenderer = new ObjMaterialRenderer(context);
         if (previewComponentId == null) {
-            boardModel = ObjModel.load(context, "models/board_ghost.obj");
-            assemblyModels.clear();
+            if(boardModel==null)boardModel = ObjModel.load(context, "models/board_ghost.obj");
             for (HomeRobotAssembly.Part part : HomeRobotAssembly.PARTS) {
                 if (!assemblyModels.containsKey(part.assetPath)) {
                     ObjModel mesh = ObjModel.load(context, part.assetPath);
                     assemblyModels.put(part.assetPath, mesh);
-                    materialRenderer.prepare(mesh);
+
                 }
             }
-            wiringModel = ObjModel.load(context, HomeRobotAssembly.WIRING_ASSET);
+            for(ObjModel mesh:assemblyModels.values())materialRenderer.prepare(mesh);
+            if(wiringModel==null)wiringModel = ObjModel.load(context, HomeRobotAssembly.WIRING_ASSET);
             materialRenderer.prepare(wiringModel);
         } else {
             // Only decode the selected mesh and its materials when opening a library preview.
             String path = ComponentModelCatalog.assetPath(previewComponentId);
-            componentModel = path == null ? null : ObjModel.load(context, path);
+            if(componentModel==null)componentModel = path == null ? null : ObjModel.load(context, path);
             if (componentModel != null) componentScale = previewScale(componentModel);
             materialRenderer.prepare(componentModel);
             if(ComponentModelCatalog.isFastenerGroup(previewComponentId)){
-                companionModel=ObjModel.load(context,"models/hex_nut.obj");materialRenderer.prepare(companionModel);
+                if(companionModel==null)companionModel=ObjModel.load(context,"models/hex_nut.obj");materialRenderer.prepare(companionModel);
                 if(ComponentModelCatalog.TRACKER_FASTENERS.equals(previewComponentId)){
-                    spacerModel=ObjModel.load(context,ComponentModelCatalog.assetPath(dev.chyken.assembl_ar.data.NeobotSeedData.PLASTIC_SPACER));materialRenderer.prepare(spacerModel);
+                    if(spacerModel==null)spacerModel=ObjModel.load(context,ComponentModelCatalog.assetPath(dev.chyken.assembl_ar.data.NeobotSeedData.PLASTIC_SPACER));materialRenderer.prepare(spacerModel);
                 }
             }
         }

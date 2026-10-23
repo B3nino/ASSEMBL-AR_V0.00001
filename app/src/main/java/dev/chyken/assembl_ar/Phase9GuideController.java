@@ -38,8 +38,7 @@ final class Phase9GuideController implements AutoCloseable {
     private void say(String text,String key){if(!closed&&!paused&&activity.isActivityResumed())activity.voiceGuide().speak(text,"phase9:"+key);}
     private void status(String text){message=text;if(spoken.add(text))say(text,"status:"+(++sequence));}
     private String instruction(){switch(flow.screen()){
-        case STANDOFF_SCAN:return "Step 9.1a: Scan Metal Standoff.\n• Place 1 metal standoff flat inside the frame.\n• Use soft lighting and keep the complete piece visible.";
-        case HARDWARE_PREP:return "Step 9.1b: Gather hardware.\n• Prepare 1 M3 nut and a screwdriver.\n• Inspect the rotatable models, then tap I Have These.";
+        case HARDWARE_PREP:return "Step 9.1: Gather hardware.\n• Prepare 1 metal standoff, 1 M3 nut and a screwdriver.\n• Inspect the rotatable models, then tap I Have These.\n• No standalone standoff scan is needed.";
         case WHEELS_SCAN:return "Step 9.2a: Scan Robot Wheels.\n• Place BOTH wheels flat in frame.\n• Either front or back hub face is accepted.";
         case WHEELS_READY:return "Step 9.2b: Confirm your wheels.\n• Keep both robot wheels ready.\n• Tap I Have These to continue.";
         case STANDOFF_DEMO:return "Step 9.3A: Install the center standoff.\n1. Insert it into the center PCB hole.\n2. Lock underneath with an M3 nut.\n3. REMOVE the top screw and set it aside for the extension board.";
@@ -50,8 +49,7 @@ final class Phase9GuideController implements AutoCloseable {
         default:return "Step 9.4C: Dual-Wheel Stability Check.\n• Gently turn and tug both wheels.\n• Confirm both hubs are fully seated, do not slip and do not rub the board.";
     }}
     private String spokenInstruction(){switch(flow.screen()){
-        case STANDOFF_SCAN:return "Step 9 point 1. Scan your metal standoff piece by placing it flat inside the camera frame.";
-        case HARDWARE_PREP:return "Gather one M3 nut and your screwdriver. Inspect the models and tap I Have These when ready.";
+        case HARDWARE_PREP:return "Gather one metal standoff, one M3 nut and your screwdriver. Inspect the models and tap I Have These. The installed standoff is checked after the demo.";
         case WHEELS_SCAN:return "Step 9 point 2. Scan both robot wheels together. Either front or back hub faces are accepted.";
         case WHEELS_READY:return "Both wheels are identified. Confirm that you have both wheels ready.";
         case STANDOFF_DEMO:return NARRATION[0];case WHEELS_DEMO:return NARRATION[1];
@@ -61,7 +59,7 @@ final class Phase9GuideController implements AutoCloseable {
         default:return "Check that both wheels are fully pushed onto their motor shafts without slipping or rubbing the board.";
     }}
     private void bind(){
-        card.previous.setOnClickListener(v->{if(saving)return;if(flow.screen()==Screen.STANDOFF_SCAN)previousPhase.run();else if(flow.previous(now())){if(flow.screen().video())positions[videoIndex()]=0;changed();}});
+        card.previous.setOnClickListener(v->{if(saving)return;if(flow.screen()==Screen.HARDWARE_PREP)previousPhase.run();else if(flow.previous(now())){if(flow.screen().video())positions[videoIndex()]=0;changed();}});
         card.next.setOnClickListener(v->{if(saving)return;if(flow.screen()==Screen.WHEELS_CHECK){if(reviewing||flow.canFinish(developer))finish.run();}else if(flow.next(now()))changed();});
         card.action.setOnClickListener(v->{if(saving)return;Screen s=flow.screen();if(s.preparation())hardware();else if(s.check())check();else if(s.video()){
             if(videoError){stopVideo();attached=null;videoError=false;render();}else if(watched[videoIndex()]){flow.confirm();flow.next(now());changed();}
@@ -70,7 +68,7 @@ final class Phase9GuideController implements AutoCloseable {
         card.setOnDetailsChanged(text->{if(video!=null){video.pause();narrator.stop();}say(text.isEmpty()?"Additional information hidden.":text,"details:"+(++sequence));});
     }
     void start(){changed();}
-    void startReview(boolean atEnd){reviewing=true;developer=true;flow.devComplete();flow.devJump(atEnd?10:1,now());card.returnToCurrent.setOnClickListener(v->finish.run());changed();}
+    void startReview(boolean atEnd){reviewing=true;developer=true;flow.devComplete();flow.devJump(atEnd?Screen.values().length:1,now());card.returnToCurrent.setOnClickListener(v->finish.run());changed();}
     private void changed(){
         if(closed)return;main.removeCallbacksAndMessages(null);finishing=false;message="";warning=false;spoken.clear();dismiss();stopVideo();attached=null;videoError=false;
         activity.voiceGuide().stop();activity.resetAnalyzerTracking();activity.hideGuidance();ArHudView hud=activity.findViewById(R.id.arHudView);hud.reset();hud.clearAssemblyTargets();hud.setBoardCorners(null);
@@ -99,7 +97,7 @@ final class Phase9GuideController implements AutoCloseable {
         if(closed||paused||saving||modal||reviewing||!flow.screen().preparation())return;modal=true;render();boolean wheels=flow.screen()==Screen.WHEELS_READY;
         String text=wheels?"Are both robot wheels ready for installation? Either hub face may have been used for identification.":"Prepare one M3 nut and a Phillips screwdriver. Keep the standoff's top screw safe; it will be removed after installation and saved for the extension board.";
         dialog=new AlertDialog.Builder(activity).setTitle(wheels?"Two robot wheels":"Standoff hardware").setView(PhysicalCheckUi.prompt(activity,text)).setNegativeButton("Inspect first",null).setPositiveButton("I Have These",(d,w)->{flow.confirm();status("Hardware ready · Next step unlocked");render();save();}).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
     private void check(){
         if(closed||paused||saving||modal||reviewing||!flow.screen().check()||flow.complete())return;modal=true;render();boolean wheels=flow.screen()==Screen.WHEELS_CHECK,nut=!wheels&&!flow.nutLocked();
@@ -108,15 +106,15 @@ final class Phase9GuideController implements AutoCloseable {
         TextView prompt=PhysicalCheckUi.prompt(activity,question);
         dialog=new AlertDialog.Builder(activity).setTitle(wheels?"Wheel stability":"Standoff check").setView(prompt).setNeutralButton("Check later",null)
             .setNegativeButton(wheels?"Wheel Loose":nut?"Loose":"Still Attached",null).setPositiveButton(wheels?"Both Wheels Locked":nut?"Locked Tight":"Top Screw Removed",null).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{if(wheels)flow.answerWheels(false);else if(nut)flow.answerNut(false);else flow.answerTopScrew(false);prompt.setText(correction+"\n\n"+question);say(correction,"correction:"+(++sequence));save();});
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{if(wheels)flow.answerWheels(true);else if(nut)flow.answerNut(true);else flow.answerTopScrew(true);dialog.dismiss();modal=false;save();render();
                 if(!wheels&&!flow.complete())main.post(this::check);
                 else if(flow.complete()){status(wheels?"Standoff and wheels verified":"Standoff secure · Top screw saved · Next unlocked");render();if(flow.canFinish(developer)){finishing=true;completionKey="complete:"+(++sequence);say("Phase 9 complete! Standoff and wheels installed successfully.",completionKey);AssemblyVoiceGuide.Status voice=activity.voiceGuide().getStatus();if(voice==AssemblyVoiceGuide.Status.MUTED||voice==AssemblyVoiceGuide.Status.UNAVAILABLE)advance();else main.postDelayed(this::advance,16000);}}
             });
-        });dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
+        });dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
-    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
+    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
     private int videoIndex(){return flow.screen()==Screen.WHEELS_DEMO?1:0;}
     private void startVideo(){
         final Screen screen=flow.screen();final int index=videoIndex();List<String> clips=Phase9AssetCatalog.videos(activity.getAssets(),index==1);
@@ -135,11 +133,11 @@ final class Phase9GuideController implements AutoCloseable {
         if(closed)return;Screen s=flow.screen();plan=!paused&&!saving&&!modal&&(!reviewing||reviewScan)&&flow.scanning()?new Plan(s.scanStage(),flow.tag()):null;
         boolean unlocked=flow.complete()&&(s!=Screen.WHEELS_CHECK||reviewing||flow.canFinish(developer));
         String details="The center standoff will support the extension board later. Tighten its lower nut, remove the top screw and store it safely.\n\nWheel D-shaped hubs must match the flat motor shafts. The camera checks visible part identity and alignment. Your mandatory stability answers confirm axle grip and lower-nut tightness. Keep power disconnected during assembly.";
-        card.render(900+flow.step(),"Phase 9 · "+s.label()+" · "+flow.step()+"/10",instruction(),details,message,unlocked,true,s.scan()&&flow.complete());
+        card.render(900+flow.step(),"Phase 9 · "+s.label()+" · "+flow.step()+"/"+Screen.values().length,instruction(),details,message,unlocked,true,s.scan()&&flow.complete());
         card.next.setText(s==Screen.WHEELS_CHECK?reviewing?"Return to current phase":"Continue to Phase 10 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);card.next.setVisibility(s.video()&&!reviewing?View.GONE:View.VISIBLE);
         boolean actionable=s.preparation()||s.check()||s.video();card.action.setVisibility(actionable&&!reviewing&&(!flow.complete()||s.video())?View.VISIBLE:View.GONE);
         card.action.setText(s.video()?videoError?"Retry demo":"Ready to Scan":s.preparation()?"I Have These":"Complete physical check");card.action.setEnabled(!saving&&(!s.video()||watched[videoIndex()]||videoError));card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
-        alignment.setInstruction(s==Screen.STANDOFF_SCAN?"Metal standoff · Complete piece":s==Screen.WHEELS_SCAN?"Both wheels · Either hub face":s==Screen.STANDOFF_WORK_SCAN?"Center standoff · Before wheels":"Complete chassis · Both wheels");alignment.showGuide(plan==null?null:Phase9AssetCatalog.guide(activity.getAssets(),s.scanStage()));
+        alignment.setInstruction(s==Screen.WHEELS_SCAN?"Both wheels · Either hub face":s==Screen.STANDOFF_WORK_SCAN?"Center standoff · Before wheels":"Complete chassis · Both wheels");alignment.showGuide(plan==null?null:Phase9AssetCatalog.guide(activity.getAssets(),s.scanStage()));
         ((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(plan!=null);activity.hideGuidance();
         if(attached!=s){stopVideo();attached=s;if(s.video())startVideo();else if(s==Screen.HARDWARE_PREP)preview.showModelChoices(new String[]{NeobotSeedData.NUT,NeobotSeedData.PHILLIPS_SCREWDRIVER,NeobotSeedData.STANDOFF},new String[]{"1 × M3 nut","Phillips screwdriver","Metal standoff"},0,text->say(text,"model:"+(++sequence)));else preview.showComponent(s.ordinal()<=Screen.STANDOFF_CHECK.ordinal()&&s!=Screen.WHEELS_SCAN&&s!=Screen.WHEELS_READY?NeobotSeedData.STANDOFF:NeobotSeedData.WHEEL,s.ordinal()<=Screen.STANDOFF_CHECK.ordinal()&&s!=Screen.WHEELS_SCAN&&s!=Screen.WHEELS_READY?"Metal standoff":"Robot wheel");}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:warning?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);

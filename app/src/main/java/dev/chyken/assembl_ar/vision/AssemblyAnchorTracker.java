@@ -40,7 +40,7 @@ import java.util.List;
  * continuous guidance only.</p>
  */
 public final class AssemblyAnchorTracker implements AutoCloseable {
-    static final long MAX_TRACKING_AGE_MILLIS = 700L;
+    static final long MAX_TRACKING_AGE_MILLIS = 1500L;
     private static final String DIAGNOSTIC_TAG = "AssemblArBoard";
 
     private static final long MAX_TRACKING_AGE_NANOS =
@@ -64,8 +64,8 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
     private static final double MAXIMUM_FRAME_ROTATION_DEGREES = 35.0;
     private static final double MAXIMUM_REPROJECTION_ERROR_PX = 10.0;
     private static final int LK_PYRAMID_LEVEL = 4;
-    private static final int MAX_POSE_HOLD_FRAMES = 10;
-    private static final long MAX_POSE_HOLD_NANOS = 500_000_000L;
+    private static final int MAX_POSE_HOLD_FRAMES = 60;
+    private static final long MAX_POSE_HOLD_NANOS = 1_500_000_000L;
     private static final double SMOOTHING_TIME_CONSTANT_NANOS = 38_000_000.0;
     private static final Size LK_WINDOW = new Size(21.0, 21.0);
     private static final TermCriteria LK_CRITERIA = new TermCriteria(
@@ -889,11 +889,6 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
             double[] newRotation = newPose.getRotationVector();
             double[] oldTranslation = oldPose.getTranslationVector();
             double[] newTranslation = newPose.getTranslationVector();
-            double rotationJump = Math.hypot(Math.hypot(
-                    newRotation[0] - oldRotation[0], newRotation[1] - oldRotation[1]),
-                    newRotation[2] - oldRotation[2]);
-            // Rodrigues vectors can change branches around pi; do not average across that seam.
-            if (rotationJump > 0.75) alpha = 1.0;
             List<VisionPoint> corners = new ArrayList<>(4);
             for (int index = 0; index < 4; index++) {
                 VisionPoint before = prior.getProjectedCorners().get(index);
@@ -901,10 +896,9 @@ public final class AssemblyAnchorTracker implements AutoCloseable {
                 corners.add(new VisionPoint(before.getX() + alpha * (after.getX() - before.getX()),
                         before.getY() + alpha * (after.getY() - before.getY())));
             }
-            double[] rvec = new double[3];
+            double[] rvec = PoseSmoothing.rotation(oldRotation,newRotation,alpha);
             double[] tvec = new double[3];
             for (int index = 0; index < 3; index++) {
-                rvec[index] = oldRotation[index] + alpha * (newRotation[index] - oldRotation[index]);
                 tvec[index] = oldTranslation[index]
                         + alpha * (newTranslation[index] - oldTranslation[index]);
             }

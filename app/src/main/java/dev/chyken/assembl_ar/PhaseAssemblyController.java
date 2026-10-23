@@ -440,6 +440,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
     /** Session location is resumable even in DEV; verified learner records remain separate. */
     private void persistSession(){
+        activity.refreshSchematicControl();
         if(restoringSession||savingPhase||phase==null||flow==null)return;
         int chapter=reviewScript!=null?pausedChapter:shownChapter==null?0:shownChapter.getIndex();
         String gearState=phase.getNumber()==11&&oledBatteryGuide!=null?oledBatteryGuide.checkpointState():phase.getNumber()==10&&extensionBoardGuide!=null?extensionBoardGuide.checkpointState():phase.getNumber()==9&&standoffWheelsGuide!=null?standoffWheelsGuide.checkpointState():phase.getNumber()==8&&sensorWiringGuide!=null?sensorWiringGuide.checkpointState():phase.getNumber()==7&&casterTrackerGuide!=null?casterTrackerGuide.checkpointState():phase.getNumber()==6&&driverWiringGuide!=null?driverWiringGuide.checkpointState():phase.getNumber()==5&&microcontrollerGuide!=null?microcontrollerGuide.checkpointState():phase.getNumber()==4&&wiringGuide!=null?wiringGuide.checkpointState():phase.getNumber()==3&&driverGuide!=null?driverGuide.checkpointState():phase.getNumber()==2&&gearGuide!=null?gearGuide.checkpointState():null;
@@ -466,6 +467,13 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         return new dev.chyken.assembl_ar.workflow.phase.WiringDiagramState(wiringGuide==null?saved.motor:wiringGuide.flow.colors(),driverWiringGuide==null?saved.driver:driverWiringGuide.flow.colors(),sensorWiringGuide==null?saved.components:sensorWiringGuide.flow.colors());
     }
     int displayedPhaseNumber(){return phase==null?1:phase.getNumber();}
+    /** A paused current phase must not expose its schematic while an earlier scan is reviewed. */
+    int focusedSchematicPhase(){
+        if(wiringGuide!=null&&wiringGuide.schematicFocused())return 4;
+        if(driverWiringGuide!=null&&driverWiringGuide.schematicFocused())return 6;
+        if(sensorWiringGuide!=null&&sensorWiringGuide.schematicFocused())return 8;
+        return 0;
+    }
     boolean isDeveloperSession(){return devNavigationActive;}
     void returnToSavedAssembly(){
         if(!devNavigationActive||savingPhase)return;
@@ -1974,7 +1982,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void onResume() {
         if(flow==null){
-            if(welcomeDialog!=null&&welcomeDialog.isShowing()&&welcomeDialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled())
+            if(welcomeDialog!=null&&welcomeDialog.isShowing()&&welcomeDialog.findViewById(R.id.welcomeStartButton)!=null)
                 activity.voiceGuide().speak(activity.getString(R.string.welcome_assembly_body),"welcome:assembly");
             return;
         }
@@ -2411,6 +2419,16 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if(extensionBoardGuide!=null)return extensionBoardGuide.flow.tag();
         if(oledBatteryGuide!=null)return oledBatteryGuide.flow.tag();
         return flow == null ? null : flow.tag();
+    }
+    RecognitionRequest visualRequestFor(CameraCalibration calibration){
+        if(isLivePhaseOne()&&flow!=null&&flow.getMode()==Mode.COMPLETE)
+            return new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(MAIN_BOARD),calibration,null,null,1,1).withRequestTag(flow.tag());
+        return null;
+    }
+    boolean isCameraModeFocused(){
+        PhaseFlow.ScanTag tag=currentTag();
+        if(tag==null||flow==null)return false;
+        return dev.chyken.assembl_ar.workflow.phase.CameraTrackingPolicy.focused(phase.getNumber(),flow.getMode(),flow.isPreviewing());
     }
 
     boolean isFrameForCurrentPhase(RecognitionResult result) {

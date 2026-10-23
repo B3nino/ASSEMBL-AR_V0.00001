@@ -34,7 +34,7 @@ public final class ActiveReferenceScope {
             else if(r.getPhase3Stage()>0){String role=Phase3AssetCatalog.referenceRole(id);take=role!=null&&(r.getPhase3Stage()==1?!role.equals("assembly"):role.equals("assembly"));}
             else{
                 String p2=Phase2AssetCatalog.referenceRole(id);
-                if(p2!=null){take=r.getPhase2Stage()==1&&p2.equals("brackets")||r.getPhase2Stage()==2&&p2.equals("motors")||r.getPhase2Stage()==5&&(p2.equals("top")||p2.equals("left")||p2.equals("right"));}
+                if(p2!=null){take=r.getPhase2Stage()==1&&p2.equals("brackets")||r.getPhase2Stage()==2&&p2.equals("motors")||r.getPhase2Stage()==5&&(p2.equals("top")||p2.equals("left")||p2.equals("right")||p2.equals("invalid"));}
                 else if(specialized(id))take=false;
                 else if(r.getPhase2Stage()==5)take=false;
                 else if(s.getAssemblyStepNumber()!=0&&s.getAssemblyStepNumber()!=r.getAssemblyStepNumber())take=false;
@@ -55,7 +55,7 @@ public final class ActiveReferenceScope {
         for(int stage:new int[]{1,3})route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(MICROCONTROLLER),null,null,null,1,5).withPhase5Stage(stage));
         for(int stage=1;stage<=4;stage++)route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(stage==1?CASTER_WHEEL:stage==2?LINE_TRACKER:MAIN_BOARD),null,null,null,stage==2?2:1,7).withPhase7Stage(stage));
         for(int stage=1;stage<=2;stage++)route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(DISTANCE_SENSOR),null,null,null,1,8).withPhase8Stage(stage));
-        for(int stage=1;stage<=3;stage++)route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(stage==1?STANDOFF:stage==2?WHEEL:MAIN_BOARD),null,null,null,stage==2?2:1,9).withPhase9Stage(stage));
+        for(int stage=2;stage<=3;stage++)route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(stage==2?WHEEL:MAIN_BOARD),null,null,null,stage==2?2:1,9).withPhase9Stage(stage));
         for(int stage=1;stage<=5;stage++)route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(Phase10AssetCatalog.target(stage)),null,null,null,1,10).withPhase10Stage(stage));
         for(int stage=1;stage<=3;stage++)route.add(new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(Phase11AssetCatalog.target(stage)),null,null,null,1,11).withPhase11Stage(stage));
         for(int i=0;i+1<route.size();i++)if(Objects.equals(key(current),key(route.get(i))))return route.get(i+1);

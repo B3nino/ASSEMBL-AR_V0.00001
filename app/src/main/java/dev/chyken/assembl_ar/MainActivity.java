@@ -27,6 +27,9 @@ public final class MainActivity extends AppCompatActivity {
         UiUtils.configureStandardWindow(this);
         setContentView(R.layout.activity_main);
         UiUtils.applyStandardInsets(this);
+        dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).start();
+        android.view.ViewGroup header=(android.view.ViewGroup)findViewById(R.id.headerWordmark).getParent().getParent();
+        com.google.android.material.button.MaterialButton settings=new com.google.android.material.button.MaterialButton(this);settings.setText("Settings");settings.setAllCaps(false);header.addView(settings);settings.setOnClickListener(v->DevDiagnosticsFragment.showControls(this));
         UiUtils.setupPrimaryNavigation(this, R.id.navAssemblyButton);
         robotModelView = findViewById(R.id.robotModelView);
         styleHeaderWordmark();

@@ -99,8 +99,9 @@ final class Phase2GuideController implements AutoCloseable {
     RecognitionRequest request(CameraCalibration calibration){
         Plan p=plan;if(p==null)return null;
         String component=p.stage==1?MOTOR_BRACKET:p.stage==2?GEAR_MOTOR:MAIN_BOARD;
-        return new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(component),calibration,null,
+        RecognitionRequest request=new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(component),calibration,null,
                 null,p.stage==1?4:p.stage==2?2:1,2).withPhase2Stage(p.stage).withRequestTag(p.tag);
+        return p.stage==5?request.withPhase2VerificationView(flow.expectedHardwareView()):request;
     }
     boolean current(RecognitionResult result){return !closed&&result.getFrameTimestampNanos()>=createdAt&&flow.tag().equals(result.getRequestTag());}
     void onResult(RecognitionResult result){
@@ -122,8 +123,10 @@ final class Phase2GuideController implements AutoCloseable {
             String before=flow.expectedHardwareView();
             flow.observeHardware(evidence==null?null:evidence.view,evidence!=null&&evidence.referenceSupported);
             boolean confirmed=flow.currentHardwareViewComplete();
+            if(!confirmed&&evidence!=null&&evidence.rejected&&activity.isActivityResumed())activity.voiceGuide().speak("Missing components detected! Ensure TT motors and mounting brackets are installed on the mainboard.","phase2:missing:"+flow.tag());
             if(confirmed&&activity.trialLog()!=null)activity.trialLog().event("verification-view",before+" confirmed; awaiting Next");
             message=confirmed?viewName(before)+" successfully scanned · Next unlocked"
+                    :evidence!=null&&evidence.rejected?"Missing components detected · Show both motors, shafts and mounting brackets."
                     :evidence!=null&&evidence.viewAmbiguous?"View unclear. Match the current guide and keep screws and brackets visible."
                     :evidence!=null&&evidence.referenceSupported&&!Objects.equals(evidence.view,before)?"That is the "+viewName(evidence.view)+". Please show the "+viewName(before)+"."
                     :"Align the "+viewName(before)+" with the guide to identify the board.";
@@ -135,7 +138,7 @@ final class Phase2GuideController implements AutoCloseable {
         boolean located=step<=2?expected.equals(result.getComponentId())&&result.getDetectedInstanceCount(expected)>0
                 &&result.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT
                 :flow.currentHardwareViewComplete();
-        boolean wrong=step<=2&&result.hasLocatedComponent()&&!expected.equals(result.getComponentId());
+        boolean wrong=step<=2&&result.hasLocatedComponent()&&!expected.equals(result.getComponentId())||step==5&&evidence!=null&&evidence.rejected;
         hud.update(flow.canNext()?ArHudView.HudState.MATCHED:wrong?ArHudView.HudState.MISMATCH:located?ArHudView.HudState.TRACKING:ArHudView.HudState.SEARCHING,
                 step==1?"Motor brackets":step==2?"TT gear motors":"Motor assembly",located||wrong?activity.normalizeCorners(result.getProjectedCorners()):null);
         if(!wasComplete&&flow.complete()){
@@ -188,7 +191,7 @@ final class Phase2GuideController implements AutoCloseable {
         }
         dialog=new AlertDialog.Builder(activity).setTitle("Joint Stability Check").setView(body)
                 .setNegativeButton(android.R.string.cancel,null).setPositiveButton("Check joints",null).create();
-        dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
             if(answers[0].getCheckedRadioButtonId()==-1||answers[1].getCheckedRadioButtonId()==-1){Toast.makeText(activity,"Check both joints first",Toast.LENGTH_SHORT).show();return;}
             boolean left=answers[0].getCheckedRadioButtonId()==answers[0].getChildAt(0).getId();
             boolean right=answers[1].getCheckedRadioButtonId()==answers[1].getChildAt(0).getId();
@@ -196,7 +199,7 @@ final class Phase2GuideController implements AutoCloseable {
             message=left&&right?"Both motor joints are firm.":"Tighten the 30mm screws with the screwdriver, then re-check both joints.";
             if(activity.isActivityResumed())activity.voiceGuide().speak(message,"phase2:joints:"+now());
             render();save();
-        }));dialog.show();PhysicalCheckUi.style(dialog);
+        });});dialog.show();PhysicalCheckUi.style(dialog);
     }
     void render(){
         if(closed)return;

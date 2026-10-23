@@ -10,7 +10,7 @@ import java.util.*;
 /** Board context locates mounting positions; each sensor is recognized with its own orientation. */
 final class Phase7ReferenceMatcher implements AutoCloseable {
     private final ReferenceDatabase database;private final ORB orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
-    private final CLAHE clahe;private final BFMatcher matcher=BFMatcher.create(Core.NORM_HAMMING,false);
+    private final CLAHE clahe;private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     private final Phase7TrackerSearch trackerSearch;
     private final List<ReferenceDatabase.PreparedReference> trackerReferences = new ArrayList<>();
     private final List<ReferenceDatabase.PreparedReference> installedReferences = new ArrayList<>();
@@ -36,7 +36,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         try{
             if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);
             if(step==4)trackerGray=work.clone();
-            clahe.apply(work,work);orb.detectAndCompute(work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();
+            DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
             if(step==4){
                 Phase7Observation evidence=inspectTrackers(trackerGray,rgb,live,descriptors,scale,located);
                 List<RecognitionResult.InstanceObservation> instances=new ArrayList<>();
@@ -151,7 +151,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
                 if(a.size()<18)continue;
                 MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
                 try{
-                    src.fromList(a);dst.fromList(b);h=Calib3d.findHomography(src,dst,Calib3d.RANSAC,3.5,mask,1600,.995);
+                    src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1600,.995);
                     int n=h.empty()?0:Core.countNonZero(mask);if(n<18||n<a.size()*.45)continue;
                     context=true;
                     boolean[][] slots=new boolean[2][2];
@@ -176,7 +176,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         boardCursor+=Math.max(1,inspectedContext-(preferred!=null?1:0));
         return Phase7Observation.installedTrackers(2,mounts,context,score,(visibleNuts[0]?1:0)+(visibleNuts[1]?1:0));
     }
-    private static List<ReferenceDatabase.PreparedReference> ordered(List<ReferenceDatabase.PreparedReference> refs,int cursor,ReferenceDatabase.PreparedReference preferred){
+    private static List<ReferenceDatabase.PreparedReference> ordered(List<ReferenceDatabase.PreparedReference> refs,int cursor,ReferenceDatabase.PreparedReference preferred){DiagnosticHammingMatcher.context(preferred==null?null:preferred.spec);
         List<ReferenceDatabase.PreparedReference> result=new ArrayList<>();
         if(preferred!=null&&refs.contains(preferred))result.add(preferred);
         for(int i=0;i<refs.size();i++){
@@ -190,7 +190,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         for(int i=0;i<variant.keypoints.length;i++)if(in(variant.keypoints[i].pt,roi,ref))sourceIds.add(i);
         if(sourceIds.size()<3)return false;
         Mat inverse=h.inv();MatOfPoint2f pixels=new MatOfPoint2f(),canonical=new MatOfPoint2f();
-        Mat query=null,train=null;List<MatOfDMatch> pairs=new ArrayList<>();
+        Mat query=null,train=null;
         try{
             Point[] positions=new Point[live.length];for(int i=0;i<live.length;i++)positions[i]=live[i].pt;
             pixels.fromArray(positions);Core.perspectiveTransform(pixels,canonical,inverse);Point[] mapped=canonical.toArray();
@@ -200,15 +200,14 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
             query=rows(variant.descriptors,sourceIds);train=rows(descriptors,liveIds);
             // Nuts repeat throughout the board. Restrict matching to the projected mount BEFORE
             // the ratio test, so another nut elsewhere cannot steal the correct correspondence.
-            matcher.knnMatch(query,train,pairs,2);List<DMatch> good=new ArrayList<>();
-            for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<75&&p[0].distance<p[1].distance*.85)good.add(p[0]);}
+            List<DMatch> good=matcher.ratioMatches(query,train,.85,74);
             good.sort(Comparator.comparingDouble(m->m.distance));Set<Integer> used=new HashSet<>();List<Point> a=new ArrayList<>(),c=new ArrayList<>();
             for(DMatch m:good)if(used.add(m.trainIdx)){a.add(variant.keypoints[sourceIds.get(m.queryIdx)].pt);c.add(live[liveIds.get(m.trainIdx)].pt);}
             if(a.size()<3)return false;pixels.fromList(a);Core.perspectiveTransform(pixels,canonical,h);Point[] projected=canonical.toArray();
             int count=0;double lx=Double.MAX_VALUE,ly=lx,rx=-lx,ry=-lx;
             for(int i=0;i<a.size();i++)if(Math.hypot(projected[i].x-c.get(i).x,projected[i].y-c.get(i).y)<=4){Point p=a.get(i);count++;lx=Math.min(lx,p.x);rx=Math.max(rx,p.x);ly=Math.min(ly,p.y);ry=Math.max(ry,p.y);}
             return count>=3&&rx-lx>=(r-l)*.20&&ry-ly>=(b-t)*.20;
-        }finally{inverse.release();pixels.release();canonical.release();if(query!=null)query.release();if(train!=null)train.release();for(Mat m:pairs)m.release();}
+        }finally{inverse.release();pixels.release();canonical.release();if(query!=null)query.release();if(train!=null)train.release();}
     }
     private static Mat rows(Mat descriptors,List<Integer> ids){
         Mat result=new Mat(ids.size(),descriptors.cols(),descriptors.type());
@@ -217,8 +216,8 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
     }
     @SuppressWarnings("unchecked")
     private List<Point>[] correspondences(ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors){
-        List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> good=new ArrayList<>();
-        try{matcher.knnMatch(variant.descriptors,descriptors,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.76)good.add(p[0]);}}finally{for(Mat m:pairs)m.release();}
+        List<DMatch> good=new ArrayList<>();
+        good.addAll(matcher.ratioMatches(variant.descriptors,descriptors,.76,64));
         good.sort(Comparator.comparingDouble(m->m.distance));Set<Integer> used=new HashSet<>();List<Point> a=new ArrayList<>(),b=new ArrayList<>();
         for(DMatch m:good)if(used.add(m.trainIdx)){a.add(variant.keypoints[m.queryIdx].pt);b.add(live[m.trainIdx].pt);}
         return new List[]{a,b};
@@ -238,22 +237,21 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         for(int i=0;i<variant.keypoints.length;i++)if(in(variant.keypoints[i].pt,region,ref))ids.add(i);
         cached=new Crop(ids,ids.size()<10?null:rows(variant.descriptors,ids));crops.put(region,cached);return cached;
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,List<List<VisionPoint>> regions,boolean installed,boolean bad,List<VisionPoint> looseRegion){
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,List<List<VisionPoint>> regions,boolean installed,boolean bad,List<VisionPoint> looseRegion){DiagnosticHammingMatcher.context(ref.spec);
         return match(ref,variant,live,descriptors,scale,regions,installed,bad,looseRegion,null);
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,List<List<VisionPoint>> regions,boolean installed,boolean bad,List<VisionPoint> looseRegion,List<VisionPoint> identity){
-        List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> good=new ArrayList<>();
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,List<List<VisionPoint>> regions,boolean installed,boolean bad,List<VisionPoint> looseRegion,List<VisionPoint> identity){DiagnosticHammingMatcher.context(ref.spec);
+        List<DMatch> good=new ArrayList<>();
         List<Integer> queryIds=new ArrayList<>();Mat localQuery=null;
         if(!installed){
             Crop cached=crop(ref,variant,looseRegion);queryIds=cached.ids;
             if(queryIds.size()<10)return null;localQuery=cached.descriptors;
         }
-        try{
+        {
             // Match only the component crop. Board features outside it must neither consume
             // matching time nor steal a live keypoint during train-index deduplication.
-            matcher.knnMatch(localQuery!=null?localQuery:variant.descriptors,descriptors,pairs,2);
-            for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.76){if(localQuery!=null)p[0].queryIdx=queryIds.get(p[0].queryIdx);good.add(p[0]);}}
-        }finally{for(Mat m:pairs)m.release();}
+            for(DMatch m:matcher.ratioMatches(localQuery!=null?localQuery:variant.descriptors,descriptors,.76,64)){if(localQuery!=null)m.queryIdx=queryIds.get(m.queryIdx);good.add(m);}
+        }
         good.sort(Comparator.comparingDouble(m->m.distance));List<Point> a=new ArrayList<>(),b=new ArrayList<>();List<Point> allA=new ArrayList<>(),allB=new ArrayList<>();Set<Integer> used=new HashSet<>();
         for(DMatch m:good){if(!used.add(m.trainIdx))continue;Point p=variant.keypoints[m.queryIdx].pt,q=live[m.trainIdx].pt;allA.add(p);allB.add(q);
             if(installed?bad||!inAny(p,regions,ref):in(p,looseRegion,ref)){a.add(p);b.add(q);}
@@ -265,7 +263,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         if(identity!=null){List<Point> detail=new ArrayList<>();for(Point p:allA)if(in(p,identity,ref))detail.add(p);if(!spread(detail,identity,ref,.25,4))return null;}
         MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
         try{
-            src.fromList(a);dst.fromList(b);h=Calib3d.findHomography(src,dst,Calib3d.RANSAC,3.5,mask,1600,.995);int inliers=h.empty()?0:Core.countNonZero(mask);
+            src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1600,.995);int inliers=h.empty()?0:Core.countNonZero(mask);
             if(inliers<minimum||inliers<a.size()*.45)return null;
             double score=inliers;
             if(identity!=null){

@@ -71,7 +71,7 @@ public final class HomeRobotSurfaceView extends GLSurfaceView {
         setEGLContextClientVersion(2);
         setEGLConfigChooser(8, 8, 8, 0, 16, 0);
         getHolder().setFormat(PixelFormat.OPAQUE);
-        setPreserveEGLContextOnPause(true);
+        setPreserveEGLContextOnPause(false);
         robotRenderer.setOnFirstFrame(()->postOnAnimation(()->postOnAnimation(()->{rendered=true;if(readyListener!=null)readyListener.run();})));
         setRenderer(robotRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);

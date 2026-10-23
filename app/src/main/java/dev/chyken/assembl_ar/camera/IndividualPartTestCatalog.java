@@ -18,19 +18,9 @@ import dev.chyken.assembl_ar.vision.RecognitionRequest;
 import dev.chyken.assembl_ar.vision.VisionPoint;
 import dev.chyken.assembl_ar.vision.VisionConfig;
 
-/**
- * Reviewed, independent identities for the diagnostic camera.
- *
- * <p>The strict catalog is an allowlist of component/path pairs, not a filename keyword filter.
- * Manual installation scenes cannot enter that standalone catalog; the legacy entry point also
- * admits only reviewed sources. Step-scoped references, generated artwork and administrator
- * captures remain excluded from this independent diagnostic catalog.
- * The bracket, gear-motor and motor-driver photographs come from the same reviewed loose-part
- * catalog used by production assembly. The new physical capture batch also shares exact geometry
- * through ReviewedIndividualReferenceCatalog. Other diagnostic-only additions remain explicitly
- * authored here. See INDIVIDUAL_PART_TEST_REFERENCES.md.
- * All competing reviewed identities remain loaded, regardless of the selected test component.</p>
- */
+/** Compatibility registrations for reviewed standalone captures. UnifiedReferenceCatalog merges
+ * these entries into production registration; the test camera now selects that shared catalog.
+ * filter() remains the reviewed-source registration helper used during that merge. */
 public final class IndividualPartTestCatalog {
     private static final Set<String> STANDALONE_COMPONENT_IDS = standaloneComponentIds();
     private static final Set<String> UNAVAILABLE_COMPONENT_IDS = unavailableComponentIds();
@@ -103,7 +93,7 @@ public final class IndividualPartTestCatalog {
     public static List<ComponentReferenceSpec> withLegacyBaselines(List<ComponentReferenceSpec> specs) {
         // Compatibility entry point: rejected contextual images must not return through the
         // tester. Missing coverage is shown explicitly instead of counting unrelated templates.
-        return filter(specs);
+        return UnifiedReferenceCatalog.individual(UnifiedReferenceCatalog.mergeRegistered(specs));
     }
 
     /** No pose direction, polarity, board anchor, repeated instance, or assembly pass is requested. */

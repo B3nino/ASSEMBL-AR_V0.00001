@@ -63,6 +63,8 @@ public final class ArHudView extends View {
     private final int labelBackgroundColor;
     private HudState state = HudState.SEARCHING;
     private boolean targetGuideVisible;
+    private boolean externalOutlines;
+    public void useDynamicOutlines(){externalOutlines=true;invalidate();}
     private boolean scanningEnabled=false;
     public void setScanningEnabled(boolean enabled){if(scanningEnabled!=enabled){scanningEnabled=enabled;invalidate();}}
     public boolean isScanningEnabled(){return scanningEnabled;}
@@ -150,6 +152,20 @@ public final class ArHudView extends View {
         boardCorners = corners != null && corners.length == 8 ? Arrays.copyOf(corners, 8) : null;
         invalidate();
     }
+    /** Replace the component polygon, not the separate board-context guide. Null means
+     * measured tracking was lost; never leave a successful scan's old polygon on screen. */
+    public void setTrackedComponentCorners(@Nullable float[] corners){
+        normalizedCorners=corners!=null&&corners.length==8?Arrays.copyOf(corners,8):null;
+        detectedParts=Collections.emptyList();invalidate();
+    }
+
+    public void setTrackedComponentRegions(String label,java.util.List<float[]> regions){
+        componentLabel=label==null?"":label;
+        if(regions==null||regions.size()<2){setTrackedComponentCorners(regions==null||regions.isEmpty()?null:regions.get(0));return;}
+        java.util.List<DetectedPart> parts=new java.util.ArrayList<>();
+        PartStatus status=state==HudState.WRONG_ORIENTATION||state==HudState.MISMATCH||state==HudState.POLARITY_ERROR?PartStatus.INVALID:state==HudState.MATCHED?PartStatus.ACCEPTED:PartStatus.PENDING;
+        for(int i=0;i<regions.size();i++)parts.add(new DetectedPart(label+" "+(i+1),regions.get(i),status));setDetectedParts(parts);
+    }
 
     public void setAssemblyTargets(@Nullable float[] left, boolean leftChecked,
                                    @Nullable float[] right, boolean rightChecked) {
@@ -169,6 +185,7 @@ public final class ArHudView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if(externalOutlines)return;
         drawAssemblyTarget(canvas, boardCorners, false);
         if (normalizedCorners == null && detectedParts.isEmpty()
                 && boardCorners == null) {

@@ -42,7 +42,7 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
         UiUtils.setupToolbar(this, getString(R.string.component_library));
         UiUtils.setupPrimaryNavigation(this, R.id.navComponentsButton);
         findViewById(R.id.testIndividualPartsButton).setOnClickListener(view ->
-                startActivity(new Intent(this, PartRecognitionTestActivity.class)));
+                startActivity(new Intent(this, DevDiagnosticsActivity.class)));
         populateComponents(NeobotSeedData.getComponents());
         setupSearch();
     }

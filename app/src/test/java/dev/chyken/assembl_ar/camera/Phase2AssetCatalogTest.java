@@ -21,7 +21,7 @@ public final class Phase2AssetCatalogTest {
         }
         List<ComponentReferenceSpec> specs=Phase2AssetCatalog.referencesForPaths(paths);
         long expected=paths.stream().filter(Phase2AssetCatalog::image)
-                .filter(p->{String role=Phase2AssetCatalog.role(p.substring(Phase2AssetCatalog.ROOT.length()+1).split("/")[0]);return role!=null&&!role.equals("invalid");}).count();
+                .filter(p->{String role=Phase2AssetCatalog.role(p.substring(Phase2AssetCatalog.ROOT.length()+1).split("/")[0]);return role!=null&&(!role.equals("invalid")||p.contains("STEP2_BARE_BOARD_INVALID"));}).count();
         assertEquals(expected,specs.size());assertTrue(specs.size()>50);
         Set<String> ids=new HashSet<>();Set<String> roles=new HashSet<>();
         for(ComponentReferenceSpec spec:specs){
@@ -29,9 +29,9 @@ public final class Phase2AssetCatalogTest {
             assertTrue(Files.isRegularFile(Paths.get("src/main/assets",spec.getJpegAssetPath())));
             roles.add(Phase2AssetCatalog.referenceRole(spec.getReferenceId()));
             assertFalse(spec.hasVerifiedPolarityAnchors());
-            assertFalse("Invalid images must not be registered",spec.getJpegAssetPath().contains("INVALIDSCANS"));
+            if(spec.getJpegAssetPath().contains("INVALID")){assertTrue(spec.getJpegAssetPath().contains("STEP2_BARE_BOARD_INVALID"));assertEquals("invalid",Phase2AssetCatalog.referenceRole(spec.getReferenceId()));}
         }
-        assertEquals(new HashSet<>(Arrays.asList("brackets","motors","top","left","right")),roles);
+        assertEquals(new HashSet<>(Arrays.asList("brackets","motors","top","left","right","invalid")),roles);
     }
     @Test public void authoredVideoOrderDoesNotDependOnAlphabeticalOrder(){
         assertEquals(0,Phase2AssetCatalog.clipOrder("P2_Where to insert motor brackets.mp4"));

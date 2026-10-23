@@ -34,6 +34,9 @@
         android:layout_height="match_parent"
         android:importantForAccessibility="no" />
 
+    <dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView
+        android:id="@+id/dynamicOutlineOverlay" android:layout_width="match_parent" android:layout_height="match_parent" android:elevation="4dp" />
+
     <dev.chyken.assembl_ar.ui.ComponentPreviewWindow
         android:id="@+id/componentPreviewWindow"
         android:layout_width="150dp"
@@ -93,6 +96,7 @@
 
         <TextView
             android:id="@+id/wiringReviewButton"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
@@ -770,4 +774,8 @@
             android:layout_marginTop="18dp"
             android:text="@string/grant_camera" />
     </LinearLayout>
+    <dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView android:id="@+id/devDiagnosticsOverlay"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|end" android:layout_marginTop="84dp" android:layout_marginEnd="12dp"
+        android:elevation="999dp" android:visibility="gone" android:maxWidth="420dp" />
 </FrameLayout>

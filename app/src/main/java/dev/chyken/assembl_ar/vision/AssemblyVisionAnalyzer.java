@@ -35,6 +35,22 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, AutoCloseable {
     private static final String TAG = "AssemblArAnalyzer";
 
+    private final OpticalFlowTrackerBridge flowBridge=new OpticalFlowTrackerBridge();
+    private final TargetBoundingTracker targetBounds=new TargetBoundingTracker();
+    private GlobalComponentRegistry.Match frameGlobalCandidate;
+    private boolean visualOnlyFrame;
+    private long lastOutlineFrame=Long.MIN_VALUE;
+    private long lastGlobalQuery=Long.MIN_VALUE;
+    private boolean illuminationPreferred;
+    private int failedDetections;
+    private org.opencv.features2d.ORB globalOrb;
+    private org.opencv.imgproc.CLAHE globalClahe;
+    private Mat diagnosticGray;
+    private FrameMetadata diagnosticFrame;
+    private volatile RecognitionRequest diagnosticRequest;
+    private volatile Object trackingTag;
+    private volatile String trackingScope;
+    public void attachMotion(android.content.Context c){flowBridge.attach(c);dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.attach(c);}
     private final ComponentRecognizer recognizer;
     private final RequestProvider requestProvider;
     private final Callback callback;
@@ -90,8 +106,49 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
         this.modelRecognizer = modelRecognizer;
     }
 
-    @Override
-    public void analyze(@NonNull ImageProxy image) {
+    private final java.util.concurrent.ExecutorService detectorExecutor=java.util.concurrent.Executors.newSingleThreadExecutor(r->new Thread(()->{android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);r.run();},"orb-detector"));
+    private final AtomicBoolean detectorBusy=new AtomicBoolean();
+    private static final long DETECTOR_INTERVAL_NANOS=150_000_000L;
+    private volatile long lastQueuedDetection=Long.MIN_VALUE;
+    @Override public void analyze(@NonNull ImageProxy image){
+        boolean suspended=requestProvider.isAnalysisSuspended();
+        if(closed.get()||suspended&&requestProvider.isTrackingSuspended()){image.close();return;}
+        long capturedFrameNanos=CaptureTimebase.toElapsedRealtimeNanos(image.getImageInfo().getTimestamp());
+        dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.frame(capturedFrameNanos);
+        boolean due=(!suspended||!requestProvider.isTrackingSuspended())&&(lastQueuedDetection==Long.MIN_VALUE||capturedFrameNanos-lastQueuedDetection>=(suspended?500_000_000L:DETECTOR_INTERVAL_NANOS));
+        if(due&&detectorBusy.compareAndSet(false,true)){
+            lastQueuedDetection=capturedFrameNanos;
+            DetachedCameraFrame owned;
+            try{owned=new DetachedCameraFrame(image,capturedFrameNanos);}catch(RuntimeException failure){detectorBusy.set(false);image.close();deliverError(failure);return;}
+            image.close();
+            try{detectorExecutor.execute(()->{try{processDetection(owned);}finally{detectorBusy.set(false);}});}catch(java.util.concurrent.RejectedExecutionException closedWorker){detectorBusy.set(false);owned.close();}
+            return;
+        }
+        Mat gray=null,rotated=null;
+        try{
+            if(lastOutlineFrame!=Long.MIN_VALUE&&capturedFrameNanos-lastOutlineFrame<50_000_000L)return;
+            lastOutlineFrame=capturedFrameNanos;
+            if(image.getFormat()!=ImageFormat.YUV_420_888)return;
+            long time=capturedFrameNanos;Rect crop=image.getCropRect();gray=yPlaneToGray(image,crop);Mat analyzed=gray;
+            int rotation=normalizeRotation(image.getImageInfo().getRotationDegrees());if(rotatePixelsToDisplay&&rotation!=0){rotated=new Mat();rotate(gray,rotated,rotation);analyzed=rotated;}
+            FrameMetadata frame=new FrameMetadata(time,image.getWidth(),image.getHeight(),crop.left,crop.top,crop.width(),crop.height(),analyzed.cols(),analyzed.rows(),rotation,rotatePixelsToDisplay&&rotation!=0,matrixValues(image.getImageInfo().getSensorToBufferTransformMatrix()));
+            RecognitionRequest request=requestProvider.requestForTracking(frame);
+            if(request==null)request=suspended?diagnosticRequest:requestProvider.requestFor(frame);if(request==null)return;
+            if(!Objects.equals(trackingScope,dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request)))return;
+            TargetBoundingTracker.Target outline=targetBounds.frame(analyzed,time,flowBridge.imageMotion(request.getCameraCalibration(),rotatePixelsToDisplay?rotation:0));
+            callback.onTargetTracking(outline,frame,request.getRequestTag());
+            // User outlines already have their own LK pass. Metric pose tracking
+            // serves an active benchmark/legacy renderer, not every ordinary frame.
+            RecognitionResult.SpatialAnchor visual=requestProvider.requiresMetricTracking()?flowBridge.trackLatest(analyzed,time,request.getCameraCalibration()):null;
+            if(visual!=null&&!flowBridge.predicted())dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.computedFrame(time);
+            dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.tracking(visual,analyzed,request.getCameraCalibration(),flowBridge.predicted(),time);
+            callback.onTracking(visual,frame,request.getCameraCalibration(),flowBridge.predicted(),request.getRequestTag());
+        }catch(RuntimeException failure){Log.w(TAG,"Intermediate tracking frame unavailable",failure);}
+        finally{if(rotated!=null)rotated.release();if(gray!=null)gray.release();image.close();}
+    }
+    /** Deterministic offline replay entry point; realtime CameraX callers use analyze(). */
+    public void analyzeForReplay(@NonNull ImageProxy image){processDetection(image);}
+    private void processDetection(@NonNull ImageProxy image) {
         Objects.requireNonNull(image, "image");
         Mat grayscale = null;
         Mat rotated = null;
@@ -103,10 +160,10 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                 return;
             }
             // A demonstration or assembly screen needs no camera evidence; skip the frame entirely.
-            if (requestProvider.isAnalysisSuspended()) return;
+            visualOnlyFrame=requestProvider.isAnalysisSuspended();
+            if(visualOnlyFrame&&requestProvider.isTrackingSuspended())return;
             long now = SystemClock.elapsedRealtimeNanos();
-            long captureTimestampNanos = CaptureTimebase.toElapsedRealtimeNanos(
-                    image.getImageInfo().getTimestamp());
+            long captureTimestampNanos = image instanceof DetachedCameraFrame?((DetachedCameraFrame)image).elapsedTimestamp:CaptureTimebase.toElapsedRealtimeNanos(image.getImageInfo().getTimestamp());
             long last = lastAcceptedFrameNanos.get();
             if (last != Long.MIN_VALUE && captureTimestampNanos <= last) {
                 return;
@@ -151,8 +208,18 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                     rotationDegrees,
                     rotatePixelsToDisplay && rotationDegrees != 0,
                     matrixValues(image.getImageInfo().getSensorToBufferTransformMatrix()));
-            RecognitionRequest request = requestProvider.requestFor(metadata);
+            RecognitionRequest request = visualOnlyFrame?requestProvider.requestForTracking(metadata):requestProvider.requestFor(metadata);
+            if(request==null&&visualOnlyFrame)request=diagnosticRequest;
+            if(request==null)return;
             Object requestTag = request == null ? null : request.getRequestTag();
+            diagnosticGray=analyzed;diagnosticFrame=metadata;diagnosticRequest=request;
+            boolean resetRequested=resetAssemblyTracking.getAndSet(false);
+            if(!Objects.equals(trackingScope,dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request))||resetRequested){flowBridge.reset();targetBounds.reset();boardTracker.reset();loosePartRecognizer.reset();previousBoardAnchor=null;}
+            trackingTag=requestTag;trackingScope=dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request);
+            frameGlobalCandidate=null;
+            DiagnosticHammingMatcher.begin();
+            DiagnosticHammingMatcher.recovery(failedDetections==0?illuminationPreferred:failedDetections%2==1?!illuminationPreferred:illuminationPreferred);
+            discoverVisualTarget(analyzed,metadata,request);
             int assemblyStep = request == null ? 0 : request.getAssemblyStepNumber();
             if(request!=null&&request.getPhase7Stage()>0){
                 // Color proposes separate module search windows only in the dual-tracker check.
@@ -247,13 +314,16 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                 if(!closed.get())deliverResult(inspected);return;
             }
             if(request!=null && request.getPhase2Stage()==5) {
-                RecognitionResult inspected=recognizer.inspectPhase2(analyzed,metadata.getTimestampNanos(),5,null)
+                rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
+                RecognitionResult inspected=recognizer.inspectPhase2(analyzed,rgb,metadata.getTimestampNanos(),5,null,request.getPhase2VerificationView()==null?"any":request.getPhase2VerificationView())
                         .withAssemblyInspection(2,null,false,null).withRequestTag(requestTag);
                 FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);
                 if(snapshot!=null){
                     if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);
                     captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());
                 }
+                String capture=measurements.captureDue(metadata.getTimestampNanos())?measurements.capture(rgb,metadata.getTimestampNanos()):null;
+                if(MeasurementRecorder.enabled())measurements.log(metadata,request,inspected,(SystemClock.elapsedRealtimeNanos()-now)/1e6,capture);
                 if(!closed.get()) deliverResult(inspected);
                 return;
             }
@@ -468,7 +538,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                     workplaneTracked, motorObservation).withBoardObservation(board)
                     .withRequestTag(requestTag);
             if(request!=null && request.getPhase2Stage()>0)
-                result=recognizer.inspectPhase2(analyzed,metadata.getTimestampNanos(),request.getPhase2Stage(),result);
+                result=recognizer.inspectPhase2(analyzed,null,metadata.getTimestampNanos(),request.getPhase2Stage(),result,"any");
             FrameSnapshotCallback requestedSnapshot = pendingFrameSnapshot.getAndSet(null);
             if (requestedSnapshot != null) {
                 try {
@@ -517,7 +587,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             }
             if (acquired) {
                 processing.set(false);
-                if (closed.get()) boardTracker.close();
+                DiagnosticHammingMatcher.end();
+                if (closed.get()) {boardTracker.close();flowBridge.close();targetBounds.close();closeGlobalFeatures();}
             }
             image.close();
         }
@@ -525,13 +596,15 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
 
     @Override
     public void close() {
-        closed.set(true);
+        closed.set(true);detectorExecutor.shutdown();
         measurements.close();
+        if(!processing.get()){flowBridge.close();targetBounds.close();closeGlobalFeatures();}
         failPendingFrameSnapshot(new IllegalStateException("Analyzer closed before frame capture"));
         if (!processing.get()) boardTracker.close();
     }
 
-    public void resetAssemblyTracking() { resetAssemblyTracking.set(true); }
+    public void resetAssemblyTracking() { resetAssemblyTracking.set(true);targetBounds.reset(); }
+    public long visualEpoch(){return targetBounds.epoch();}
 
     /** Captures the next frame that reaches recognition, using its exact analyzed pixels. */
     public boolean captureNextAnalyzedFrame(FrameSnapshotCallback callback) {
@@ -763,11 +836,102 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
 
     private void deliverResult(RecognitionResult result) {
         try {
-            callback.onResult(result);
+            if(diagnosticGray!=null&&diagnosticRequest!=null){
+                try{result=globalValidation(result,diagnosticGray,diagnosticRequest);}catch(RuntimeException unavailable){Log.w(TAG,"Optional cross-reference hint unavailable",unavailable);}
+                RecognitionResult.SpatialAnchor seed=result.getSpatialAnchor();
+                if(seed==null&&result.getPose()!=null&&result.getProjectedCorners().size()==4&&result.getReferenceId()!=null&&result.getComponentId()!=null)seed=new RecognitionResult.SpatialAnchor(result.getReferenceId(),result.getComponentId(),result.getProjectedCorners(),result.getPose());
+                boolean wrong=result.getDiagnosticMetrics()!=null&&result.getDiagnosticMetrics().mismatch!=null;
+                if(result.getValidationState()==RecognitionResult.ValidationState.COMPONENT_MISMATCH||result.getValidationState()==RecognitionResult.ValidationState.WRONG_ORIENTATION||result.getValidationState()==RecognitionResult.ValidationState.POLARITY_ERROR){seed=null;wrong=true;}
+                // Visual localization is delivered BEFORE workflow completion. Its owner is
+                // the camera screen, not the scan token that changes when Next unlocks.
+                deliverTarget(result);
+                if(!visualOnlyFrame)callback.onResult(result);
+                if(result.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT){illuminationPreferred=DiagnosticHammingMatcher.snapshot().recovery;failedDetections=0;}else failedDetections++;
+                if(wrong)flowBridge.reset();
+                RecognitionResult.SpatialAnchor visual=null;
+                try{if(!wrong&&requestProvider.requiresMetricTracking())visual=flowBridge.update(diagnosticGray,result.getFrameTimestampNanos(),seed,diagnosticRequest.getCameraCalibration());else flowBridge.reset();}catch(RuntimeException trackingFailure){flowBridge.reset();Log.w(TAG,"Visual tracking unavailable",trackingFailure);}
+                if(visual!=null&&!flowBridge.predicted())dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.computedFrame(result.getFrameTimestampNanos());
+                try{if(!visualOnlyFrame){dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.record(result,diagnosticRequest,diagnosticGray);if(dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest!=null)callback.onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest);}}catch(RuntimeException diagnosticFailure){Log.w(TAG,"Optional benchmark measurement unavailable",diagnosticFailure);}
+                if(visual!=null)callback.onTracking(visual,diagnosticFrame,diagnosticRequest.getCameraCalibration(),flowBridge.predicted(),diagnosticRequest.getRequestTag());
+            }else if(!visualOnlyFrame)callback.onResult(result);
         } catch (RuntimeException callbackFailure) {
             Log.e(TAG, "Vision result callback failed", callbackFailure);
         }
     }
+
+    /** Fast visual localization runs before the heavier installation checks. */
+    private void discoverVisualTarget(Mat gray,FrameMetadata frame,RecognitionRequest request){
+        if(request==null||!GlobalComponentRegistry.INSTANCE.hasReferences()||targetBounds.hasTarget())return;
+        long now=SystemClock.elapsedRealtimeNanos();if(lastGlobalQuery!=Long.MIN_VALUE&&now-lastGlobalQuery<350_000_000L)return;
+        if(globalOrb==null){globalOrb=OpenCvVisionUtils.createOrb(VisionConfig.defaults());globalClahe=OpenCvVisionUtils.createClahe(VisionConfig.defaults());}
+        Mat normalized=new Mat(),rows=new Mat(),mask=new Mat();org.opencv.core.MatOfKeyPoint keys=new org.opencv.core.MatOfKeyPoint();
+        try{
+            DiagnosticHammingMatcher.normalize(globalClahe,gray,normalized);DiagnosticHammingMatcher.extract(globalOrb,normalized,mask,keys,rows);
+            DiagnosticHammingMatcher.captureLive(keys.toArray(),rows,1);String expected=request.getExpectation()==null?null:request.getExpectation().getComponentId();long started=SystemClock.elapsedRealtimeNanos();
+            GlobalComponentRegistry.Match match=GlobalComponentRegistry.INSTANCE.queryForOverlay(rows,keys.toArray(),expected,request.getAssemblyStepNumber());
+            DiagnosticHammingMatcher.snapshot().matchingNs+=SystemClock.elapsedRealtimeNanos()-started;lastGlobalQuery=SystemClock.elapsedRealtimeNanos();frameGlobalCandidate=match;
+            if(match!=null){boolean wrong=match.identityCertain&&match.incompatible(request.getAssemblyStepNumber(),expected);
+                String name=ComponentContourTemplates.name(match.componentId,match.name),wanted=ComponentContourTemplates.name(expected,expected);
+                if(wrong&&Objects.equals(match.componentId,expected)){name+=" (Phase "+match.phase+")";wanted="Phase "+request.getAssemblyStepNumber()+" assembly";}
+                TargetBoundingTracker.Target target=targetBounds.detect(gray,frame.getTimestampNanos(),match.componentId,name,wanted,wrong?TargetBoundingTracker.State.WRONG:match.identityCertain?TargetBoundingTracker.State.LOCKED:TargetBoundingTracker.State.ACQUIRING,match.bodyRegions,false);
+                callback.onTargetTracking(target,frame,request.getRequestTag());
+            }
+        }catch(RuntimeException unavailable){Log.w(TAG,"Visual discovery unavailable; local verification retained",unavailable);}
+        finally{normalized.release();rows.release();mask.release();keys.release();}
+    }
+    private void deliverTarget(RecognitionResult result){
+        java.util.List<java.util.List<VisionPoint>> regions=new java.util.ArrayList<>();
+        for(RecognitionResult.InstanceObservation part:result.getInstanceObservations())if(part.getProjectedCorners().size()==4&&regions.size()<4)regions.add(part.getProjectedCorners());
+        if(regions.isEmpty()&&result.hasLocatedComponent()&&result.getProjectedCorners().size()==4)regions.add(result.getProjectedCorners());
+        String id=result.getComponentId(),name=result.getDisplayName();
+        boolean wrong=result.getValidationState()==RecognitionResult.ValidationState.COMPONENT_MISMATCH||result.getValidationState()==RecognitionResult.ValidationState.WRONG_ORIENTATION||result.getValidationState()==RecognitionResult.ValidationState.POLARITY_ERROR;
+        boolean verified=result.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT;
+        TargetBoundingTracker.State state=wrong?TargetBoundingTracker.State.WRONG:TargetBoundingTracker.State.LOCKED;
+        String expected=diagnosticRequest.getExpectation()==null?null:diagnosticRequest.getExpectation().getComponentId();
+        GlobalComponentRegistry.Match global=frameGlobalCandidate;
+        if(global!=null&&(regions.isEmpty()||result.getDiagnosticMetrics()!=null&&result.getDiagnosticMetrics().mismatch!=null)){
+            regions=new java.util.ArrayList<>(global.bodyRegions);if(regions.isEmpty())regions.add(global.targetCorners);
+            id=global.componentId;name=global.name;wrong=global.identityCertain&&global.incompatible(diagnosticRequest.getAssemblyStepNumber(),expected);
+            state=wrong?TargetBoundingTracker.State.WRONG:global.identityCertain?TargetBoundingTracker.State.LOCKED:TargetBoundingTracker.State.ACQUIRING;verified=false;
+        }
+        if(regions.isEmpty()||id==null)return;
+        TargetBoundingTracker.Target located=targetBounds.detect(diagnosticGray,result.getFrameTimestampNanos(),id,ComponentContourTemplates.name(id,name),ComponentContourTemplates.name(expected,expected),state,regions,verified);
+        callback.onTargetTracking(located,diagnosticFrame,diagnosticRequest.getRequestTag());
+    }
+
+    private RecognitionResult globalValidation(RecognitionResult result,Mat gray,RecognitionRequest request){
+        RecognitionResult.DiagnosticMetrics prior=result.getDiagnosticMetrics();String mismatch=null;
+        DiagnosticHammingMatcher.State probe=DiagnosticHammingMatcher.snapshot();
+        // Installed components share a PCB with many earlier/later parts. Local independent
+        // component + board geometry is the verification gate. The global library supplies
+        // wrong-item hints only when that gate fails, at a bounded cadence, not a second
+        // full-frame ORB/database search after every successful scan.
+        boolean verified=result.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT&&result.getDetectionMethod()==RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY;
+        boolean knownRejection=result.getPhase2Observation()!=null&&result.getPhase2Observation().rejected
+                ||result.getValidationState()==RecognitionResult.ValidationState.WRONG_ORIENTATION
+                ||result.getValidationState()==RecognitionResult.ValidationState.POLARITY_ERROR;
+        long now=SystemClock.elapsedRealtimeNanos();
+        if(!verified&&!knownRejection&&GlobalComponentRegistry.INSTANCE.isReady()&&(lastGlobalQuery==Long.MIN_VALUE||now-lastGlobalQuery>=(targetBounds.hasTarget()?1_000_000_000L:350_000_000L))){
+            lastGlobalQuery=now;
+            if(probe.live==null){
+                if(globalOrb==null){globalOrb=OpenCvVisionUtils.createOrb(VisionConfig.defaults());globalClahe=OpenCvVisionUtils.createClahe(VisionConfig.defaults());}
+                Mat normalized=new Mat(),descriptors=new Mat(),mask=new Mat();org.opencv.core.MatOfKeyPoint points=new org.opencv.core.MatOfKeyPoint();
+                try{DiagnosticHammingMatcher.normalize(globalClahe,gray,normalized);DiagnosticHammingMatcher.extract(globalOrb,normalized,mask,points,descriptors);DiagnosticHammingMatcher.captureLive(points.toArray(),descriptors,1);}finally{normalized.release();descriptors.release();mask.release();points.release();}
+            }
+            long started=SystemClock.elapsedRealtimeNanos();
+            try{GlobalComponentRegistry.Match best=probe.live==null?null:GlobalComponentRegistry.INSTANCE.queryForOverlay(probe.live,probe.liveKeys,request.getExpectation()==null?null:request.getExpectation().getComponentId(),request.getAssemblyStepNumber());
+                frameGlobalCandidate=best;
+                String expected=request.getExpectation()==null?null:request.getExpectation().getComponentId();
+                boolean verifiedLocal=result.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT&&result.getProjectedCorners().size()==4;
+                boolean competing=best!=null&&(!verifiedLocal||GlobalComponentRegistry.samePhysicalTarget(result.getProjectedCorners(),best.targetCorners));
+                if(competing&&best.identityCertain&&best.incompatible(request.getAssemblyStepNumber(),expected)&&best.score>Math.max(15,result.getInlierCount()*1.25))mismatch=best.phase>0?"Incorrect component detected. This item belongs to Phase "+best.phase+".":"Incorrect component detected. Please select the requested component.";
+            }finally{long finished=SystemClock.elapsedRealtimeNanos();probe.matchingNs+=finished-started;lastGlobalQuery=finished;}
+        }
+        int total=prior==null?probe.total:prior.totalMatches,assigned=prior==null&&probe.best!=null?KeypointInventoryManager.INSTANCE.count(probe.best.getReferenceId()):prior==null?KeypointInventoryManager.INSTANCE.count(result.getReferenceId()):prior.referenceKeypoints;
+        result=result.withLatency(new RecognitionResult.Latency(Math.max(probe.featureNs/1e6,result.getLatency().getFeatureExtractionMs()),probe.matchingNs/1e6,Math.max(probe.geometryNs/1e6,result.getLatency().getSpatialValidationMs()),result.getLatency().getCircularFallbackMs(),Math.max(0,SystemClock.elapsedRealtimeNanos()-probe.started)/1e6));
+        return result.withDiagnosticMetrics(new RecognitionResult.DiagnosticMetrics(total,assigned,dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.lighting(gray),mismatch,prior==null?probe.good:prior.probeGood,prior==null&&probe.best!=null?probe.best.getReferenceId():prior==null?null:prior.probeReference,probe.recovery?"illumination-recovery+CLAHE":"CLAHE"));
+    }
+    private void closeGlobalFeatures(){if(globalOrb!=null){globalOrb.clear();globalOrb=null;}if(globalClahe!=null){globalClahe.clear();globalClahe=null;}}
 
     private void deliverError(Throwable failure) {
         if (closed.get()) return;
@@ -781,14 +945,21 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
     /** Supplies current step expectations and calibrated intrinsics for analyzed coordinates. */
     public interface RequestProvider {
         RecognitionRequest requestFor(FrameMetadata frameMetadata);
+        default RecognitionRequest requestForTracking(FrameMetadata frame){return null;}
 
         /** True while no camera evidence is needed, so frames are released unanalyzed. */
         default boolean isAnalysisSuspended() { return false; }
+        default boolean isTrackingSuspended(){return isAnalysisSuspended();}
+        default boolean requiresMetricTracking(){return true;}
     }
 
     public interface Callback {
         void onResult(RecognitionResult result);
+        default void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample) { }
+        default void onTargetTracking(TargetBoundingTracker.Target target,FrameMetadata frame,Object requestTag) { }
+        default void onOutlineTracking(ImageOutlineTracker.Outline outline,FrameMetadata frame,Object requestTag) { }
 
+        default void onTracking(RecognitionResult.SpatialAnchor anchor,FrameMetadata frame,CameraCalibration calibration,boolean predicted,Object requestTag) { }
         default void onError(Throwable failure) {
             Log.e(TAG, "Vision analysis failed", failure);
         }

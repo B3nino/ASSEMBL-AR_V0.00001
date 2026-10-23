@@ -439,7 +439,7 @@ public final class AssemblyBoardContinuityInstrumentedTest {
             camera.get(0, 0, y);
             byte[] original = y.clone();
             boolean[] closed = {false};
-            analyzer.analyze(image(y, timestampNanos, closed));
+            analyzer.analyzeForReplay(image(y, timestampNanos, closed));
             assertTrue("Every camera frame must close", closed[0]);
             assertArrayEquals("Board/component processing must leave original camera bytes untouched", original, y);
             if (failure != null && !allowComponentError) throw new AssertionError("Native analyzer failed", failure);

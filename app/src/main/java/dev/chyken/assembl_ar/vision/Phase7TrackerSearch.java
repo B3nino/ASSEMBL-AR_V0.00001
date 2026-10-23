@@ -54,8 +54,8 @@ final class Phase7TrackerSearch implements AutoCloseable {
         double scale = extent == 0 ? 1.0 : Math.min(4.0, extent / (double)Math.max(window.width, window.height));
         try {
             Imgproc.resize(crop, normalized, new Size(), scale, scale, Imgproc.INTER_LINEAR);
-            clahe.apply(normalized, normalized);
-            orb.detectAndCompute(normalized, empty, points, descriptors);
+            DiagnosticHammingMatcher.normalize(clahe,normalized, normalized);
+            DiagnosticHammingMatcher.extract(orb,normalized, empty, points, descriptors);
             KeyPoint[] keypoints = points.toArray();
             for (KeyPoint keypoint : keypoints) {
                 keypoint.pt.x = window.x + keypoint.pt.x / scale;

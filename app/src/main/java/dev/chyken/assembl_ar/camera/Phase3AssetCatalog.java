@@ -21,11 +21,19 @@ public final class Phase3AssetCatalog {
         int end=id.indexOf('_',PREFIX.length());return end<0?null:id.substring(PREFIX.length(),end);
     }
     public static List<ComponentReferenceSpec> references(AssetManager assets){return referencesForPaths(Phase2AssetCatalog.files(assets,ROOT));}
+    /** Placement photos may be supplied alongside loose photos; their authored filename
+     * identifies installed context and must never train the loose-part/front-face gate. */
+    public static String roleForPath(String path){
+        if(path==null||!path.startsWith(ROOT+"/"))return null;
+        String relative=path.substring(ROOT.length()+1),role=role(relative.split("/")[0]);
+        String file=Phase2AssetCatalog.normalize(relative.substring(relative.lastIndexOf('/')+1));
+        return "front".equals(role)&&file.contains("MOTORDRIVERPLACEMENT")?"assembly":role;
+    }
     public static List<ComponentReferenceSpec> referencesForPaths(List<String> paths){
         List<ComponentReferenceSpec> specs=new ArrayList<>();
         for(String path:paths){
             if(!Phase2AssetCatalog.image(path)||!path.startsWith(ROOT+"/"))continue;
-            String role=role(path.substring(ROOT.length()+1).split("/")[0]);if(role==null)continue;
+            String role=roleForPath(path);if(role==null)continue;
             specs.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,NeobotSeedData.MOTOR_DRIVER,"Motor Driver",28,37)
                     .jpegAssetPath(path).assemblyStepNumber(3).maximumImageDimension(1280).polarityAnchorsVerified(false).build());
         }
@@ -53,7 +61,7 @@ public final class Phase3AssetCatalog {
             // The provided directory is P3_SCANNINGUIDE (one G); also accept the requested spelling.
             if(!Phase2AssetCatalog.image(path)||!(folder.equals("P3SCANNINGUIDE")||folder.equals("P3SCANNINGGUIDE")))continue;
             boolean installed=Phase2AssetCatalog.normalize(path).contains("INSTALLATION");
-            if((step==1&&!installed)||(step>=4&&installed))return path;
+            if((step==1&&!installed)||(step==4&&installed))return path;
         }
         return null;
     }

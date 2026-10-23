@@ -92,7 +92,8 @@ public final class PartRecognitionTestSession {
 
         RecognitionResult.DetectionMethod method = result.getDetectionMethod();
         boolean detected = result.hasLocatedComponent();
-        boolean expected = detected && stats.componentId.equals(result.getComponentId());
+        boolean expected = detected && stats.componentId.equals(result.getComponentId())
+                && (result.getDiagnosticMetrics()==null||result.getDiagnosticMetrics().mismatch==null);
         RecognitionResult.RejectionEvidence rejection = result.getRejectionEvidence();
         if (rejection != null) {
             String reason = rejection.getReason().name();

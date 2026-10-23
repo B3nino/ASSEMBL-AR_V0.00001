@@ -6,7 +6,7 @@ public final class Phase3Observation {
     public final State state;
     public final double score;
     public Phase3Observation(State state,double score){this.state=state;this.score=score;}
-    public boolean accepted(int step){return step==1?state==State.FRONT:(step==4||step==5)&&state==State.PLACED;}
+    public boolean accepted(int step){return step==1?state==State.FRONT:step==4&&state==State.PLACED;}
     /** Compare semantic corner order after independently mapping the main board. Rotation cancels out. */
     public static State placement(java.util.List<VisionPoint> expected,java.util.List<VisionPoint> actual){
         if(expected.size()!=4||actual.size()!=4)return State.SEARCHING;

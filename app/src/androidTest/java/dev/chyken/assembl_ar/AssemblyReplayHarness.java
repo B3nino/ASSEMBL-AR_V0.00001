@@ -248,7 +248,7 @@ final class AssemblyReplayHarness implements AutoCloseable {
             for (int index = 1; index <= maxFrames && !outcome.reached; index++) {
                 delivered[0] = null;
                 long started = SystemClock.elapsedRealtimeNanos();
-                analyzer.analyze(image(frame, started));
+                analyzer.analyzeForReplay(image(frame, started));
                 if (failure[0] != null) throw new AssertionError(label + " analyzer failed", failure[0]);
                 RecognitionResult result = delivered[0];
                 assertNotNull(label + " frame " + index + " produced no result", result);
@@ -310,7 +310,7 @@ final class AssemblyReplayHarness implements AutoCloseable {
         try {
             for (int index = 0; index < frames; index++) {
                 delivered[0] = null;
-                analyzer.analyze(image(frame, SystemClock.elapsedRealtimeNanos()));
+                analyzer.analyzeForReplay(image(frame, SystemClock.elapsedRealtimeNanos()));
                 if (failure[0] != null) throw new AssertionError("Analyzer failed", failure[0]);
                 assertNotNull("Frame " + (index + 1) + " produced no result", delivered[0]);
             }

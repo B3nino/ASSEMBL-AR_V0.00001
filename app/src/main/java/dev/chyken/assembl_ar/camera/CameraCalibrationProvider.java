@@ -174,12 +174,21 @@ public final class CameraCalibrationProvider {
     }
 
     private boolean hasIntrinsicCalibration() {
+        // Some tablet HALs publish positive focal values with a zero/invalid
+        // optical center. Those placeholders are not a calibrated camera. Prefer
+        // focal/sensor metadata (or the tagged approximation) over a K centered
+        // on the corner of the image, which destabilizes every solvePnP result.
         return intrinsicCalibration != null && intrinsicCalibration.length >= 4
                 && activeArray != null && activeArray.width() > 0 && activeArray.height() > 0
                 && preCorrectionActiveArray != null
                 && preCorrectionActiveArray.width() > 0
                 && preCorrectionActiveArray.height() > 0
-                && intrinsicCalibration[0] > 0f && intrinsicCalibration[1] > 0f;
+                && Float.isFinite(intrinsicCalibration[0]) && Float.isFinite(intrinsicCalibration[1])
+                && intrinsicCalibration[0] > 0f && intrinsicCalibration[1] > 0f
+                && Float.isFinite(intrinsicCalibration[2]) && Float.isFinite(intrinsicCalibration[3])
+                && intrinsicCalibration[2] > 0f && intrinsicCalibration[2] < preCorrectionActiveArray.width()
+                && intrinsicCalibration[3] > 0f && intrinsicCalibration[3] < preCorrectionActiveArray.height()
+                && (intrinsicCalibration.length < 5 || Float.isFinite(intrinsicCalibration[4]));
     }
 
     /** Applies CameraX's exact active-sensor crop/scale transform to K before analyzer cropping. */

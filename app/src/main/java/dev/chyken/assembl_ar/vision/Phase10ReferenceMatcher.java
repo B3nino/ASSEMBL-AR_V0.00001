@@ -10,7 +10,7 @@ import java.util.*;
 /** CLAHE/ORB with independent distributed part matches; board texture alone cannot pass hardware. */
 final class Phase10ReferenceMatcher implements AutoCloseable {
     private final ReferenceDatabase database;private final ORB orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
-    private final CLAHE clahe;private final BFMatcher matcher=BFMatcher.create(Core.NORM_HAMMING,false);
+    private final CLAHE clahe;private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     private final int[] cursors=new int[6];
     private final ReferenceDatabase.PreparedReference[] preferred=new ReferenceDatabase.PreparedReference[6];
     Phase10ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;clahe=OpenCvVisionUtils.createClahe(config);}
@@ -18,7 +18,7 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
         long start=android.os.SystemClock.elapsedRealtimeNanos();Mat work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();double scale=Math.min(1,1280.0/Math.max(gray.cols(),gray.rows())),positive=0,negative=0;List<VisionPoint> corners=Collections.emptyList();
         database.acquireForRecognition();
         try{
-            if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);clahe.apply(work,work);orb.detectAndCompute(work,empty,keys,descriptors);KeyPoint[] live=keys.toArray();
+            if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keys,descriptors);KeyPoint[] live=keys.toArray();
             List<ReferenceDatabase.PreparedReference> positiveRefs=new ArrayList<>(),negativeRefs=new ArrayList<>();
             for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){String role=Phase10AssetCatalog.referenceRole(ref.spec.getReferenceId());if(Phase10AssetCatalog.eligible(role,stage))(role.endsWith("bad")?negativeRefs:positiveRefs).add(ref);}
             List<ReferenceDatabase.PreparedReference> candidates=new ArrayList<>();
@@ -48,9 +48,9 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
                 .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase10Observation(result);
         }finally{database.releaseAfterRecognition();work.release();descriptors.release();keys.release();empty.release();}
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,int stage,Mat gray){
-        List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> good=new ArrayList<>();
-        try{matcher.knnMatch(variant.descriptors,descriptors,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.76)good.add(p[0]);}}finally{for(Mat p:pairs)p.release();}
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,int stage,Mat gray){DiagnosticHammingMatcher.context(ref.spec);
+        List<DMatch> good=new ArrayList<>();
+        good.addAll(matcher.ratioMatches(variant.descriptors,descriptors,.76,64));
         good.sort(Comparator.comparingDouble(m->m.distance));Set<Integer> used=new HashSet<>();List<DMatch> unique=new ArrayList<>();for(DMatch m:good)if(used.add(m.trainIdx))unique.add(m);
         List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();int parts=stage==5?4:stage==4?2:1;List<Mat> transforms=new ArrayList<>();double score=0;boolean chassis=false;Mat context=null;
         try{
@@ -75,12 +75,12 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
     private static int inliers(List<Point> source,List<Point> target,Mat h){MatOfPoint2f a=new MatOfPoint2f(),b=new MatOfPoint2f();try{a.fromList(source);Core.perspectiveTransform(a,b,h);Point[] projected=b.toArray();int count=0;for(int i=0;i<projected.length;i++)if(Math.hypot(projected[i].x-target.get(i).x,projected[i].y-target.get(i).y)<=3.5)count++;return count;}finally{a.release();b.release();}}
     private static Mat homography(List<Point> source,List<Point> target,int minimum,List<VisionPoint> region,ReferenceDatabase.PreparedReference ref,boolean wheel){
         if(source.size()<minimum)return null;MatOfPoint2f a=new MatOfPoint2f(),b=new MatOfPoint2f();Mat mask=new Mat(),h=null;
-        try{a.fromList(source);b.fromList(target);h=Calib3d.findHomography(a,b,Calib3d.RANSAC,3.5,mask,1800,.995);int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<source.size()*.5){h.release();return null;}
+        try{a.fromList(source);b.fromList(target);h=DiagnosticHammingMatcher.homography(a,b,Calib3d.RANSAC,3.5,mask,1800,.995);int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<source.size()*.5){h.release();return null;}
             double l=Double.MAX_VALUE,t=l,r=-l,bottom=-l;for(int i=0;i<source.size();i++)if(mask.get(i,0)[0]!=0){Point p=source.get(i);l=Math.min(l,p.x);r=Math.max(r,p.x);t=Math.min(t,p.y);bottom=Math.max(bottom,p.y);}
             if(r-l<(region.get(2).getX()-region.get(0).getX())*ref.imageWidth*(wheel?.18:.30)||bottom-t<(region.get(2).getY()-region.get(0).getY())*ref.imageHeight*(wheel?.25:.30)){h.release();return null;}return h;
         }finally{a.release();b.release();mask.release();}
     }
-    private static List<VisionPoint> project(List<VisionPoint> box,ReferenceDatabase.PreparedReference ref,Mat h,double scale){MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();try{
+    private static List<VisionPoint> project(List<VisionPoint> box,ReferenceDatabase.PreparedReference ref,Mat h,double scale){DiagnosticHammingMatcher.context(ref.spec);MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();try{
         Point[] p=new Point[4];for(int i=0;i<4;i++)p[i]=new Point(box.get(i).getX()*ref.imageWidth,box.get(i).getY()*ref.imageHeight);src.fromArray(p);Core.perspectiveTransform(src,dst,h);if(Imgproc.contourArea(dst,true)<100)return Collections.emptyList();List<VisionPoint> result=new ArrayList<>();for(Point q:dst.toArray()){if(!Double.isFinite(q.x+q.y))return Collections.emptyList();result.add(new VisionPoint(q.x/scale,q.y/scale));}return result;
     }finally{src.release();dst.release();}}
     /** Both plastic side rails must be visible; silkscreen through the open center is insufficient. */

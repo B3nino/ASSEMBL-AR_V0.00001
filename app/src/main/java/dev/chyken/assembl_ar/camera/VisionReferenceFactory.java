@@ -34,6 +34,12 @@ public final class VisionReferenceFactory {
 
     public static List<ComponentReferenceSpec> build(AssemblArRepository repository,
             android.content.res.AssetManager assets) {
+        List<ComponentReferenceSpec> specs=UnifiedReferenceCatalog.build(repository, assets);
+        for(ComponentReferenceSpec spec:specs)dev.chyken.assembl_ar.vision.ComponentContourTemplates.register(spec);
+        return specs;
+    }
+
+    static List<ComponentReferenceSpec> buildRegistered(AssemblArRepository repository, android.content.res.AssetManager assets) {
         List<ComponentReferenceSpec> result = new ArrayList<>();
         Set<String> referenceIds = new HashSet<>();
         if(assets!=null)for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase11(assets))if(referenceIds.add(spec.getReferenceId()))result.add(spec);

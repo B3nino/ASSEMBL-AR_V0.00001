@@ -2,9 +2,10 @@ package dev.chyken.assembl_ar.vision;
 import org.junit.Test;
 import static org.junit.Assert.*;
 public final class Phase2ObservationTest {
-    @Test public void legacyNegativeScoresCannotVetoAPositiveBoardMatch(){
+    @Test public void bareBoardEvidenceCannotSubstituteForVerifiedLocalMotorFeatures(){
         assertFalse(new Phase2Observation("top",30,29).rejected);
         assertTrue(new Phase2Observation("top",30,270).referenceSupported);
+        assertTrue(new Phase2Observation("top",0,40).rejected);
         assertFalse(new Phase2Observation("top",12,0).referenceSupported);
         assertTrue(new Phase2Observation("top",40,20).referenceSupported);
     }

@@ -106,14 +106,14 @@ final class Phase5GuideController implements AutoCloseable {
         TextView text=new TextView(activity);text.setText(INFO);text.setTextSize(16);int pad=UiUtils.dp(activity,24);text.setPadding(pad,pad/2,pad,pad);
         ScrollView scroll=new ScrollView(activity);scroll.addView(text);
         dialog=new AlertDialog.Builder(activity).setTitle("Arduino Nano · View Info").setView(scroll).setPositiveButton("Back to step",null).create();
-        dialog.setOnDismissListener(d->{infoShowing=false;if(!closed&&!paused){flow.resume(now());render();say(flow.complete()?"Scan successful. Next is unlocked.":SPOKEN[flow.step()],"info-closed:"+(++sequence));}});
+        dialog.setOnDismissListener(d->{if(dialog!=d)return;infoShowing=false;if(!closed&&!paused){flow.resume(now());render();say(flow.complete()?"Scan successful. Next is unlocked.":SPOKEN[flow.step()],"info-closed:"+(++sequence));}});
         dialog.show();PhysicalCheckUi.style(dialog);say(INFO,"info:"+(++sequence));
     }
     private void stability(){
         if(closed||paused||saving||reviewing||flow.step()!=4||flow.complete()||dialog!=null&&dialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,"");
         dialog=new AlertDialog.Builder(activity).setTitle("Pin alignment & stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm",null).create();
-        dialog.setOnShowListener(d->{
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;
             updateChecklist(prompt,false);
             say(SPOKEN[4]+" "+checklistQuestion(),"checklist-open:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{if(flow.firmConfirmed())flow.confirmPins(false);else flow.confirmFirm(false);status(RESEAT);updateChecklist(prompt);render();save();});

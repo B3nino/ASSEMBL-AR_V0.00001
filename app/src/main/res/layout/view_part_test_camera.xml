@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <androidx.camera.view.PreviewView android:id="@+id/partTestPreview" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <dev.chyken.assembl_ar.render.ArGlSurfaceView android:id="@+id/partTestArView" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <dev.chyken.assembl_ar.ui.ArHudView android:id="@+id/partTestHud" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView android:id="@+id/dynamicOutlineOverlay" android:layout_width="match_parent" android:layout_height="match_parent" android:elevation="4dp" />
+    <TextView android:id="@+id/partTestStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom"
+        android:padding="12dp" android:background="@color/camera_scrim" android:textColor="@color/white" android:textSize="14sp"
+        android:maxLines="3" android:ellipsize="end" android:accessibilityLiveRegion="polite" />
+</merge>

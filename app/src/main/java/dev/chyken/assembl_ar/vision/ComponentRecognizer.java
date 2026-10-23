@@ -85,6 +85,8 @@ public final class ComponentRecognizer implements AutoCloseable {
     private double lastPoseErrorPx = Double.NaN;
     private boolean recognizingBoard;
     private boolean quickBoardReferencePass;
+    private final IndividualReferenceSearchWindow individualWindow=new IndividualReferenceSearchWindow();
+    private Set<String> individualFrameReferences;
 
     /** OpenCV and the supplied reference database must already be initialized. */
     public ComponentRecognizer(VisionConfig config, ReferenceDatabase database) {
@@ -102,6 +104,8 @@ public final class ComponentRecognizer implements AutoCloseable {
     synchronized RecognitionResult inspectPhase2(Mat gray,long timestamp,int stage,RecognitionResult primary) {
         ensureOpen(); return phase2Matcher.inspect(gray,timestamp,stage,primary);
     }
+    synchronized RecognitionResult inspectPhase2(Mat gray,Mat rgb,long timestamp,int stage,RecognitionResult primary){ensureOpen();return phase2Matcher.inspect(gray,rgb,timestamp,stage,primary);}
+    synchronized RecognitionResult inspectPhase2(Mat gray,Mat rgb,long timestamp,int stage,RecognitionResult primary,String view){ensureOpen();return phase2Matcher.inspect(gray,rgb,timestamp,stage,primary,view);}
     synchronized RecognitionResult inspectPhase7(Mat gray,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase7(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,rgb,timestamp,step);}
     synchronized RecognitionResult inspectPhase11(Mat gray,long timestamp,int stage){ensureOpen();return phase11Matcher.inspect(gray,timestamp,stage);}
@@ -220,6 +224,16 @@ public final class ComponentRecognizer implements AutoCloseable {
                 ? RecognitionRequest.unconstrained(null)
                 : request;
         long totalStart = SystemClock.elapsedRealtimeNanos();
+        if(database.prepareIndividualBank(safeRequest)){
+            // Cached pair batches own the old reference keys. Retire them on every
+            // bank change so moving between parts cannot retain earlier photo banks.
+            frameCache.release();descriptorBatches.close();
+        }
+        individualFrameReferences=null;
+        if(!database.isIndividualBank()&&safeRequest.getAssemblyStepNumber()==0&&safeRequest.isDescriptorOnlyIdentityAllowed()&&safeRequest.getExpectation()!=null){
+            List<ComponentReferenceSpec> photos=new ArrayList<>();for(ReferenceDatabase.PreparedReference r:database.preparedReferences())photos.add(r.spec);
+            individualFrameReferences=individualWindow.next(photos,safeRequest.getExpectation().getComponentId());
+        }
         long featureNanos = 0L;
         long matchingNanos = 0L;
         long spatialNanos = 0L;
@@ -248,13 +262,14 @@ public final class ComponentRecognizer implements AutoCloseable {
                 frameCache.descriptors.copyTo(frameDescriptors);
                 frameKeypoints = frameCache.keypoints;
             } else {
-                clahe.apply(grayscale, normalizedFrame);
-                orb.detectAndCompute(
+                DiagnosticHammingMatcher.normalize(clahe,grayscale, normalizedFrame);
+                DiagnosticHammingMatcher.extract(orb,
                         normalizedFrame, emptyMask, frameKeypointMat, frameDescriptors);
                 frameKeypoints = frameKeypointMat.toArray();
                 frameCache.store(grayscale, normalizedFrame,
                         frameDescriptors, frameKeypoints);
             }
+            DiagnosticHammingMatcher.captureLive(frameKeypoints,frameDescriptors,1);
             activeFrameDescriptors = frameDescriptors;
             featureNanos = SystemClock.elapsedRealtimeNanos() - stageStart;
             rejectionTracker = ExpectedRejectionTracker.initialize(
@@ -523,6 +538,9 @@ public final class ComponentRecognizer implements AutoCloseable {
                     result = result.withRejectionEvidence(evidence);
                 }
             }
+            DiagnosticHammingMatcher.snapshot().matchingNs += matchingNanos;
+            database.observeIndividualBank(result);
+            if(individualFrameReferences!=null&&result.hasLocatedComponent()&&safeRequest.getExpectation().getComponentId().equals(result.getComponentId()))individualWindow.matched(result.getReferenceId());
             logLatency(result);
             return result;
         } catch (RuntimeException failure) {
@@ -894,6 +912,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                     photometricVariant, assemblyReferencesOnly, installedBracketViewsOnly);
         }
         for (ReferenceDatabase.PreparedReference reference : database.preparedReferences()) {
+            if(individualFrameReferences!=null&&!individualFrameReferences.contains(reference.spec.getReferenceId()))continue;
             if (quickBoardReferencePass && !reference.spec.isFastAcquisitionView()
                     && !"extension_circuit_board".equals(reference.spec.getComponentId())) continue;
             boolean referenceEligible = assemblyReferencesOnly
@@ -930,6 +949,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 // Repeated PCB holes, connector pins and fastener edges can map multiple
                 // source descriptors to one live feature. They are one observation, for
                 // every catalog view, and must not inflate consensus or identity ranking.
+                int ratioGoodMatchCount=goodMatches.size();DiagnosticHammingMatcher.record(reference.spec,ratioGoodMatchCount,pairs.size());
                 goodMatches = uniqueFrameMatches(goodMatches);
                 double distanceSum = 0.0;
                 for (DMatch match : goodMatches) distanceSum += match.distance;
@@ -941,7 +961,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 }
                 if (goodMatches.size() >= config.getMinimumGoodMatches()) {
                     candidates.add(new RawCandidate(reference, variant, frameKeypoints,
-                            goodMatches, distanceSum / goodMatches.size()));
+                            goodMatches, distanceSum / goodMatches.size(),ratioGoodMatchCount));
                 }
             }
         }
@@ -959,6 +979,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             boolean assemblyReferencesOnly, boolean installedBracketViewsOnly) {
         List<ReferenceDatabase.PreparedOrbVariant> missing = new ArrayList<>();
         for (ReferenceDatabase.PreparedReference reference : database.preparedReferences()) {
+            if(individualFrameReferences!=null&&!individualFrameReferences.contains(reference.spec.getReferenceId()))continue;
             if (quickBoardReferencePass && !reference.spec.isFastAcquisitionView()
                     && !"extension_circuit_board".equals(reference.spec.getComponentId())) continue;
             boolean eligible = assemblyReferencesOnly
@@ -1057,9 +1078,11 @@ public final class ComponentRecognizer implements AutoCloseable {
                 pairs = new java.util.IdentityHashMap<>();
         KeyPoint[] keypoints = new KeyPoint[0];
         boolean valid;
+        boolean recovery;
 
         boolean holds(Mat grayscale) {
-            return valid && source.size().equals(grayscale.size()) && source.type() == grayscale.type()
+            return valid && recovery == DiagnosticHammingMatcher.snapshot().recovery
+                    && source.size().equals(grayscale.size()) && source.type() == grayscale.type()
                     && Core.norm(source, grayscale, Core.NORM_INF) == 0.0;
         }
 
@@ -1069,6 +1092,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             normalizedFrame.copyTo(normalized);
             frameDescriptors.copyTo(descriptors);
             keypoints = frameKeypoints;
+            recovery = DiagnosticHammingMatcher.snapshot().recovery;
             pairs.clear();
             valid = true;
         }
@@ -1330,7 +1354,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                         // Keep the full-frame ORB pyramid's pixel origin. Cropping before ORB
                         // shifts pyramid sampling and can turn repeated print texture into a
                         // skewed homography, even for the same source photograph.
-                        orb.detectAndCompute(normalizedFrame, tileMask, tileKeypointMat, tileDescriptors);
+                        DiagnosticHammingMatcher.extract(orb,normalizedFrame, tileMask, tileKeypointMat, tileDescriptors);
                         featureNanos += SystemClock.elapsedRealtimeNanos() - stageStart;
                         if (tileDescriptors.empty()) {
                             tileDescriptors.release();
@@ -1410,7 +1434,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 finally { additionalMask.release(); }
             }
             long stageStart = SystemClock.elapsedRealtimeNanos();
-            orb.detectAndCompute(
+            DiagnosticHammingMatcher.extract(orb,
                     normalizedFrame, exclusionMask, keypointMat, descriptors);
             KeyPoint[] keypoints = keypointMat.toArray();
             featureNanos = SystemClock.elapsedRealtimeNanos() - stageStart;
@@ -1560,6 +1584,7 @@ public final class ComponentRecognizer implements AutoCloseable {
      */
     static boolean isReferenceEligibleForRequest(
             ComponentReferenceSpec spec, RecognitionRequest request) {
+        if(request!=null&&request.isDescriptorOnlyIdentityAllowed()&&!dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog.assembly(spec))return true;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase2AssetCatalog.PREFIX)) return false;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX)) return false;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))return false;
@@ -1638,7 +1663,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         try {
             source.fromList(referencePoints);
             destination.fromList(imagePoints);
-            homography = Calib3d.findHomography(
+            homography = DiagnosticHammingMatcher.homography(
                     source,
                     destination,
                     Calib3d.RANSAC,
@@ -1760,10 +1785,12 @@ public final class ComponentRecognizer implements AutoCloseable {
             raw.recordHomographyAccepted(referencePoints.size(), inliers);
             Mat ownedHomography = homography;
             homography = null;
-            return new SpatialCandidate(raw.reference, ownedHomography, corners,
+            SpatialCandidate candidate = new SpatialCandidate(raw.reference, ownedHomography, corners,
                     referencePoints.size(), inliers, inlierRatio,
                     confidence, rankingScore, poseInliers.objectPointsMm,
                     poseInliers.imagePoints);
+            candidate.referenceKeypoints=raw.referenceVariant.keypoints.length;candidate.ratioGoodMatchCount=raw.ratioGoodMatchCount;
+            return candidate;
         } finally {
             if (homography != null) {
                 homography.release();
@@ -2016,6 +2043,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 .validation(validation)
                 .orientation(orientation.classification, orientation.degrees)
                 .polarity(polarity)
+                .orbMetrics(candidate.referenceKeypoints,candidate.referenceKeypoints,candidate.ratioGoodMatchCount)
                 .matches(frameKeypointCount, candidate.goodMatchCount,
                         candidate.inlierCount, candidate.inlierRatio)
                 .confidence(candidate.confidence)
@@ -2059,6 +2087,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 .validation(validation)
                 .orientation(RecognitionResult.OrientationClassification.UNKNOWN, Double.NaN)
                 .polarity(polarity)
+                .orbMetrics(candidate.referenceVariant.keypoints.length,candidate.referenceVariant.keypoints.length,candidate.ratioGoodMatchCount)
                 .matches(frameKeypointCount, candidate.goodMatches.size(), 0, 0.0)
                 .confidence(confidence);
     }
@@ -3292,6 +3321,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         final KeyPoint[] frameKeypoints;
         final List<DMatch> goodMatches;
         final double averageDistance;
+        final int ratioGoodMatchCount;
         int validMatchCount = -1;
         int homographyInlierCount = -1;
         double homographyInlierRatio = Double.NaN;
@@ -3300,7 +3330,9 @@ public final class ComponentRecognizer implements AutoCloseable {
         RawCandidate(ReferenceDatabase.PreparedReference reference,
                      ReferenceDatabase.PreparedOrbVariant referenceVariant,
                      KeyPoint[] frameKeypoints,
-                     List<DMatch> goodMatches, double averageDistance) {
+                     List<DMatch> goodMatches, double averageDistance) {this(reference,referenceVariant,frameKeypoints,goodMatches,averageDistance,goodMatches.size());}
+        RawCandidate(ReferenceDatabase.PreparedReference reference,ReferenceDatabase.PreparedOrbVariant referenceVariant,KeyPoint[] frameKeypoints,List<DMatch> goodMatches,double averageDistance,int ratioGoodMatchCount){
+            this.ratioGoodMatchCount=ratioGoodMatchCount;
             this.reference = reference;
             this.referenceVariant = referenceVariant;
             this.frameKeypoints = frameKeypoints;
@@ -3330,6 +3362,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         final ReferenceDatabase.PreparedReference reference;
         final Mat homography;
         final List<VisionPoint> corners;
+        int referenceKeypoints=-1,ratioGoodMatchCount=-1;
         final int goodMatchCount;
         final int inlierCount;
         final double inlierRatio;

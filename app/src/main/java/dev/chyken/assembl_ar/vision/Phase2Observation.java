@@ -16,10 +16,10 @@ public final class Phase2Observation {
         this.competingViewScore=competingViewScore;
         this.visibleMotors=visibleMotors;
         this.view=view; positiveScore=positive; negativeScore=negative;
-        // Invalid-scan datasets no longer veto recognition or erase a confirmed view.
-        rejected=false;
+        // A failed local hardware fit cannot be rescued by matching the bare PCB.
+        rejected=negative>=16 && positive<16;
         viewAmbiguous=competingViewScore>0 && (positive<competingViewScore*1.15||positive-competingViewScore<3);
-        referenceSupported=positive>=16 && !viewAmbiguous;
+        referenceSupported=positive>=16 && !viewAmbiguous && !rejected;
     }
     public Phase2Observation withVisibleMotors(int count){return new Phase2Observation(view,positiveScore,negativeScore,count,competingViewScore);}
 }

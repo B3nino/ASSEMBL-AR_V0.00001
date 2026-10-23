@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -58,7 +59,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import dev.chyken.assembl_ar.camera.CameraCalibrationProvider;
-import dev.chyken.assembl_ar.camera.VisionReferenceFactory;
 import dev.chyken.assembl_ar.camera.IndividualPartTestCatalog;
 import dev.chyken.assembl_ar.data.AssemblArRepository;
 import dev.chyken.assembl_ar.diagnostics.BuildStamp;
@@ -191,6 +191,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private final Map<Long, CameraFrameState> calibrationByFrame = new ConcurrentHashMap<>();
     private int unrecognizedFrames;
     private boolean diagnosticsVisible;
+    private volatile boolean diagnosticsModal;
     private long lastDiagnosticCaptureNanos = Long.MIN_VALUE;
     private double diagnosticFps;
     private long lastHandledCaptureNanos = Long.MIN_VALUE;
@@ -245,6 +246,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     };
 
     private PreviewView previewView;
+    private final dev.chyken.assembl_ar.ui.LatestUiTask outlineUpdates=new dev.chyken.assembl_ar.ui.LatestUiTask(task->runOnUiThread(task));
     private ArGlSurfaceView arGlView;
     private ArHudView arHudView;
     private LinearLayout recognitionBanner;
@@ -304,6 +306,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.attach(this);
         assemblyWelcomeAccepted=savedInstanceState!=null&&savedInstanceState.getBoolean("assembly_welcome_accepted",false);
         MeasurementRecorder.install(this);
         setContentView(R.layout.activity_assembly);
@@ -351,8 +354,7 @@ public final class AssemblyActivity extends AppCompatActivity {
             getIntent().removeExtra(EXTRA_WORKFLOW_MODE);
             recreate();
         });
-        findViewById(R.id.shareTrialLogButton).setOnClickListener(view ->
-                PhaseAssemblyController.shareTrialLog(this));
+        findViewById(R.id.shareTrialLogButton).setOnClickListener(view -> DevDiagnosticsFragment.showControls(this));
         if (phases) {
             PhaseAssemblyController controller = new PhaseAssemblyController(this);
             controller.bind();
@@ -391,6 +393,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         arGlView = findViewById(R.id.arGlView);
         arHudView = findViewById(R.id.arHudView);
+        arHudView.useDynamicOutlines();arGlView.useDynamicOutlines();
         recognitionBanner = findViewById(R.id.recognitionBanner);
         recognitionSpinner = findViewById(R.id.recognitionSpinner);
         recognitionText = findViewById(R.id.recognitionText);
@@ -582,13 +585,22 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private volatile dev.chyken.assembl_ar.ui.WiringDiagramReviewDialog wiringReviewDialog;
+    void refreshSchematicControl(){
+        View button=findViewById(R.id.wiringReviewButton);if(button==null)return;
+        boolean wiring=phaseController!=null?phaseController.focusedSchematicPhase()>0:
+                !usesPhaseWorkflow()&&currentStep!=null&&!currentStep.getPinConnections().isEmpty();
+        int visibility=wiring?View.VISIBLE:View.GONE;
+        if(button.getVisibility()!=visibility)button.setVisibility(visibility);
+    }
     private void reviewWiringDiagrams(){
         if(destroyed||wiringReviewDialog!=null&&wiringReviewDialog.isShowing())return;
+        refreshSchematicControl();if(findViewById(R.id.wiringReviewButton).getVisibility()!=View.VISIBLE)return;
         PhaseAssemblyController phases=phaseController;
+        int focusedPhase=phases==null?8:phases.focusedSchematicPhase();
         dev.chyken.assembl_ar.workflow.phase.WiringDiagramState state=phases!=null?phases.wiringDiagramState():dev.chyken.assembl_ar.workflow.phase.WiringDiagramState.fromCheckpoints(
             dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.wiringState(this,NeobotSeedData.PROJECT_ID),dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.driverWiringState(this,NeobotSeedData.PROJECT_ID),dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.sensorWiringState(this,NeobotSeedData.PROJECT_ID));
         if(phases!=null)phases.onPause();voiceGuide.stop();assemblyVisibilityGeneration++;arHudView.setScanningEnabled(false);
-        wiringReviewDialog=new dev.chyken.assembl_ar.ui.WiringDiagramReviewDialog(this,state,phases==null?8:phases.displayedPhaseNumber(),text->voiceGuide.speak(text,"wiring-review:"+SystemClock.elapsedRealtimeNanos()));
+        wiringReviewDialog=new dev.chyken.assembl_ar.ui.WiringDiagramReviewDialog(this,state,focusedPhase,text->voiceGuide.speak(text,"wiring-review:"+SystemClock.elapsedRealtimeNanos()));
         wiringReviewDialog.setOnDismissListener(d->{wiringReviewDialog=null;assemblyVisibilityGeneration++;if(!destroyed&&activityResumed){if(phaseController!=null)phaseController.onResume();refreshReferenceScope();}});wiringReviewDialog.show();
         voiceGuide.speak("Wiring diagrams. Select a phase to revisit its schematic. Your assembly progress is preserved.","wiring-review:open");
     }
@@ -597,10 +609,8 @@ public final class AssemblyActivity extends AppCompatActivity {
     // Bank epochs change independently of the bound camera and reject stale native results.
     private volatile int referenceBankGeneration;
     private String failedReferenceScope,referencePreparationMessage;
-    private long lastReferenceProgress;
     private volatile boolean libraryPreparing;
     private volatile String libraryFailure;
-    private dev.chyken.assembl_ar.vision.ReferenceCacheIndex libraryIndex;
     private androidx.appcompat.app.AlertDialog libraryDialog;
     private android.widget.ProgressBar libraryProgress;
     private android.widget.TextView libraryText;
@@ -615,17 +625,38 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     private final Runnable referenceScopeMonitor=new Runnable(){public void run(){
         if(destroyed)return;
+        refreshSchematicControl();
+        dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView outline=findViewById(R.id.dynamicOutlineOverlay);
+        if(outline!=null)outline.setCameraActive(activityResumed&&!diagnosticsModal&&!libraryPreparing&&phaseController!=null&&phaseController.isCameraModeFocused());
         if(visionInitializationStarted&&referenceCatalog!=null&&activityResumed)refreshReferenceScope();
         if(recognitionText!=null)recognitionText.postDelayed(this,250);
     }};
     private RecognitionRequest activeReferenceRequest(){
-        if(libraryPreparing||libraryFailure!=null||wiringReviewDialog!=null&&wiringReviewDialog.isShowing())return null;
+        if(diagnosticsModal||libraryPreparing||libraryFailure!=null||wiringReviewDialog!=null&&wiringReviewDialog.isShowing())return null;
         PhaseAssemblyController phases=phaseController;
-        if(phases!=null)return phases.isAnalysisSuspended()?null:phases.requestFor(null);
+        if(phases!=null)return phases.isAnalysisSuspended()?(phases.isCameraModeFocused()?phases.visualRequestFor(null):null):phases.requestFor(null);
         AssemblyStep step=currentStep;if(step==null)return null;
         String target=activeCheckpoint==null?primaryComponentId(step):activeCheckpoint.getComponentId();
         return new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(target),null,null,spatialAnchorComponentId(step),1,step.getStepNumber());
     }
+    void captureDiagnosticScanFrame(){
+        AssemblyVisionAnalyzer current=analyzer;
+        if(current==null){Toast.makeText(this,"Open a camera scanning step first",Toast.LENGTH_SHORT).show();return;}
+        boolean queued=current.captureNextAnalyzedFrame(new AssemblyVisionAnalyzer.FrameSnapshotCallback(){
+            @Override public void onCaptured(AssemblyVisionAnalyzer.AnalyzedFrameSnapshot snapshot){
+                AssemblyVisionAnalyzer.FrameMetadata m=snapshot.getMetadata();RecognitionResult r=snapshot.getRecognitionResult();
+                dev.chyken.assembl_ar.workflow.PartTestSampleArchive archive=new dev.chyken.assembl_ar.workflow.PartTestSampleArchive(
+                    r.getComponentId()==null?"assembly":r.getComponentId(),m.getTimestampNanos(),m.getAnalyzedWidth(),m.getAnalyzedHeight(),m.getRotationDegrees(),
+                    dev.chyken.assembl_ar.diagnostics.BuildStamp.details()+"\nRequest: "+r.getRequestTag()+"\nState: "+r.getValidationState(),snapshot.getPngBytes(),snapshot.getRgbPngBytes(),snapshot.getCameraCalibration());
+                dev.chyken.assembl_ar.diagnostics.DiagnosticLogger.get(AssemblyActivity.this).recordFrame(archive);
+                runOnUiThread(()->Toast.makeText(AssemblyActivity.this,"Raw scan frame saved · Download Diagnostic Logs to share",Toast.LENGTH_LONG).show());
+            }
+            @Override public void onError(Throwable error){runOnUiThread(()->Toast.makeText(AssemblyActivity.this,"Capture failed: "+error.getMessage(),Toast.LENGTH_LONG).show());}
+        });
+        Toast.makeText(this,queued?"Capture queued · return to camera and frame the component":"A capture is already queued",Toast.LENGTH_LONG).show();
+    }
+    void pauseForDiagnostics(){diagnosticsModal=true;assemblyVisibilityGeneration++;if(phaseController!=null)phaseController.onPause();voiceGuide.stop();}
+    void resumeAfterDiagnostics(){diagnosticsModal=false;if(!destroyed&&activityResumed){assemblyVisibilityGeneration++;if(phaseController!=null)phaseController.onResume();refreshReferenceScope();}}
     private void initializeVision() {
         if(visionInitializationStarted||destroyed)return;
         visionInitializationStarted=true;int generation=++visionGeneration;
@@ -635,7 +666,7 @@ public final class AssemblyActivity extends AppCompatActivity {
             try{
                 if(!OpenCVLoader.initLocal())throw new IllegalStateException("OpenCV native runtime is unavailable");
                 long catalogStarted=SystemClock.elapsedRealtime();
-                VisionConfig config=VisionConfig.defaults();List<ComponentReferenceSpec> catalog=VisionReferenceFactory.build(repository,getAssets());
+                VisionConfig config=VisionConfig.defaults();List<ComponentReferenceSpec> catalog=dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).catalog().get();
                 ModelBasedPartRecognizer models=null;try{models=new ModelBasedPartRecognizer(getAssets());}catch(Exception failure){Log.w("AssemblyActivity","Model templates unavailable",failure);}
                 Log.i("AssemblyActivity","Reference catalog indexed photos="+catalog.size()+" ms="+(SystemClock.elapsedRealtime()-catalogStarted));
                 ModelBasedPartRecognizer readyModels=models;
@@ -658,17 +689,14 @@ public final class AssemblyActivity extends AppCompatActivity {
         libraryProgress=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);body.addView(libraryProgress);
         libraryDialog=new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Prepare recognition library").setView(body).setCancelable(false).setNegativeButton("Save and exit",(d,w)->finish()).create();
         libraryDialog.setOnShowListener(d->{if(libraryDialog!=null)dev.chyken.assembl_ar.ui.PhysicalCheckUi.style(libraryDialog);});
-        recognitionText.postDelayed(()->{if(!destroyed&&libraryPreparing&&libraryDialog!=null&&!libraryDialog.isShowing())libraryDialog.show();},600);
+        recognitionText.postDelayed(new Runnable(){public void run(){if(destroyed||!libraryPreparing||libraryDialog==null)return;
+            dev.chyken.assembl_ar.vision.VisionPreloadManager preload=dev.chyken.assembl_ar.vision.VisionPreloadManager.get(AssemblyActivity.this);
+            int total=preload.totalCount(),done=preload.completedCount();libraryProgress.setIndeterminate(total==0);libraryProgress.setMax(Math.max(1,total));libraryProgress.setProgress(done);libraryText.setText("Preparing shared reference index · "+done+" / "+total+"\nCompiled photos are reused on later runs.");if(!libraryDialog.isShowing())libraryDialog.show();recognitionText.postDelayed(this,500);
+        }},600);
         int generation=visionGeneration;
         visionLoaderExecutor.execute(()->{
             try{
-                libraryIndex=new dev.chyken.assembl_ar.vision.ReferenceCacheIndex(referenceCacheDirectory(),getApplicationInfo().sourceDir,ReferenceDatabase.cacheRevision());
-                dev.chyken.assembl_ar.vision.ReferenceCacheIndex.install(getAssets(),libraryIndex);
-                ReferenceDatabase.prepareLibrary(getAssets(),referenceCatalog,visionConfig,referenceCacheDirectory(),libraryIndex,
-                    ()->!destroyed&&generation==visionGeneration,(done,total)->{
-                        long now=SystemClock.elapsedRealtime();if(done!=total&&now-lastReferenceProgress<150)return;lastReferenceProgress=now;
-                        runOnUiThread(()->{if(!destroyed&&libraryPreparing){libraryProgress.setMax(total);libraryProgress.setProgress(done);libraryText.setText("Preparing all assembly components · "+done+" / "+total+"\nThis is a one-time pass. You can exit and resume it later. Future scans reuse this library.");}});
-                    });
+                dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).start().get();
                 runOnUiThread(()->{if(!isVisionGenerationActive(generation))return;libraryPreparing=false;if(libraryDialog!=null){libraryDialog.dismiss();libraryDialog=null;}if(activityResumed&&phaseController!=null)phaseController.onResume();refreshReferenceScope();});
             }catch(Throwable failure){Log.e("AssemblyActivity","Whole-build reference preparation failed",failure);runOnUiThread(()->{if(!isVisionGenerationActive(generation))return;libraryPreparing=false;if(libraryDialog!=null){libraryDialog.dismiss();libraryDialog=null;}libraryFailure="Library preparation interrupted · tap to retry";visionInitializationStarted=false;setBanner(libraryFailure,false,R.drawable.bg_camera_warning);});}
         });
@@ -840,8 +868,22 @@ public final class AssemblyActivity extends AppCompatActivity {
                         PhaseAssemblyController phases = phaseController;
                         return !referenceBankMatchesRequest() || phases != null && phases.isAnalysisSuspended();
                     }
+                    @Override public RecognitionRequest requestForTracking(AssemblyVisionAnalyzer.FrameMetadata frame){return phaseController==null?null:phaseController.visualRequestFor(calibrationProvider==null?null:calibrationProvider.forFrame(frame));}
+                    @Override public boolean isTrackingSuspended(){return !activityResumed||diagnosticsModal||libraryPreparing||phaseController==null||!phaseController.isCameraModeFocused();}
+                    @Override public boolean requiresMetricTracking(){return dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.running();}
                 },
                 new AssemblyVisionAnalyzer.Callback() {
+                    @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(activityResumed&&isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).setText(sample.hudText());});}
+                    @Override public void onTargetTracking(dev.chyken.assembl_ar.vision.TargetBoundingTracker.Target target,AssemblyVisionAnalyzer.FrameMetadata frame,Object tag){
+                        int visible=assemblyVisibilityGeneration;
+                        outlineUpdates.submit(()->{if(!activityResumed||visible!=assemblyVisibilityGeneration||!isVisionGenerationActive(generation)||bankGeneration!=referenceBankGeneration||phaseController!=null&&!phaseController.isCameraModeFocused()||target!=null&&(analyzer==null||target.epoch!=analyzer.visualEpoch()))return;
+                            dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView overlay=findViewById(R.id.dynamicOutlineOverlay);
+                            java.util.List<float[]> regions=new java.util.ArrayList<>();if(target!=null)for(java.util.List<VisionPoint> region:target.regions)regions.add(dev.chyken.assembl_ar.vision.PreviewOutlineCoordinates.normalize(region,frame.getAnalyzedWidth(),frame.getAnalyzedHeight(),previewView.getWidth(),previewView.getHeight()));
+                            overlay.show(target,regions);
+                            if(target!=null&&!target.predicted&&target.state==dev.chyken.assembl_ar.vision.TargetBoundingTracker.State.WRONG&&!target.name.equals(target.expectedName))
+                                voiceGuide.speak("Incorrect item detected. You are scanning "+target.name+" instead of "+target.expectedName+".","outline-wrong:"+tag+":"+target.componentId);
+                        });
+                    }
                     @Override
                     public void onResult(RecognitionResult result) {
                         long completedAt = SystemClock.elapsedRealtimeNanos();
@@ -857,6 +899,16 @@ public final class AssemblyActivity extends AppCompatActivity {
                         });
                     }
 
+                    @Override public void onTracking(RecognitionResult.SpatialAnchor anchor,AssemblyVisionAnalyzer.FrameMetadata frame,CameraCalibration calibration,boolean predicted,Object tag){
+                        int trackingGeneration=assemblyVisibilityGeneration;
+                        runOnUiThread(()->{if(!activityResumed||trackingGeneration!=assemblyVisibilityGeneration||!isVisionGenerationActive(generation)||bankGeneration!=referenceBankGeneration||phaseController!=null&&phaseController.isAnalysisSuspended())return;
+                            RecognitionRequest active=activeReferenceRequest();if(active==null||!java.util.Objects.equals(active.getRequestTag(),tag))return;
+                            calibrationByFrame.remove(frame.getTimestampNanos());
+                            dev.chyken.assembl_ar.ui.TargetAlignmentBoxView guide=findViewById(R.id.targetAlignmentBox);if(guide!=null)guide.setTrackingState(anchor!=null&&!predicted,predicted);
+                            arHudView.setBoardCorners(anchor==null?null:normalizeCorners(anchor.getProjectedCorners()));
+                            dev.chyken.assembl_ar.render.ArOverlayRenderer.track(arGlView,anchor);
+                        });
+                    }
                     @Override
                     public void onError(Throwable failure) {
                         runOnUiThread(() -> {
@@ -874,6 +926,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                         });
                     }
                 }, visionConfig, true, modelPartRecognizer);
+        analyzer.attachMotion(this);
         imageAnalysis.setAnalyzer(cameraExecutor, analyzer);
     }
 
@@ -1017,7 +1070,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     /** @param completedAtNanos when analysis finished, or Long.MIN_VALUE when unknown */
     private void handleRecognition(RecognitionResult result, long completedAtNanos) {
-        if (result == null) return;
+        if (result == null||diagnosticsModal) return;
         CameraFrameState frame = calibrationByFrame.remove(result.getFrameTimestampNanos());
         PhaseAssemblyController phases = phaseController;
         if (destroyed || !activityResumed || currentStep == null
@@ -1029,6 +1082,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         if (phases != null && !phases.isFrameForCurrentPhase(result)) return;
         if (result.getFrameTimestampNanos() <= lastHandledCaptureNanos) return;
         lastHandledCaptureNanos = result.getFrameTimestampNanos();
+        if(result.getDiagnosticMetrics()!=null&&result.getDiagnosticMetrics().mismatch!=null){String warning=result.getDiagnosticMetrics().mismatch;calibrationByFrame.remove(result.getFrameTimestampNanos());updateDiagnostics(result);arHudView.update(ArHudView.HudState.MISMATCH,"Incorrect component",null);arGlView.hideGuidance();setBanner(warning,false,R.drawable.bg_camera_warning);voiceGuide.speak(warning,"global-mismatch:"+result.getRequestTag());return;}
         if (frame != null) {
             latestCalibration = frame.calibration;
             analyzedWidth = frame.width;
@@ -2122,6 +2176,10 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private void updateDiagnostics(RecognitionResult result) {
+        dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView floating=findViewById(R.id.devDiagnosticsOverlay);
+        dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample=dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest;
+        if(sample!=null)floating.setText(sample.hudText());
+
         long captureNanos = result.getFrameTimestampNanos();
         if (lastDiagnosticCaptureNanos != Long.MIN_VALUE
                 && captureNanos > lastDiagnosticCaptureNanos) {
@@ -2193,6 +2251,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private void setDiagnosticsVisible(boolean visible) {
         diagnosticsVisible = visible;
         diagnosticsPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+        findViewById(R.id.devDiagnosticsOverlay).setVisibility(visible?View.VISIBLE:View.GONE);
     }
 
     void devForceCompleteCurrentStep() {
@@ -3004,6 +3063,9 @@ public final class AssemblyActivity extends AppCompatActivity {
     void showGuidance(ArGuidance guidance) { arGlView.showGuidance(guidance, cameraProjection()); }
 
     void resetAnalyzerTracking() {
+        outlineUpdates.clear();
+        assemblyVisibilityGeneration++;
+        dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView overlay=findViewById(R.id.dynamicOutlineOverlay);if(overlay!=null){overlay.clear();overlay.setCameraActive(false);}
         if (analyzer != null) analyzer.resetAssemblyTracking();
     }
 
@@ -3061,6 +3123,8 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        outlineUpdates.clear();
+        dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView outline=findViewById(R.id.dynamicOutlineOverlay);if(outline!=null)outline.setCameraActive(false);
         recognitionText.removeCallbacks(referenceScopeMonitor);
         activityResumed = false;
         if(componentPreview!=null) componentPreview.pause();

@@ -94,7 +94,7 @@ final class Phase11GuideController implements AutoCloseable {
         if(closed||paused||saving||modal||reviewing||!flow.screen().preparation())return;modal=true;render();
         String text="Prepare electrical tape or a securing strap to hold the battery on the upper Extension Board beside the OLED, as shown in the demo. Keep the pack clear of moving parts and keep the power switch OFF while connecting.";
         dialog=new AlertDialog.Builder(activity).setTitle("Battery securing materials").setView(PhysicalCheckUi.prompt(activity,text)).setNegativeButton("Inspect first",null).setPositiveButton("I Have These",(d,w)->{flow.confirm();status("Materials ready · Next step unlocked");render();save();}).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
     private void check(){
         if(closed||paused||saving||modal||reviewing&&!reviewScan||!flow.screen().check()||flow.complete())return;modal=true;render();boolean oled=flow.screen()==Screen.OLED_CHECK;
@@ -102,14 +102,14 @@ final class Phase11GuideController implements AutoCloseable {
         String correction=oled?"Gently press down on the OLED header pins until fully seated. Check no pin is outside the socket.":"Secure the battery with tape or a strap and fully insert the power plug into the mainboard socket. Keep the switch OFF while adjusting.";
         TextView prompt=PhysicalCheckUi.prompt(activity,question);
         dialog=new AlertDialog.Builder(activity).setTitle(oled?"OLED seating check":"Battery and power check").setView(prompt).setNeutralButton("Check later",null).setNegativeButton(oled?"Loose":"Check Power",null).setPositiveButton(oled?"Firmly Seated":"Secured & Connected",null).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{flow.answerSecure(false);prompt.setText(correction+"\n\n"+question);say(correction,"correction:"+(++sequence));save();});
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{flow.answerSecure(true);dialog.dismiss();save();status("Check complete · Next step unlocked");render();
                 if(!oled&&flow.next(now())){changed();if(flow.canFinish(developer))finish.run();}
             });
-        });dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
+        });dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
-    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
+    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
     private int videoIndex(){return flow.screen().videoIndex();}
     private void startVideo(){
         final Screen screen=flow.screen();final int index=videoIndex();List<String> clips=Phase11AssetCatalog.videos(activity.getAssets(),index);

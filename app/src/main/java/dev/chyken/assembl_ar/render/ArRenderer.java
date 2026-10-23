@@ -60,6 +60,9 @@ final class ArRenderer implements GLSurfaceView.Renderer {
     private final FloatBuffer squareBuffer;
 
     private volatile RenderGuidance guidance;
+    private volatile float[] trackedPose;
+    private volatile float poseUnitScale=1;
+    void updateTrackedPose(float[] pose){float[] matrix=pose.clone();matrix[12]*=poseUnitScale;matrix[13]*=poseUnitScale;matrix[14]*=poseUnitScale;trackedPose=matrix;}
     @Nullable private volatile ArCameraProjection requestedProjection;
     @Nullable private ArCameraProjection appliedProjection;
     private boolean projectionDirty = true;
@@ -84,6 +87,7 @@ final class ArRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(identityPose, 0);
         Matrix.translateM(identityPose, 0, 0f, 0f, -NORMALIZED_CAMERA_DISTANCE);
         Matrix.rotateM(identityPose, 0, -58f, 1f, 0f, 0f);
+        trackedPose=null;
         guidance = RenderGuidance.hidden(identityPose);
         ringBuffer = buffer(circleVertices(64, 1f));
         gridBuffer = buffer(gridVertices(6, 1.4f));
@@ -107,6 +111,7 @@ final class ArRenderer implements GLSurfaceView.Renderer {
     }
 
     void update(ArGuidance authoredGuidance) {
+        trackedPose=null;float[] sourcePose=authoredGuidance.getOpenGlModelViewMatrix();poseUnitScale=sourcePose==null?1:normalizePhysicalPose(sourcePose).physicalUnitScale;
         guidance = RenderGuidance.from(authoredGuidance, identityPose);
     }
 
@@ -116,6 +121,7 @@ final class ArRenderer implements GLSurfaceView.Renderer {
     }
 
     void hide() {
+        trackedPose=null;
         guidance = RenderGuidance.hidden(identityPose);
     }
 
@@ -461,7 +467,8 @@ final class ArRenderer implements GLSurfaceView.Renderer {
     }
 
     private void compose(float[] pose, float[] modelMatrix) {
-        Matrix.multiplyMM(viewModel, 0, pose, 0, modelMatrix, 0);
+        float[] tracked=trackedPose;
+        Matrix.multiplyMM(viewModel, 0, tracked==null?pose:tracked, 0, modelMatrix, 0);
         Matrix.multiplyMM(mvp, 0, projection, 0, viewModel, 0);
     }
 

@@ -13,7 +13,8 @@ public final class Phase3MotorDriverFlowTest {
         f.confirmDemo(false);assertFalse(f.next(121));f.confirmDemo(true);assertTrue(f.next(130));
         assertTrue(f.scanning());f.observe(false);assertFalse(f.next(131));
         f.observe(true);assertTrue(f.next(140));assertEquals(5,f.step());assertFalse(f.complete());
-        f.observe(true);assertTrue(f.next(150));assertFalse(f.scanning());
+        assertFalse(f.scanning());f.observe(true);assertFalse(f.complete());
+        f.confirmDemo(false);assertFalse(f.next(141));f.confirmDemo(true);assertTrue(f.next(150));assertFalse(f.scanning());
         f.confirmStability(false,true);assertFalse(f.canFinish(false));
         f.confirmStability(true,false);assertFalse(f.canFinish(false));
         f.confirmStability(true,true);assertTrue(f.canFinish(false));assertTrue(f.allComplete());
@@ -39,9 +40,11 @@ public final class Phase3MotorDriverFlowTest {
     @Test public void lookBackDoesNotEraseProgressButConfirmedRescanInvalidatesDependents(){
         Phase3MotorDriverFlow f=new Phase3MotorDriverFlow(100);f.devComplete();
         assertTrue(f.previous(200));assertEquals(5,f.step());assertTrue(f.allComplete());
-        f.rescan(210);assertFalse(f.complete());assertFalse(f.allComplete());assertTrue(f.scanning());
-        assertTrue(f.previous(220));assertTrue(f.complete());
-        assertTrue(f.next(230));f.observe(true);f.next(240);assertFalse(f.complete());
+        f.rescan(205);assertTrue(f.complete());assertFalse(f.scanning());
+        assertTrue(f.previous(210));assertEquals(4,f.step());
+        f.rescan(220);assertFalse(f.complete());assertFalse(f.allComplete());assertTrue(f.scanning());
+        f.observe(true);assertTrue(f.next(230));assertEquals(5,f.step());assertFalse(f.complete());assertFalse(f.scanning());
+        f.confirmDemo(true);f.next(240);assertFalse(f.complete());
     }
     @Test public void devSkippingOneStepCannotCompleteALearnerPhase(){
         Phase3MotorDriverFlow f=new Phase3MotorDriverFlow(0);f.devJump(6,100);f.devSkip();
@@ -60,5 +63,19 @@ public final class Phase3MotorDriverFlowTest {
         assertEquals(driver.tag(),root.tag());assertTrue(root.collectsEvidence());
         assertTrue(root.accept(root.tag(),20));driver.observe(true);driver.next(30);
         assertFalse(root.collectsEvidence());assertEquals(driver.mode(),root.getMode());
+    }
+    @Test public void legacyPlacementScanResumesWithoutRepeatingEarlierWork(){
+        Phase3MotorDriverFlow f=Phase3MotorDriverFlow.restore("4,111000",100);
+        assertEquals(4,f.step());assertTrue(f.scanning());assertTrue(f.complete(3));
+        f.observe(true);assertTrue(f.next(110));assertEquals(PhaseFlow.Mode.DEMO,f.mode());
+        assertFalse(f.scanning());assertFalse(f.complete());
+        Phase3MotorDriverFlow restored=Phase3MotorDriverFlow.restore(f.snapshot(),120);
+        assertEquals(5,restored.step());assertFalse(restored.complete());
+    }
+    @Test public void legacyPostScrewScanBecomesFasteningDemoButCompletedPhysicalCheckSurvives(){
+        Phase3MotorDriverFlow pending=Phase3MotorDriverFlow.restore("5,111110",100);
+        assertEquals(5,pending.step());assertFalse(pending.scanning());assertFalse(pending.complete());
+        Phase3MotorDriverFlow complete=Phase3MotorDriverFlow.restore("6,111111",100);
+        assertTrue(complete.canFinish(false));assertTrue(complete.allComplete());
     }
 }

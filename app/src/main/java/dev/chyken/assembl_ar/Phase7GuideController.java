@@ -85,7 +85,7 @@ final class Phase7GuideController implements AutoCloseable {
         dialog=RescanConfirmationDialog.show(activity,()->{
             stopVideo();previewKey=-1;flow.rescan(now());changed();
         });
-        dialog.setOnDismissListener(d->{
+        dialog.setOnDismissListener(d->{if(dialog!=d)return;
             dialog=null;
             if(modal){modal=false;if(!closed&&!paused){flow.resume(now());render();}}
         });
@@ -136,7 +136,7 @@ final class Phase7GuideController implements AutoCloseable {
         if(closed||paused||saving||flow.step()<3||flow.viewingDemo()||!flow.scanned()||flow.complete()||dialog!=null&&dialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,question());
         dialog=new AlertDialog.Builder(activity).setTitle(flow.step()==3?"Caster stability":"Line tracker stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Secure",null).create();
-        dialog.setOnShowListener(d->{PhysicalCheckUi.style(dialog);checkLabels();say(question(),"check:"+(++sequence));
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);checkLabels();say(question(),"check:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{
                 if(flow.step()==3){if(flow.sandwiched())flow.confirmSwivels(false);else flow.confirmSandwiched(false);}else flow.confirmStable(false);
                 String correction=flow.step()==3?"Please tighten both outer nuts against the caster plate using your screwdriver.":"Check both 10 millimeter screws, nylon spacers and M3 nuts, then tighten the hardware until the trackers hold their position.";

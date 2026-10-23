@@ -15,7 +15,11 @@ public final class TargetAlignmentBoxView extends android.widget.FrameLayout {
     private float startX,startY,originX,originY;
     private int startWidth,startHeight;
     private String asset;
-    public void setInstruction(@Nullable String text){captionView.setText(text==null?"Hold title to move · Match this view":text);}
+    private String instruction="Hold title to move · Match this view";
+    private boolean tracking,predicted;
+    public void setInstruction(@Nullable String text){instruction=text==null?"Hold title to move · Match this view":text;renderCaption();}
+    public void setTrackingState(boolean measured,boolean held){if(tracking==(measured||held)&&predicted==held)return;tracking=measured||held;predicted=held;renderCaption();}
+    private void renderCaption(){String text=(tracking?predicted?"Pose predicted · ":"Tracking lock · ":"")+instruction;if(!text.contentEquals(captionView.getText()))captionView.setText(text);}
     public TargetAlignmentBoxView(Context c,@Nullable AttributeSet attrs){
         super(c,attrs);setBackgroundResource(dev.chyken.assembl_ar.R.drawable.bg_camera_panel);setElevation(dp(7));
         picture=new ImageView(c);picture.setScaleType(ImageView.ScaleType.FIT_CENTER);picture.setImageAlpha(100);
@@ -43,7 +47,7 @@ public final class TargetAlignmentBoxView extends android.widget.FrameLayout {
     public void showGuide(@Nullable String path,@Nullable android.graphics.RectF sourceRegion){
         ArHudView hud=getRootView().findViewById(dev.chyken.assembl_ar.R.id.arHudView);
         if(hud!=null)hud.setTargetGuideVisible(path!=null);
-        if(path==null){setVisibility(GONE);return;}setVisibility(VISIBLE);
+        if(path==null){setTrackingState(false,false);setVisibility(GONE);return;}setVisibility(VISIBLE);
         String key=path+(sourceRegion==null?"":sourceRegion.toString());
         if(!key.equals(asset)){asset=key;AssetImageLoader.loadBounded(picture,path,sourceRegion==null?960:1920,sourceRegion);}
     }

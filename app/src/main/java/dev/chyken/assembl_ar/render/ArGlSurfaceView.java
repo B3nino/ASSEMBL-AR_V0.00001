@@ -16,6 +16,8 @@ import dev.chyken.assembl_ar.model.OverlayType;
 /** Transparent OpenGL ES layer rendered directly over the CameraX preview. */
 public final class ArGlSurfaceView extends GLSurfaceView {
     private final ArRenderer arRenderer;
+    private boolean dynamicOutlinesOnly;
+    public void useDynamicOutlines(){hideGuidance();dynamicOutlinesOnly=true;}
 
     public ArGlSurfaceView(@NonNull Context context) {
         this(context, null);
@@ -27,19 +29,21 @@ public final class ArGlSurfaceView extends GLSurfaceView {
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
         setZOrderOnTop(true);
-        setPreserveEGLContextOnPause(true);
+        setPreserveEGLContextOnPause(false);
         arRenderer = new ArRenderer(context.getApplicationContext());
         setRenderer(arRenderer);
-        setRenderMode(RENDERMODE_CONTINUOUSLY);
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
         setClickable(false);
         setFocusable(false);
     }
 
     public void showGuidance(String componentId, List<OverlayType> overlayTypes,
                              @Nullable float[] openGlViewMatrix) {
+        if(dynamicOutlinesOnly)return;
         arRenderer.update(componentId,
                 overlayTypes == null ? Collections.emptyList() : overlayTypes,
                 openGlViewMatrix);
+        requestRender();
     }
 
     /**
@@ -47,15 +51,23 @@ public final class ArGlSurfaceView extends GLSurfaceView {
      * A projection previously supplied through {@link #setCameraProjection(ArCameraProjection)}
      * remains active.
      */
+    private volatile ArGuidance retainedGuidance;
+    private volatile boolean guidanceVisible;
     public void showGuidance(@NonNull ArGuidance guidance) {
+        if(dynamicOutlinesOnly)return;
+        retainedGuidance=guidance;guidanceVisible=true;
         arRenderer.update(guidance);
+        requestRender();
     }
 
     /** Updates authored guidance and the camera projection used to register it. */
     public void showGuidance(@NonNull ArGuidance guidance,
                              @Nullable ArCameraProjection cameraProjection) {
+        if(dynamicOutlinesOnly)return;
+        retainedGuidance=guidance;guidanceVisible=true;
         arRenderer.setCameraProjection(cameraProjection);
         arRenderer.update(guidance);
+        requestRender();
     }
 
     /**
@@ -64,9 +76,14 @@ public final class ArGlSurfaceView extends GLSurfaceView {
      */
     public void setCameraProjection(@Nullable ArCameraProjection cameraProjection) {
         arRenderer.setCameraProjection(cameraProjection);
+        requestRender();
     }
 
+    public void updateTrackedPose(float[] matrix){if(dynamicOutlinesOnly)return;ArGuidance authored=retainedGuidance;if(!guidanceVisible&&authored!=null){arRenderer.update(authored);guidanceVisible=true;}arRenderer.updateTrackedPose(matrix);requestRender();}
     public void hideGuidance() {
+        if(dynamicOutlinesOnly&&!guidanceVisible)return;
+        guidanceVisible=false;
         arRenderer.hide();
+        requestRender();
     }
 }

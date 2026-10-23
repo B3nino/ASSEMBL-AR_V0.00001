@@ -46,8 +46,9 @@ public final class ReferenceDatabase implements AutoCloseable {
     private static final int REFERENCE_PREPARATION_VERSION = 2;
     private static final double ROI_PADDING_RATIO = 0.05;
 
-    private final List<PreparedReference> references;
-    private final Set<String> componentIds;
+    private List<PreparedReference> references;
+    private Set<String> componentIds;
+    private IndividualBank individualBank;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final ReentrantReadWriteLock lifecycleLock = new ReentrantReadWriteLock();
 
@@ -58,6 +59,52 @@ public final class ReferenceDatabase implements AutoCloseable {
             ids.add(reference.spec.getComponentId());
         }
         componentIds = Collections.unmodifiableSet(ids);
+    }
+
+    /** Standalone diagnostics retain only one small native bank. The complete shared
+     * catalog and compiled disk cache remain available; loading occurs on the existing
+     * background recognition worker, never the UI or CameraX delivery thread. */
+    public static ReferenceDatabase loadIndividualBank(AssetManager assets,List<ComponentReferenceSpec> catalog,
+            String component,VisionConfig config,File directory,java.util.function.BooleanSupplier active)throws IOException{
+        if(android.os.Looper.myLooper()==android.os.Looper.getMainLooper())throw new IllegalStateException("Individual banks must load off the UI thread");
+        IndividualBank bank=new IndividualBank(assets,catalog,config,directory,active);
+        List<ComponentReferenceSpec> first=bank.next(component);
+        ReferenceDatabase database=load(assets,first,config,directory,active);
+        database.individualBank=bank;
+        Set<String> ids=new LinkedHashSet<>();for(ComponentReferenceSpec spec:catalog)ids.add(spec.getComponentId());
+        database.componentIds=Collections.unmodifiableSet(ids);return database;
+    }
+
+    boolean isIndividualBank(){return individualBank!=null;}
+    /** Called before taking this database's recognition read-lock. */
+    boolean prepareIndividualBank(RecognitionRequest request){
+        IndividualBank bank=individualBank;
+        if(bank==null||request.getExpectation()==null)return false;
+        String expected=request.getExpectation().getComponentId();
+        if(java.util.Objects.equals(expected,bank.component)&&bank.failures<3)return false;
+        if(android.os.Looper.myLooper()==android.os.Looper.getMainLooper())throw new IllegalStateException("Individual banks must load off the UI thread");
+        List<ComponentReferenceSpec> specs=bank.next(expected);
+        ReferenceDatabase loaded;
+        try{loaded=load(bank.assets,specs,bank.config,bank.directory,()->!closed.get()&&bank.active.getAsBoolean());}
+        catch(IOException failure){throw new IllegalStateException("Could not open component reference bank",failure);}
+        lifecycleLock.writeLock().lock();
+        try{
+            ensureOpen();List<PreparedReference> old=references;references=loaded.references;
+            // Transfer native ownership; closing the temporary owner must not release it.
+            loaded.references=Collections.emptyList();loaded.close();
+            for(PreparedReference ref:old)ref.release();return true;
+        }finally{lifecycleLock.writeLock().unlock();if(!loaded.closed.get())loaded.close();}
+    }
+    void observeIndividualBank(RecognitionResult result){
+        IndividualBank bank=individualBank;if(bank==null)return;
+        if(result.hasLocatedComponent()&&java.util.Objects.equals(bank.component,result.getComponentId())){bank.failures=0;bank.window.matched(result.getReferenceId());}
+        else bank.failures++;
+    }
+    private static final class IndividualBank {
+        final AssetManager assets;final List<ComponentReferenceSpec> catalog;final VisionConfig config;final File directory;final java.util.function.BooleanSupplier active;
+        final IndividualReferenceSearchWindow window=new IndividualReferenceSearchWindow();String component;int failures;
+        IndividualBank(AssetManager a,List<ComponentReferenceSpec> specs,VisionConfig c,File d,java.util.function.BooleanSupplier active){assets=a;catalog=Collections.unmodifiableList(new ArrayList<>(specs));config=c;directory=d;this.active=active;}
+        List<ComponentReferenceSpec> next(String id){component=id;failures=0;Set<String> chosen=window.next(catalog,id);List<ComponentReferenceSpec> selected=new ArrayList<>();for(ComponentReferenceSpec spec:catalog)if(chosen.contains(spec.getReferenceId()))selected.add(spec);return selected;}
     }
 
     /** OpenCV must be initialized before this method is called. */
@@ -246,17 +293,39 @@ public final class ReferenceDatabase implements AutoCloseable {
     /** Stream a whole-build preparation pass without retaining a catalog's native matrices. */
     public static void prepareLibrary(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory,ReferenceCacheIndex index,java.util.function.BooleanSupplier active,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException{
         ORB orb=OpenCvVisionUtils.createOrb(config);CLAHE clahe=OpenCvVisionUtils.createClahe(config);int done=0;
-        try{for(ComponentReferenceSpec spec:specs){checkLoadActive(active);if(!index.terminal(spec,config)){
+        try{for(ComponentReferenceSpec spec:specs){checkLoadActive(active);if(index.isSkipped(spec,config)){KeypointInventoryManager.INSTANCE.skipped(spec);progress.accept(++done,specs.size());continue;}if(!index.terminal(spec,config)||!GlobalComponentRegistry.INSTANCE.isReady()){
             PreparedReference ready=null;
             try{ready=prepareReference(assets,spec,orb,clahe,config,directory);if(spec.getAdminDescriptorBlob()!=null)index.administrator(spec,config);}
-            catch(IOException|RuntimeException unusable){Log.w("ReferenceLibrary","Unusable reference: "+spec.getReferenceId(),unusable);index.skipped(spec,config);}
+            catch(IOException|RuntimeException unusable){Log.w("ReferenceLibrary","Unusable reference: "+spec.getReferenceId(),unusable);index.skipped(spec,config);KeypointInventoryManager.INSTANCE.skipped(spec);}
             finally{if(ready!=null)ready.release();}
             if(!index.terminal(spec,config))throw new IOException("Compiled reference could not be saved. Check available app storage.");
         }progress.accept(++done,specs.size());}checkLoadActive(active);}finally{orb.clear();clahe.clear();}
     }
     public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":"+Phase5PhotoGeometry.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION;}
 
-    private static PreparedReference prepareReference(AssetManager assetManager,
+    /** A geometry edit only invalidates the affected phase, not the entire library. */
+    static String cacheRevision(ComponentReferenceSpec spec){
+        int phase=spec.getAssemblyStepNumber();
+        int geometry=phase==2?Phase2PhotoGeometry.CACHE_VERSION:phase==3?Phase3PhotoGeometry.VERSION:phase==5?Phase5PhotoGeometry.VERSION:phase==7?Phase7PhotoGeometry.VERSION:phase==8?Phase8PhotoGeometry.VERSION:phase==9?Phase9PhotoGeometry.VERSION:phase==10?Phase10PhotoGeometry.VERSION:phase==11?Phase11PhotoGeometry.VERSION:0;
+        return "scoped-library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+phase+":"+geometry;
+    }
+
+    public static void preloadLibrary(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory,ReferenceCacheIndex index,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException {
+        prepareLibrary(assets,specs,config,directory,index,()->true,progress);
+    }
+    private static PreparedReference prepareReference(AssetManager assets,ComponentReferenceSpec spec,ORB orb,CLAHE clahe,VisionConfig config,File directory)throws IOException {
+        VisionPreloadManager cache=VisionPreloadManager.active(assets);
+        ReferenceCacheIndex provenance=ReferenceCacheIndex.active(assets,directory);
+        String key=provenance==null?null:provenance.key(spec,config);
+        PreparedReference hit=cache==null||key==null?null:cache.acquire(key);
+        if(hit!=null)return hit;
+        PreparedReference result=prepareReferenceUncached(assets,spec,orb,clahe,config,directory);
+        KeypointInventoryManager.INSTANCE.prepared(result);
+        GlobalComponentRegistry.INSTANCE.prepared(result);
+        if(cache!=null&&key!=null)cache.retain(key,result);
+        return result;
+    }
+    private static PreparedReference prepareReferenceUncached(AssetManager assetManager,
                                                       ComponentReferenceSpec spec,
                                                       ORB orb,
                                                       CLAHE clahe,
@@ -786,6 +855,20 @@ public final class ReferenceDatabase implements AutoCloseable {
             descriptors = primary == null ? null : primary.descriptors;
         }
 
+        PreparedReference copy(){
+            return new PreparedReference(this);
+        }
+        private PreparedReference(PreparedReference source){
+            spec=source.spec;imageWidth=source.imageWidth;imageHeight=source.imageHeight;
+            List<PreparedOrbVariant> owned=new ArrayList<>();
+            try{for(PreparedOrbVariant v:source.orbVariants)owned.add(new PreparedOrbVariant(v.photometricVariant,v.keypoints,v.descriptors));}
+            catch(RuntimeException|Error failure){for(PreparedOrbVariant v:owned)v.release();throw failure;}
+            orbVariants=Collections.unmodifiableList(owned);PreparedOrbVariant primary=null;
+            for(PreparedOrbVariant v:owned)if(v.photometricVariant==PhotometricVariant.NORMALIZED){primary=v;break;}
+            if(primary==null&&!owned.isEmpty())primary=owned.get(0);
+            keypoints=primary==null?new KeyPoint[0]:primary.keypoints;descriptors=primary==null?null:primary.descriptors;
+        }
+        long estimatedBytes(){long total=0;for(PreparedOrbVariant v:orbVariants)total+=(long)v.descriptors.total()*v.descriptors.elemSize()+v.keypoints.length*96L;return total;}
         List<PreparedOrbVariant> orbVariants() {
             return orbVariants;
         }

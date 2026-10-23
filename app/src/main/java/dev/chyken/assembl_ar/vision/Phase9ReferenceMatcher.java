@@ -9,8 +9,10 @@ import java.util.*;
 
 /** Per-object identity pools plus independent board context. Counts never accumulate across frames. */
 final class Phase9ReferenceMatcher implements AutoCloseable {
+    private static final long FRAME_BUDGET_NS=850_000_000L;
+    private static final long LOOSE_WINDOW_BUDGET_NS=200_000_000L;
     private final ReferenceDatabase database;private final ORB orb=ORB.create(3200,1.2f,8,12,0,2,ORB.HARRIS_SCORE,31,7);
-    private final CLAHE clahe;private final BFMatcher matcher=BFMatcher.create(Core.NORM_HAMMING,false);
+    private final CLAHE clahe;private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     private final Map<ReferenceDatabase.PreparedOrbVariant,Map<Integer,Features>> pools=new IdentityHashMap<>();
     private int frameKeypoints;
     private final int[] cursors=new int[5];private ReferenceDatabase.PreparedReference preferredLoose,preferredScene;
@@ -18,7 +20,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
 
     RecognitionResult inspect(Mat gray,Mat rgb,long timestamp,int stage){
         frameKeypoints=0;
-        long start=android.os.SystemClock.elapsedRealtimeNanos(),deadline=System.nanoTime()+850_000_000L;
+        long start=android.os.SystemClock.elapsedRealtimeNanos(),deadline=System.nanoTime()+FRAME_BUDGET_NS;
         Mat color=new Mat(),bgr=new Mat();List<VisionPoint> corners=Collections.emptyList();boolean stand=false,left=false,right=false,context=false,invalid=false;int count=0;double score=0;
         database.acquireForRecognition();
         try{
@@ -33,7 +35,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                     for(int extent:new int[]{0,512}){
                         try(Live live=extract(gray,window,extent)){
                             List<ReferenceDatabase.PreparedReference> ordered=ranked(refs,live,false,preferredLoose,cursors[stage],stage);int visited=0;
-                            long slice=Math.min(deadline,System.nanoTime()+200_000_000L);
+                            long slice=Math.min(deadline,System.nanoTime()+LOOSE_WINDOW_BUDGET_NS);
                             for(ReferenceDatabase.PreparedReference ref:ordered){
                                 if(visited>0&&System.nanoTime()>slice)break;visited++;
                                 for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants)for(int part=0;part<ref.spec.getFeatureRegionsNormalized().size();part++){
@@ -106,11 +108,11 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         if(!assembly&&stage==2)result.sort(Comparator.comparingInt(r->"wheel".equals(Phase9AssetCatalog.referenceRole(r.spec.getReferenceId()))?0:1));
         if(assembly&&stage==4)result.sort(Comparator.comparingInt(r->"assembly".equals(Phase9AssetCatalog.referenceRole(r.spec.getReferenceId()))?0:1));return result;
     }
-    private static List<ReferenceDatabase.PreparedReference> ordered(List<ReferenceDatabase.PreparedReference> refs,int cursor,ReferenceDatabase.PreparedReference preferred){
+    private static List<ReferenceDatabase.PreparedReference> ordered(List<ReferenceDatabase.PreparedReference> refs,int cursor,ReferenceDatabase.PreparedReference preferred){DiagnosticHammingMatcher.context(preferred==null?null:preferred.spec);
         List<ReferenceDatabase.PreparedReference> result=new ArrayList<>();if(refs.contains(preferred))result.add(preferred);for(int i=0;i<refs.size();i++){ReferenceDatabase.PreparedReference r=refs.get(Math.floorMod(cursor+i,refs.size()));if(r!=preferred)result.add(r);}return result;
     }
     /** Cheap sparse descriptor ranking only schedules candidates; it never certifies a part. */
-    private List<ReferenceDatabase.PreparedReference> ranked(List<ReferenceDatabase.PreparedReference> refs,Live live,boolean board,ReferenceDatabase.PreparedReference preferred,int cursor,int stage){
+    private List<ReferenceDatabase.PreparedReference> ranked(List<ReferenceDatabase.PreparedReference> refs,Live live,boolean board,ReferenceDatabase.PreparedReference preferred,int cursor,int stage){DiagnosticHammingMatcher.context(preferred==null?null:preferred.spec);
         Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
         for(ReferenceDatabase.PreparedReference ref:refs){int best=0;
             for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){
@@ -133,9 +135,8 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         return result;
     }
     private int sparseScore(Features f,Live live){
-        if(f.sparse.empty()||live.rows.rows()<2)return 0;List<MatOfDMatch> pairs=new ArrayList<>();int count=0;
-        try{matcher.knnMatch(f.sparse,live.rows,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.80)count++;}}
-        finally{for(Mat m:pairs)m.release();}return count;
+        if(f.sparse.empty()||live.rows.rows()<2)return 0;
+        return matcher.ratioMatches(f.sparse,live.rows,.80,64).size();
     }
     private List<Rect> proposals(Mat gray,Mat bgr,int stage){
         List<Rect> result=new ArrayList<>();if(!bgr.empty())for(Rect r:Phase9PhotoGeometry.colored(bgr,new Scalar(12,stage==1?40:80,45),new Scalar(42,255,255),5)){
@@ -149,11 +150,11 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         Mat crop=gray.submat(window),work=new Mat(),mask=new Mat(),rows=new Mat();MatOfKeyPoint keypoints=new MatOfKeyPoint();
         try{
             double scale=extent==0?1:extent/(double)Math.max(window.width,window.height);Imgproc.resize(crop,work,new Size(),scale,scale,scale<1?Imgproc.INTER_AREA:Imgproc.INTER_LINEAR);
-            clahe.apply(work,work);orb.detectAndCompute(work,mask,keypoints,rows);KeyPoint[] keys=keypoints.toArray();frameKeypoints+=keys.length;for(KeyPoint k:keys){k.pt.x=k.pt.x/scale+window.x;k.pt.y=k.pt.y/scale+window.y;}
+            DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,mask,keypoints,rows);KeyPoint[] keys=keypoints.toArray();frameKeypoints+=keys.length;for(KeyPoint k:keys){k.pt.x=k.pt.x/scale+window.x;k.pt.y=k.pt.y/scale+window.y;}
             return new Live(keys,rows);
         }catch(RuntimeException failure){rows.release();throw failure;}finally{crop.release();work.release();mask.release();keypoints.release();}
     }
-    private Features pool(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v,int part){
+    private Features pool(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v,int part){DiagnosticHammingMatcher.context(ref.spec);
         Map<Integer,Features> cache=pools.computeIfAbsent(v,key->new HashMap<>());Features found=cache.get(part);if(found!=null)return found;
         List<Integer> ids=new ArrayList<>();List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
         for(int i=0;i<v.keypoints.length;i++){
@@ -165,13 +166,13 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         found=new Features(keys,rows);cache.put(part,found);return found;
     }
     private Found match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v,int part,Live live,int minimum,boolean board){
-        Features source=pool(ref,v,part);if(source.rows.empty()||live.rows.rows()<2)return null;List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> good=new ArrayList<>();
-        try{matcher.knnMatch(source.rows,live.rows,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.76)good.add(p[0]);}}finally{for(Mat m:pairs)m.release();}
+        Features source=pool(ref,v,part);if(source.rows.empty()||live.rows.rows()<2)return null;List<DMatch> good=new ArrayList<>();
+        good.addAll(matcher.ratioMatches(source.rows,live.rows,.76,64));
         good=ComponentRecognizer.uniqueFrameMatches(good);if(good.size()<minimum)return null;
         List<Point> a=new ArrayList<>(),b=new ArrayList<>();for(DMatch m:good){a.add(source.keys[m.queryIdx].pt);b.add(live.keys[m.trainIdx].pt);}
         MatOfPoint2f from=new MatOfPoint2f(),to=new MatOfPoint2f();Mat inliers=new Mat(),h=null;
         try{
-            from.fromList(a);to.fromList(b);h=Calib3d.findHomography(from,to,Calib3d.RANSAC,3.5,inliers,1600,.995);int n=h.empty()?0:Core.countNonZero(inliers);
+            from.fromList(a);to.fromList(b);h=DiagnosticHammingMatcher.homography(from,to,Calib3d.RANSAC,3.5,inliers,1600,.995);int n=h.empty()?0:Core.countNonZero(inliers);
             if(n<minimum||n<a.size()*.5)return null;
             double l=Double.MAX_VALUE,t=l,r=-l,bt=-l;for(int i=0;i<a.size();i++)if(inliers.get(i,0)[0]!=0){Point p=a.get(i);l=Math.min(l,p.x);r=Math.max(r,p.x);t=Math.min(t,p.y);bt=Math.max(bt,p.y);}
             List<VisionPoint> region=board?Arrays.asList(new VisionPoint(0,0),new VisionPoint(1,0),new VisionPoint(1,1),new VisionPoint(0,1)):ref.spec.getFeatureRegionsNormalized().get(part);
@@ -181,7 +182,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         }finally{from.release();to.release();inliers.release();if(h!=null)h.release();}
     }
     private static boolean inside(Point p,List<VisionPoint> r,ReferenceDatabase.PreparedReference ref){return p.x>=r.get(0).getX()*ref.imageWidth&&p.x<=r.get(2).getX()*ref.imageWidth&&p.y>=r.get(0).getY()*ref.imageHeight&&p.y<=r.get(2).getY()*ref.imageHeight;}
-    private static List<VisionPoint> project(List<VisionPoint> region,ReferenceDatabase.PreparedReference ref,Mat h){
+    private static List<VisionPoint> project(List<VisionPoint> region,ReferenceDatabase.PreparedReference ref,Mat h){DiagnosticHammingMatcher.context(ref.spec);
         MatOfPoint2f a=new MatOfPoint2f(),b=new MatOfPoint2f();try{List<Point> points=new ArrayList<>();for(VisionPoint p:region)points.add(new Point(p.getX()*ref.imageWidth,p.getY()*ref.imageHeight));a.fromList(points);Core.perspectiveTransform(a,b,h);Point[] q=b.toArray();double area=Imgproc.contourArea(b,true);
             if(!Double.isFinite(area)||area<12)return Collections.emptyList();MatOfPoint convex=new MatOfPoint(q);try{if(!Imgproc.isContourConvex(convex))return Collections.emptyList();}finally{convex.release();}
             List<VisionPoint> result=new ArrayList<>();for(Point p:q){if(!Double.isFinite(p.x+p.y))return Collections.emptyList();result.add(new VisionPoint(p.x,p.y));}return result;

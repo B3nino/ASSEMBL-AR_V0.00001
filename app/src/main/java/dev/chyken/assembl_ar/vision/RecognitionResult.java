@@ -58,6 +58,16 @@ public final class RecognitionResult {
         IDENTITY_AMBIGUOUS
     }
 
+    public static final class DiagnosticMetrics {
+        public final String preprocessing;
+        public final int totalMatches,referenceKeypoints,probeGood;public final String lighting,mismatch,probeReference;
+        public DiagnosticMetrics(int total,int assigned,String lighting,String mismatch){this(total,assigned,lighting,mismatch,-1,null);}
+        public DiagnosticMetrics(int total,int assigned,String lighting,String mismatch,int probeGood,String probeReference){this(total,assigned,lighting,mismatch,probeGood,probeReference,"unspecified");}
+        public DiagnosticMetrics(int total,int assigned,String lighting,String mismatch,int probeGood,String probeReference,String preprocessing){this.preprocessing=preprocessing;totalMatches=total;referenceKeypoints=assigned;this.lighting=lighting;this.mismatch=mismatch;this.probeGood=probeGood;this.probeReference=probeReference;}
+    }
+    private final DiagnosticMetrics diagnosticMetrics;
+    public DiagnosticMetrics getDiagnosticMetrics(){return diagnosticMetrics;}
+    public RecognitionResult withDiagnosticMetrics(DiagnosticMetrics m){Builder b=copyBuilder();b.diagnosticMetrics=m;return b.build();}
     private final long frameTimestampNanos;
     private final String referenceId;
     private final String componentId;
@@ -95,6 +105,7 @@ public final class RecognitionResult {
     private final Phase3Observation phase3Observation;
 
     private RecognitionResult(Builder builder) {
+        diagnosticMetrics=builder.diagnosticMetrics;
         phase2Observation=builder.phase2Observation;
         phase7Observation=builder.phase7Observation;
         phase8Observation=builder.phase8Observation;
@@ -360,6 +371,7 @@ public final class RecognitionResult {
         copy.boardObservation = boardObservation;
         copy.rejectionEvidence = rejectionEvidence;
         copy.requestTag = requestTag;
+        copy.diagnosticMetrics=diagnosticMetrics;
         copy.phase2Observation=phase2Observation;
         copy.phase3Observation=phase3Observation;
         copy.phase7Observation=phase7Observation;
@@ -409,6 +421,9 @@ public final class RecognitionResult {
     }
 
     static final class Builder {
+        private DiagnosticMetrics diagnosticMetrics;
+        Builder orbMetrics(int total,int assigned,int good){diagnosticMetrics=new DiagnosticMetrics(total,assigned,"Unknown",null,good,null);return this;}
+        Builder orbMetrics(int total,int assigned){diagnosticMetrics=new DiagnosticMetrics(total,assigned,"Unknown",null);return this;}
         private Phase2Observation phase2Observation;
         private Phase7Observation phase7Observation;
         private Phase8Observation phase8Observation;

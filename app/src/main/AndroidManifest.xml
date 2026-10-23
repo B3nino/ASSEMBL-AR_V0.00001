@@ -39,6 +39,7 @@
         <activity
             android:name=".ComponentLibraryActivity"
             android:exported="false" />
+        <activity android:name=".DevDiagnosticsActivity" android:exported="false" />
         <activity
             android:name=".PartRecognitionTestActivity"
             android:exported="false" />

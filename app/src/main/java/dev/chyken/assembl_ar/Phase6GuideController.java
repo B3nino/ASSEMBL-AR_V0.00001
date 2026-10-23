@@ -13,6 +13,7 @@ import dev.chyken.assembl_ar.workflow.phase.*;
 
 /** UI coordinator: camera analysis, artwork decoding and speech remain on their existing workers. */
 final class Phase6GuideController implements AutoCloseable {
+    boolean schematicFocused(){return !closed&&!paused&&flow.step()>=2;}
     private static final String[] HUD={"",
         "Step 6.1: Select 6x Jumper Wire Colors.\n• Pick custom colors for VCC, GND, A-1A, A-1B, B-1A and B-1B.\n• Match the colors to your physical jumper wires.",
         "Step 6.2: Connect Power Wires.",
@@ -105,7 +106,7 @@ final class Phase6GuideController implements AutoCloseable {
         if(closed||paused||saving||reviewing||flow.complete()||dialog!=null&&dialog.isShowing()||(flow.step()!=2&&flow.step()!=4))return;
         TextView prompt=PhysicalCheckUi.prompt(activity,question());
         dialog=new AlertDialog.Builder(activity).setTitle(flow.step()==2?"Power connection check":"Final connection check").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm & Secure",null).create();
-        dialog.setOnShowListener(d->{
+        dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;
             PhysicalCheckUi.style(dialog);updateCheck(prompt);say(question(),"check:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{
                 if(flow.step()==2)flow.confirmPower(false);else if(!flow.seated())flow.confirmSeated(false);else flow.confirmCorrect(false);

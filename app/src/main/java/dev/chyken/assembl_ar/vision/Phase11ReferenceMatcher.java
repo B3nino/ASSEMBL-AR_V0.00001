@@ -18,7 +18,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
     private final int[] cursors=new int[4];
     private final ReferenceDatabase.PreparedReference[] preferred=new ReferenceDatabase.PreparedReference[4];
     private final CLAHE clahe;
-    private final BFMatcher matcher=BFMatcher.create(Core.NORM_HAMMING,false);
+    private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     Phase11ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);clahe=OpenCvVisionUtils.createClahe(config);}
     RecognitionResult inspect(Mat gray,long time,int step){
         long start=android.os.SystemClock.elapsedRealtimeNanos();Mat raw=new Mat(),work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keypoints=new MatOfKeyPoint();
@@ -27,7 +27,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
         boardEvidence=0;database.acquireForRecognition();
         try{
             if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);
-            if(step==3)work.copyTo(raw);clahe.apply(work,work);orb.detectAndCompute(work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();
+            if(step==3)work.copyTo(raw);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
             List<ReferenceDatabase.PreparedReference> positive=new ArrayList<>(),negative=new ArrayList<>();
             for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){String role=Phase11AssetCatalog.referenceRole(ref.spec.getReferenceId());if(Phase11AssetCatalog.eligible(role,step))(role.equals("back")?negative:positive).add(ref);}
             List<ReferenceDatabase.PreparedReference> candidates=new ArrayList<>();if(preferred[step]!=null)candidates.add(preferred[step]);int cursor=cursors[step]++;
@@ -68,7 +68,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
         }finally{database.releaseAfterRecognition();raw.release();work.release();descriptors.release();empty.release();keypoints.release();}
     }
     /** The PCB locates a small search window; only independently matched OLED features pass it. */
-    private Match matchInstalled(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat work,double scale){
+    private Match matchInstalled(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat work,double scale){DiagnosticHammingMatcher.context(ref.spec);
         Split split=splits.get(variant);if(split==null){split=new Split(ref,variant);splits.put(variant,split);}
         List<Point> source=new ArrayList<>(),target=new ArrayList<>();collect(split.context,live,descriptors,source,target);
         Mat board=homography(source,target,14,15,15);if(board==null)return null;boardEvidence=Math.max(boardEvidence,inliers(source,target,board));
@@ -82,7 +82,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
             if(right-x<16||bottom-y<16)return null;crop=work.submat(new Rect(x,y,right-x,bottom-y));double enlargement=480.0/Math.max(crop.cols(),crop.rows());
             Imgproc.resize(crop,detail,new Size(Math.round(crop.cols()*enlargement),Math.round(crop.rows()*enlargement)),0,0,Imgproc.INTER_CUBIC);
             // Re-normalize the local window. Global CLAHE alone allocates features to PCB printing.
-            clahe.apply(detail,detail);detailOrb.detectAndCompute(detail,empty,keys,detailDescriptors);KeyPoint[] local=keys.toArray();
+            DiagnosticHammingMatcher.normalize(clahe,detail,detail);DiagnosticHammingMatcher.extract(detailOrb,detail,empty,keys,detailDescriptors);KeyPoint[] local=keys.toArray();
             double sx=crop.cols()/(double)detail.cols(),sy=crop.rows()/(double)detail.rows();for(KeyPoint k:local){k.pt.x=x+k.pt.x*sx;k.pt.y=y+k.pt.y*sy;}
             source.clear();target.clear();collect(split.local,local,detailDescriptors,source,target);
             double width=(c.get(2).getX()-c.get(0).getX())*ref.imageWidth,height=(c.get(2).getY()-c.get(0).getY())*ref.imageHeight;
@@ -99,8 +99,8 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
     }
     private void collect(Features features,KeyPoint[] live,Mat descriptors,List<Point> source,List<Point> target){
         if(features.descriptors.empty()||descriptors.empty()||descriptors.rows()<2)return;
-        List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> good=new ArrayList<>();
-        try{matcher.knnMatch(features.descriptors,descriptors,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<70&&p[0].distance<p[1].distance*.80)good.add(p[0]);}}finally{for(Mat pair:pairs)pair.release();}
+        List<DMatch> good=new ArrayList<>();
+        good.addAll(matcher.ratioMatches(features.descriptors,descriptors,.80,69));
         good.sort(Comparator.comparingDouble(p->p.distance));Set<Integer> used=new HashSet<>();for(DMatch m:good)if(used.add(m.trainIdx)){source.add(features.keys[m.queryIdx].pt);target.add(live[m.trainIdx].pt);}
     }
     private static final class Features{
@@ -119,9 +119,9 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
             local=new Features(v,a);context=new Features(v,other);
         }
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,boolean installed){
-        List<MatOfDMatch> pairs=new ArrayList<>();List<DMatch> candidates=new ArrayList<>();
-        try{matcher.knnMatch(variant.descriptors,descriptors,pairs,2);for(MatOfDMatch pair:pairs){DMatch[] p=pair.toArray();if(p.length==2&&p[0].distance<65&&p[0].distance<p[1].distance*.76)candidates.add(p[0]);}}finally{for(Mat m:pairs)m.release();}
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,boolean installed){DiagnosticHammingMatcher.context(ref.spec);
+        List<DMatch> candidates=new ArrayList<>();
+        candidates.addAll(matcher.ratioMatches(variant.descriptors,descriptors,.76,64));
         candidates.sort(Comparator.comparingDouble(p->p.distance));Set<Integer> used=new HashSet<>();
         List<Point> module=new ArrayList<>(),moduleLive=new ArrayList<>(),board=new ArrayList<>(),boardLive=new ArrayList<>();
         List<VisionPoint> c=ref.spec.getPlanarCornersNormalized();double l=c.get(0).getX()*ref.imageWidth,t=c.get(0).getY()*ref.imageHeight,r=c.get(2).getX()*ref.imageWidth,b=c.get(2).getY()*ref.imageHeight;
@@ -145,7 +145,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
     }
     private Mat homography(List<Point> a,List<Point> b,int minimum,double minimumWidth,double minimumHeight){
         if(a.size()<minimum)return null;MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
-        try{src.fromList(a);dst.fromList(b);h=Calib3d.findHomography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
+        try{src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
             int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){h.release();return null;}
             double minX=Double.MAX_VALUE,minY=minX,maxX=-minX,maxY=-minX;
             for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){Point p=a.get(i);minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}

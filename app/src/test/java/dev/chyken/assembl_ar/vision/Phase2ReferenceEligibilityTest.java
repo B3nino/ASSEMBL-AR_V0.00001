@@ -16,4 +16,9 @@ public final class Phase2ReferenceEligibilityTest {
                 .withPhase2Stage(2).withRequestTag("stage-generation");
         assertEquals(2,request.getPhase2Stage());assertEquals("stage-generation",request.getRequestTag());
     }
+    @org.junit.Test public void requestedVerificationViewSurvivesRequestCopies(){
+        RecognitionRequest r=new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component("main_board"),null,null,null,1,2).withPhase2Stage(5).withPhase2VerificationView("left").withRequestTag("left-scan");
+        org.junit.Assert.assertEquals("left",r.getPhase2VerificationView());org.junit.Assert.assertEquals("left-scan",r.getRequestTag());
+        org.junit.Assert.assertEquals("left",r.withPhase2Stage(5).getPhase2VerificationView());
+    }
 }

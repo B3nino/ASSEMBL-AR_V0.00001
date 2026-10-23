@@ -147,6 +147,54 @@ public final class CameraCalibrationInstrumentedTest {
         assertEquals(invalid.getSource(), invalid.scaled(.5, .5).cropped(5, 7).getSource());
     }
 
+    @Test
+    public void zeroOrInvalidOpticalCenterUsesUsableFocalMetadataInstead() {
+        for(float[] intrinsic:new float[][]{
+                {1200,1180,0,0,0},{1200,1180,2000,0,0},
+                {1200,1180,Float.NaN,1500,0},{1200,1180,5000,1500,0},
+                {Float.POSITIVE_INFINITY,1180,2000,1500,0}}){
+            CameraCalibrationProvider provider=CameraCalibrationProvider.fromCharacteristics(
+                    intrinsic,new Rect(100,50,4100,3050),new Rect(100,50,4100,3050),
+                    4f,new SizeF(8f,6f),new Size(4000,3000));
+            CameraCalibration calibration=provider.forFrame(metadata(1800,1400,0,false));
+            assertEquals(CameraCalibration.Source.FOCAL_SENSOR_METADATA,calibration.getSource());
+            assertArrayEquals(new double[]{1000,0,900,0,1000,700,0,0,1},calibration.getCameraMatrixRowMajor(),.001);
+        }
+    }
+
+    @Test
+    public void zeroOpticalCenterWithoutOtherMetadataUsesTaggedApproximation() {
+        CameraCalibrationProvider provider=CameraCalibrationProvider.fromCharacteristics(
+                new float[]{1200,1180,0,0,0},new Rect(0,0,4000,3000),
+                new Rect(0,0,4000,3000),null,null,null);
+        CameraCalibration calibration=provider.forFrame(metadata(1800,1400,0,false));
+        assertEquals(CameraCalibration.Source.APPROXIMATE_MISSING_METADATA,calibration.getSource());
+        assertArrayEquals(new double[]{2124,0,900,0,2124,700,0,0,1},calibration.getCameraMatrixRowMajor(),.001);
+    }
+
+    @Test
+    public void physicalTabletMetadataReportsItsAnalysisSizesAndCalibrationValidity() throws Exception {
+        android.content.Context context=androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getTargetContext();
+        android.hardware.camera2.CameraManager cameras=(android.hardware.camera2.CameraManager)context.getSystemService(android.content.Context.CAMERA_SERVICE);
+        for(String id:cameras.getCameraIdList()){
+            android.hardware.camera2.CameraCharacteristics metadata=cameras.getCameraCharacteristics(id);
+            Integer facing=metadata.get(android.hardware.camera2.CameraCharacteristics.LENS_FACING);
+            if(facing==null||facing!=android.hardware.camera2.CameraCharacteristics.LENS_FACING_BACK)continue;
+            float[] k=metadata.get(android.hardware.camera2.CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
+            Rect active=metadata.get(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            Rect pre=metadata.get(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+            float[] focal=metadata.get(android.hardware.camera2.CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            CameraCalibrationProvider provider=CameraCalibrationProvider.fromCharacteristics(k,active,pre,focal==null||focal.length==0?null:focal[0],
+                    metadata.get(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE),metadata.get(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE));
+            boolean unusable=k!=null&&k.length>=4&&(k[2]<=0||k[3]<=0);
+            CameraCalibration calibration=provider.forFrame(metadata(1800,1400,0,false));
+            if(unusable)org.junit.Assert.assertNotEquals(CameraCalibration.Source.CAMERA2_INTRINSICS,calibration.getSource());
+            android.hardware.camera2.params.StreamConfigurationMap streams=metadata.get(android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            android.util.Log.i("CameraMetadataAudit","camera="+id+" intrinsic="+java.util.Arrays.toString(k)+" usableSource="+calibration.getSource()
+                    +" YUV="+(streams==null?"none":java.util.Arrays.toString(streams.getOutputSizes(android.graphics.ImageFormat.YUV_420_888))));
+        }
+    }
+
     private static CameraCalibrationProvider provider() {
         return CameraCalibrationProvider.fromCharacteristics(
                 new float[]{1200f, 1180f, 2000f, 1500f, 0f},

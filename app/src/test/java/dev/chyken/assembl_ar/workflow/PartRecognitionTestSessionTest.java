@@ -20,6 +20,12 @@ public final class PartRecognitionTestSessionTest {
     private static final RecognitionResult.DetectionMethod FALLBACK =
             RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK;
 
+    @Test public void crossPhaseRejectionCannotBeCountedAsExpectedOrLocked() throws Exception {
+        PartRecognitionTestSession session=new PartRecognitionTestSession();long token=session.selectPart("motor","Motor",.001f);
+        for(int i=0;i<5;i++)session.observe(token,frame(i*100,"motor",ORB,true).withDiagnosticMetrics(new RecognitionResult.DiagnosticMetrics(100,100,"Normal","Wrong assembly phase")),QUAD);
+        PartRecognitionTestSession.Snapshot snapshot=session.getSnapshot("motor");assertFalse(snapshot.isLocked());assertEquals(5,snapshot.getWrongComponentFrames());assertEquals(0,snapshot.getExpectedOrbFrames());
+    }
+
     @Test
     public void observedMatchAndConfusionCountsHaveExplicitDenominators() throws Exception {
         PartRecognitionTestSession session = new PartRecognitionTestSession();

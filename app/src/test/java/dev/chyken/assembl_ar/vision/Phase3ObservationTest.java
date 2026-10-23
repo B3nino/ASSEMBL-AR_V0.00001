@@ -28,7 +28,8 @@ public final class Phase3ObservationTest {
     @Test public void evidenceTypesCannotBeReusedInOtherSteps(){
         assertTrue(new Phase3Observation(Phase3Observation.State.FRONT,30).accepted(1));
         assertFalse(new Phase3Observation(Phase3Observation.State.FRONT,30).accepted(4));
-        assertTrue(new Phase3Observation(Phase3Observation.State.PLACED,30).accepted(5));
+        assertTrue(new Phase3Observation(Phase3Observation.State.PLACED,30).accepted(4));
+        assertFalse(new Phase3Observation(Phase3Observation.State.PLACED,30).accepted(5));
         assertFalse(new Phase3Observation(Phase3Observation.State.BACKWARD,30).accepted(5));
         assertFalse(new Phase3Observation(Phase3Observation.State.PLACED,30).accepted(6));
     }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/canvas">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <include layout="@layout/view_toolbar" />
+        <LinearLayout android:id="@+id/partTestPanes" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <FrameLayout android:id="@+id/partTestCameraPane" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.62" android:background="@color/black">
+                <include layout="@layout/view_part_test_camera" />
+            </FrameLayout>
+            <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.38">
+                <include layout="@layout/view_part_test_controls" />
+            </FrameLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView android:id="@+id/devDiagnosticsOverlay"
+        android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="top|start"
+        android:layout_marginTop="80dp" android:layout_marginStart="12dp" android:elevation="999dp"
+        android:maxWidth="260dp" android:maxLines="3" android:ellipsize="end" />
+</FrameLayout>

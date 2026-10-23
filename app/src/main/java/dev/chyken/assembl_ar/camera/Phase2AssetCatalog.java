@@ -41,7 +41,7 @@ public final class Phase2AssetCatalog {
         if(n.equals("STEP25HARDWARECHECKLEFTSIDE")) return "left";
         if(n.equals("STEP25HARDWARECHECKRIGHTSIDE")) return "right";
         if(n.equals("STEP25HARDWARECHECKTOPVIEW")) return "top";
-        if(n.equals("STEP25HARDWARECHECKINVALIDSCANS")) return "invalid";
+        if(n.equals("STEP25HARDWARECHECKINVALIDSCANS")||n.equals("STEP2BAREBOARDINVALID")) return "invalid";
         return null;
     }
     public static List<ComponentReferenceSpec> references(AssetManager assets) {
@@ -53,7 +53,7 @@ public final class Phase2AssetCatalog {
             if(!image(path)) continue;
             String relative=path.substring(ROOT.length()+1);
             String group=role(relative.split("/")[0]);
-            if(group==null||group.equals("invalid")) continue;
+            if(group==null||group.equals("invalid")&&!normalize(relative.split("/")[0]).equals("STEP2BAREBOARDINVALID")) continue;
             String id=group.equals("brackets")?MOTOR_BRACKET:group.equals("motors")?GEAR_MOTOR:MAIN_BOARD;
             result.add(ComponentReferenceSpec.builder(PREFIX+group+"_"+path,id,id,
                     group.equals("brackets")?25:group.equals("motors")?70:100,
