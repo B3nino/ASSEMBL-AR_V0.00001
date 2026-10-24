@@ -1,0 +1,685 @@
+{
+  "version": 1,
+  "description": "Manually reviewed raw camera windows; source pixels retained; held-out timestamps never registered",
+  "references": [
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_0.jpg",
+      "video": "pETy-FHZ",
+      "time": 2,
+      "sharpness": 1020.7305908203125,
+      "role": "brackets",
+      "regions": [
+        [
+          0.1630859,
+          0.2725694,
+          0.3037109,
+          0.5885417
+        ],
+        [
+          0.3271484,
+          0.2673611,
+          0.4638672,
+          0.5902778
+        ],
+        [
+          0.4824219,
+          0.2604167,
+          0.6210938,
+          0.5815972
+        ],
+        [
+          0.6347656,
+          0.234375,
+          0.7763672,
+          0.5642361
+        ]
+      ],
+      "corners": null,
+      "sha256": "6ab47b4579ef9006fd37fc28e8ca468f5d269166b70a12b564fdf877809d9048"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_0_0.jpg",
+      "video": "pETy-FHZ",
+      "time": 2,
+      "sharpness": 1020.7305908203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0909091,
+        0.0582524,
+        0.9090909,
+        0.9417476
+      ],
+      "sha256": "871d5593cafe0aac626de4da137306071d8e8d2f4604eeaa50294aba7ea6a41b"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_0_1.jpg",
+      "video": "pETy-FHZ",
+      "time": 2,
+      "sharpness": 1020.7305908203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0930233,
+        0.0571429,
+        0.9069767,
+        0.9428571
+      ],
+      "sha256": "eac7c86e5101101d59ede7c8c79b67e1566cb2d08fb4135fe63fdaa3d4188b7d"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_0_2.jpg",
+      "video": "pETy-FHZ",
+      "time": 2,
+      "sharpness": 1020.7305908203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.091954,
+        0.0574163,
+        0.908046,
+        0.9425837
+      ],
+      "sha256": "45cb61d88fe31779d2c86cab94d84f6734afdbbc7613fd0ee05b3f17af848ab3"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_0_3.jpg",
+      "video": "pETy-FHZ",
+      "time": 2,
+      "sharpness": 1020.7305908203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0903955,
+        0.0560748,
+        0.9096045,
+        0.9439252
+      ],
+      "sha256": "e1e1cab20daed297535aa781446dd0579dd20eb49d26b66d42135d2cafd7905e"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_1.jpg",
+      "video": "pETy-FHZ",
+      "time": 11.82,
+      "sharpness": 5110.2783203125,
+      "role": "brackets",
+      "regions": [
+        [
+          0.1826172,
+          0.1649306,
+          0.3330078,
+          0.5017361
+        ],
+        [
+          0.3632812,
+          0.1788194,
+          0.5097656,
+          0.5104167
+        ],
+        [
+          0.53125,
+          0.1770833,
+          0.6708984,
+          0.5104167
+        ],
+        [
+          0.7011719,
+          0.1701389,
+          0.8486328,
+          0.5069444
+        ]
+      ],
+      "corners": null,
+      "sha256": "9b49f993a8dd489c47f841f9e76b83865b512b51ee1fe8840ec66a8f130a8a89"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_1_0.jpg",
+      "video": "pETy-FHZ",
+      "time": 11.82,
+      "sharpness": 5110.2783203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0860215,
+        0.0550459,
+        0.9139785,
+        0.9449541
+      ],
+      "sha256": "e4ae477072d2ce8f204787d76ec1fdaeb8a0e0f7e1de1e8596e0b24190fadb15"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_1_1.jpg",
+      "video": "pETy-FHZ",
+      "time": 11.82,
+      "sharpness": 5110.2783203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0879121,
+        0.055814,
+        0.9120879,
+        0.944186
+      ],
+      "sha256": "d05943f5237db19f61c5f23de6ffab9e1570dd55d79f2122fbd6aef246c03c24"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_1_2.jpg",
+      "video": "pETy-FHZ",
+      "time": 11.82,
+      "sharpness": 5110.2783203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0914286,
+        0.0555556,
+        0.9085714,
+        0.9444444
+      ],
+      "sha256": "d6d4ca874d9168e528cfe577032dc6e08e896ae3d920503a42d20ec7f750c7a8"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_1_3.jpg",
+      "video": "pETy-FHZ",
+      "time": 11.82,
+      "sharpness": 5110.2783203125,
+      "role": "bracket",
+      "regions": [],
+      "corners": [
+        0.0874317,
+        0.0550459,
+        0.9125683,
+        0.9449541
+      ],
+      "sha256": "08c149e6db6577cee1fd764060623229f9513afbd0357977600f6082f3f5cf5d"
+    },
+    {
+      "path": "references/Phase2/STEP2_2_MOTORSCANS/var_light/VIDEO_b189KSO5_0_0.jpg",
+      "video": "b189KSO5",
+      "time": 0.78,
+      "sharpness": 121.86085510253906,
+      "role": "motor",
+      "regions": [],
+      "corners": [
+        0.038835,
+        0.0869565,
+        0.961165,
+        0.9130435
+      ],
+      "sha256": "65176d320be438e2f10c95cf0b27b3bfb3cba6d9073a69687e20adc7de034058"
+    },
+    {
+      "path": "references/Phase2/STEP2_2_MOTORSCANS/var_light/VIDEO_b189KSO5_0_1.jpg",
+      "video": "b189KSO5",
+      "time": 0.78,
+      "sharpness": 121.86085510253906,
+      "role": "motor",
+      "regions": [],
+      "corners": [
+        0.0359551,
+        0.0603448,
+        0.9595506,
+        0.9396552
+      ],
+      "sha256": "716ee896db02fc764c809bc886a8236a81d9f77c892e7762bf310b943e888482"
+    },
+    {
+      "path": "references/Phase2/STEP2_2_MOTORSCANS/var_light/VIDEO_b189KSO5_1_0.jpg",
+      "video": "b189KSO5",
+      "time": 17,
+      "sharpness": 373.3663024902344,
+      "role": "motor",
+      "regions": [],
+      "corners": [
+        0.0473373,
+        0.1029412,
+        0.9615385,
+        0.8970588
+      ],
+      "sha256": "0f01931196254cb47971b6795a40ffda2b690bc0c41af0237376bb88cea7b579"
+    },
+    {
+      "path": "references/Phase2/STEP2_2_MOTORSCANS/var_light/VIDEO_b189KSO5_1_1.jpg",
+      "video": "b189KSO5",
+      "time": 17,
+      "sharpness": 373.3663024902344,
+      "role": "motor",
+      "regions": [],
+      "corners": [
+        0.0486322,
+        0.0875,
+        0.9635258,
+        0.9125
+      ],
+      "sha256": "1fcd53ecf09dfbd3217d5a3cac1e9880d1dc318bed624ada59ce939fcac26948"
+    },
+    {
+      "path": "references/Phase2/STEP2_2_MOTORSCANS/var_light/VIDEO_b189KSO5_2_0.jpg",
+      "video": "b189KSO5",
+      "time": 31.18,
+      "sharpness": 256.1551208496094,
+      "role": "motor",
+      "regions": [],
+      "corners": [
+        0.0359551,
+        0.0833333,
+        0.9595506,
+        0.9166667
+      ],
+      "sha256": "8c9f47cb2b3f380561f59af6348cdbfeb716b5d7b0273b5b54da3b36a5a96b0a"
+    },
+    {
+      "path": "references/Phase2/STEP2_2_MOTORSCANS/var_light/VIDEO_b189KSO5_2_1.jpg",
+      "video": "b189KSO5",
+      "time": 31.18,
+      "sharpness": 256.1551208496094,
+      "role": "motor",
+      "regions": [],
+      "corners": [
+        0.0389294,
+        0.0838323,
+        0.9610706,
+        0.9161677
+      ],
+      "sha256": "0a3f73c6a9fa1c7fbe5dc3430068e286ce9d74e1723286e4fe94821fc8ba3569"
+    },
+    {
+      "path": "references/Phase2/STEP2_1_BRACKETS/var_light/VIDEO_pETy-FHZ_2.jpg",
+      "video": "pETy-FHZ",
+      "time": 27,
+      "sharpness": 999.1766357421875,
+      "role": "brackets",
+      "regions": [
+        [
+          0.125,
+          0.2534722,
+          0.3271484,
+          0.7048611
+        ],
+        [
+          0.3457031,
+          0.2291667,
+          0.5429688,
+          0.6788194
+        ],
+        [
+          0.546875,
+          0.1927083,
+          0.7451172,
+          0.6336806
+        ],
+        [
+          0.7382812,
+          0.1527778,
+          0.9462891,
+          0.59375
+        ]
+      ],
+      "corners": null,
+      "sha256": "f9b5d65a839f3ceb211764b6138a0b70dfe130d9674643f3791f6d7353cd9914"
+    },
+    {
+      "path": "references/Phase1/STEP1_1MAINBOARDSCAN/var_light/VIDEO_UZLNjaoq_0.jpg",
+      "video": "UZLNjaoq",
+      "time": 4,
+      "sharpness": 1208.8172607421875,
+      "role": "board",
+      "regions": [],
+      "corners": [
+        0.025,
+        0.025,
+        0.975,
+        0.975
+      ],
+      "sha256": "2722e41d328691b5f0a930b72cf8838b8b2812871c7a6b7cfaf71b63e8e81076"
+    },
+    {
+      "path": "references/Phase1/STEP1_1MAINBOARDSCAN/var_light/VIDEO_UZLNjaoq_1.jpg",
+      "video": "UZLNjaoq",
+      "time": 12.18,
+      "sharpness": 2151.527587890625,
+      "role": "board",
+      "regions": [],
+      "corners": [
+        0.025,
+        0.025,
+        0.975,
+        0.975
+      ],
+      "sha256": "129de98252459eac1604acc97f9d906e421dc3e5900ed76e0776c3980315695b"
+    },
+    {
+      "path": "references/Phase1/STEP1_1MAINBOARDSCAN/var_light/VIDEO_UZLNjaoq_2.jpg",
+      "video": "UZLNjaoq",
+      "time": 22.82,
+      "sharpness": 2400.523681640625,
+      "role": "board",
+      "regions": [],
+      "corners": [
+        0.025,
+        0.025,
+        0.975,
+        0.975
+      ],
+      "sha256": "97948612161f139e8b7d2efd003664680c24d05e3cc6d098490cfcf88d891546"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_FULL/var_light/VIDEO_K-zzGzAP_0.jpg",
+      "video": "K-zzGzAP",
+      "time": 2,
+      "sharpness": 2139.350341796875,
+      "role": "top",
+      "regions": [
+        [
+          0.3037109,
+          0.3038194,
+          0.4101562,
+          0.7795139
+        ],
+        [
+          0.2783203,
+          0.4809028,
+          0.3037109,
+          0.6927083
+        ],
+        [
+          0.3847656,
+          0.4479167,
+          0.4072266,
+          0.6197917
+        ],
+        [
+          0.6142578,
+          0.296875,
+          0.7216797,
+          0.7673611
+        ],
+        [
+          0.5712891,
+          0.4809028,
+          0.6123047,
+          0.7135417
+        ],
+        [
+          0.7089844,
+          0.4392361,
+          0.734375,
+          0.6180556
+        ]
+      ],
+      "corners": null,
+      "sha256": "0019577e244f5923b417e38515df121b230e1ee03e3833bc1f517a56649731c6"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_FULL/var_light/VIDEO_K-zzGzAP_1.jpg",
+      "video": "K-zzGzAP",
+      "time": 10,
+      "sharpness": 1479.6556396484375,
+      "role": "top",
+      "regions": [
+        [
+          0.3398438,
+          0.3715278,
+          0.4384766,
+          0.8038194
+        ],
+        [
+          0.3125,
+          0.5069444,
+          0.3417969,
+          0.703125
+        ],
+        [
+          0.4140625,
+          0.5034722,
+          0.4345703,
+          0.6753472
+        ],
+        [
+          0.6191406,
+          0.3611111,
+          0.7236328,
+          0.7916667
+        ],
+        [
+          0.59375,
+          0.4965278,
+          0.6445312,
+          0.6892361
+        ],
+        [
+          0.7109375,
+          0.4947917,
+          0.7392578,
+          0.65625
+        ]
+      ],
+      "corners": null,
+      "sha256": "d18c4c5c764891f701756ed326bef54e25f03e28e77444763ee4581252629dc9"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_FULL/var_light/VIDEO_K-zzGzAP_2.jpg",
+      "video": "K-zzGzAP",
+      "time": 16.18,
+      "sharpness": 1014.06591796875,
+      "role": "top",
+      "regions": [
+        [
+          0.3007812,
+          0.3524306,
+          0.3964844,
+          0.7934028
+        ],
+        [
+          0.2714844,
+          0.4965278,
+          0.3007812,
+          0.71875
+        ],
+        [
+          0.3740234,
+          0.4930556,
+          0.3955078,
+          0.65625
+        ],
+        [
+          0.5732422,
+          0.3368056,
+          0.6816406,
+          0.7725694
+        ],
+        [
+          0.5527344,
+          0.484375,
+          0.6083984,
+          0.6614583
+        ],
+        [
+          0.671875,
+          0.4826389,
+          0.7001953,
+          0.6440972
+        ]
+      ],
+      "corners": null,
+      "sha256": "fbe9b5d0b0e8650af7c484c5191571b3ad267f263c0ea0c55fce565a391c44b1"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_LEFT/var_light/VIDEO_K-zzGzAP_0.jpg",
+      "video": "K-zzGzAP",
+      "time": 24.82,
+      "sharpness": 80.036865234375,
+      "role": "left",
+      "regions": [
+        [
+          0.4550781,
+          0.4253472,
+          0.8027344,
+          0.6545139
+        ]
+      ],
+      "corners": null,
+      "sha256": "5dbdbf7862080bcbe0ef719790d03f0eca2a23942c6b01fe27e4bf3f2075f28e"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_LEFT/var_light/VIDEO_K-zzGzAP_1.jpg",
+      "video": "K-zzGzAP",
+      "time": 30.18,
+      "sharpness": 400.6648254394531,
+      "role": "left",
+      "regions": [
+        [
+          0.4150391,
+          0.3315972,
+          0.8027344,
+          0.5850694
+        ]
+      ],
+      "corners": null,
+      "sha256": "cafaee2c83987bb9066d1093163df5a4578e73b52c20a78589e5ca7491240ec8"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_RIGHT/var_light/VIDEO_K-zzGzAP_0.jpg",
+      "video": "K-zzGzAP",
+      "time": 38,
+      "sharpness": 384.6226806640625,
+      "role": "right",
+      "regions": [
+        [
+          0.2353516,
+          0.3333333,
+          0.6503906,
+          0.6024306
+        ]
+      ],
+      "corners": null,
+      "sha256": "e8d96a7f14e013f267c57a3307d23049a303ddd6ae330aa1ba84b0a1bf276f93"
+    },
+    {
+      "path": "references/Phase2/STEP2_TOPVIEW_RIGHT/var_light/VIDEO_K-zzGzAP_1.jpg",
+      "video": "K-zzGzAP",
+      "time": 41.18,
+      "sharpness": 277.342529296875,
+      "role": "right",
+      "regions": [
+        [
+          0.1298828,
+          0.3506944,
+          0.5888672,
+          0.6493056
+        ]
+      ],
+      "corners": null,
+      "sha256": "50829d105e0724c21ec9b48b8f1b9f1b208aad6ceabc7a530276c16b1b394e15"
+    }
+  ],
+  "held_out": [
+    {
+      "path": "heldout-board-7.jpg",
+      "video": "UZLNjaoq",
+      "role": "board",
+      "time": 7
+    },
+    {
+      "path": "heldout-board-18.jpg",
+      "video": "UZLNjaoq",
+      "role": "board",
+      "time": 18
+    },
+    {
+      "path": "heldout-board-29.jpg",
+      "video": "UZLNjaoq",
+      "role": "board",
+      "time": 29
+    },
+    {
+      "path": "heldout-brackets-8.jpg",
+      "video": "pETy-FHZ",
+      "role": "brackets",
+      "time": 8
+    },
+    {
+      "path": "heldout-brackets-21.jpg",
+      "video": "pETy-FHZ",
+      "role": "brackets",
+      "time": 21
+    },
+    {
+      "path": "heldout-brackets-28.jpg",
+      "video": "pETy-FHZ",
+      "role": "brackets",
+      "time": 28
+    },
+    {
+      "path": "heldout-motors-14.jpg",
+      "video": "b189KSO5",
+      "role": "motors",
+      "time": 14
+    },
+    {
+      "path": "heldout-motors-19.jpg",
+      "video": "b189KSO5",
+      "role": "motors",
+      "time": 19
+    },
+    {
+      "path": "heldout-motors-35.jpg",
+      "video": "b189KSO5",
+      "role": "motors",
+      "time": 35
+    },
+    {
+      "path": "heldout-top-6.jpg",
+      "video": "K-zzGzAP",
+      "role": "top",
+      "time": 6
+    },
+    {
+      "path": "heldout-top-13.jpg",
+      "video": "K-zzGzAP",
+      "role": "top",
+      "time": 13
+    },
+    {
+      "path": "heldout-top-18.jpg",
+      "video": "K-zzGzAP",
+      "role": "top",
+      "time": 18
+    },
+    {
+      "path": "heldout-left-23.jpg",
+      "video": "K-zzGzAP",
+      "role": "left",
+      "time": 23
+    },
+    {
+      "path": "heldout-left-28.jpg",
+      "video": "K-zzGzAP",
+      "role": "left",
+      "time": 28
+    },
+    {
+      "path": "heldout-left-33.jpg",
+      "video": "K-zzGzAP",
+      "role": "left",
+      "time": 33
+    },
+    {
+      "path": "heldout-right-37.jpg",
+      "video": "K-zzGzAP",
+      "role": "right",
+      "time": 37
+    },
+    {
+      "path": "heldout-right-40.jpg",
+      "video": "K-zzGzAP",
+      "role": "right",
+      "time": 40
+    },
+    {
+      "path": "heldout-right-42.jpg",
+      "video": "K-zzGzAP",
+      "role": "right",
+      "time": 42
+    }
+  ]
+}

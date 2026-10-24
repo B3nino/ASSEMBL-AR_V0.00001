@@ -25,9 +25,11 @@ public final class Phase2AssetCatalogTest {
         assertEquals(expected,specs.size());assertTrue(specs.size()>50);
         Set<String> ids=new HashSet<>();Set<String> roles=new HashSet<>();
         for(ComponentReferenceSpec spec:specs){
-            assertTrue(ids.add(spec.getReferenceId()));assertEquals(2,spec.getAssemblyStepNumber());
+            assertTrue(ids.add(spec.getReferenceId()));
+            assertEquals(spec.getReferenceId().startsWith("video12_")?0:2,spec.getAssemblyStepNumber());
             assertTrue(Files.isRegularFile(Paths.get("src/main/assets",spec.getJpegAssetPath())));
-            roles.add(Phase2AssetCatalog.referenceRole(spec.getReferenceId()));
+            String role=Phase2AssetCatalog.referenceRole(spec.getReferenceId());
+            if(role!=null)roles.add(role);else assertTrue(spec.getReferenceId().startsWith("video12_"));
             assertFalse(spec.hasVerifiedPolarityAnchors());
             if(spec.getJpegAssetPath().contains("INVALID")){assertTrue(spec.getJpegAssetPath().contains("STEP2_BARE_BOARD_INVALID"));assertEquals("invalid",Phase2AssetCatalog.referenceRole(spec.getReferenceId()));}
         }

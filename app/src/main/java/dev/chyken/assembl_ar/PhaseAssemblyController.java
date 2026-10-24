@@ -900,6 +900,10 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
 
     void devSkipCurrentStep() {
         if(phase==null || script==null || savingPhase) return;
+        // Phase 1 has a dedicated learner card, not a demo chapter. Skipping its
+        // nonexistent preview hid the only usable Next action. Keep this explicit
+        // developer checkpoint separate from camera evidence and learner progress.
+        if(phase.getNumber()==1){devForceCompleteCurrentPhase();return;}
         if(gearGuide!=null){devNavigationActive=true;gearGuide.devSkip();return;}
         if(driverGuide!=null){devNavigationActive=true;driverGuide.devSkip();return;}
         if(wiringGuide!=null){devNavigationActive=true;wiringGuide.devSkip();return;}
@@ -1379,7 +1383,13 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     @Nullable
+    private volatile RecognitionRequest lastVisualRequest;
     RecognitionRequest requestFor(CameraCalibration calibration) {
+        RecognitionRequest request=buildRequestFor(calibration);
+        if(request!=null)lastVisualRequest=request;
+        return request;
+    }
+    private RecognitionRequest buildRequestFor(CameraCalibration calibration) {
         if(gearGuide!=null)return gearGuide.request(calibration);
         if(driverGuide!=null)return driverGuide.request(calibration);
         if(wiringGuide!=null)return null;
@@ -2423,12 +2433,19 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     RecognitionRequest visualRequestFor(CameraCalibration calibration){
         if(isLivePhaseOne()&&flow!=null&&flow.getMode()==Mode.COMPLETE)
             return new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(MAIN_BOARD),calibration,null,null,1,1).withRequestTag(flow.tag());
-        return null;
+        RecognitionRequest last=lastVisualRequest;
+        return visualRequestCurrent(last)?last.withCameraCalibration(calibration):null;
+    }
+    private boolean visualRequestCurrent(RecognitionRequest last){
+        return last!=null&&last.getRequestTag() instanceof PhaseFlow.ScanTag&&flow!=null
+            &&dev.chyken.assembl_ar.workflow.phase.CameraTrackingPolicy.retains(
+                (PhaseFlow.ScanTag)last.getRequestTag(),currentTag(),flow.isPreviewing());
     }
     boolean isCameraModeFocused(){
         PhaseFlow.ScanTag tag=currentTag();
         if(tag==null||flow==null)return false;
-        return dev.chyken.assembl_ar.workflow.phase.CameraTrackingPolicy.focused(phase.getNumber(),flow.getMode(),flow.isPreviewing());
+        return dev.chyken.assembl_ar.workflow.phase.CameraTrackingPolicy.focused(phase.getNumber(),flow.getMode(),flow.isPreviewing())
+            ||visualRequestCurrent(lastVisualRequest);
     }
 
     boolean isFrameForCurrentPhase(RecognitionResult result) {

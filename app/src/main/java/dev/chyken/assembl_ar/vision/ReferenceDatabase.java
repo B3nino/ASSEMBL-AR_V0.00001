@@ -301,13 +301,13 @@ public final class ReferenceDatabase implements AutoCloseable {
             if(!index.terminal(spec,config))throw new IOException("Compiled reference could not be saved. Check available app storage.");
         }progress.accept(++done,specs.size());}checkLoadActive(active);}finally{orb.clear();clahe.clear();}
     }
-    public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":"+Phase5PhotoGeometry.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION;}
+    public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":p3manual"+Phase3ReferenceAnnotations.VERSION+":"+Phase5PhotoGeometry.VERSION+":p5local"+Phase5DescriptorSampler.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION;}
 
     /** A geometry edit only invalidates the affected phase, not the entire library. */
     static String cacheRevision(ComponentReferenceSpec spec){
         int phase=spec.getAssemblyStepNumber();
         int geometry=phase==2?Phase2PhotoGeometry.CACHE_VERSION:phase==3?Phase3PhotoGeometry.VERSION:phase==5?Phase5PhotoGeometry.VERSION:phase==7?Phase7PhotoGeometry.VERSION:phase==8?Phase8PhotoGeometry.VERSION:phase==9?Phase9PhotoGeometry.VERSION:phase==10?Phase10PhotoGeometry.VERSION:phase==11?Phase11PhotoGeometry.VERSION:0;
-        return "scoped-library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+phase+":"+geometry;
+        return "scoped-library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+phase+":"+geometry+(Phase5DescriptorSampler.installed(spec)?":p5local"+Phase5DescriptorSampler.VERSION:"")+(Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath())==null?"":":p3manual"+Phase3ReferenceAnnotations.VERSION);
     }
 
     public static void preloadLibrary(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory,ReferenceCacheIndex index,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException {
@@ -410,12 +410,15 @@ public final class ReferenceDatabase implements AutoCloseable {
                 mask = referenceMask(spec, grayscale.cols(), grayscale.rows());
                 // The small caster plate and sensor trim pots need enough local descriptors
                 // alongside board context. Keep all other reference extraction settings intact.
-                if(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.installed(
+                if(Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath())!=null
+                        ||dev.chyken.assembl_ar.camera.Phase7AssetCatalog.installed(
                         dev.chyken.assembl_ar.camera.Phase7AssetCatalog.referenceRole(spec.getReferenceId()))
                         ||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.PREFIX)
                         ||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX)||spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase11AssetCatalog.PREFIX))
                     phase7Orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
-                variants = Phase11DescriptorSampler.installed(spec)
+                variants = Phase5DescriptorSampler.installed(spec)
+                        ?Phase5DescriptorSampler.compute(spec,grayscale,mask,orb,clahe)
+                        :Phase11DescriptorSampler.installed(spec)
                         ?Phase11DescriptorSampler.compute(spec,grayscale,mask,phase7Orb,clahe)
                         :spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase9AssetCatalog.PREFIX)
                         ?Phase9DescriptorSampler.compute(spec,grayscale,mask,clahe)
@@ -554,6 +557,8 @@ public final class ReferenceDatabase implements AutoCloseable {
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.PREFIX))assetFingerprint+="_p5roi"+Phase5PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.PREFIX))assetFingerprint+="_p7roi"+Phase7PhotoGeometry.VERSION;
         if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.PREFIX))assetFingerprint+="_p3roi"+Phase3PhotoGeometry.VERSION;
+        if(Phase5DescriptorSampler.installed(spec))assetFingerprint+="_p5local"+Phase5DescriptorSampler.VERSION;
+        if(Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath())!=null)assetFingerprint+="_manual"+Phase3ReferenceAnnotations.VERSION;
         return new File(directory, safeId + "_" + assetFingerprint + ".asor");
     }
 
@@ -676,7 +681,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         MatOfPoint polygon = new MatOfPoint(pixels);
         try {
             Imgproc.fillConvexPoly(mask, polygon, new Scalar(255));
-            if("assembly".equals(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
+            if(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
             if(Phase11DescriptorSampler.installed(spec))mask.setTo(new Scalar(255));
             if(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase8AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));
             if(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.referenceRole(spec.getReferenceId())))mask.setTo(new Scalar(255));

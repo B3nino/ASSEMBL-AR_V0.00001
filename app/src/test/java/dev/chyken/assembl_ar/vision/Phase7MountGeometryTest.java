@@ -32,7 +32,7 @@ public final class Phase7MountGeometryTest {
     @Test public void trackerInstallationNeedsBothBodiesBothMountPositionsAndBoardContext(){
         for(int bodies=0;bodies<=2;bodies++)for(int mounts=0;mounts<=2;mounts++)for(boolean board:new boolean[]{false,true}){
             Phase7Observation proof=Phase7Observation.installedTrackers(bodies,mounts,board,80);
-            assertEquals(bodies==2&&mounts==2&&board,proof.accepted(4));assertFalse("An unclear view is not a missing-part alert",proof.invalid);
+            assertEquals(bodies==2&&mounts==2&&board,proof.withCaster(true).accepted(4));assertFalse("An unclear view is not a missing-part alert",proof.invalid);
         }
     }
 }

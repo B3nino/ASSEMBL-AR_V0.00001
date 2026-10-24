@@ -105,7 +105,7 @@ public final class Phase7ReferenceMatcherInstrumentedTest {
             // Bounded native searches continue through all reference angles over fresh frames.
             for(int i=0;i<12;i++){
                 found=matcher.inspect(gray,color?rgb:null,100+i,4).getPhase7Observation();
-                android.util.Log.i("Phase7Replay","frame="+(i+1)+" color="+color+" bodies="+found.visibleTrackers+" mounts="+found.verifiedMounts+" accepted="+found.accepted(4));
+                android.util.Log.i("Phase7Replay","frame="+(i+1)+" color="+color+" bodies="+found.visibleTrackers+" mounts="+found.verifiedMounts+" caster="+found.casterPresent+" accepted="+found.accepted(4));
                 if(found.accepted(4))break;
             }
             assertTrue("Both identical modules need independent local descriptor pools",found!=null&&found.accepted(4));

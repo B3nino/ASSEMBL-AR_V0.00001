@@ -2,6 +2,11 @@ package dev.chyken.assembl_ar.vision;
 import org.junit.Test;
 import static org.junit.Assert.*;
 public final class Phase2ObservationTest {
+    @Test public void sharedPcbMatchesDoNotProveHardwareIsMissing(){
+        Phase2Observation uncertain=new Phase2Observation("top",0,90,1,0,false);
+        assertFalse(uncertain.rejected);assertFalse(uncertain.referenceSupported);assertFalse(uncertain.withVisibleMotors(2).rejected);
+        assertTrue(new Phase2Observation("top",0,90,0,0,true).rejected);
+    }
     @Test public void bareBoardEvidenceCannotSubstituteForVerifiedLocalMotorFeatures(){
         assertFalse(new Phase2Observation("top",30,29).rejected);
         assertTrue(new Phase2Observation("top",30,270).referenceSupported);

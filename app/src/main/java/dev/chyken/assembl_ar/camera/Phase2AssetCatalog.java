@@ -38,9 +38,9 @@ public final class Phase2AssetCatalog {
         String n=normalize(folder);
         if(n.equals("STEP21BRACKETS")||n.equals("BRACKETSREFERENCE")) return "brackets";
         if(n.equals("STEP22MOTORSCANS")||n.equals("MOTORSREFERENCE")) return "motors";
-        if(n.equals("STEP25HARDWARECHECKLEFTSIDE")) return "left";
-        if(n.equals("STEP25HARDWARECHECKRIGHTSIDE")) return "right";
-        if(n.equals("STEP25HARDWARECHECKTOPVIEW")) return "top";
+        if(n.equals("STEP25HARDWARECHECKLEFTSIDE")||n.equals("STEP2TOPVIEWLEFT")) return "left";
+        if(n.equals("STEP25HARDWARECHECKRIGHTSIDE")||n.equals("STEP2TOPVIEWRIGHT")) return "right";
+        if(n.equals("STEP25HARDWARECHECKTOPVIEW")||n.equals("STEP2TOPVIEWFULL")) return "top";
         if(n.equals("STEP25HARDWARECHECKINVALIDSCANS")||n.equals("STEP2BAREBOARDINVALID")) return "invalid";
         return null;
     }
@@ -51,6 +51,8 @@ public final class Phase2AssetCatalog {
         List<ComponentReferenceSpec> result=new ArrayList<>();
         for(String path:paths) {
             if(!image(path)) continue;
+            ComponentReferenceSpec reviewed=Phase12VideoReferences.find(path);
+            if(reviewed!=null){result.add(reviewed);continue;}
             String relative=path.substring(ROOT.length()+1);
             String group=role(relative.split("/")[0]);
             if(group==null||group.equals("invalid")&&!normalize(relative.split("/")[0]).equals("STEP2BAREBOARDINVALID")) continue;

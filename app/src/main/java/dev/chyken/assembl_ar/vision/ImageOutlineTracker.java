@@ -24,6 +24,7 @@ public final class ImageOutlineTracker implements AutoCloseable {
     private long at=Long.MIN_VALUE,latestAt=Long.MIN_VALUE;
     private boolean closed;
     public synchronized boolean hasOutline(){return id!=null;}
+    synchronized long latestTimestampNanos(){return latestAt;}
     public synchronized void reset(){releaseTracking();if(latest!=null)latest.release();latest=null;latestAt=Long.MIN_VALUE;}
     private void releaseTracking(){if(previous!=null)previous.release();if(points!=null)points.release();previous=null;points=null;quad=Collections.emptyList();id=null;at=Long.MIN_VALUE;}
     public synchronized Outline detect(Mat gray,long time,String component,String name,List<VisionPoint> corners){
@@ -44,6 +45,10 @@ public final class ImageOutlineTracker implements AutoCloseable {
                 Core.bitwise_and(mask,solid,filtered);
                 Imgproc.goodFeaturesToTrack(gray,found,80,.012,3,filtered,5,false,.04);
                 if(found.rows()<8)Imgproc.goodFeaturesToTrack(gray,found,80,.012,3,mask,5,false,.04);
+                // Small/dark PCBs can have strong ORB geometry but fewer than eight
+                // widely spaced Shi-Tomasi corners. Denser seeds remain subject to
+                // the identical forward/backward LK and RANSAC checks below.
+                if(found.rows()<8)Imgproc.goodFeaturesToTrack(gray,found,80,.0025,1,mask,3,false,.04);
             }finally{solid.release();filtered.release();kernel.release();}
             points=new MatOfPoint2f(found.toArray());if(points.rows()<8){releaseTracking();return null;}previous=gray.clone();
             // ORB runs on a detached frame. Its result may be several seconds old,
@@ -76,7 +81,12 @@ public final class ImageOutlineTracker implements AutoCloseable {
             for(int i=0;i<Math.min(old.length,Math.min(next.length,round.length));i++)if(ok[i]!=0&&reverse[i]!=0&&error[i]<40&&Math.hypot(old[i].x-round[i].x,old[i].y-round[i].y)<2&&next[i].x>=0&&next[i].y>=0&&next[i].x<gray.cols()&&next[i].y<gray.rows()){a.add(old[i]);b.add(next[i]);}
             if(a.size()<8){releaseTracking();return null;}
             src.fromList(a);dst.fromList(b);h=Calib3d.findHomography(src,dst,Calib3d.RANSAC,2.5,inliers,500,.99);
-            if(h.empty()||Core.countNonZero(inliers)<(catchingUp?12:8)||Core.countNonZero(inliers)<a.size()*(catchingUp?.7:.6)){releaseTracking();return null;}
+            // A glossy/small body may legitimately seed only 8–11 corners. Requiring
+            // twelve on catch-up made those targets impossible to display, even with
+            // perfect fresh forward/backward correspondence. Keep the eight-point
+            // floor and stricter catch-up consensus without demanding absent seeds.
+            int required=catchingUp?Math.min(12,a.size()):8;
+            if(h.empty()||Core.countNonZero(inliers)<required||Core.countNonZero(inliers)<a.size()*(catchingUp?.7:.6)){releaseTracking();return null;}
             qsrc.fromArray(toPoints(quad));Core.perspectiveTransform(qsrc,qdst,h);Point[] moved=qdst.toArray();
             for(int first=0;first<quad.size();first+=4){
                 double oldArea=area(toPoints(quad.subList(first,first+4))),newArea=area(Arrays.copyOfRange(moved,first,first+4));

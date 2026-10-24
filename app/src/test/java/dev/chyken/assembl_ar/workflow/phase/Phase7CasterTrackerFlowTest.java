@@ -43,7 +43,7 @@ public final class Phase7CasterTrackerFlowTest {
         f.devSkipStage(112);assertTrue(f.hardwareReady());assertTrue(f.nextStage(113));assertEquals(2,f.step());
     }
     @Test public void replayedAssemblyStepsOfferRescanEvenBeforeTheirFirstSuccessfulMatch(){
-        for(int step:new int[]{3,4}){
+        for(int step:new int[]{4}){
             Phase7CasterTrackerFlow f=new Phase7CasterTrackerFlow(100);
             f.devJump(step,101);assertFalse(f.canRescan());
             f.demoFinished();f.armScan(102);assertTrue(f.canRescan());
@@ -52,7 +52,7 @@ public final class Phase7CasterTrackerFlowTest {
         }
     }
     @Test public void rescanningAReviewedAssemblyStepKeepsTheOtherCompletedSteps(){
-        for(int step:new int[]{3,4}){
+        for(int step:new int[]{4}){
             Phase7CasterTrackerFlow f=new Phase7CasterTrackerFlow(100);f.devComplete();
             f.devJump(step,101);assertTrue(f.canRescan());Object old=f.tag();
             f.rescan(102);assertFalse(f.complete());assertFalse(f.accepts(old,103));
@@ -68,7 +68,7 @@ public final class Phase7CasterTrackerFlowTest {
         f.observe(Phase7Observation.installedTrackers(1,1,true,40));
         f.observe(Phase7Observation.installedTrackers(1,1,true,45));
         assertFalse(f.scanned());assertTrue(f.scanning());
-        f.observe(Phase7Observation.installedTrackers(2,2,true,90));
+        f.observe(Phase7Observation.installedTrackers(2,2,true,90).withCaster(true));
         assertTrue(f.scanned());assertFalse(f.complete());
         f.confirmStable(true);assertTrue(f.complete());
     }
@@ -88,14 +88,17 @@ public final class Phase7CasterTrackerFlowTest {
         f.observe(new Phase7Observation(2,true,40));assertFalse(f.complete());
         f.observe(found(2));assertFalse(f.complete());assertTrue(f.nextStage(102));f.confirmHardware();assertTrue(f.complete());assertTrue(f.next(103));return f;
     }
-    @Test public void installedScanRequiresDemoAndExplicitScanWorkThenBothCasterAnswers(){
+    @Test public void casterDemoRequiresExplicitChecklistAndNeverOpensACameraScan(){
         Phase7CasterTrackerFlow f=throughInventory();assertFalse(f.scanning());
-        f.armScan(104);f.observe(found(1));assertFalse(f.scanned());
-        f.demoFinished();assertFalse(f.scanning());f.observe(found(1));assertFalse(f.scanned());
-        f.armScan(105);assertTrue(f.scanning());f.observe(found(1));assertTrue(f.scanned());assertFalse(f.complete());
+        f.confirmSandwiched(true);f.armScan(104);assertFalse(f.checklistReady());
+        f.demoFinished();assertFalse(f.checklistReady());f.armScan(105);
+        assertTrue(f.checklistReady());assertFalse(f.scanning());assertFalse(f.canRescan());
+        f.observe(found(1));assertFalse(f.scanned());assertFalse(f.complete());
         f.confirmSandwiched(true);assertFalse(f.complete());f.confirmSwivels(false);assertFalse(f.sandwiched());
         f.confirmSandwiched(true);f.confirmSwivels(true);assertTrue(f.next(106));
-        f.confirmStable(true);assertFalse(f.complete());f.demoFinished();f.armScan(107);f.observe(found(1));
+        f.confirmStable(true);assertFalse(f.complete());f.demoFinished();f.armScan(107);
+        f.observe(Phase7Observation.installedTrackers(2,2,true,90));assertFalse("Caster evidence mandatory",f.scanned());
+        f.observe(Phase7Observation.installedTrackers(2,2,true,90).withCaster(true));
         assertFalse(f.canFinish(false));f.confirmStable(false);assertFalse(f.canFinish(false));
         f.confirmStable(true);assertTrue(f.allComplete());assertTrue(f.canFinish(false));
     }
@@ -106,23 +109,23 @@ public final class Phase7CasterTrackerFlowTest {
         assertFalse(f.accepts(f.tag(),199));assertTrue(f.accepts(f.tag(),201));
         Object fresh=f.tag();f.devJump(2,300);assertFalse(f.accepts(fresh,301));
     }
-    @Test public void resumeKeepsScanHardwareVideoAndFirstPhysicalAnswer(){
-        Phase7CasterTrackerFlow f=throughInventory();f.demoFinished();f.armScan(110);f.observe(found(1));f.confirmSandwiched(true);
+    @Test public void resumeKeepsHardwareDemoAndFirstCasterAnswerWithoutASeparateScan(){
+        Phase7CasterTrackerFlow f=throughInventory();f.demoFinished();f.armScan(110);f.confirmSandwiched(true);
         Phase7CasterTrackerFlow r=Phase7CasterTrackerFlow.restore(f.snapshot(),200);
-        assertEquals(3,r.step());assertTrue(r.demoReady());assertTrue(r.scanned());assertTrue(r.sandwiched());assertFalse(r.swivels());
+        assertEquals(3,r.step());assertTrue(r.demoReady());assertTrue(r.checklistReady());assertTrue(r.sandwiched());assertFalse(r.swivels());
         assertFalse(r.scanning());r.confirmSwivels(true);assertTrue(r.next(201));assertFalse(r.scanning());
-        r.previous(202);r.rescan(203);assertTrue(r.scanning());assertFalse(r.sandwiched());assertTrue(r.demoReady());
-        r.previous(204);assertEquals(3,r.step());assertTrue(r.viewingDemo());r.previous(205);assertTrue(r.complete());assertEquals(2,r.trackerCount());
-        r.previous(205);r.previous(206);assertTrue(r.complete());assertTrue(r.hardwareReady());
+        r.previous(202);assertEquals(3,r.step());assertTrue(r.viewingDemo());r.rescan(203);assertFalse(r.scanning());
+        assertTrue(r.sandwiched());assertTrue(r.swivels());r.armScan(204);assertTrue(r.checklistReady());
+        r.previous(205);r.previous(206);assertEquals(2,r.step());assertTrue(r.complete());assertEquals(2,r.trackerCount());
     }
     @Test public void anArmedScanCanResumeButUsesANewCaptureWindow(){
-        Phase7CasterTrackerFlow f=throughInventory();f.demoFinished();f.armScan(110);Object old=f.tag();
+        Phase7CasterTrackerFlow f=throughInventory();f.devJump(4,109);f.demoFinished();f.armScan(110);Object old=f.tag();
         Phase7CasterTrackerFlow r=Phase7CasterTrackerFlow.restore(f.snapshot(),200);
         assertTrue(r.scanning());assertFalse(r.accepts(old,150));assertFalse(r.accepts(r.tag(),199));
         assertTrue(r.accepts(r.tag(),201));r.suspendScan(202);assertFalse(r.scanning());
     }
     @Test public void jumpingToFinalChecklistDoesNotCompleteUnverifiedEarlierSteps(){
-        Phase7CasterTrackerFlow f=new Phase7CasterTrackerFlow(0);f.devJump(4,1);f.demoFinished();f.armScan(2);f.observe(found(1));f.confirmStable(true);
+        Phase7CasterTrackerFlow f=new Phase7CasterTrackerFlow(0);f.devJump(4,1);f.demoFinished();f.armScan(2);f.observe(Phase7Observation.installedTrackers(2,2,true,90).withCaster(true));f.confirmStable(true);
         assertTrue(f.complete());assertFalse(f.canFinish(false));assertTrue(f.canFinish(true));
         f.restart(3);assertEquals(1,f.step());assertFalse(f.complete());assertTrue(f.scanning());
     }
@@ -145,14 +148,14 @@ public final class Phase7CasterTrackerFlowTest {
         restored.armScan(121);restored.observe(found(1));restored.confirmSandwiched(true);restored.confirmSwivels(true);assertTrue(restored.next(122));
         restored.demoFinished();restored.armScan(123);assertEquals(4,restored.step());assertTrue(restored.scanning());
         restored.previous(124);assertEquals(4,restored.step());assertTrue(restored.viewingDemo());assertFalse(restored.scanned());
-        restored.armScan(125);restored.observe(Phase7Observation.installedTrackers(2,2,true,90));assertTrue(restored.scanned());
+        restored.armScan(125);restored.observe(Phase7Observation.installedTrackers(2,2,true,90).withCaster(true));assertTrue(restored.scanned());
         restored.previous(126);assertEquals(4,restored.step());assertTrue(restored.viewingDemo());assertTrue(restored.scanned());
         restored.armScan(127);assertFalse(restored.scanning());assertTrue(restored.scanned());assertFalse(restored.viewingDemo());
         restored.previous(128);restored.previous(129);assertEquals(3,restored.step());assertTrue(restored.viewingDemo());assertTrue(restored.complete());
     }
     @Test public void anImageCanLocateTheTrackersButOnlyTheUserCanConfirmTheirHardwareAndStability(){
         Phase7CasterTrackerFlow f=throughInventory();f.demoFinished();f.armScan(110);f.observe(found(1));f.confirmSandwiched(true);f.confirmSwivels(true);f.next(111);
-        f.demoFinished();f.armScan(112);Phase7Observation camera=Phase7Observation.installedTrackers(2,2,true,90,0);
+        f.demoFinished();f.armScan(112);Phase7Observation camera=Phase7Observation.installedTrackers(2,2,true,90,0).withCaster(true);
         assertEquals(0,camera.imageConfirmedNuts);f.observe(camera);assertTrue(f.scanned());assertFalse(f.complete());assertFalse(f.canFinish(false));
         f.confirmStable(false);assertFalse(f.canFinish(false));f.confirmStable(true);assertTrue(f.canFinish(false));
     }
@@ -171,6 +174,13 @@ public final class Phase7CasterTrackerFlowTest {
         Phase7CasterTrackerFlow f=new Phase7CasterTrackerFlow(100);root.attachCasterTrackerFlow(f);
         assertTrue(root.collectsEvidence());assertFalse(root.canScan());assertTrue(root.accept(f.tag(),101));
         root.interrupt(150);assertFalse(root.collectsEvidence());root.resume(200);assertTrue(root.collectsEvidence());
-        f.devJump(3,300);assertFalse(root.collectsEvidence());f.demoFinished();f.armScan(301);assertTrue(root.collectsEvidence());
+        f.devJump(3,300);assertFalse(root.collectsEvidence());f.demoFinished();f.armScan(301);assertFalse(root.collectsEvidence());
+        f.devJump(4,302);f.demoFinished();f.armScan(303);assertTrue(root.collectsEvidence());
     }
+    @Test public void oldCasterCameraWindowMigratesToChecklistWithoutLosingAnswers(){
+        Phase7CasterTrackerFlow f=Phase7CasterTrackerFlow.restore("3,3,11001110000,2,true,false,false",100);
+        assertEquals(3,f.step());assertFalse(f.scanning());assertTrue(f.checklistReady());
+        f.confirmSandwiched(true);f.confirmSwivels(true);assertTrue(f.complete());
+    }
+
 }

@@ -235,7 +235,11 @@ public final class RecognitionRequest {
     }
 
     private RecognitionRequest copy() {
-        RecognitionRequest copy = new RecognitionRequest(expectation, cameraCalibration,
+        return copyWithCalibration(cameraCalibration);
+    }
+    public RecognitionRequest withCameraCalibration(CameraCalibration calibration){return copyWithCalibration(calibration);}
+    private RecognitionRequest copyWithCalibration(CameraCalibration calibration) {
+        RecognitionRequest copy = new RecognitionRequest(expectation, calibration,
                 polarityObservation, spatialAnchorComponentId, expectedInstanceCount,
                 assemblyStepNumber, minimumCornerAreaRatioOverride, descriptorOnlyIdentityAllowed);
         copy.guidedBracketSlot = guidedBracketSlot;

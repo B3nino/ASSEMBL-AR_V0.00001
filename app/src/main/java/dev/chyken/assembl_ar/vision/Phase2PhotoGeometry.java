@@ -7,10 +7,23 @@ import org.opencv.imgproc.Imgproc;
 import java.io.*;
 import java.util.*;
 
-/** Scene descriptors exclude the surrounding tabletop; top views include the whole board. */
+/** Hardware descriptors exclude tabletop and unchanged PCB printing. */
 final class Phase2PhotoGeometry {
-    static final int CACHE_VERSION=6;
+    static final int CACHE_VERSION=7;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes,File cache) throws IOException {
+        // Reviewed video masks are explicit authored geometry. Never re-segment
+        // them from exposure-sensitive yellow pixels or overwrite other references.
+        if(!source.getFeatureRegionsNormalized().isEmpty()){
+            if("top".equals(Phase2AssetCatalog.referenceRole(source.getReferenceId()))){
+                File silhouette=cache==null?null:new File(cache.getPath()+".reviewed-silhouette1");
+                if(!Phase2AppearanceTemplates.load(source.getReferenceId(),silhouette)){
+                    MatOfByte encoded=new MatOfByte(bytes);Mat image=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR);
+                    try{if(image.empty())throw new IOException("Unreadable reviewed motor photo");Phase2AppearanceTemplates.capture(source.getReferenceId(),image,source.getFeatureRegionsNormalized(),silhouette);}
+                    finally{encoded.release();image.release();}
+                }
+            }
+            return source;
+        }
         File roiFile=cache==null?null:new File(cache.getPath()+".p2roi"+CACHE_VERSION);
         File appearanceFile=cache==null?null:new File(cache.getPath()+".p2silhouette"+CACHE_VERSION);
         List<List<VisionPoint>> regions=new ArrayList<>();
@@ -36,12 +49,20 @@ final class Phase2PhotoGeometry {
                 Core.inRange(hsv,"top".equals(role)?new Scalar(18,110,95):new Scalar(15,65,45),"top".equals(role)?new Scalar(42,255,255):new Scalar(43,255,255),mask);
             }
             Mat kernel=Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(5,5));
-            try { Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_CLOSE,kernel); } finally {kernel.release();}
+            try {
+                // A yellow PCB edge or wire can connect a small collar to an enormous
+                // mostly empty bounding box. Remove those thin paths before grouping
+                // side-view housings; otherwise local motor material tests reject even
+                // the source photograph, and ORB describes the stationary PCB instead.
+                if("left".equals(role)||"right".equals(role))Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_OPEN,kernel);
+                Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_CLOSE,kernel);
+            } finally {kernel.release();}
             Imgproc.findContours(mask,contours,hierarchy,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_SIMPLE);
             List<Rect> boxes=new ArrayList<>();
             for(MatOfPoint contour:contours) {
                 Rect r=Imgproc.boundingRect(contour);
                 if(Imgproc.contourArea(contour)<bgr.total()*.0015 || r.area()>bgr.total()*.85) continue;
+                if(("left".equals(role)||"right".equals(role))&&Imgproc.contourArea(contour)<r.area()*.4)continue;
                 boxes.add(r);
             }
             boxes.sort((a,b)->Double.compare(b.area(),a.area()));

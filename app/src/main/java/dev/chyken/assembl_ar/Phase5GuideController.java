@@ -16,12 +16,12 @@ final class Phase5GuideController implements AutoCloseable {
     private static final String[] HUD={"",
         "Step 5.1: Scan the Arduino Nano Microcontroller.\n• Place the microcontroller flat within the camera frame.\n• Tap 'View Info' for pinout details.",
         "Step 5.2: Board Installation Demo.\n• Align the Nano header pins with the female socket on the Main Board.\n• Ensure the USB port points in the direction shown in the video, then press down firmly.",
-        "Step 5.3: Verify Microcontroller Orientation.\n• Point camera straight down at the top view of the board.\n• Fit your board inside the recommended scanning frame.",
+        "Step 5.3: Verify Microcontroller Orientation.\n• Keep the entire Nano and nearby PCB labels in view.\n• Point straight down; move back slightly if the USB port reflects light.",
         "Step 5.4: Pin Alignment & Stability Check.\n• Ensure the board is pressed fully flat and does not wobble.\n• Check that no header pins are bent or sticking outside the socket."};
     private static final String[] SPOKEN={"",
         "Step 5 point 1. Please locate and scan your Arduino Nano microcontroller by placing it flat inside the camera frame.",
         "Step 5 point 2. Align all pins with the main board header socket and press down firmly, making sure the USB port faces the correct direction.",
-        "Step 5 point 3. Point your camera straight down at the board within the target box to verify orientation.",
+        "Step 5 point 3. Point your camera straight down. Keep the entire Nano and nearby board labels visible. Move back slightly if light reflects off the USB connector.",
         "Step 5 point 4. Confirm the microcontroller is firmly seated and that no pins are sticking outside the header socket."};
     private static final String RESEAT="Gently pull up the Nano, realign all pins over the socket holes, and press down evenly.";
     // Classic Nano facts: https://docs.arduino.cc/hardware/nano/

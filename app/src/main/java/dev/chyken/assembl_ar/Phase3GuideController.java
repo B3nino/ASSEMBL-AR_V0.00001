@@ -18,14 +18,14 @@ final class Phase3GuideController implements AutoCloseable {
         "Step 3.1: Scan the Motor Driver module.\n• Lay the motor driver flat inside the camera frame.\n• System detects orientation automatically.",
         "Step 3.2: Gather hardware.\n• Locate 2x Short Screws (10mm) and 2x M3 Nuts.\n• Tap 'I Have These' to proceed.",
         "Step 3.3: Watch the placement demo.\n• Align and seat the motor driver on its headers.\n• Leave screws out until the placement scan passes.",
-        "Step 3.4: Verify Module Placement (NO SCREWS YET).\n• Seat the motor driver onto the main board header slots.\n• Align your board with the recommended scanning frame.",
+        "Step 3.4: Verify Module Placement (NO SCREWS YET).\n• Green screw terminals face the board center; the six-pin header faces the red LED.\n• Seat the driver on its headers and keep nearby board markings visible.",
         "Step 3.5: Watch the fastening demo.\n• Insert 2x 10mm screws and secure both M3 nuts underneath.\n• Replay or scrub the demo, then continue to the physical screw check.",
         "Step 3.6: Joint Stability Test.\n• Confirm both screws and nuts are fitted.\n• Lightly press and wiggle the motor driver with your finger."};
     private static final String[] SPOKEN={"",
         "Step 3 point 1. Please locate and scan the Motor Driver module by placing it flat inside the camera frame.",
         "Step 3 point 2. Gather two 10 millimeter screws and two M3 nuts, then tap I Have These once ready.",
         "Step 3 point 3. Watch how to seat the motor driver. Leave the screws out until the placement scan passes.",
-        "Step 3 point 4. Seat the motor driver onto the board header slots without screws, then align your board within the target box to verify orientation.",
+        "Step 3 point 4. Seat the motor driver without screws. Its green screw terminals face the center of the main board, and its six pin header faces the red LED. Keep the driver and nearby board markings in view.",
         "Step 3 point 5. Watch how to fit both 10 millimeter screws and M3 nuts. Then continue to the physical screw and stability check. No further camera scan is needed.",
         "Step 3 point 6. Lightly press on the motor driver to check if it moves or jiggles."};
     private static final String[] LINES={"1. Align the Motor Driver pins with the corresponding header slots on the Main Board.",
@@ -91,9 +91,9 @@ final class Phase3GuideController implements AutoCloseable {
     void onResult(RecognitionResult result){
         if(!flow.accepts(result.getRequestTag(),result.getFrameTimestampNanos()))return;
         Phase3Observation evidence=result.getPhase3Observation();boolean accepted=evidence!=null&&evidence.accepted(flow.step());flow.observe(accepted);
-        boolean warning=evidence!=null&&(evidence.state==Phase3Observation.State.FLIPPED||evidence.state==Phase3Observation.State.BACKWARD);
+        boolean warning=evidence!=null&&(evidence.state==Phase3Observation.State.FLIPPED||evidence.state==Phase3Observation.State.BACKWARD||evidence.state==Phase3Observation.State.MISALIGNED);
         if(warning){
-            message=evidence.state==Phase3Observation.State.FLIPPED?"The motor driver is upside down. Please flip it over to its front side.":"Motor driver is inserted backward. Rotate it 180 degrees before adding screws.";
+            message=evidence.state==Phase3Observation.State.FLIPPED?"The motor driver is upside down. Please flip it over to its front side.":evidence.state==Phase3Observation.State.MISALIGNED?"The motor driver is not aligned with its socket. Lift it gently, align all header pins, and re-seat it before adding screws.":"Motor driver is inserted backward. Rotate it 180 degrees before adding screws.";
             if(lastWarning!=evidence.state){say(message,"warning:"+evidence.state+":"+flow.tag());lastWarning=evidence.state;}
         }else if(accepted){message="Scan successful · Next unlocked";say(message, "matched:"+flow.tag());lastWarning=null;}
         else message=flow.step()==1?"Keep the front face visible inside the recommended frame.":"Keep the driver and nearby board visible. Move loose wires aside if they cover the chips or header row; avoid glare.";

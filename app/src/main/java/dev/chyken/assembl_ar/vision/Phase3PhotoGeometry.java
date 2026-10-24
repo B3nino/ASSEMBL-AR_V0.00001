@@ -10,6 +10,10 @@ import java.util.*;
 final class Phase3PhotoGeometry {
     static final int VERSION=2;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        Phase3ReferenceAnnotations.Regions authored=Phase3ReferenceAnnotations.forPath(source.getJpegAssetPath());
+        if(authored!=null){List<VisionPoint> c=authored.outline;return ComponentReferenceSpec.builder(source.getReferenceId(),source.getComponentId(),source.getDisplayName(),28,37)
+            .jpegAssetPath(source.getJpegAssetPath()).assemblyStepNumber(3).maximumImageDimension(1280)
+            .planarReferenceCornersNormalized(c.get(0),c.get(1),c.get(2),c.get(3)).featureRegionsNormalized(authored.features()).polarityAnchorsVerified(false).build();}
         MatOfByte encoded=new MatOfByte(bytes);Mat rgb=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR),hsv=new Mat(),mask=new Mat(),hierarchy=new Mat();
         List<MatOfPoint> contours=new ArrayList<>();
         try{
@@ -24,7 +28,7 @@ final class Phase3PhotoGeometry {
             for(MatOfPoint c:contours){double a=Imgproc.contourArea(c);Rect r=Imgproc.boundingRect(c);if(a>area&&a>rgb.total()*.0005&&r.area()<rgb.total()*.9){best=r;area=a;}}
             if(best==null)throw new IllegalArgumentException("Driver PCB not visible in Phase 3 photo: "+source.getJpegAssetPath());
             List<VisionPoint> corners=rect(best.x/(double)rgb.cols(),best.y/(double)rgb.rows(),(best.x+best.width)/(double)rgb.cols(),(best.y+best.height)/(double)rgb.rows());
-            boolean assembly="assembly".equals(Phase3AssetCatalog.referenceRole(source.getReferenceId()));
+            boolean assembly=Phase3AssetCatalog.installed(Phase3AssetCatalog.referenceRole(source.getReferenceId()));
             return ComponentReferenceSpec.builder(source.getReferenceId(),source.getComponentId(),source.getDisplayName(),28,37)
                     .jpegAssetPath(source.getJpegAssetPath()).assemblyStepNumber(3).maximumImageDimension(1280)
                     .planarReferenceCornersNormalized(corners.get(0),corners.get(1),corners.get(2),corners.get(3)).featureRegionsNormalized(Collections.singletonList(assembly?rect(.02,.02,.98,.98):corners))
@@ -32,6 +36,8 @@ final class Phase3PhotoGeometry {
         }finally{for(Mat c:contours)c.release();encoded.release();rgb.release();hsv.release();mask.release();hierarchy.release();}
     }
     static void excludeMountingHoles(Mat mask,ComponentReferenceSpec spec){
+        Phase3ReferenceAnnotations.Regions authored=Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath());
+        if(authored!=null){for(VisionPoint p:authored.holes)Imgproc.circle(mask,new Point(p.getX()*mask.cols(),p.getY()*mask.rows()),(int)Math.max(2,authored.holeRadius*mask.cols()),new Scalar(0),-1);return;}
         List<VisionPoint> c=spec.getPlanarCornersNormalized();double left=c.get(0).getX()*mask.cols(),top=c.get(0).getY()*mask.rows();
         double width=(c.get(2).getX()-c.get(0).getX())*mask.cols(),height=(c.get(2).getY()-c.get(0).getY())*mask.rows();
         int radius=(int)Math.max(3,Math.min(width,height)*.105);

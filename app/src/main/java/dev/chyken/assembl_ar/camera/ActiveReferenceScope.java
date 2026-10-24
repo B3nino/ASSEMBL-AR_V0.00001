@@ -31,7 +31,7 @@ public final class ActiveReferenceScope {
             else if(r.getPhase8Stage()>0){String role=Phase8AssetCatalog.referenceRole(id);take=role!=null&&((r.getPhase8Stage()==1)!=Phase8AssetCatalog.installed(role));}
             else if(r.getPhase7Stage()>0){String role=Phase7AssetCatalog.referenceRole(id);take=Phase7AssetCatalog.eligible(role,r.getPhase7Stage())||r.getPhase7Stage()==4&&"trackers".equals(role);}
             else if(r.getPhase5Stage()>0){String role=Phase5AssetCatalog.referenceRole(id);take=role!=null&&((r.getPhase5Stage()==1)!=Phase5AssetCatalog.installed(role));}
-            else if(r.getPhase3Stage()>0){String role=Phase3AssetCatalog.referenceRole(id);take=role!=null&&(r.getPhase3Stage()==1?!role.equals("assembly"):role.equals("assembly"));}
+            else if(r.getPhase3Stage()>0){String role=Phase3AssetCatalog.referenceRole(id);take=role!=null&&((r.getPhase3Stage()==1)!=Phase3AssetCatalog.installed(role));}
             else{
                 String p2=Phase2AssetCatalog.referenceRole(id);
                 if(p2!=null){take=r.getPhase2Stage()==1&&p2.equals("brackets")||r.getPhase2Stage()==2&&p2.equals("motors")||r.getPhase2Stage()==5&&(p2.equals("top")||p2.equals("left")||p2.equals("right")||p2.equals("invalid"));}

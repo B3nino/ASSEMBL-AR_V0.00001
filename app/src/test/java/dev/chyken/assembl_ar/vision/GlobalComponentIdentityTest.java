@@ -31,4 +31,12 @@ public final class GlobalComponentIdentityTest {
         assertTrue(GlobalComponentRegistry.samePhysicalTarget(rect(20,20,120,60),rect(22,19,119,62)));
         assertFalse(GlobalComponentRegistry.samePhysicalTarget(Collections.emptyList(),rect(0,0,40,40)));
     }
+    @Test public void aLocatedNanoStillCheckingPlacementIsNotVetoedByADifferentPartElsewhere(){
+        RecognitionResult nano=RecognitionResult.builder(1).identity("nano:body","arduino_nano_microcontroller","Nano")
+            .method(RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY).validation(RecognitionResult.ValidationState.NO_COMPONENT).corners(rect(180,100,260,190)).build();
+        assertTrue(nano.hasLocatedComponent());
+        assertFalse(GlobalComponentRegistry.competesWithLocalization(nano,rect(20,20,120,60)));
+        assertTrue("A wrong identity at the actual Nano location can still challenge it",GlobalComponentRegistry.competesWithLocalization(nano,rect(181,100,260,191)));
+        assertTrue(GlobalComponentRegistry.competesWithLocalization(RecognitionResult.builder(1).build(),rect(20,20,120,60)));
+    }
 }

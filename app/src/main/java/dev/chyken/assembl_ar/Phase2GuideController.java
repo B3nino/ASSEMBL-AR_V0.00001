@@ -123,12 +123,13 @@ final class Phase2GuideController implements AutoCloseable {
             String before=flow.expectedHardwareView();
             flow.observeHardware(evidence==null?null:evidence.view,evidence!=null&&evidence.referenceSupported);
             boolean confirmed=flow.currentHardwareViewComplete();
-            if(!confirmed&&evidence!=null&&evidence.rejected&&activity.isActivityResumed())activity.voiceGuide().speak("Missing components detected! Ensure TT motors and mounting brackets are installed on the mainboard.","phase2:missing:"+flow.tag());
+            if(!confirmed&&evidence!=null&&evidence.rejected&&activity.isActivityResumed())activity.voiceGuide().speak("Motor installation is not verified yet. Check that both TT motors, their shafts, and mounting brackets are visible.","phase2:missing:"+flow.tag());
             if(confirmed&&activity.trialLog()!=null)activity.trialLog().event("verification-view",before+" confirmed; awaiting Next");
             message=confirmed?viewName(before)+" successfully scanned · Next unlocked"
-                    :evidence!=null&&evidence.rejected?"Missing components detected · Show both motors, shafts and mounting brackets."
+                    :evidence!=null&&evidence.rejected?"Hardware not verified · Show both motors, shafts and mounting brackets."
                     :evidence!=null&&evidence.viewAmbiguous?"View unclear. Match the current guide and keep screws and brackets visible."
                     :evidence!=null&&evidence.referenceSupported&&!Objects.equals(evidence.view,before)?"That is the "+viewName(evidence.view)+". Please show the "+viewName(before)+"."
+                    :evidence!=null&&evidence.visibleMotors>0?"Motor geometry located · Still checking "+("top".equals(before)?"both motors, brackets and shafts.":"the motor, brackets and board edge.")
                     :"Align the "+viewName(before)+" with the guide to identify the board.";
             if(confirmed&&activity.isActivityResumed())
                 activity.voiceGuide().speak(hardwareInstruction(),"phase2:view:"+flow.tag());
@@ -149,7 +150,7 @@ final class Phase2GuideController implements AutoCloseable {
     }
     private static String viewName(String view){return "top".equals(view)?"top view":"left".equals(view)?"left motor side":"right".equals(view)?"right motor side":"requested view";}
     private String hardwareInstruction(){
-        if(flow.complete())return "Top, left and right views scanned. Continue to the Joint Stability Check.";
+        if(flow.complete()&&flow.hardwareViewNumber()==3)return "Top, left and right views scanned. Continue to the Joint Stability Check.";
         if(flow.currentHardwareViewComplete())return viewName(flow.expectedHardwareView())+" successfully scanned. Tap Next to scan the "+(flow.hardwareViewNumber()==1?"left":"right")+" motor side.";
         return "Scan "+flow.hardwareViewNumber()+" of 3: "+viewName(flow.expectedHardwareView())+".\n"
                 +("top".equals(flow.expectedHardwareView())?"Show both installed motors from above.":"Move to the indicated side. Show the motor, both bracket screws and the board edge.")

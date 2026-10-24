@@ -21,8 +21,8 @@ final class Phase7GuideController implements AutoCloseable {
     private static final String[] SPOKEN={"",
         "Step 7 point 1. Scan your caster wheel unit. Once identified, choose Next to prepare its mounting hardware.",
         "Step 7 point 2. Scan both line tracker modules together. Once identified, choose Next to prepare their mounting hardware.",
-        "Step 7 point 3. Follow the caster wheel assembly demos, then scan the bottom view and check the caster's stability.",
-        "Step 7 point 4. Follow the line tracker assembly demos, then scan the bottom view and check both modules."};
+        "Step 7 point 3. Follow the caster wheel assembly demos, then check its stability. The final bottom-view scan will verify the caster and both trackers together.",
+        "Step 7 point 4. Follow the line tracker assembly demos, then scan the caster and both installed trackers together from underneath."};
     private static final String[] LINES={
         "1. Locate the two mounting holes at the front of the main board and insert 2x 20mm screws from the top.",
         "2. Thread 2x nuts underneath as standoff spacers, slide the Caster Wheel onto the screws, and lock with 2x outer nuts.",
@@ -68,8 +68,8 @@ final class Phase7GuideController implements AutoCloseable {
         card.previous.setOnClickListener(v->{if(saving)return;if(flow.step()==1&&!flow.preparingHardware())previousPhase.run();else {stopVideo();if(flow.previous(now())){if(flow.viewingDemo()){int g=flow.step()-3;resumeClip[g]=0;resumePosition[g]=0;}changed();}}});
         card.next.setOnClickListener(v->{if(saving)return;if(flow.step()==4){if(reviewing||flow.canFinish(developer))finish.run();}else if(flow.nextStage(now()))changed();});
         card.action.setOnClickListener(v->{if(saving)return;if(flow.step()<=2)confirmHardware();else if(videoError){stopVideo();startVideo();render();}
-            else if(flow.demoReady()&&(flow.viewingDemo()||!flow.scanned())){stopVideo();previewKey=-1;flow.armScan(now());status(scanInstruction());activity.resetAnalyzerTracking();render();save();if(flow.scanned()&&!flow.complete())main.post(this::checklist);}
-            else if(flow.scanned())checklist();
+            else if(flow.demoReady()&&(flow.viewingDemo()||!flow.checklistReady())){stopVideo();previewKey=-1;flow.armScan(now());status(flow.step()==3?"Caster assembled · Check stability":scanInstruction());activity.resetAnalyzerTracking();render();save();if(flow.checklistReady()&&!flow.complete())main.post(this::checklist);}
+            else if(flow.checklistReady())checklist();
         });
         card.rescan.setOnClickListener(v->requestRescan());
         card.setOnDetailsChanged(text->{
@@ -97,7 +97,7 @@ final class Phase7GuideController implements AutoCloseable {
         activity.voiceGuide().stop();activity.resetAnalyzerTracking();activity.hideGuidance();ArHudView hud=activity.findViewById(R.id.arHudView);hud.reset();hud.clearAssemblyTargets();hud.setBoardCorners(null);
         render();save();
         if(flow.viewingDemo()&&!paused)startVideo();else say(flow.stageComplete()?"This step is complete. Review the information, then choose Next.":flow.step()>=3&&flow.scanning()?scanInstruction():spokenInstruction(),"step:"+flow.tag());
-        if(flow.step()>=3&&flow.scanned()&&!flow.viewingDemo()&&!flow.complete()&&!paused)main.post(this::checklist);
+        if(flow.step()>=3&&flow.checklistReady()&&!flow.viewingDemo()&&!flow.complete()&&!paused)main.post(this::checklist);
     }
     boolean scanning(){return plan!=null;}
     RecognitionRequest request(CameraCalibration calibration){Plan p=plan;if(p==null)return null;String target=p.step==1?NeobotSeedData.CASTER_WHEEL:p.step==2?NeobotSeedData.LINE_TRACKER:NeobotSeedData.MAIN_BOARD;
@@ -112,7 +112,7 @@ final class Phase7GuideController implements AutoCloseable {
         else if(evidence.trackerInstallation)status(evidence.visibleTrackers<2?
                 evidence.visibleTrackers+"/2 trackers found. Keep BOTH complete modules in view, including their blue adjustment knobs and sensor ends.":
                 !evidence.boardContext?"Both trackers found. Keep some printed board markings around their mounts in view.":
-                "Both trackers found · "+evidence.verifiedMounts+"/2 board mounts aligned. Keep the module ends and nearby board markings visible.");
+                !evidence.casterPresent?"Both trackers found. Include the caster wheel and its mounting plate in frame.":"Both trackers found · "+evidence.verifiedMounts+"/2 board mounts aligned. Keep the module ends and nearby board markings visible.");
         else if(flow.step()==2&&evidence.count>0)status("1 of 2 line trackers found. Keep both modules visible together.");
         else {if(wasWarning){message="";render();}return;}
         ArHudView hud=activity.findViewById(R.id.arHudView);
@@ -121,7 +121,7 @@ final class Phase7GuideController implements AutoCloseable {
             List<ArHudView.DetectedPart> parts=new ArrayList<>();
             for(RecognitionResult.InstanceObservation instance:result.getInstanceObservations()){
                 float[] corners=activity.normalizeCorners(instance.getProjectedCorners());
-                if(corners!=null&&corners.length==8)parts.add(new ArHudView.DetectedPart("Tracker "+(parts.size()+1),corners,ArHudView.PartStatus.ACCEPTED));
+                if(corners!=null&&corners.length==8)parts.add(new ArHudView.DetectedPart("caster_wheel".equals(instance.getComponentId())?"Caster wheel":"Tracker "+(parts.size()+1),corners,ArHudView.PartStatus.ACCEPTED));
             }
             hud.setDetectedParts(parts);
         }
@@ -131,9 +131,9 @@ final class Phase7GuideController implements AutoCloseable {
         if(closed||paused||saving||!flow.preparingHardware()||!flow.scanned())return;
         flow.confirmHardware();status("Hardware ready · Next unlocked");render();save();
     }
-    private String scanInstruction(){return flow.step()==3?"Turn the board over. Align the bottom view within the recommended scanning frame to verify the caster wheel.":"Show the front half of the board from underneath, with BOTH trackers and their mounting nuts visible. The modules may swivel around their screws; the whole board does not need to fit in frame.";}
+    private String scanInstruction(){return flow.step()==3?"Turn the board over. Align the bottom view within the recommended scanning frame to verify the caster wheel.":"Show the front half of the board from underneath, with the CASTER WHEEL, BOTH trackers and their mounting points visible. The modules may swivel around their screws; the whole board does not need to fit in frame.";}
     private void checklist(){
-        if(closed||paused||saving||flow.step()<3||flow.viewingDemo()||!flow.scanned()||flow.complete()||dialog!=null&&dialog.isShowing())return;
+        if(closed||paused||saving||flow.step()<3||flow.viewingDemo()||!flow.checklistReady()||flow.complete()||dialog!=null&&dialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,question());
         dialog=new AlertDialog.Builder(activity).setTitle(flow.step()==3?"Caster stability":"Line tracker stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Secure",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);checkLabels();say(question(),"check:"+(++sequence));
@@ -162,7 +162,7 @@ final class Phase7GuideController implements AutoCloseable {
         if(step>=3){
             int group=step-3,base=group*2;
             for(int i=0;i<=maxLine[group];i++)summary.append("\n\n").append(LINES[base+i]);
-            if(!flow.viewingDemo())summary.append("\n\n").append(scanInstruction()).append(flow.scanned()?"\nBottom-view scan verified.":"");
+            if(!flow.viewingDemo())summary.append("\n\n").append(step==3?"Check caster stability now. The final bottom-view scan verifies the caster together with both trackers.":scanInstruction()).append(step==4&&flow.scanned()?"\nCaster and tracker assembly verified.":"");
         }
         String previewHelp=step<=2?flow.preparingHardware()?"The labeled hardware models rotate together. Confirm the quantities listed above; these fasteners do not need a camera scan.":"Touch and drag the component model to rotate it.":"Tap the preview title to choose a component or fastener model. Touch and drag the model to rotate it.";
         String details=summary+"\n\n"+previewHelp+"\n\nLeave the battery disconnected while assembling. Camera verification checks visible placement; the hands-on questions confirm nut retention, swivel movement and stable mounting.";
@@ -171,8 +171,8 @@ final class Phase7GuideController implements AutoCloseable {
         card.rescan.setEnabled(!saving&&!modal);
         card.next.setText(step==4?reviewing?"Return to current phase":"Continue to Phase 8 →":step<=2&&!flow.preparingHardware()?"Next: Prepare hardware →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
         card.action.setVisibility(step<=2?flow.preparingHardware()?View.VISIBLE:View.GONE:(!flow.complete()||flow.viewingDemo())?View.VISIBLE:View.GONE);
-        card.action.setText(step<=2?flow.hardwareReady()?"Hardware confirmed":"I Have These":videoError?"Retry demo":flow.viewingDemo()&&flow.scanned()?"Return to verification":flow.scanned()?"Check stability":"Scan Work");
-        card.action.setEnabled(!saving&&(step<=2?flow.preparingHardware()&&flow.scanned()&&!flow.hardwareReady():videoError||flow.scanned()||flow.demoReady()&&plan==null));
+        card.action.setText(step<=2?flow.hardwareReady()?"Hardware confirmed":"I Have These":videoError?"Retry demo":step==3?"Ready for Checklist":flow.viewingDemo()&&flow.scanned()?"Return to verification":flow.scanned()?"Check stability":"Scan Work");
+        card.action.setEnabled(!saving&&(step<=2?flow.preparingHardware()&&flow.scanned()&&!flow.hardwareReady():videoError||flow.checklistReady()||flow.demoReady()&&plan==null));
         card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
         alignment.setInstruction(step<=2?"Phase 7 · "+(step==1?"Caster wheel":"Both line trackers"):"Bottom view · "+(step==3?"Caster wheel":"Front half · Both trackers and mounting nuts"));
         alignment.showGuide(plan!=null?Phase7AssetCatalog.guide(activity.getAssets(),step):null,
@@ -200,7 +200,7 @@ final class Phase7GuideController implements AutoCloseable {
             public void onClip(int clip){if(closed||flow.step()!=step)return;maxLine[group]=Math.max(maxLine[group],clip-base);render();save();}
             public void onPlayback(int clip,boolean playing,boolean seek){if(!closed&&flow.step()==step)narrator.onPlayback(clip,playing&&!paused,seek);}
             public void onClipEnded(){AssemblyVoiceGuide.Status s=activity.voiceGuide().getStatus();if(video!=null&&(!narrator.isPending()||s==AssemblyVoiceGuide.Status.MUTED||s==AssemblyVoiceGuide.Status.UNAVAILABLE))video.continueAfterNarration();}
-            public void onFinished(){if(closed||flow.step()!=step)return;flow.demoFinished();maxLine[group]=1;narrator.stop();status(flow.scanned()?"Demo complete · Return to verification when ready":"Demo complete · Scan Work is ready");render();save();}
+            public void onFinished(){if(closed||flow.step()!=step)return;flow.demoFinished();maxLine[group]=1;narrator.stop();status(flow.scanned()?"Demo complete · Return to verification when ready":step==3?"Demo complete · Ready for Checklist":"Demo complete · Scan Work is ready");render();save();}
             public void onError(String error){narrator.stop();videoError=true;status(error);render();}
         },Phase7AssetCatalog::clipOrder);
         preview.showContent(video.view(),step==3?"Caster assembly · Tap to pause":"Tracker assembly · Tap to pause");video.seek(resumeClip[group],resumePosition[group]);render();video.play();

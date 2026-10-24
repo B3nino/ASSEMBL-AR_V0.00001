@@ -22,7 +22,7 @@ public final class UnifiedReferenceCatalog {
     public static dev.chyken.assembl_ar.vision.RecognitionRequest request(ComponentReferenceSpec s,dev.chyken.assembl_ar.vision.CameraCalibration c){
         String id=s.getReferenceId();int p=phase(s);
         dev.chyken.assembl_ar.vision.RecognitionRequest r=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component(s.getComponentId()),c,null,null,p==2&&"brackets".equals(Phase2AssetCatalog.referenceRole(id))?4:p==2&&"motors".equals(Phase2AssetCatalog.referenceRole(id))?2:1,p);
-        if(p==2){String role=Phase2AssetCatalog.referenceRole(id);return r.withPhase2Stage("brackets".equals(role)?1:"motors".equals(role)?2:5);}
+        if(p==2){String role=Phase2AssetCatalog.referenceRole(id);return role==null?r:r.withPhase2Stage("brackets".equals(role)?1:"motors".equals(role)?2:5);}
         if(p==3)return r.withPhase3Stage(assembly(s)?4:1);
         if(p==5)return r.withPhase5Stage(assembly(s)?3:1);
         if(p==7){String role=Phase7AssetCatalog.referenceRole(id);return r.withPhase7Stage(role!=null&&role.startsWith("caster")?assembly(s)?3:1:assembly(s)?4:2);}
@@ -44,8 +44,15 @@ public final class UnifiedReferenceCatalog {
         return text.contains("INVALID")||!assembly(s)&&(s.isBottomFace()||text.contains("UNDERSIDE"));
     }
     public static boolean assembly(ComponentReferenceSpec s) {
+        // Isolated, reviewed crops live beside their phase's scene photographs.
+        // Folder names must not turn a loose part into an installed assembly.
+        if(s.getAssemblyStepNumber()==0&&s.getReferenceId().startsWith("video12_"))return false;
+        String p2=Phase2AssetCatalog.referenceRole(s.getReferenceId());
+        // Phase 2 scene photos include contextual multi-part inventory groups;
+        // a group must not become one giant standalone-component homography.
+        if(p2!=null)return true;
         String driver=Phase3AssetCatalog.referenceRole(s.getReferenceId());
-        if(driver!=null)return "assembly".equals(driver);
+        if(driver!=null)return Phase3AssetCatalog.installed(driver);
         String nano=Phase5AssetCatalog.referenceRole(s.getReferenceId());
         if(nano!=null)return Phase5AssetCatalog.installed(nano);
         String path=String.valueOf(s.getJpegAssetPath()).toUpperCase(Locale.ROOT);

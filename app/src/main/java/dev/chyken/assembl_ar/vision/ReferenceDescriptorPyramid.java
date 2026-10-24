@@ -26,7 +26,7 @@ final class ReferenceDescriptorPyramid {
         // The driver PCB is nearly rotationally symmetric. Added coarse support can make
         // board printing look like module orientation. Its fine-sampled installed check
         // retains the proven descriptor set; loose driver recognition uses the pyramid.
-        if("assembly".equals(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))
+        if(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(spec.getReferenceId())))
             return AdminDescriptorBlobCodec.computeVariants(gray,mask,orb,clahe);
         // Cylinders protrude beyond a flat PCB boundary. This matcher already separates
         // cylinder-only inliers from independent board context and competing inward photos.
@@ -85,7 +85,7 @@ final class ReferenceDescriptorPyramid {
     /** A coarse patch centred on a small PCB can actually describe the stationary board
      * behind it. Extra scales must not cross that identity/context boundary. Native
      * descriptors remain exactly as before; only newly added sampling is filtered. */
-    private static AdminDescriptorBlobCodec.DescriptorVariant keepIndependentPatches(AdminDescriptorBlobCodec.DescriptorVariant v,double[] box){
+    static AdminDescriptorBlobCodec.DescriptorVariant keepIndependentPatches(AdminDescriptorBlobCodec.DescriptorVariant v,double[] box){
         List<KeyPoint> keys=new ArrayList<>();List<Integer> ids=new ArrayList<>();
         for(int i=0;i<v.keypoints.length;i++){
             KeyPoint k=v.keypoints[i];double x=k.pt.x,y=k.pt.y,radius=k.size*.71;

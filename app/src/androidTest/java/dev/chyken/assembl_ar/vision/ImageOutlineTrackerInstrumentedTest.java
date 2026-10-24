@@ -36,6 +36,23 @@ public final class ImageOutlineTrackerInstrumentedTest {
             assertNotNull(o);assertEquals(116,o.corners.get(0).getX(),2);assertEquals(95,o.corners.get(0).getY(),2);
         }finally{start.release();next.release();}
     }
+    @Test public void sparseEightToElevenCornerTargetsCatchUpButCannotTrackABlankFrame()throws Exception{
+        Mat start=scene(),next=moved(start,9,3),blank=new Mat(400,640,CvType.CV_8UC1,new Scalar(90));
+        java.lang.reflect.Field points=ImageOutlineTracker.class.getDeclaredField("points");points.setAccessible(true);
+        java.lang.reflect.Method advance=ImageOutlineTracker.class.getDeclaredMethod("advance",Mat.class,long.class,boolean.class);advance.setAccessible(true);
+        try(ImageOutlineTracker tracker=new ImageOutlineTracker()){
+            for(int count:new int[]{8,9,10,11})for(boolean occluded:new boolean[]{false,true}){
+                tracker.reset();assertNotNull(tracker.detect(start,1,"motor","Motor",corners()));
+                MatOfPoint2f seeds=(MatOfPoint2f)points.get(tracker);Point[] all=seeds.toArray(),sparse=new Point[count];
+                // Keep the same native initializer, then model a small glossy body
+                // with only a few distributed corners instead of a textured PCB.
+                for(int i=0;i<count;i++)sparse[i]=all[i*all.length/count];seeds.fromArray(sparse);
+                ImageOutlineTracker.Outline o=(ImageOutlineTracker.Outline)advance.invoke(tracker,occluded?blank:next,2_000_000_001L,true);
+                if(occluded){assertNull("Occlusion with "+count+" seeds cannot produce an outline",o);assertFalse(tracker.hasOutline());}
+                else {assertNotNull("Delayed target with "+count+" measured corners",o);assertEquals(109,o.corners.get(0).getX(),2);assertEquals(93,o.corners.get(0).getY(),2);}
+            }
+        }finally{start.release();next.release();blank.release();}
+    }
     @Test public void mountedPairKeepsTwoSeparateMovingOutlines(){
         Mat start=scene(),second=start.submat(new Rect(380,100,130,100));Core.randu(second,20,230);second.release();
         List<VisionPoint> other=Arrays.asList(new VisionPoint(380,100),new VisionPoint(510,100),new VisionPoint(510,200),new VisionPoint(380,200));

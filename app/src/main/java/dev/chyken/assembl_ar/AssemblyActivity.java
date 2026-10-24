@@ -818,6 +818,9 @@ public final class AssemblyActivity extends AppCompatActivity {
                 // Bind analysis with Preview from the outset to keep their crop/timebase shared.
                 // CameraX discards analysis frames until the asynchronously prepared analyzer exists.
                 ImageAnalysis analysis = new ImageAnalysis.Builder()
+                        .setResolutionSelector(new androidx.camera.core.resolutionselector.ResolutionSelector.Builder()
+                            .setResolutionStrategy(new androidx.camera.core.resolutionselector.ResolutionStrategy(
+                                new android.util.Size(640,480),androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build())
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                         .build();

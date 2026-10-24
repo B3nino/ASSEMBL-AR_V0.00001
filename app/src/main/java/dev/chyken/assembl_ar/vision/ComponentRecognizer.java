@@ -454,6 +454,19 @@ public final class ComponentRecognizer implements AutoCloseable {
             if (bestCandidate != null) {
                 instanceCandidates.add(bestCandidate);
             }
+            // Different reviewed faces can already localize different physical
+            // instances in this first pass (e.g. matte and reflective brackets).
+            // Retain those independently verified, non-overlapping homographies
+            // before re-extracting masked frames for additional instances.
+            if(isExpectedCandidate(bestCandidate,safeRequest)&&safeRequest.getExpectedInstanceCount()>1){
+                for(SpatialCandidate candidate:spatialCandidates){
+                    if(instanceCandidates.size()>=safeRequest.getExpectedInstanceCount())break;
+                    if(!isExpectedCandidate(candidate,safeRequest)||candidate.confidence<.75)continue;
+                    boolean distinct=true;
+                    for(SpatialCandidate prior:instanceCandidates)if(!areDistinctInstanceQuads(prior.corners,candidate.corners)){distinct=false;break;}
+                    if(distinct)instanceCandidates.add(candidate);
+                }
+            }
             while (instanceCandidates.size() < safeRequest.getExpectedInstanceCount()
                     && isExpectedCandidate(bestCandidate, safeRequest)) {
                 AdditionalDetection additional = detectAdditionalExpectedInstance(

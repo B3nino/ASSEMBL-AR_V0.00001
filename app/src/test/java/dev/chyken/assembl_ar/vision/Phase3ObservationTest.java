@@ -33,4 +33,20 @@ public final class Phase3ObservationTest {
         assertFalse(new Phase3Observation(Phase3Observation.State.BACKWARD,30).accepted(5));
         assertFalse(new Phase3Observation(Phase3Observation.State.PLACED,30).accepted(6));
     }
+    @Test public void strongDisplacementProducesReseatFeedbackAndNeverUnlocks(){
+        assertEquals(Phase3Observation.State.MISALIGNED,Phase3Observation.classify(4,0,0,8,0,18));
+        assertFalse(new Phase3Observation(Phase3Observation.State.MISALIGNED,18).accepted(4));
+        assertEquals(Phase3Observation.State.PLACED,Phase3Observation.classify(4,0,0,18,0,7));
+        assertEquals(Phase3Observation.State.BACKWARD,Phase3Observation.classify(4,0,0,0,18,0));
+        assertEquals(Phase3Observation.State.SEARCHING,Phase3Observation.classify(4,0,0,18,18,0));
+    }
+    @Test public void manualCloseViewSeparatesRigidBodyFromAdjacentConnector(){
+        Phase3ReferenceAnnotations.Regions regions=Phase3ReferenceAnnotations.forPath("references/Phase3/STEP3_5ASSEMBLYSCAN/TABLET_DRIVER_PLACEMENT_CLOSE_20261024.jpg");
+        assertNotNull(regions);assertEquals(4,regions.outline.size());assertEquals(5,regions.features().size());
+        assertTrue(Phase3ReferenceAnnotations.contains(regions.identity,270/640.0,185/400.0));
+        assertFalse(Phase3ReferenceAnnotations.contains(regions.identity,190/640.0,180/400.0));
+        assertTrue(Phase3ReferenceAnnotations.contains(regions.outline,250/640.0,240/400.0));
+        assertFalse(Phase3ReferenceAnnotations.contains(regions.identity,250/640.0,240/400.0));
+        assertNull(Phase3ReferenceAnnotations.forPath("references/Phase5/STEP5_3HARDWARESCAN/test.jpg"));
+    }
 }

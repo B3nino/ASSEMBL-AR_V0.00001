@@ -31,10 +31,10 @@ final class Phase7TrackerSearch implements AutoCloseable {
                     double r = region.get(2).getX() * w, b = region.get(2).getY() * h;
                     if (r-l > 5 && b-t > 5) add(result, w, h, l-8, t-8, r+8, b+8);
                 }
-                if (result.size() < 2) addDarkModuleWindows(gray, bgr, result);
+                if (result.size() < 2) addDarkModuleWindows(gray, result);
             } finally { scaled.release(); bgr.release(); }
         }
-        if (rgb == null || rgb.empty()) addDarkModuleWindows(gray, null, result);
+        if (rgb == null || rgb.empty()) addDarkModuleWindows(gray, result);
         // Color is an optional search hint. Neutral lighting, monochrome fixtures and different
         // trim-pot colors still receive independent spatial searches, in either camera rotation.
         add(result, w, h, 0, 0, w*.56, h);
@@ -70,16 +70,12 @@ final class Phase7TrackerSearch implements AutoCloseable {
     }
 
     /** Search hints for dark IR emitters, which need not look blue in tablet lighting. */
-    private static void addDarkModuleWindows(Mat gray, Mat bgr, List<Rect> windows) {
-        Mat hsv=new Mat(),blue=new Mat(),mask=new Mat(),hierarchy=new Mat();
+    private static void addDarkModuleWindows(Mat gray, List<Rect> windows) {
+        Mat mask=new Mat(),hierarchy=new Mat();
         Mat kernel=Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));
         List<MatOfPoint> contours=new ArrayList<>();
         List<Rect> candidates=new ArrayList<>();
         try {
-            if(bgr!=null) {
-                Imgproc.cvtColor(bgr,hsv,Imgproc.COLOR_BGR2HSV);
-                Core.inRange(hsv,new Scalar(85,50,20),new Scalar(135,255,255),blue);
-            }
             for(int threshold:new int[]{45,65,85}) {
                 Imgproc.threshold(gray,mask,threshold,255,Imgproc.THRESH_BINARY_INV);
                 Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_CLOSE,kernel);
@@ -90,11 +86,8 @@ final class Phase7TrackerSearch implements AutoCloseable {
                     Rect r=Imgproc.boundingRect(contour);
                     double area=Imgproc.contourArea(contour),aspect=Math.max(r.width,r.height)/(double)Math.max(1,Math.min(r.width,r.height));
                     if(area<gray.total()*.001||area>gray.total()*.20||aspect<1.8||aspect>8||area/r.area()<.25)continue;
-                    if(!blue.empty()) {
-                        Mat patch=blue.submat(r);int colored;
-                        try{colored=Core.countNonZero(patch);}finally{patch.release();}
-                        if(colored<8)continue;
-                    }
+                    // These are proposals, never acceptance evidence. Dark sensors in warm
+                    // indoor light can have no blue pixels; ORB identity decides below.
                     thresholdCandidates.add(r);
                 }
                 // Suppress nested contours only after sorting. Otherwise a narrow shadow
@@ -113,11 +106,11 @@ final class Phase7TrackerSearch implements AutoCloseable {
                 if(!duplicate)add(windows,gray.cols(),gray.rows(),r.x-8,r.y-8,r.x+r.width+8,r.y+r.height+8);
                 // Without color, shadows and printed logos also propose rectangles. Retain
                 // alternatives rather than letting either false hint displace a real sensor.
-                if(windows.size()==(bgr==null?4:2))break;
+                if(windows.size()>=4)break;
             }
         } finally {
             for(Mat contour:contours)contour.release();
-            hsv.release();blue.release();mask.release();hierarchy.release();kernel.release();
+            mask.release();hierarchy.release();kernel.release();
         }
     }
 

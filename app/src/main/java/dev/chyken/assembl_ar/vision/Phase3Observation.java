@@ -7,6 +7,13 @@ public final class Phase3Observation {
     public final double score;
     public Phase3Observation(State state,double score){this.state=state;this.score=score;}
     public boolean accepted(int step){return step==1?state==State.FRONT:step==4&&state==State.PLACED;}
+    public static State classify(int step,double front,double back,double placed,double reversed,double misaligned){
+        if(step==1){if(back>=12&&back>front*1.15)return State.FLIPPED;if(front>=12&&front>back*1.15)return State.FRONT;return State.SEARCHING;}
+        if(misaligned>=12&&misaligned>Math.max(placed,reversed)*1.5)return State.MISALIGNED;
+        if(reversed>=8&&reversed>placed*1.15)return State.BACKWARD;
+        if(placed>=8&&placed>reversed*1.15)return State.PLACED;
+        return State.SEARCHING;
+    }
     /** Compare semantic corner order after independently mapping the main board. Rotation cancels out. */
     public static State placement(java.util.List<VisionPoint> expected,java.util.List<VisionPoint> actual){
         if(expected.size()!=4||actual.size()!=4)return State.SEARCHING;

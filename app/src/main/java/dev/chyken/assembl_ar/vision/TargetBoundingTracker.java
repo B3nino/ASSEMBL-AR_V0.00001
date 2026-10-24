@@ -27,16 +27,21 @@ public final class TargetBoundingTracker implements AutoCloseable {
     public synchronized Target detect(Mat gray,long time,String id,String name,String expected,State state,List<List<VisionPoint>> regions,boolean verified){
         if(closed||regions.isEmpty())return null;
         // Slow ORB results must not drag a live LK outline back to an old camera frame.
-        if(measured!=null&&measured.timestamp>time){
-            if(measured.componentId.equals(id)){
-                measured=new Target(id,name,expected,state,measured.regions,false,verified,measured.timestamp,epoch);
-                displayed=new Target(id,name,expected,state,displayed==null?measured.regions:displayed.regions,false,verified,measured.timestamp,epoch);
-            }return displayed;
+        if(measured!=null&&measured.timestamp>time&&measured.componentId.equals(id)&&measured.regions.size()==regions.size()){
+            measured=new Target(id,name,expected,state,measured.regions,false,verified,measured.timestamp,epoch);
+            displayed=new Target(id,name,expected,state,displayed==null?measured.regions:displayed.regions,false,verified,measured.timestamp,epoch);
+            return displayed;
         }
         List<List<VisionPoint>> bodies=new ArrayList<>();for(List<VisionPoint> region:regions)if(region.size()==4&&bodies.size()<4)bodies.add(LoosePartShapeRecognizer.contourProfile(id)==ComponentContourTemplates.Body.CABLE?region:rigidBodyBounds(gray,region));
         if(bodies.isEmpty())return null;
         ImageOutlineTracker.Outline located=flow.detectRegions(gray,time,id,name,bodies);
-        if(located==null)return null;
+        if(located==null){
+            // A current measured ORB polygon is still useful feedback when a glossy body
+            // cannot seed LK. Never resurrect coordinates from a delayed detector frame.
+            long latest=flow.latestTimestampNanos();
+            if(latest>time&&latest-time>150_000_000L)return null;
+            return accept(new Target(id,name,expected,state,bodies,false,verified,time,epoch));
+        }
         if(measured!=null&&(!id.equals(measured.componentId)||measured.regions.size()!=located.regions.size())){displayed=null;vx=vy=0;}
         return accept(new Target(id,name,expected,state,located.regions,false,verified,located.timestamp,epoch));
     }

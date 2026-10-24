@@ -4,6 +4,32 @@ import android.content.Context;import androidx.test.ext.junit.runners.AndroidJUn
 /** Camera-scale regression: PCB-wide consensus alone must never satisfy motor installation. */
 @RunWith(AndroidJUnit4.class) public final class Phase2PrecisionInstrumentedTest {
     @BeforeClass public static void nativeRuntime(){assertTrue(OpenCVLoader.initLocal());}
+    @Test public void topViewGateRejectsCollapsedAndMirroredMotorPlanes(){
+        List<List<VisionPoint>> regions=new ArrayList<>();
+        for(double x:new double[]{.2,.65})for(int i=0;i<3;i++)regions.add(Arrays.asList(new VisionPoint(x,.2),new VisionPoint(x+.1,.2),new VisionPoint(x+.1,.65),new VisionPoint(x,.65)));
+        Mat h=Mat.eye(3,3,CvType.CV_64F);
+        try{
+            assertTrue(Phase2ReferenceMatcher.topViewTransformSupported(h,regions,640,400));
+            h.put(0,0,0,-.8,50,.8,0,15,0,0,1);assertTrue("In-plane rotation is valid",Phase2ReferenceMatcher.topViewTransformSupported(h,regions,640,400));
+            h.put(0,0,1,0,0,0,.55,0,0,0,1);assertTrue("Moderate top-view tilt is valid",Phase2ReferenceMatcher.topViewTransformSupported(h,regions,640,400));
+            h.put(1,1,.1);assertFalse("Near edge-on side view is not top-view evidence",Phase2ReferenceMatcher.topViewTransformSupported(h,regions,640,400));
+            h.put(0,0,-1,0,640,0,1,0,0,0,1);assertFalse("A reflected mounting layout is not valid",Phase2ReferenceMatcher.topViewTransformSupported(h,regions,640,400));
+        }finally{h.release();}
+    }
+    @Test public void sidePhotographsCannotCertifyTheTopView()throws Exception{
+        Context c=InstrumentationRegistry.getInstrumentation().getTargetContext();List<ComponentReferenceSpec> bank=new ArrayList<>(),probes=new ArrayList<>();Set<String> views=new HashSet<>();
+        for(ComponentReferenceSpec s:Phase2AssetCatalog.references(c.getAssets())){
+            String role=Phase2AssetCatalog.referenceRole(s.getReferenceId());if(!Arrays.asList("top","left","right","invalid").contains(role))continue;
+            if((role.equals("left")||role.equals("right"))&&views.add(role)){probes.add(s);continue;}bank.add(s);
+        }
+        VisionConfig config=VisionConfig.defaults();
+        try(ReferenceDatabase db=ReferenceDatabase.load(c.getAssets(),bank,config,new File(c.getNoBackupFilesDir(),"orb_reference_cache_v3"));Phase2ReferenceMatcher matcher=new Phase2ReferenceMatcher(db,config)){
+            for(ComponentReferenceSpec probe:probes){Mat rgb=cameraPhoto(c,probe),gray=new Mat();try{
+                Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);
+                for(int i=0;i<6;i++){DiagnosticHammingMatcher.begin();DiagnosticHammingMatcher.recovery((i&1)==1);Phase2Observation o=matcher.inspect(gray,rgb,i+1,5,null,"top").getPhase2Observation();assertFalse("A side photograph cannot unlock top: "+probe.getReferenceId(),o.referenceSupported&&"top".equals(o.view));}
+            }finally{rgb.release();gray.release();DiagnosticHammingMatcher.end();}}
+        }
+    }
     @Test public void topReferenceRequiresBothHardwareRoisAndBareBoardNeverPasses()throws Exception{
         Context c=InstrumentationRegistry.getInstrumentation().getTargetContext();List<ComponentReferenceSpec> bank=new ArrayList<>();ComponentReferenceSpec positive=null,negative=null;
         for(ComponentReferenceSpec s:Phase2AssetCatalog.references(c.getAssets())){String role=Phase2AssetCatalog.referenceRole(s.getReferenceId());if("top".equals(role)&&bank.size()<3){bank.add(s);positive=s;}if("invalid".equals(role)&&s.getJpegAssetPath().contains("BARE_BOARD")){bank.add(s);negative=s;}}
@@ -61,6 +87,57 @@ import android.content.Context;import androidx.test.ext.junit.runners.AndroidJUn
             }
         }
     }
+    @Test public void heldOutInstalledViewsKeepLocalHardwareEvidenceUnderExposureChanges()throws Exception{
+        Context c=InstrumentationRegistry.getInstrumentation().getTargetContext();List<ComponentReferenceSpec> bank=new ArrayList<>();Map<String,ComponentReferenceSpec> probes=new LinkedHashMap<>();
+        for(ComponentReferenceSpec s:Phase2AssetCatalog.references(c.getAssets())){
+            String role=Phase2AssetCatalog.referenceRole(s.getReferenceId());if(!Arrays.asList("top","left","right","invalid").contains(role))continue;
+            if(!role.equals("invalid")&&!probes.containsKey(role)){probes.put(role,s);continue;}bank.add(s);
+        }
+        VisionConfig config=VisionConfig.defaults();
+        try(ReferenceDatabase db=ReferenceDatabase.load(c.getAssets(),bank,config,new File(c.getNoBackupFilesDir(),"orb_reference_cache_v3"))){
+            for(Map.Entry<String,ComponentReferenceSpec> p:probes.entrySet())for(double gain:new double[]{1,.55,1.20,-1}){
+                Mat rgb=cameraPhoto(c,p.getValue()),lit=new Mat(),gray=new Mat();
+                try(Phase2ReferenceMatcher matcher=new Phase2ReferenceMatcher(db,config)){
+                    if(gain<0){
+                        // Measured camera-scale geometry with a strong side-light
+                        // gradient. Do not change labels or reference descriptors.
+                        byte[] pixels=new byte[(int)(rgb.total()*3)];rgb.get(0,0,pixels);
+                        for(int y=0;y<rgb.rows();y++)for(int x=0;x<rgb.cols();x++)for(int channel=0;channel<3;channel++){
+                            int index=(y*rgb.cols()+x)*3+channel;pixels[index]=(byte)Math.min(255,8+(int)((pixels[index]&255)*(.35+.85*x/(rgb.cols()-1.0))));
+                        }
+                        lit.create(rgb.size(),rgb.type());lit.put(0,0,pixels);
+                    }else rgb.convertTo(lit,-1,gain,8);
+                    Imgproc.cvtColor(lit,gray,Imgproc.COLOR_RGB2GRAY);boolean matched=false;
+                    for(int attempt=0;attempt<10;attempt++){
+                        DiagnosticHammingMatcher.begin();DiagnosticHammingMatcher.recovery((attempt&1)==1);
+                        RecognitionResult r=matcher.inspect(gray,lit,attempt+1,5,null,p.getKey());Phase2Observation o=r.getPhase2Observation();
+                        android.util.Log.i("Phase2Lighting",p.getKey()+" gain="+gain+" attempt="+attempt+" accepted="+o.referenceSupported+" located="+r.getInstanceObservations().size()+" ms="+r.getLatency().getTotalMs());
+                        if(o.referenceSupported&&p.getKey().equals(o.view)){assertEquals(p.getKey().equals("top")?2:1,r.getInstanceObservations().size());matched=true;break;}
+                    }
+                    assertTrue("Held-out installed "+p.getKey()+" gain="+gain,matched);
+                }finally{rgb.release();lit.release();gray.release();DiagnosticHammingMatcher.end();}
+            }
+        }
+    }
+    @Test public void missingMotorOrBracketNeverPassesAndVisibleMotorCanRemainAcquiring()throws Exception{
+        Context c=InstrumentationRegistry.getInstrumentation().getTargetContext();List<ComponentReferenceSpec> bank=new ArrayList<>();ComponentReferenceSpec probe=null;
+        for(ComponentReferenceSpec s:Phase2AssetCatalog.references(c.getAssets())){
+            String role=Phase2AssetCatalog.referenceRole(s.getReferenceId());if(!Arrays.asList("top","left","right","invalid").contains(role))continue;
+            if(probe==null&&role.equals("top")){probe=s;continue;}bank.add(s);
+        }
+        assertNotNull(probe);ComponentReferenceSpec shape=Phase2PhotoGeometry.resolve(probe,read(c,probe),null);Mat original=cameraPhoto(c,probe);
+        MatOfByte encoded=new MatOfByte(read(c,probe));Mat decoded=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR);
+        double scale=Math.min(640.0/decoded.cols(),400.0/decoded.rows());int w=(int)Math.round(decoded.cols()*scale),h=(int)Math.round(decoded.rows()*scale),x=(640-w)/2,y=(400-h)/2;encoded.release();decoded.release();
+        VisionConfig config=VisionConfig.defaults();
+        try(ReferenceDatabase db=ReferenceDatabase.load(c.getAssets(),bank,config,new File(c.getNoBackupFilesDir(),"orb_reference_cache_v3"))){
+            for(int index:new int[]{0,3,1,4}){Mat rgb=original.clone(),gray=new Mat();try(Phase2ReferenceMatcher matcher=new Phase2ReferenceMatcher(db,config)){
+                List<VisionPoint> roi=shape.getFeatureRegionsNormalized().get(index);Imgproc.rectangle(rgb,new Point(x+roi.get(0).getX()*w,y+roi.get(0).getY()*h),new Point(x+roi.get(2).getX()*w,y+roi.get(2).getY()*h),new Scalar(180,180,180),-1);Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);boolean acquiring=false;
+                for(int attempt=0;attempt<6;attempt++){DiagnosticHammingMatcher.begin();DiagnosticHammingMatcher.recovery((attempt&1)==1);RecognitionResult r=matcher.inspect(gray,rgb,attempt+1,5,null,"top");Phase2Observation o=r.getPhase2Observation();assertFalse("Erased hardware ROI "+index+" detected="+o.view+" score="+o.positiveScore,o.referenceSupported&&"top".equals(o.view));acquiring|=!r.getInstanceObservations().isEmpty();}
+                assertTrue("A visible motor should retain an acquiring outline with another hardware check pending, ROI="+index,acquiring);
+            }finally{rgb.release();gray.release();DiagnosticHammingMatcher.end();}}
+        }finally{original.release();}
+    }
+    private static byte[] read(Context c,ComponentReferenceSpec s)throws Exception{try(InputStream in=c.getAssets().open(s.getJpegAssetPath())){return in.readAllBytes();}}
     /** Preserve physical geometry when fitting portrait reference photos to the tablet frame. */
     private static Mat cameraPhoto(Context c,ComponentReferenceSpec s)throws Exception{
         byte[] data;try(InputStream in=c.getAssets().open(s.getJpegAssetPath())){data=in.readAllBytes();}

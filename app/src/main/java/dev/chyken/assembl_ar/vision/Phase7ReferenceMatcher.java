@@ -16,7 +16,9 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
     private final List<ReferenceDatabase.PreparedReference> installedReferences = new ArrayList<>();
     private final Map<ReferenceDatabase.PreparedOrbVariant,Map<List<VisionPoint>,Crop>> cropQueries = new IdentityHashMap<>();
     private ReferenceDatabase.PreparedReference preferredBody, preferredBoard;
-    private final int[][] windowCursors=new int[4][9];
+    private final List<List<VisionPoint>> searchHints=new ArrayList<>();
+    private long hintTime;
+    private final int[][] windowCursors=new int[4][16];
     private int boardCursor, searchAttempt;
     Phase7ReferenceMatcher(ReferenceDatabase db,VisionConfig config){
         database=db;clahe=OpenCvVisionUtils.createClahe(config);trackerSearch=new Phase7TrackerSearch(config);
@@ -35,16 +37,16 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         database.acquireForRecognition();
         try{
             if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);
-            if(step==4)trackerGray=work.clone();
+            if(step==2||step==4)trackerGray=work.clone();
             DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
-            if(step==4){
-                Phase7Observation evidence=inspectTrackers(trackerGray,rgb,live,descriptors,scale,located);
+            if(step==2||step==4){
+                Phase7Observation evidence=inspectTrackers(trackerGray,rgb,live,descriptors,scale,located,step==4);
                 List<RecognitionResult.InstanceObservation> instances=new ArrayList<>();
-                for(int i=0;i<located.size();i++)instances.add(new RecognitionResult.InstanceObservation("phase7:tracker:"+i,"line_tracker_module",RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY,located.get(i),.88));
-                return RecognitionResult.builder(time).identity("phase7:trackers","line_tracker_module","Dual tracker installation")
+                for(int i=0;i<located.size();i++)instances.add(new RecognitionResult.InstanceObservation("phase7:part:"+i,i<2?"line_tracker_module":"caster_wheel",RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY,located.get(i),.88));
+                return RecognitionResult.builder(time).identity("phase7:trackers","line_tracker_module",step==4?"Caster and dual tracker installation":"Line trackers")
                         .method(located.isEmpty()?RecognitionResult.DetectionMethod.NONE:RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY).instances(instances)
-                        .validation(evidence.accepted(4)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:RecognitionResult.ValidationState.NO_COMPONENT)
-                        .matches(live.length,(int)evidence.score,(int)evidence.score,evidence.score>0?1:0).confidence(evidence.accepted(4)?.88:0)
+                        .validation(evidence.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:RecognitionResult.ValidationState.NO_COMPONENT)
+                        .matches(live.length,(int)evidence.score,(int)evidence.score,evidence.score>0?1:0).confidence(evidence.accepted(step)?.88:0)
                         .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-started)/1e6))
                         .build().withPhase7Observation(evidence);
             }
@@ -78,9 +80,16 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
             return result.build().withPhase7Observation(observation);
         }finally{database.releaseAfterRecognition();work.release();descriptors.release();empty.release();keypoints.release();if(remaining!=null)remaining.release();if(trackerGray!=null)trackerGray.release();}
     }
-    private Phase7Observation inspectTrackers(Mat gray,Mat rgb,KeyPoint[] live,Mat descriptors,double scale,List<List<VisionPoint>> located){
+    private Phase7Observation inspectTrackers(Mat gray,Mat rgb,KeyPoint[] live,Mat descriptors,double scale,List<List<VisionPoint>> located,boolean installation){
         List<Body> bodies=new ArrayList<>();List<List<VisionPoint>> quads=new ArrayList<>();double score=0;
         List<Rect> windows=trackerSearch.windows(gray,rgb);
+        long clock=System.nanoTime();
+        if(clock-hintTime<1_500_000_000L)for(List<VisionPoint> hint:searchHints){
+            double l=Double.MAX_VALUE,t=l,r=-l,b=-l;for(VisionPoint p:hint){l=Math.min(l,p.getX()*scale);r=Math.max(r,p.getX()*scale);t=Math.min(t,p.getY()*scale);b=Math.max(b,p.getY()*scale);}
+            int x=Math.max(0,(int)(l-(r-l)*.35)),y=Math.max(0,(int)(t-(b-t)*.35));
+            int right=Math.min(gray.cols(),(int)Math.ceil(r+(r-l)*.35)),bottom=Math.min(gray.rows(),(int)Math.ceil(b+(b-t)*.35));
+            if(right-x>=16&&bottom-y>=16)windows.add(0,new Rect(x,y,right-x,bottom-y));
+        }
         ++searchAttempt;
         // Native pixels must participate as well as enlarged detail passes. Actual tablet
         // captures match at 1x but fail at 3–4x despite having more detected keypoints.
@@ -91,9 +100,15 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
             Rect window=windows.get(slot);
             int[] cursors=windowCursors[sampling];
             boolean hadPreferredBody=preferredBody!=null;
-            List<ReferenceDatabase.PreparedReference> candidates=ordered(trackerReferences,cursors[slot],preferredBody);
+            List<ReferenceDatabase.PreparedReference> candidates;
             Body best=null;
             try(Phase7TrackerSearch.Features local=trackerSearch.extract(gray,window,featureExtent)){
+                // Remove the already located instance BEFORE the ratio test. In overlapping
+                // windows, two identical sensors otherwise suppress each other's descriptors.
+                for(int k=0;k<local.points.length;k++)for(List<VisionPoint> found:quads)if(inside(local.points[k].pt,found,scale)){
+                    Mat row=local.descriptors.row(k);try{row.setTo(new Scalar(0));}finally{row.release();}break;
+                }
+                candidates=rankedBodies(local.descriptors,cursors[slot],preferredBody);
                 // Extraction is not template matching time. On the tablet it used to consume
                 // the entire 80ms allowance, leaving only one photograph tested per window.
                 long windowDeadline=Math.min(deadline,System.nanoTime()+80_000_000L);
@@ -133,8 +148,14 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
             }
             if(bodies.size()==2||System.nanoTime()>deadline)break;
         }
+        if(!quads.isEmpty()){
+            if(quads.size()==2){searchHints.clear();searchHints.addAll(quads);}
+            else{if(clock-hintTime>=1_500_000_000L)searchHints.clear();for(List<VisionPoint> q:quads)if(distinct(q,searchHints)){if(searchHints.size()==2)searchHints.remove(0);searchHints.add(q);}}
+            hintTime=clock;
+        }
+        if(!installation)return new Phase7Observation(bodies.size(),false,score);
         if(bodies.size()<2)return Phase7Observation.installedTrackers(bodies.size(),0,false,score);
-        int mounts=0;boolean context=false;boolean[] visibleNuts=new boolean[2];
+        int mounts=0;boolean context=false,caster=false;boolean[] visibleNuts=new boolean[2];
         long contextDeadline=System.nanoTime()+300_000_000L;
         ReferenceDatabase.PreparedReference preferred=preferredBoard!=null?preferredBoard:
                 installedReferences.contains(bodies.get(0).reference)?bodies.get(0).reference:null;
@@ -154,6 +175,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
                     src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1600,.995);
                     int n=h.empty()?0:Core.countNonZero(mask);if(n<18||n<a.size()*.45)continue;
                     context=true;
+                    boolean candidateCaster=regions.size()>6&&localProof(ref,variant,live,descriptors,regions.get(6),h,6);
                     boolean[][] slots=new boolean[2][2];
                     for(int slot=0;slot<2;slot++){
                         List<VisionPoint> roi=regions.get(2+slot);
@@ -166,15 +188,20 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
                     }
                     // The two sensor bodies must meet two DIFFERENT board mounts under
                     // the same board pose; two sensors beside one mount cannot satisfy it.
-                    mounts=Math.max(mounts,Phase7MountGeometry.distinctMounts(slots));
+                    int candidateMounts=Phase7MountGeometry.distinctMounts(slots);
+                    if(candidateMounts>mounts||candidateMounts==mounts&&candidateCaster){mounts=candidateMounts;caster=candidateCaster;}
                     // The scan certifies two sensor locations. Reflective fasteners remain
                     // explicit hardware/stability answers, even when their image evidence is weak.
-                    if(mounts==2){preferredBoard=ref;return Phase7Observation.installedTrackers(2,2,true,score+n,(visibleNuts[0]?1:0)+(visibleNuts[1]?1:0));}
+                    if(candidateMounts==2&&candidateCaster){
+                        List<Point> plate=new ArrayList<>();for(VisionPoint p:regions.get(6))plate.add(new Point(p.getX()*ref.imageWidth,p.getY()*ref.imageHeight));
+                        src.fromList(plate);Core.perspectiveTransform(src,dst,h);List<VisionPoint> outline=new ArrayList<>();for(Point p:dst.toArray())outline.add(new VisionPoint(p.x/scale,p.y/scale));located.add(outline);
+                        preferredBoard=ref;return Phase7Observation.installedTrackers(2,2,true,score+n,(visibleNuts[0]?1:0)+(visibleNuts[1]?1:0)).withCaster(true);
+                    }
                 }finally{src.release();dst.release();mask.release();if(h!=null)h.release();}
             }
         }
         boardCursor+=Math.max(1,inspectedContext-(preferred!=null?1:0));
-        return Phase7Observation.installedTrackers(2,mounts,context,score,(visibleNuts[0]?1:0)+(visibleNuts[1]?1:0));
+        return Phase7Observation.installedTrackers(2,mounts,context,score,(visibleNuts[0]?1:0)+(visibleNuts[1]?1:0)).withCaster(caster);
     }
     private static List<ReferenceDatabase.PreparedReference> ordered(List<ReferenceDatabase.PreparedReference> refs,int cursor,ReferenceDatabase.PreparedReference preferred){DiagnosticHammingMatcher.context(preferred==null?null:preferred.spec);
         List<ReferenceDatabase.PreparedReference> result=new ArrayList<>();
@@ -186,9 +213,12 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         return result;
     }
     private boolean nutProof(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,List<VisionPoint> roi,Mat h){
+        return localProof(ref,variant,live,descriptors,roi,h,3);
+    }
+    private boolean localProof(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,List<VisionPoint> roi,Mat h,int minimum){
         List<Integer> sourceIds=new ArrayList<>(),liveIds=new ArrayList<>();
         for(int i=0;i<variant.keypoints.length;i++)if(in(variant.keypoints[i].pt,roi,ref))sourceIds.add(i);
-        if(sourceIds.size()<3)return false;
+        if(sourceIds.size()<minimum)return false;
         Mat inverse=h.inv();MatOfPoint2f pixels=new MatOfPoint2f(),canonical=new MatOfPoint2f();
         Mat query=null,train=null;
         try{
@@ -196,17 +226,34 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
             pixels.fromArray(positions);Core.perspectiveTransform(pixels,canonical,inverse);Point[] mapped=canonical.toArray();
             double l=roi.get(0).getX()*ref.imageWidth,t=roi.get(0).getY()*ref.imageHeight,r=roi.get(2).getX()*ref.imageWidth,b=roi.get(2).getY()*ref.imageHeight;
             for(int i=0;i<mapped.length;i++){Point p=mapped[i];if(p.x>=l-(r-l)*.15&&p.x<=r+(r-l)*.15&&p.y>=t-(b-t)*.15&&p.y<=b+(b-t)*.15)liveIds.add(i);}
-            if(liveIds.size()<3)return false;
+            if(liveIds.size()<minimum)return false;
             query=rows(variant.descriptors,sourceIds);train=rows(descriptors,liveIds);
             // Nuts repeat throughout the board. Restrict matching to the projected mount BEFORE
             // the ratio test, so another nut elsewhere cannot steal the correct correspondence.
             List<DMatch> good=matcher.ratioMatches(query,train,.85,74);
             good.sort(Comparator.comparingDouble(m->m.distance));Set<Integer> used=new HashSet<>();List<Point> a=new ArrayList<>(),c=new ArrayList<>();
             for(DMatch m:good)if(used.add(m.trainIdx)){a.add(variant.keypoints[sourceIds.get(m.queryIdx)].pt);c.add(live[liveIds.get(m.trainIdx)].pt);}
-            if(a.size()<3)return false;pixels.fromList(a);Core.perspectiveTransform(pixels,canonical,h);Point[] projected=canonical.toArray();
+            if(a.size()<minimum)return false;pixels.fromList(a);Core.perspectiveTransform(pixels,canonical,h);Point[] projected=canonical.toArray();
+            if(minimum>=6){
+                // The caster ball protrudes from the PCB. Its own homography may differ
+                // from the flat-board transform; require local identity and coherent placement.
+                Mat localMask=new Mat(),local=null;MatOfPoint2f observed=new MatOfPoint2f();
+                try{
+                    observed.fromList(c);local=DiagnosticHammingMatcher.homography(pixels,observed,Calib3d.RANSAC,3.5,localMask,800,.995);
+                    if(local.empty()||Core.countNonZero(localMask)<minimum||Core.countNonZero(localMask)<a.size()*.5)return false;
+                    double lx=Double.MAX_VALUE,ly=lx,rx=-lx,ry=-lx;
+                    for(int i=0;i<a.size();i++)if(localMask.get(i,0)[0]!=0){Point p=a.get(i);lx=Math.min(lx,p.x);rx=Math.max(rx,p.x);ly=Math.min(ly,p.y);ry=Math.max(ry,p.y);}
+                    if(rx-lx<(r-l)*.20||ry-ly<(b-t)*.20)return false;
+                    pixels.fromArray(new Point(l,t),new Point(r,t),new Point(r,b),new Point(l,b));
+                    Core.perspectiveTransform(pixels,canonical,h);Core.perspectiveTransform(pixels,observed,local);
+                    Point[] expected=canonical.toArray(),actual=observed.toArray();double diagonal=Math.hypot(expected[0].x-expected[2].x,expected[0].y-expected[2].y);
+                    for(int i=0;i<4;i++)if(!Double.isFinite(actual[i].x+actual[i].y)||Math.hypot(actual[i].x-expected[i].x,actual[i].y-expected[i].y)>Math.max(8,diagonal*.35))return false;
+                    return true;
+                }finally{localMask.release();observed.release();if(local!=null)local.release();}
+            }
             int count=0;double lx=Double.MAX_VALUE,ly=lx,rx=-lx,ry=-lx;
             for(int i=0;i<a.size();i++)if(Math.hypot(projected[i].x-c.get(i).x,projected[i].y-c.get(i).y)<=4){Point p=a.get(i);count++;lx=Math.min(lx,p.x);rx=Math.max(rx,p.x);ly=Math.min(ly,p.y);ry=Math.max(ry,p.y);}
-            return count>=3&&rx-lx>=(r-l)*.20&&ry-ly>=(b-t)*.20;
+            return count>=minimum&&rx-lx>=(r-l)*.20&&ry-ly>=(b-t)*.20;
         }finally{inverse.release();pixels.release();canonical.release();if(query!=null)query.release();if(train!=null)train.release();}
     }
     private static Mat rows(Mat descriptors,List<Integer> ids){
@@ -227,8 +274,33 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         Body(Match match,boolean vertical,ReferenceDatabase.PreparedReference reference){this.match=match;this.vertical=vertical;this.reference=reference;}
     }
     private static final class Crop{
-        final List<Integer> ids;final Mat descriptors;
-        Crop(List<Integer> ids,Mat descriptors){this.ids=ids;this.descriptors=descriptors;}
+        final List<Integer> ids;final Mat descriptors,sparse;
+        Crop(List<Integer> ids,Mat descriptors){this.ids=ids;this.descriptors=descriptors;
+            int count=descriptors==null?0:Math.min(32,descriptors.rows());sparse=count==0?new Mat():new Mat(count,descriptors.cols(),descriptors.type());
+            if(count>0){int stride=descriptors.cols();byte[] all=new byte[descriptors.rows()*stride],selected=new byte[count*stride];descriptors.get(0,0,all);for(int i=0;i<count;i++)System.arraycopy(all,(i*descriptors.rows()/count)*stride,selected,i*stride,stride);sparse.put(0,0,selected);}
+        }
+    }
+    /** Sparse ranking schedules a viewpoint; only the full geometric check accepts it. */
+    private List<ReferenceDatabase.PreparedReference> rankedBodies(Mat live,int cursor,ReferenceDatabase.PreparedReference preferred){
+        List<ReferenceDatabase.PreparedReference> ordered=ordered(trackerReferences,cursor,preferred);
+        Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
+        long started=android.os.SystemClock.elapsedRealtimeNanos();
+        try{
+            for(ReferenceDatabase.PreparedReference ref:ordered){int best=0;
+                for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){if(!v.hasOrbData())continue;
+                    List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
+                    for(int i=0;i<Math.min(2,regions.size());i++){
+                        Crop body=crop(ref,v,regions.get(i));if(body.sparse.empty()||live.rows()<2)continue;
+                        NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(body.sparse,live);int n=0;
+                        for(int k=0;k<pairs.size();k++)if(pairs.hasTwo(k)&&pairs.bestDistance(k)<=64&&pairs.bestDistance(k)<.80*pairs.secondDistance(k))n++;
+                        best=Math.max(best,n);
+                    }
+                    break;
+                }
+                scores.put(ref,best);
+            }
+        }finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}
+        ordered.sort((a,b)->Integer.compare(scores.get(b),scores.get(a)));return ordered;
     }
     private Crop crop(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,List<VisionPoint> region){
         Map<List<VisionPoint>,Crop> crops=cropQueries.computeIfAbsent(variant,key->new HashMap<>());
@@ -317,7 +389,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
     private static MatOfPoint2f polygon(List<VisionPoint> corners){Point[] points=new Point[corners.size()];for(int i=0;i<points.length;i++)points[i]=new Point(corners.get(i).getX(),corners.get(i).getY());return new MatOfPoint2f(points);}
     private static final class Match{final double score;final List<VisionPoint> corners;Match(double score,List<VisionPoint> corners){this.score=score;this.corners=corners;}}
     public void close(){
-        for(Map<List<VisionPoint>,Crop> crops:cropQueries.values())for(Crop crop:crops.values())if(crop.descriptors!=null)crop.descriptors.release();
+        for(Map<List<VisionPoint>,Crop> crops:cropQueries.values())for(Crop crop:crops.values()){if(crop.descriptors!=null)crop.descriptors.release();crop.sparse.release();}
         cropQueries.clear();trackerSearch.close();orb.clear();clahe.clear();matcher.clear();
     }
 }

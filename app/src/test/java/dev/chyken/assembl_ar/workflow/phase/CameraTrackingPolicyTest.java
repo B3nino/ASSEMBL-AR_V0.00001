@@ -1,6 +1,18 @@
 package dev.chyken.assembl_ar.workflow.phase;
 import org.junit.Test;import static org.junit.Assert.*;
 public final class CameraTrackingPolicyTest {
+    @Test public void fastSuccessfulScansKeepVisualsUntilNavigationButNeverInDemos(){
+        for(int phase=1;phase<=11;phase++)for(PhaseFlow.Mode source:new PhaseFlow.Mode[]{PhaseFlow.Mode.SCAN_PARTS,PhaseFlow.Mode.VERIFY}){
+            PhaseFlow.ScanTag scan=new PhaseFlow.ScanTag("phase"+phase,source,4);
+            for(PhaseFlow.Mode mode:new PhaseFlow.Mode[]{source,PhaseFlow.Mode.PHYSICAL_CHECK,PhaseFlow.Mode.COMPLETE}){
+                assertTrue(CameraTrackingPolicy.retains(scan,new PhaseFlow.ScanTag("phase"+phase,mode,4),false));
+                assertFalse(CameraTrackingPolicy.retains(scan,new PhaseFlow.ScanTag("phase"+phase,mode,5),false));
+                assertFalse(CameraTrackingPolicy.retains(scan,new PhaseFlow.ScanTag("other",mode,4),false));
+                assertFalse(CameraTrackingPolicy.retains(scan,new PhaseFlow.ScanTag("phase"+phase,mode,4),true));
+            }
+            assertFalse(CameraTrackingPolicy.retains(scan,new PhaseFlow.ScanTag("phase"+phase,PhaseFlow.Mode.DEMO,4),false));
+        }
+    }
     @Test public void completedPhaseOneStillOwnsTheCameraWhileOldEvidenceIsRejected(){
         PhaseFlow flow=new PhaseFlow(AssemblyPhaseCatalog.phases().get(0),1);
         PhaseFlow.ScanTag scan=flow.tag();flow.inventoryComplete(2);

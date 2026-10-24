@@ -29,6 +29,18 @@ public final class DynamicOutlineUiInstrumentedTest {
             }
         });
     }
+    @Test public void phaseOneDeveloperCompletionShowsAnEnabledFooterWithoutCameraEvidence(){
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
+            Context c=themed(new int[]{1024,600});dev.chyken.assembl_ar.ui.PhaseOneGuideView card=new dev.chyken.assembl_ar.ui.PhaseOneGuideView(c,null);
+            card.setScanned(false,false,false);assertFalse(card.isNextEnabled());
+            dev.chyken.assembl_ar.workflow.phase.PhaseFlow flow=new dev.chyken.assembl_ar.workflow.phase.PhaseFlow(dev.chyken.assembl_ar.workflow.phase.AssemblyPhaseCatalog.phases().get(0),1);
+            flow.devComplete(2);assertFalse(flow.collectsEvidence());card.setScanned(flow.getMode()==dev.chyken.assembl_ar.workflow.phase.PhaseFlow.Mode.COMPLETE,false,true);layout(card,700,450);
+            assertTrue(card.isNextEnabled());final boolean[] clicked={false};card.setNextAction(()->clicked[0]=true);
+            java.util.ArrayDeque<View> views=new java.util.ArrayDeque<>();views.add(card);boolean found=false;
+            while(!views.isEmpty()){View v=views.removeFirst();if(v instanceof Button&&v.isEnabled()&&v.getVisibility()==View.VISIBLE&&((Button)v).getText().toString().startsWith("Next Step")){assertTrue(v.getHeight()>0);v.performClick();found=true;}if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++)views.add(((ViewGroup)v).getChildAt(i));}
+            assertTrue("Visible developer Next action",found);assertTrue(clicked[0]);
+        });
+    }
     private Context themed(int[] size){
         Context target=InstrumentationRegistry.getInstrumentation().getTargetContext();Configuration config=new Configuration(target.getResources().getConfiguration());config.screenWidthDp=size[0];config.screenHeightDp=size[1];config.fontScale=1.5f;config.orientation=size[0]>size[1]?Configuration.ORIENTATION_LANDSCAPE:Configuration.ORIENTATION_PORTRAIT;
         Context base=target.createConfigurationContext(config);String candidate=InstrumentationRegistry.getArguments().getString("candidateDex");

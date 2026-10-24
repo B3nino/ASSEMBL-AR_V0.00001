@@ -145,7 +145,7 @@ public final class GlobalComponentRegistry {
     }
     private static boolean validOutline(List<VisionPoint> corners){double area=0;for(int i=0;i<4;i++){VisionPoint a=corners.get(i),b=corners.get((i+1)%4);if(!Double.isFinite(a.getX()+a.getY()))return false;area+=a.getX()*b.getY()-b.getX()*a.getY();}return area>32;}
     private static boolean compactIdentity(ComponentReferenceSpec s){
-        return "assembly".equals(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(s.getReferenceId()))
+        return dev.chyken.assembl_ar.camera.Phase3AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase3AssetCatalog.referenceRole(s.getReferenceId()))
                 ||dev.chyken.assembl_ar.camera.Phase5AssetCatalog.installed(dev.chyken.assembl_ar.camera.Phase5AssetCatalog.referenceRole(s.getReferenceId()));
     }
     /** -1 means shared PCB/context cannot establish this component's identity. */
@@ -166,6 +166,12 @@ public final class GlobalComponentRegistry {
         return identity;
     }
     /** Components elsewhere on the same assembled PCB are not competing identities. */
+    static boolean competesWithLocalization(RecognitionResult local,List<VisionPoint> candidate){
+        if(!local.hasLocatedComponent())return true;
+        if(local.getProjectedCorners().size()==4)return samePhysicalTarget(local.getProjectedCorners(),candidate);
+        for(RecognitionResult.InstanceObservation part:local.getInstanceObservations())if(samePhysicalTarget(part.getProjectedCorners(),candidate))return true;
+        return false;
+    }
     static boolean samePhysicalTarget(List<VisionPoint> expected,List<VisionPoint> candidate){
         if(expected.size()!=4||candidate.size()!=4)return false;
         double[] a=bounds(expected),b=bounds(candidate);double aa=(a[2]-a[0])*(a[3]-a[1]),ba=(b[2]-b[0])*(b[3]-b[1]);

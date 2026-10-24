@@ -36,12 +36,17 @@ final class NearestDescriptorPairs {
     }
 
     static NearestDescriptorPairs compute(Mat query, Mat train) {
+        return compute(query,train,null);
+    }
+    /** Spatial gating changes the search domain only; callers still apply Lowe and RANSAC. */
+    static NearestDescriptorPairs compute(Mat query, Mat train, Mat mask) {
         if (query.empty() || train.empty()) return new NearestDescriptorPairs(0, 0, new int[0], new int[0]);
         Mat distance = new Mat();
         Mat index = new Mat();
         try {
             // OpenCV clamps K to the train row count; a missing neighbour is reported as -1.
-            Core.batchDistance(query, train, distance, CvType.CV_32S, index, Core.NORM_HAMMING, 2);
+            if(mask==null)Core.batchDistance(query, train, distance, CvType.CV_32S, index, Core.NORM_HAMMING, 2);
+            else Core.batchDistance(query,train,distance,CvType.CV_32S,index,Core.NORM_HAMMING,2,mask);
             int columns = index.cols();
             int[] indices = new int[query.rows() * columns];
             int[] distances = new int[indices.length];

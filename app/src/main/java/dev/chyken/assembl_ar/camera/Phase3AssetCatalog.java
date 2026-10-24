@@ -14,8 +14,11 @@ public final class Phase3AssetCatalog {
         if(n.equals("STEP31MOTORDRIVER")||n.equals("MOTORDRIVERFRONT"))return "front";
         if(n.equals("MOTORDRIVERBACKINVALID"))return "back";
         if(n.equals("STEP35ASSEMBLYSCAN"))return "assembly";
+        // These photographs show the driver installed backward, not its loose underside.
+        if(n.equals("STEP31MOTORDRIVERINVALID")||n.equals("STEP34MOTORDRIVERBACKWARD"))return "invalid";
         return null;
     }
+    public static boolean installed(String role){return "assembly".equals(role)||"invalid".equals(role);}
     public static String referenceRole(String id){
         if(id==null||!id.startsWith(PREFIX))return null;
         int end=id.indexOf('_',PREFIX.length());return end<0?null:id.substring(PREFIX.length(),end);

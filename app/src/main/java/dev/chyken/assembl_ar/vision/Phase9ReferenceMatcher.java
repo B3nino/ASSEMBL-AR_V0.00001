@@ -21,7 +21,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
     RecognitionResult inspect(Mat gray,Mat rgb,long timestamp,int stage){
         frameKeypoints=0;
         long start=android.os.SystemClock.elapsedRealtimeNanos(),deadline=System.nanoTime()+FRAME_BUDGET_NS;
-        Mat color=new Mat(),bgr=new Mat();List<VisionPoint> corners=Collections.emptyList();boolean stand=false,left=false,right=false,context=false,invalid=false;int count=0;double score=0;
+        Mat color=new Mat(),bgr=new Mat();List<VisionPoint> corners=Collections.emptyList();List<RecognitionResult.InstanceObservation> instances=new ArrayList<>();boolean stand=false,left=false,right=false,context=false,invalid=false;int count=0;double score=0;
         database.acquireForRecognition();
         try{
             if(rgb!=null&&!rgb.empty()){Imgproc.resize(rgb,color,gray.size(),0,0,Imgproc.INTER_AREA);Imgproc.cvtColor(color,bgr,Imgproc.COLOR_RGB2BGR);}
@@ -48,7 +48,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                         }
                         if(best!=null)break;
                     }
-                    if(best!=null){bodies.add(best.corners);count++;score+=best.score;corners=best.corners;preferredLoose=selected;best.close();}
+                    if(best!=null){bodies.add(best.corners);count++;score+=best.score;corners=best.corners;instances.add(new RecognitionResult.InstanceObservation("phase9:loose:"+count,stage==1?"center_standoff":"drive_wheel",RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY,best.corners,.85));preferredLoose=selected;best.close();}
                     if(count==(stage==1?1:2))break;
                 }
                 if(stage==1){stand=count==1;count=0;}
@@ -63,6 +63,18 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                             context=true;List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
                             List<VisionPoint> predictedStand=project(regions.get(2),ref,board.h);
                             boolean visibleStand=brassAt(bgr,predictedStand);boolean l=false,r=false;double value=board.score;
+                            if(!visibleStand){
+                                // Specular brass can appear white/gray. Require an independent
+                                // local standoff homography when its gold appearance disappears.
+                                Rect standCrop=bounds(predictedStand,gray,.25);
+                                if(standCrop!=null)for(int extent:new int[]{0,256})try(Live detail=extract(gray,standCrop,extent)){
+                                    Found local=match(ref,v,2,detail,6,false);
+                                    if(local!=null){try{visibleStand=aligned(predictedStand,local.corners);if(visibleStand)value+=local.score;}finally{local.close();}}
+                                    if(visibleStand)break;
+                                }
+                            }
+                            List<RecognitionResult.InstanceObservation> visible=new ArrayList<>();
+                            if(visibleStand)visible.add(new RecognitionResult.InstanceObservation("phase9:standoff","center_standoff",RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY,predictedStand,.85));
                             if(stage==4&&!bad){
                                 boolean[] seen=new boolean[2];
                                 for(int side=0;side<2;side++){
@@ -70,7 +82,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                                     if(crop==null)continue;
                                     for(int extent:new int[]{0,512})try(Live local=extract(gray,crop,extent)){
                                         Found wheel=match(ref,v,side,local,10,false);
-                                        if(wheel!=null){seen[side]=aligned(expected,wheel.corners);if(seen[side])value+=wheel.score;wheel.close();if(seen[side])break;}
+                                        if(wheel!=null){seen[side]=aligned(expected,wheel.corners);if(seen[side]){value+=wheel.score;visible.add(new RecognitionResult.InstanceObservation("phase9:wheel:"+side,"drive_wheel",RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY,wheel.corners,.85));}wheel.close();if(seen[side])break;}
                                     }
                                 }
                                 l=seen[0];r=seen[1];
@@ -80,7 +92,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                             boolean pass=visibleStand&&(stage==3||!bad&&l&&r);
                             int quality=(visibleStand?1:0)+(l?2:0)+(r?2:0);
                             int previous=(stand?1:0)+(left?2:0)+(right?2:0);
-                            if(quality>previous||quality==previous&&value>score){stand=visibleStand;left=l;right=r;score=value;corners=board.corners;}
+                            if(quality>previous||quality==previous&&value>score){stand=visibleStand;left=l;right=r;score=value;corners=visible.isEmpty()?Collections.emptyList():visible.get(0).getProjectedCorners();instances=visible;}
                             board.close();
                             if(pass){preferredScene=ref;stand=true;left=l;right=r;invalid=false;break;}
                         }
@@ -96,7 +108,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
             return RecognitionResult.builder(timestamp).identity("phase9:photo",component,"Standoff and wheels")
                 .method(corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
                 .validation(o.accepted(stage)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:invalid?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
-                .corners(corners).matches(frameKeypoints,(int)score,(int)score,score>0?1:0).confidence(o.accepted(stage)?.85:0)
+                .corners(corners).instances(instances).matches(frameKeypoints,(int)score,(int)score,score>0?1:0).confidence(o.accepted(stage)?.85:0)
                 .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase9Observation(o);
         }finally{database.releaseAfterRecognition();color.release();bgr.release();}
     }
@@ -144,12 +156,20 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
             if(r.area()<gray.total()*(stage==1?.0005:.006)||stage==1&&aspect<2.2||stage==2&&aspect>2.1)continue;
             result.add(Phase9PhotoGeometry.pad(r,stage==1?.35:.25,gray));if(result.size()==3)break;
         }
-        if(result.isEmpty())result.add(new Rect(0,0,gray.cols(),gray.rows()));return result;
+        // Both rubber faces remain eligible when yellow hubs are shaded. Independent
+        // descriptor pools prevent one identical wheel stealing the other's ratio matches.
+        if(stage==2){
+            result.add(new Rect(0,0,(int)(gray.cols()*.56),gray.rows()));
+            result.add(new Rect((int)(gray.cols()*.44),0,gray.cols()-(int)(gray.cols()*.44),gray.rows()));
+            result.add(new Rect(0,0,gray.cols(),(int)(gray.rows()*.56)));
+            result.add(new Rect(0,(int)(gray.rows()*.44),gray.cols(),gray.rows()-(int)(gray.rows()*.44)));
+        }
+        result.add(new Rect(0,0,gray.cols(),gray.rows()));return result;
     }
     private Live extract(Mat gray,Rect window,int extent){
         Mat crop=gray.submat(window),work=new Mat(),mask=new Mat(),rows=new Mat();MatOfKeyPoint keypoints=new MatOfKeyPoint();
         try{
-            double scale=extent==0?1:extent/(double)Math.max(window.width,window.height);Imgproc.resize(crop,work,new Size(),scale,scale,scale<1?Imgproc.INTER_AREA:Imgproc.INTER_LINEAR);
+            double scale=extent==0?1:Math.min(4,extent/(double)Math.max(window.width,window.height));Imgproc.resize(crop,work,new Size(),scale,scale,scale<1?Imgproc.INTER_AREA:Imgproc.INTER_LINEAR);
             DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,mask,keypoints,rows);KeyPoint[] keys=keypoints.toArray();frameKeypoints+=keys.length;for(KeyPoint k:keys){k.pt.x=k.pt.x/scale+window.x;k.pt.y=k.pt.y/scale+window.y;}
             return new Live(keys,rows);
         }catch(RuntimeException failure){rows.release();throw failure;}finally{crop.release();work.release();mask.release();keypoints.release();}

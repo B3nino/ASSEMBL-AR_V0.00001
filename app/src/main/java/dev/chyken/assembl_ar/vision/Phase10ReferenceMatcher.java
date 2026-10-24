@@ -11,14 +11,16 @@ import java.util.*;
 final class Phase10ReferenceMatcher implements AutoCloseable {
     private final ReferenceDatabase database;private final ORB orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
     private final CLAHE clahe;private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
+    private final ComponentDetailExtractor details;
     private final int[] cursors=new int[6];
     private final ReferenceDatabase.PreparedReference[] preferred=new ReferenceDatabase.PreparedReference[6];
-    Phase10ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;clahe=OpenCvVisionUtils.createClahe(config);}
+    Phase10ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;clahe=OpenCvVisionUtils.createClahe(config);details=new ComponentDetailExtractor(config);}
     RecognitionResult inspect(Mat gray,long time,int stage){
-        long start=android.os.SystemClock.elapsedRealtimeNanos();Mat work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();double scale=Math.min(1,1280.0/Math.max(gray.cols(),gray.rows())),positive=0,negative=0;List<VisionPoint> corners=Collections.emptyList();
+        long start=android.os.SystemClock.elapsedRealtimeNanos();Mat raw=new Mat(),work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();double scale=Math.min(1,1280.0/Math.max(gray.cols(),gray.rows())),positive=0,negative=0;List<VisionPoint> corners=Collections.emptyList();
+        List<ComponentDetailExtractor.Sample> samples=new ArrayList<>();boolean sampled=false;
         database.acquireForRecognition();
         try{
-            if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keys,descriptors);KeyPoint[] live=keys.toArray();
+            if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);work.copyTo(raw);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keys,descriptors);KeyPoint[] live=keys.toArray();
             List<ReferenceDatabase.PreparedReference> positiveRefs=new ArrayList<>(),negativeRefs=new ArrayList<>();
             for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){String role=Phase10AssetCatalog.referenceRole(ref.spec.getReferenceId());if(Phase10AssetCatalog.eligible(role,stage))(role.endsWith("bad")?negativeRefs:positiveRefs).add(ref);}
             List<ReferenceDatabase.PreparedReference> candidates=new ArrayList<>();
@@ -33,7 +35,12 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
             if(!descriptors.empty())for(ReferenceDatabase.PreparedReference ref:candidates){
                 if(tried>=Math.min(negativeRefs.isEmpty()?1:2,candidates.size())&&System.nanoTime()>deadline)break;tried++;
                 String role=Phase10AssetCatalog.referenceRole(ref.spec.getReferenceId());
-                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){if(!variant.hasOrbData())continue;Match found=match(ref,variant,live,descriptors,scale,stage,gray);if(found==null)continue;
+                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){if(!variant.hasOrbData())continue;Match found=match(ref,variant,live,descriptors,scale,stage,gray);
+                    if(found==null&&(stage==1||stage==3)){
+                        if(!sampled){sampled=true;for(List<VisionPoint> proposal:ComponentDetailExtractor.proposals(raw)){ComponentDetailExtractor.Sample detail=details.extract(raw,proposal,512);if(detail!=null)samples.add(detail);}}
+                        for(ComponentDetailExtractor.Sample detail:samples){found=match(ref,variant,detail.keys,detail.descriptors,scale,stage,gray);if(found!=null)break;}
+                    }
+                    if(found==null)continue;
                     if(role.endsWith("bad")){if(found.score>negative){negative=found.score;if(negative>positive)corners=found.corners;}}
                     else if(found.score>positive){positive=found.score;corners=found.corners;preferred[stage]=ref;}
                     break;
@@ -46,7 +53,7 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
                 .validation(result.accepted()?RecognitionResult.ValidationState.EXPECTED_COMPONENT:result.flipped()?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
                 .corners(corners).matches(live.length,(int)result.score,(int)result.score,result.score>0?1:0).confidence(result.accepted()?.85:0)
                 .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase10Observation(result);
-        }finally{database.releaseAfterRecognition();work.release();descriptors.release();keys.release();empty.release();}
+        }finally{database.releaseAfterRecognition();for(ComponentDetailExtractor.Sample detail:samples)detail.close();raw.release();work.release();descriptors.release();keys.release();empty.release();}
     }
     private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,int stage,Mat gray){DiagnosticHammingMatcher.context(ref.spec);
         List<DMatch> good=new ArrayList<>();
@@ -68,7 +75,7 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
                 score+=inliers(source,target,h);if(i>=2)chassis=true;
             }
             if(stage==5&&!chassis)return null;
-            List<VisionPoint> quad=project(ref.spec.getPlanarCornersNormalized(),ref,transforms.get(0),scale);return quad.size()==4?new Match(score,quad):null;
+            List<VisionPoint> quad=stage==4?project(regions.get(1),ref,transforms.get(1),scale):project(ref.spec.getPlanarCornersNormalized(),ref,transforms.get(0),scale);return quad.size()==4?new Match(score,quad):null;
         }finally{for(Mat h:transforms)h.release();}
     }
     private static boolean inside(Point p,List<VisionPoint> box,ReferenceDatabase.PreparedReference ref){return p.x>=box.get(0).getX()*ref.imageWidth&&p.x<=box.get(2).getX()*ref.imageWidth&&p.y>=box.get(0).getY()*ref.imageHeight&&p.y<=box.get(2).getY()*ref.imageHeight;}
@@ -87,10 +94,18 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
     private static boolean protectorMaterial(List<VisionPoint> box,ReferenceDatabase.PreparedReference ref,Mat h,Mat gray,double scale){
         double l=box.get(0).getX()*ref.imageWidth,t=box.get(0).getY()*ref.imageHeight,w=(box.get(2).getX()-box.get(0).getX())*ref.imageWidth,height=(box.get(2).getY()-box.get(0).getY())*ref.imageHeight;
         MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();
-        try{for(double start:new double[]{.15,.70}){List<Point> samples=new ArrayList<>();for(int x=0;x<10;x++)for(int y=0;y<16;y++)samples.add(new Point(l+(start+.20*x/9)*w,t+(.30+.40*y/15)*height));src.fromList(samples);Core.perspectiveTransform(src,dst,h);int count=0,dark=0;for(Point p:dst.toArray()){int x=(int)(p.x/scale),y=(int)(p.y/scale);if(x<0||y<0||x>=gray.cols()||y>=gray.rows())continue;count++;if(gray.get(y,x)[0]<110)dark++;}if(count<100||dark<count*.35)return false;}return true;
+        try{
+            List<Point> aperture=new ArrayList<>();for(int x=0;x<10;x++)for(int y=0;y<16;y++)aperture.add(new Point(l+(.40+.20*x/9)*w,t+(.30+.40*y/15)*height));
+            src.fromList(aperture);Core.perspectiveTransform(src,dst,h);List<Double> backing=new ArrayList<>();
+            for(Point p:dst.toArray()){int x=(int)(p.x/scale),y=(int)(p.y/scale);if(x>=0&&y>=0&&x<gray.cols()&&y<gray.rows())backing.add(gray.get(y,x)[0]);}
+            if(backing.size()<100)return false;Collections.sort(backing);
+            // Compare both black rails with the local PCB seen through the aperture.
+            // A global 110 gray-level cutoff changes meaning under exposure/glare.
+            double shadow=backing.get((int)(backing.size()*.75))-8;
+            for(double start:new double[]{.15,.70}){List<Point> samples=new ArrayList<>();for(int x=0;x<10;x++)for(int y=0;y<16;y++)samples.add(new Point(l+(start+.20*x/9)*w,t+(.30+.40*y/15)*height));src.fromList(samples);Core.perspectiveTransform(src,dst,h);int count=0,dark=0;for(Point p:dst.toArray()){int x=(int)(p.x/scale),y=(int)(p.y/scale);if(x<0||y<0||x>=gray.cols()||y>=gray.rows())continue;count++;if(gray.get(y,x)[0]<shadow)dark++;}if(count<100||dark<count*.35)return false;}return true;
         }finally{src.release();dst.release();}
     }
     private static boolean coherent(List<VisionPoint> expected,List<VisionPoint> actual,double tolerance){if(expected.size()!=4||actual.size()!=4)return false;double size=Math.hypot(expected.get(0).getX()-expected.get(2).getX(),expected.get(0).getY()-expected.get(2).getY());if(size<10)return false;for(int i=0;i<4;i++)if(Math.hypot(expected.get(i).getX()-actual.get(i).getX(),expected.get(i).getY()-actual.get(i).getY())>size*tolerance)return false;return true;}
     private static final class Match{final double score;final List<VisionPoint> corners;Match(double score,List<VisionPoint> corners){this.score=score;this.corners=corners;}}
-    public void close(){orb.clear();clahe.clear();matcher.clear();}
+    public void close(){details.close();orb.clear();clahe.clear();matcher.clear();}
 }

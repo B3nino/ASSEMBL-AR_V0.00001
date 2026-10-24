@@ -11,7 +11,7 @@ public final class PhaseGuideMetadata {
         {"4.1 · Select wire colors","4.2 · Component wiring schematic","4.3 · Wire pull test"},
         {"5.1 · Nano scan and View Info","5.2 · Installation demo","5.3 · Installed orientation scan","5.4 · Pin alignment and stability"},
         {"6.1 · Six jumper wire colors","6.2 · Power and ground check","6.3 · Four PWM control signals","6.4 · Final wiring checklist"},
-        {"7.1a · Scan caster wheel","7.1b · Caster screws and nuts","7.2a · Scan two line trackers","7.2b · Tracker screws, spacers and nuts","7.3 · Caster demos, bottom scan and stability","7.4 · Tracker demos, bottom scan and stability"},
+        {"7.1a · Scan caster wheel","7.1b · Caster screws and nuts","7.2a · Scan two line trackers","7.2b · Tracker screws, spacers and nuts","7.3 · Caster demos and stability","7.4 · Tracker demos, combined bottom scan and stability"},
         java.util.Arrays.stream(Phase8SensorWiringFlow.Screen.values()).map(Phase8SensorWiringFlow.Screen::label).toArray(String[]::new),
         java.util.Arrays.stream(Phase9StandoffWheelsFlow.Screen.values()).map(Phase9StandoffWheelsFlow.Screen::label).toArray(String[]::new),
         java.util.Arrays.stream(Phase10ExtensionBoardFlow.Screen.values()).map(Phase10ExtensionBoardFlow.Screen::label).toArray(String[]::new),

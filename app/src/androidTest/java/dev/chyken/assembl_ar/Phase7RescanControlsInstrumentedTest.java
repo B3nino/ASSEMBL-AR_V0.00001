@@ -39,7 +39,7 @@ public final class Phase7RescanControlsInstrumentedTest {
                 if(!loaded[0])SystemClock.sleep(50);
             }
             assertTrue(loaded[0]);
-            for(int step:new int[]{3,4}) {
+            for(int step:new int[]{4}) {
                 Phase7GuideController[] holder=new Phase7GuideController[1];
                 String[] before=new String[1];Object[] video=new Object[1];
                 try {
@@ -81,7 +81,7 @@ public final class Phase7RescanControlsInstrumentedTest {
                         Object builder=call(RecognitionResult.class,"builder",new Class<?>[]{long.class},SystemClock.elapsedRealtimeNanos());
                         RecognitionResult result=(RecognitionResult)call(builder,"build",new Class<?>[0]);
                         result=(RecognitionResult)call(result,"withRequestTag",new Class<?>[]{Object.class},guide.flow.tag());
-                        result=(RecognitionResult)call(result,"withPhase7Observation",new Class<?>[]{Phase7Observation.class},step==3?new Phase7Observation(1,false,50):Phase7Observation.installedTrackers(2,2,true,90));
+                        result=(RecognitionResult)call(result,"withPhase7Observation",new Class<?>[]{Phase7Observation.class},step==3?new Phase7Observation(1,false,50):Phase7Observation.installedTrackers(2,2,true,90).withCaster(true));
                         guide.onResult(result);assertTrue(guide.flow.scanned());
                     });
                     ui(scenario,activity->{

@@ -8,7 +8,7 @@ import java.util.*;
 
 /** Source-only localization: live acceptance still requires distributed, geometric ORB evidence. */
 final class Phase7PhotoGeometry {
-    static final int VERSION=6;
+    static final int VERSION=7;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source, byte[] bytes, java.io.File cache) {
         java.io.File geometry = cache == null ? null : new java.io.File(cache.getPath() + ".regions1");
         List<List<VisionPoint>> regions = ReferenceRegionCache.read(geometry);
@@ -50,7 +50,11 @@ final class Phase7PhotoGeometry {
                 }
             }
             List<List<VisionPoint>> regions=new ArrayList<>();
-            if("trackerwork".equals(role))regions.addAll(Phase7TrackerPhotoGeometry.regions(bgr));
+            if("trackerwork".equals(role)){
+                regions.addAll(Phase7TrackerPhotoGeometry.regions(bgr));
+                // The final scan now owns caster presence as well as both independent modules.
+                regions.add(ball==null?rect(0,0,.002,.002):casterPlate(ball,bgr.cols(),bgr.rows()));
+            }
             else if(installed&&negative)regions.add(rect(.04,.04,.96,.96));
             else if(role.startsWith("caster")){
                 if(ball!=null)regions.add(installed?casterPlate(ball,bgr.cols(),bgr.rows()):box(ball,bgr.cols(),bgr.rows(),.12));

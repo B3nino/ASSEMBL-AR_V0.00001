@@ -30,6 +30,8 @@ tests += [root/'app/src/test/java/dev/chyken/assembl_ar'/p for p in ['camera/Pha
 extra=['vision/PreviewOutlineCoordinatesTest.java','diagnostics/LightingEstimatorTest.java','workflow/PartRecognitionTestSessionTest.java','diagnostics/DiagnosticsFormatTest.java','diagnostics/AcademicBenchmarkRunnerTest.java','vision/PoseSmoothingTest.java','camera/UnifiedReferenceCatalogTest.java','vision/GlobalComponentIdentityTest.java']
 extra.append('vision/IndividualReferenceSearchWindowTest.java')
 extra.append('ui/LatestUiTaskTest.java')
+extra.append('vision/AdaptiveIlluminationPolicyTest.java')
+extra.append('camera/Phase12VideoReferencesTest.java')
 tests += [root/'app/src/test/java/dev/chyken/assembl_ar'/name for name in extra]
 args=['-encoding','UTF-8','-proc:none','-classpath',cp,'-d',str(out/'tests')]+list(map(str,tests))
 (out/'test-javac.args').write_text('\n'.join('"'+a.replace('\\','/')+'"' for a in args))
