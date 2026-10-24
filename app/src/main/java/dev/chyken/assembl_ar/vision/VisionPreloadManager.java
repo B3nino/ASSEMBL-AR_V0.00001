@@ -59,7 +59,10 @@ public final class VisionPreloadManager {
             @Override public void onConfigurationChanged(android.content.res.Configuration c) { }
             @Override public void onLowMemory() { trimMemory(); }
             @Override public void onTrimMemory(int level) {
-                if (level >= TRIM_MEMORY_RUNNING_LOW) trimMemory();
+                // UI_HIDDEN (20) is an ordinary app switch, not a low-memory
+                // signal. Keep the warm cache when opening Recents/control center.
+                if (level == TRIM_MEMORY_RUNNING_LOW || level == TRIM_MEMORY_RUNNING_CRITICAL
+                        || level >= TRIM_MEMORY_BACKGROUND) trimMemory();
             }
         });
     }

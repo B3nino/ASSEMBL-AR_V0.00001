@@ -41,7 +41,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
             // not wait behind dozens of high-resolution phone/wire photographs.
             if(step!=1)ordered.sort(Comparator.comparingDouble(r->Math.abs(Math.log(
                     Math.max(r.imageWidth,r.imageHeight)/(double)Math.max(raw.cols(),raw.rows())))));
-            if(step!=1)ordered=rankedWindow(ordered,descriptors);
+            ordered=rankedWindow(ordered,descriptors,step);
             if(preferredReference!=null)for(int i=0;i<ordered.size();i++)if(preferredReference.equals(ordered.get(i).spec.getReferenceId())){ordered.add(0,ordered.remove(i));break;}
             int directRefinements=0;
             if(!descriptors.empty())for(ReferenceDatabase.PreparedReference ref:ordered){
@@ -50,6 +50,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
                 // A strong positive can prune positive duplicates, but never skip
                 // the actual backward-installation reference family.
                 if(step!=1&&role.equals("assembly")&&evidence.strong())continue;
+                if(step==1&&role.equals("front")&&evidence.score(Phase3Observation.State.FRONT)>=20)continue;
                 if(role.equals("invalid")&&evidence.invalidStrong)continue;
                 String path=ref.spec.getJpegAssetPath(),name=path.substring(path.lastIndexOf('/')+1);
                 if(!seen.add(role+":"+name))continue;
@@ -200,11 +201,11 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
     }
     /** A small probe only schedules full geometry work. Probe matches are never
      * reported as accepted matches, keypoint evidence, or a benchmark trial. */
-    private List<ReferenceDatabase.PreparedReference> rankedWindow(List<ReferenceDatabase.PreparedReference> ordered,Mat live){
+    private List<ReferenceDatabase.PreparedReference> rankedWindow(List<ReferenceDatabase.PreparedReference> ordered,Mat live,int step){
         List<ReferenceDatabase.PreparedReference> positive=new ArrayList<>(),negative=new ArrayList<>();
         Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
         for(ReferenceDatabase.PreparedReference ref:ordered){
-            String role=Phase3AssetCatalog.referenceRole(ref.spec.getReferenceId());if(!Phase3AssetCatalog.installed(role))continue;
+            String role=Phase3AssetCatalog.referenceRole(ref.spec.getReferenceId());if(role==null||((step==1)==Phase3AssetCatalog.installed(role)))continue;
             int best=0;
             for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
                 if(!variant.hasOrbData())continue;Split split=splits.get(variant);if(split==null){split=new Split(ref,variant);splits.put(variant,split);}
@@ -214,7 +215,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
                 int good=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&pairs.bestDistance(i)<=64&&pairs.bestDistance(i)<.76*pairs.secondDistance(i))good++;
                 best=Math.max(best,good);
             }
-            scores.put(ref,best);("invalid".equals(role)?negative:positive).add(ref);
+            scores.put(ref,best);("invalid".equals(role)||"back".equals(role)?negative:positive).add(ref);
         }
         Comparator<ReferenceDatabase.PreparedReference> ranking=Comparator.comparingInt(r->-scores.get(r));positive.sort(ranking);negative.sort(ranking);
         LinkedHashSet<ReferenceDatabase.PreparedReference> selected=new LinkedHashSet<>();

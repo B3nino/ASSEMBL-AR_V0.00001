@@ -12,7 +12,10 @@ public final class Phase5AssetCatalog {
     public static String role(String folder){
         switch(Phase2AssetCatalog.normalize(folder)){
             case "STEP51MICROCONTROLLERSCAN":return "front";
+            case "STEP51ARDUINONANO":return "front";
             case "MICROCONTROLLERBOTTOMINVALID":return "back";
+            case "STEP51ARDUINONANOINVALID":
+            case "STEP55ARDUINONANOINVALID":return "back";
             case "STEP53HARDWARESCAN":return "assembly";
             case "STEP53HARDWARESCANINVALIDS":return "invalid";
             default:return null;
@@ -23,11 +26,20 @@ public final class Phase5AssetCatalog {
         int end=id.indexOf('_',PREFIX.length());return end<0?null:id.substring(PREFIX.length(),end);
     }
     public static boolean installed(String role){return "assembly".equals(role)||"invalid".equals(role);}
+    /** These reviewed negative views specifically show a 180-degree USB reversal. */
+    public static boolean reversedInstallationReference(String id){
+        if(!"invalid".equals(referenceRole(id)))return false;
+        int start=id.indexOf("references/");
+        Phase35VideoReferences.Entry e=start<0?null:Phase35VideoReferences.annotation(id.substring(start));
+        return e!=null&&"nano".equals(e.part)&&"invalid".equals(e.role);
+    }
     public static List<ComponentReferenceSpec> references(AssetManager assets){return referencesForPaths(Phase2AssetCatalog.files(assets,ROOT));}
     public static List<ComponentReferenceSpec> referencesForPaths(List<String> paths){
         List<ComponentReferenceSpec> result=new ArrayList<>();Set<String> seen=new HashSet<>();
         for(String path:paths){
             if(!path.startsWith(ROOT+"/")||!Phase2AssetCatalog.image(path)||!seen.add(path))continue;
+            ComponentReferenceSpec reviewed=Phase35VideoReferences.find(path);
+            if(reviewed!=null){result.add(reviewed);continue;}
             String role=role(path.substring(ROOT.length()+1).split("/")[0]);if(role==null)continue;
             // This is the Nano footprint; the full assembly photo is context, not a 45mm board.
             result.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,NeobotSeedData.MICROCONTROLLER,"Arduino Nano",18,45)

@@ -16,7 +16,7 @@ target.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
     # Carry the small tablet-authored exemplars for isolated asset replay too.
     # Existing large reference/video assets still come from the installed app.
-    names = sorted(n for n in apk.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n) or n in ('resources.arsc','AndroidManifest.xml') or n.startswith('res/') or n.startswith('assets/references/Phase3/STEP3_5ASSEMBLYSCAN/TABLET_DRIVER_PLACEMENT') or n.startswith('assets/references/Phase3/STEP3_1MOTORDRIVER_INVALID/') or '/var_light/VIDEO_' in n)
+    names = sorted(n for n in apk.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n) or n in ('resources.arsc','AndroidManifest.xml') or n.startswith('res/') or n.startswith('assets/references/Phase3/STEP3_5ASSEMBLYSCAN/TABLET_DRIVER_PLACEMENT') or n.startswith('assets/references/Phase3/STEP3_1MOTORDRIVER_INVALID/') or '/var_light/VIDEO_' in n or '/var_light/VIDEO35_' in n)
     if not names:
         raise SystemExit('No DEX in the built APK')
     for name in names:

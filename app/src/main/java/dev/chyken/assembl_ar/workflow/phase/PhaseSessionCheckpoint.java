@@ -37,4 +37,10 @@ public final class PhaseSessionCheckpoint {
     public boolean canRestore(AssemblyPhase firstUnfinished){
         return firstUnfinished!=null&&(developer||phaseId.equals(firstUnfinished.getId()));
     }
+    /** Android recreating a live screen may also restore an earlier completed-step review.
+     * It still cannot open learner phases beyond the first unfinished phase. */
+    public boolean canRestoreActivity(AssemblyPhase firstUnfinished){
+        return developer||firstUnfinished==null
+                ||AssemblyPhaseCatalog.byId(phaseId).getNumber()<=firstUnfinished.getNumber();
+    }
 }

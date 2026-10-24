@@ -9,8 +9,15 @@ final class PhotoFeaturePartition implements AutoCloseable {
     final Mat probe;
     PhotoFeaturePartition(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v){
         double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
+        dev.chyken.assembl_ar.camera.Phase35VideoReferences.Entry authored=dev.chyken.assembl_ar.camera.Phase35VideoReferences.annotation(ref.spec.getJpegAssetPath());
         List<Integer> own=new ArrayList<>(),other=new ArrayList<>();
         for(int i=0;i<v.keypoints.length;i++){Point p=v.keypoints[i].pt;
+            if(authored!=null){
+                double x=p.x/ref.imageWidth,y=p.y/ref.imageHeight;
+                if(Phase3ReferenceAnnotations.contains(authored.regions.get(0),x,y))own.add(i);
+                else if(!Phase3ReferenceAnnotations.contains(authored.body,x,y))for(int n=1;n<authored.regions.size();n++)if(Phase3ReferenceAnnotations.contains(authored.regions.get(n),x,y)){other.add(i);break;}
+                continue;
+            }
             if(p.x>=b[0]&&p.x<=b[2]&&p.y>=b[1]&&p.y<=b[3])own.add(i);
             else if(p.x<b[0]-.15*w||p.x>b[2]+.15*w||p.y<b[1]-.15*h||p.y>b[3]+.15*h)other.add(i);
         }

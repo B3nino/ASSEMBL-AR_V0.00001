@@ -108,6 +108,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     private boolean catalogReady;
     private boolean resumed;
     private boolean cameraBound;
+    private boolean resumeRequested;
+    @Nullable private Preview cameraPreviewUseCase;
     private boolean permissionRequested;
     private volatile boolean destroyed;
     private volatile boolean testing;
@@ -173,6 +175,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         selectedIndex = retained == null ? initialIndex() : retained.selectedIndex;
         pendingSampleExportFile = retained == null ? null : retained.pendingSampleExportFile;
         if (state != null) {
+            resumeRequested=state.getBoolean("test_running",false);
             selectedIndex = Math.max(0, Math.min(components.size() - 1, state.getInt("part_index", selectedIndex)));
             permissionRequested = state.getBoolean("permission_requested");
             pendingExport = state.getString("pending_export");
@@ -301,6 +304,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         long generation = session.selectPart(part.getId(), part.getName(), minimumAreaRatio);
         activeTest = new ActiveTest(generation, part.getId(), minimumAreaRatio);
         testing = true;
+        resumeRequested=false;
+        if(analyzer!=null)analyzer.resume();
         hud.setScanningEnabled(true);
         ((dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView)findViewById(R.id.dynamicOutlineOverlay)).setCameraActive(true);
         if (analyzer != null && analysis != null) analysis.setAnalyzer(cameraExecutor, analyzer);
@@ -313,11 +318,13 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     boolean pauseForDiagnostics(){boolean active=testing;pauseTest();return active;}
     void resumeAfterDiagnostics(){if(!destroyed&&resumed)startTest();}
     private void pauseTest() {
+        resumeRequested=false;
         outlineUpdates.clear();
         testing = false;
         dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView overlay=findViewById(R.id.dynamicOutlineOverlay);if(overlay!=null)overlay.setCameraActive(false);
         if(outlineVoice!=null)outlineVoice.stop();
         activeTest = null;
+        contexts.clear();frameContext=null;
         session.pause();
         if (analyzer != null) analyzer.cancelPendingFrameSnapshot();
         if (analysis != null) analysis.clearAnalyzer();
@@ -474,7 +481,9 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 boundCamera = camera;
                 calibrationProvider = CameraCalibrationProvider.from(camera.getCameraInfo());
                 cameraBound = true;
+                cameraPreviewUseCase=cameraPreview;
                 renderSelection();
+                resumeSavedTest();
             } catch (Exception failure) {
                 if (analyzer != null) analyzer.close();
                 if (analysis != null) analysis.clearAnalyzer();
@@ -1023,26 +1032,39 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     @Override protected void onResume() {
         super.onResume();
         resumed = true;
+        if(analyzer!=null)analyzer.resume();
+        if(cameraPreviewUseCase!=null)cameraPreviewUseCase.setSurfaceProvider(preview.getSurfaceProvider());
         arView.onResume();
         if (!testMode) {
             if (!catalogReady) initializeVision();
             else if (hasCameraPermission()) bindCamera();
         }
+        resumeSavedTest();
+    }
+
+    private void resumeSavedTest(){
+        if(resumeRequested&&resumed&&catalogReady&&(testMode||cameraBound))startTest();
     }
 
     private dev.chyken.assembl_ar.ui.AssemblyVoiceGuide outlineVoice;
     @Override protected void onPause() {
+        boolean wasRunning=testing||resumeRequested;
         pauseTest();
+        resumeRequested=wasRunning;
         resumed = false;
+        if(analyzer!=null)analyzer.pause();
         arView.onPause();
         super.onPause();
     }
+
+    @Override protected void onStop(){if(analyzer!=null)analyzer.pause();super.onStop();}
 
     @Override public Object onRetainCustomNonConfigurationInstance() {
         return new RetainedState(session, selectedIndex, pendingSampleExportFile);
     }
 
     @Override protected void onSaveInstanceState(Bundle state) {
+        state.putBoolean("test_running",testing||resumeRequested);
         state.putInt("part_index", selectedIndex);
         state.putBoolean("permission_requested", permissionRequested);
         state.putString("pending_export", pendingExport);
@@ -1063,6 +1085,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
             pendingSampleExportFile = null;
         }
         boundCamera = null;
+        cameraPreviewUseCase=null;
         ComponentRecognizer closingRecognizer = recognizer;
         ReferenceDatabase closingDatabase = referenceDatabase;
         cameraExecutor.execute(() -> {

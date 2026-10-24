@@ -10,6 +10,7 @@ import java.util.*;
 final class Phase3PhotoGeometry {
     static final int VERSION=2;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        if(dev.chyken.assembl_ar.camera.Phase35VideoReferences.find(source.getJpegAssetPath())!=null)return source;
         Phase3ReferenceAnnotations.Regions authored=Phase3ReferenceAnnotations.forPath(source.getJpegAssetPath());
         if(authored!=null){List<VisionPoint> c=authored.outline;return ComponentReferenceSpec.builder(source.getReferenceId(),source.getComponentId(),source.getDisplayName(),28,37)
             .jpegAssetPath(source.getJpegAssetPath()).assemblyStepNumber(3).maximumImageDimension(1280)

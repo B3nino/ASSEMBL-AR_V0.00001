@@ -28,6 +28,8 @@ public final class Phase3AssetCatalog {
      * identifies installed context and must never train the loose-part/front-face gate. */
     public static String roleForPath(String path){
         if(path==null||!path.startsWith(ROOT+"/"))return null;
+        ComponentReferenceSpec reviewed=Phase35VideoReferences.find(path);
+        if(reviewed!=null)return referenceRole(reviewed.getReferenceId());
         String relative=path.substring(ROOT.length()+1),role=role(relative.split("/")[0]);
         String file=Phase2AssetCatalog.normalize(relative.substring(relative.lastIndexOf('/')+1));
         return "front".equals(role)&&file.contains("MOTORDRIVERPLACEMENT")?"assembly":role;
@@ -36,6 +38,8 @@ public final class Phase3AssetCatalog {
         List<ComponentReferenceSpec> specs=new ArrayList<>();
         for(String path:paths){
             if(!Phase2AssetCatalog.image(path)||!path.startsWith(ROOT+"/"))continue;
+            ComponentReferenceSpec reviewed=Phase35VideoReferences.find(path);
+            if(reviewed!=null){specs.add(reviewed);continue;}
             String role=roleForPath(path);if(role==null)continue;
             specs.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,NeobotSeedData.MOTOR_DRIVER,"Motor Driver",28,37)
                     .jpegAssetPath(path).assemblyStepNumber(3).maximumImageDimension(1280).polarityAnchorsVerified(false).build());

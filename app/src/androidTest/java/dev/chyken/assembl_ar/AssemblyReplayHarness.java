@@ -446,6 +446,8 @@ final class AssemblyReplayHarness implements AutoCloseable {
                         case "getTimestamp": return timestampNanos;
                         case "getRotationDegrees": return 0;
                         case "getSensorToBufferTransformMatrix": return new Matrix();
+                        case "getTagBundle": return androidx.camera.core.impl.TagBundle.emptyBundle();
+                        case "populateExifData": return null;
                         default: throw new UnsupportedOperationException(method.getName());
                     }
                 });

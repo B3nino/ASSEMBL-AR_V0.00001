@@ -32,6 +32,7 @@ extra.append('vision/IndividualReferenceSearchWindowTest.java')
 extra.append('ui/LatestUiTaskTest.java')
 extra.append('vision/AdaptiveIlluminationPolicyTest.java')
 extra.append('camera/Phase12VideoReferencesTest.java')
+extra.append('camera/Phase35VideoReferencesTest.java')
 tests += [root/'app/src/test/java/dev/chyken/assembl_ar'/name for name in extra]
 args=['-encoding','UTF-8','-proc:none','-classpath',cp,'-d',str(out/'tests')]+list(map(str,tests))
 (out/'test-javac.args').write_text('\n'.join('"'+a.replace('\\','/')+'"' for a in args))

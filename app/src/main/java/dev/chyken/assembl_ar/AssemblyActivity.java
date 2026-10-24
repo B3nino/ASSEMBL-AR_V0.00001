@@ -282,6 +282,9 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     @Nullable private Camera boundCamera;
+    @Nullable private Preview cameraPreviewUseCase;
+    @Nullable private dev.chyken.assembl_ar.workflow.phase.PhaseSessionCheckpoint recreationCheckpoint;
+    dev.chyken.assembl_ar.workflow.phase.PhaseSessionCheckpoint recreationCheckpoint(){return recreationCheckpoint;}
     private boolean cameraBindingInProgress;
     @Nullable private View.OnLayoutChangeListener cameraLayoutListener;
     private int cameraLayoutGeneration;
@@ -306,6 +309,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        recreationCheckpoint=savedInstanceState==null?null:dev.chyken.assembl_ar.workflow.phase.PhaseSessionCheckpoint.decode(savedInstanceState.getString("assembly_phase_session"));
         dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.attach(this);
         assemblyWelcomeAccepted=savedInstanceState!=null&&savedInstanceState.getBoolean("assembly_welcome_accepted",false);
         MeasurementRecorder.install(this);
@@ -791,6 +795,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private void startCamera(int generation) {
         if (!isVisionGenerationActive(generation) || !hasCameraPermission()) return;
         if (boundCamera != null) {
+            if(cameraPreviewUseCase!=null)cameraPreviewUseCase.setSurfaceProvider(previewView.getSurfaceProvider());
             attachVisionAnalyzer(generation);
             return;
         }
@@ -837,6 +842,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                 Camera camera = provider.bindToLifecycle(
                         this, CameraSelector.DEFAULT_BACK_CAMERA, useCases.build());
                 boundCamera = camera;
+                cameraPreviewUseCase=preview;
                 imageAnalysis = analysis;
                 calibrationProvider = CameraCalibrationProvider.from(camera.getCameraInfo());
                 attachVisionAnalyzer(generation);
@@ -3093,10 +3099,19 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        dev.chyken.assembl_ar.workflow.phase.PhaseSessionCheckpoint checkpoint=dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.session(this,NeobotSeedData.PROJECT_ID);
+        if(checkpoint!=null)outState.putString("assembly_phase_session",checkpoint.encode());
         outState.putLong("session_started_at", sessionStartedAt);
         outState.putBoolean("assembly_welcome_accepted",assemblyWelcomeAccepted);
         stepInfoPanel.saveState(outState);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override protected void onRestoreInstanceState(Bundle state){
+        super.onRestoreInstanceState(state);
+        if(recreationCheckpoint==null)recreationCheckpoint=dev.chyken.assembl_ar.workflow.phase.PhaseSessionCheckpoint.decode(state.getString("assembly_phase_session"));
+        // Controllers render their restored checkpoint when the repository callback
+        // completes. Never reload/reset a live phase from an Android view callback.
     }
 
     @Override
@@ -3105,6 +3120,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         if(visionInitializationStarted){recognitionText.removeCallbacks(referenceScopeMonitor);recognitionText.post(referenceScopeMonitor);}
         assemblyVisibilityGeneration++;
         activityResumed = true;
+        if(analyzer!=null)analyzer.resume();
         if(componentPreview!=null) componentPreview.resume();
         if (assemblyDemo != null && !awaitingPartScan
                 && !(activeCheckpoint != null && activeCheckpoint.getKind() == GuidedCheckpoint.Kind.IDENTITY
@@ -3139,7 +3155,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         partIntroductionGate.reset();
         bracketSetGate.reset();
         assemblyVisibilityGeneration++;
-        if (analyzer != null) analyzer.resetAssemblyTracking();
+        if (analyzer != null) analyzer.pause();
         if (arHudView != null) arHudView.setBoardCorners(null);
         if (currentStep != null && (activeCheckpoint == null
                 ? !isManualOnlyFinalCheck(currentStep) : activeCheckpoint.requiresCamera())
@@ -3158,6 +3174,11 @@ public final class AssemblyActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    @Override protected void onStop(){
+        if(analyzer!=null)analyzer.pause();
+        super.onStop();
+    }
+
     @Override
     protected void onDestroy() {
         destroyed = true;prefetchGeneration++;
@@ -3166,6 +3187,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         if(wiringReviewDialog!=null)wiringReviewDialog.dismiss();
         if(componentPreview!=null) componentPreview.dispose();
         boundCamera = null;
+        cameraPreviewUseCase=null;
         PhaseAssemblyController phases = phaseController;
         if (phases != null) phases.onDestroy();
         phaseController = null;

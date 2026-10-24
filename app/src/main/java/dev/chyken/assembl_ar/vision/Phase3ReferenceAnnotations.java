@@ -38,7 +38,11 @@ public final class Phase3ReferenceAnnotations {
             rect(280,42,367,130),rect(177,181,246,306),rect(407,143,449,317),rect(251,309,395,352),rect(448,23,575,143));
     }
     private Phase3ReferenceAnnotations(){}
-    public static Regions forPath(String path){return path==null?null:VIEWS.get(path);}
+    public static Regions forPath(String path){
+        if(path==null)return null;Regions known=VIEWS.get(path);if(known!=null)return known;
+        dev.chyken.assembl_ar.camera.Phase35VideoReferences.Entry e=dev.chyken.assembl_ar.camera.Phase35VideoReferences.annotation(path);
+        return e==null||!e.part.equals("driver")?null:new Regions(e.body,e.regions.get(0),Collections.emptyList(),0,e.regions.subList(1,e.regions.size()));
+    }
     public static final class Regions {
         public final List<VisionPoint> outline,identity,holes;
         public final List<List<VisionPoint>> context;

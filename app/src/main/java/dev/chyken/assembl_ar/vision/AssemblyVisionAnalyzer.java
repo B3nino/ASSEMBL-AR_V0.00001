@@ -49,7 +49,11 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
     private volatile RecognitionRequest diagnosticRequest;
     private volatile Object trackingTag;
     private volatile String trackingScope;
-    public void attachMotion(android.content.Context c){flowBridge.attach(c);dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.attach(c);}
+    private android.content.Context motionContext;
+    private final AtomicBoolean lifecyclePaused=new AtomicBoolean();
+    private final AtomicLong lifecycleEpoch=new AtomicLong();
+    private long detectionEpoch;
+    public void attachMotion(android.content.Context c){motionContext=c.getApplicationContext();flowBridge.attach(motionContext);dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.attach(c);}
     private final ComponentRecognizer recognizer;
     private final RequestProvider requestProvider;
     private final Callback callback;
@@ -112,7 +116,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
     private volatile long retryAfterNanos=Long.MIN_VALUE;
     @Override public void analyze(@NonNull ImageProxy image){
         boolean suspended=requestProvider.isAnalysisSuspended();
-        if(closed.get()||suspended&&requestProvider.isTrackingSuspended()){image.close();return;}
+        if(closed.get()||lifecyclePaused.get()||suspended&&requestProvider.isTrackingSuspended()){image.close();return;}
+        long frameEpoch=lifecycleEpoch.get();
         long capturedFrameNanos=CaptureTimebase.toElapsedRealtimeNanos(image.getImageInfo().getTimestamp());
         dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.frame(capturedFrameNanos);
         boolean due=capturedFrameNanos>=retryAfterNanos&&(!suspended||!requestProvider.isTrackingSuspended())&&(lastQueuedDetection==Long.MIN_VALUE||capturedFrameNanos-lastQueuedDetection>=(suspended?500_000_000L:DETECTOR_INTERVAL_NANOS));
@@ -123,7 +128,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             image.close();
             try{detectorExecutor.execute(()->{
                 long started=SystemClock.elapsedRealtimeNanos();
-                try{processDetection(owned);}finally{
+                try{processDetection(owned,frameEpoch);}finally{
                     // A slow detector used to restart immediately after every job,
                     // saturating the CPU indefinitely. Leave a bounded recovery gap;
                     // live camera/LK updates continue on their independent path.
@@ -146,6 +151,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             if(request==null)request=suspended?diagnosticRequest:requestProvider.requestFor(frame);if(request==null)return;
             if(!Objects.equals(trackingScope,dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request)))return;
             TargetBoundingTracker.Target outline=targetBounds.frame(analyzed,time,flowBridge.imageMotion(request.getCameraCalibration(),rotatePixelsToDisplay?rotation:0));
+            if(closed.get()||lifecyclePaused.get()||frameEpoch!=lifecycleEpoch.get())return;
             callback.onTargetTracking(outline,frame,request.getRequestTag());
             // User outlines already have their own LK pass. Metric pose tracking
             // serves an active benchmark/legacy renderer, not every ordinary frame.
@@ -157,8 +163,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
         finally{if(rotated!=null)rotated.release();if(gray!=null)gray.release();image.close();}
     }
     /** Deterministic offline replay entry point; realtime CameraX callers use analyze(). */
-    public void analyzeForReplay(@NonNull ImageProxy image){processDetection(image);}
-    private void processDetection(@NonNull ImageProxy image) {
+    public void analyzeForReplay(@NonNull ImageProxy image){processDetection(image,lifecycleEpoch.get());}
+    private void processDetection(@NonNull ImageProxy image,long queuedEpoch) {
         Objects.requireNonNull(image, "image");
         Mat grayscale = null;
         Mat rotated = null;
@@ -166,7 +172,8 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
         Mat componentGray = null;
         boolean acquired = false;
         try {
-            if (closed.get()) {
+            detectionEpoch=queuedEpoch;
+            if (closed.get()||lifecyclePaused.get()||queuedEpoch!=lifecycleEpoch.get()) {
                 return;
             }
             // A demonstration or assembly screen needs no camera evidence; skip the frame entirely.
@@ -625,6 +632,22 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
     }
 
     public void resetAssemblyTracking() { resetAssemblyTracking.set(true);retryAfterNanos=Long.MIN_VALUE;targetBounds.reset(); }
+    /** A lifecycle pause drops only camera-owned state. The active descriptor bank survives. */
+    public void pause(){
+        if(closed.get()||!lifecyclePaused.compareAndSet(false,true))return;
+        lifecycleEpoch.incrementAndGet();targetBounds.reset();cancelPendingFrameSnapshot();
+        try{detectorExecutor.execute(()->{
+            boardTracker.reset();flowBridge.pause();targetBounds.reset();recognizer.releaseCameraFrameCache();loosePartRecognizer.reset();
+            previousBoardFrame=null;previousBoardAnchor=null;diagnosticGray=null;diagnosticFrame=null;diagnosticRequest=null;trackingScope=null;trackingTag=null;frameGlobalCandidate=null;
+            illuminationPolicy.reset();lastGlobalQuery=Long.MIN_VALUE;
+            retryAfterNanos=Long.MIN_VALUE;lastQueuedDetection=Long.MIN_VALUE;lastAcceptedFrameNanos.set(Long.MIN_VALUE);
+        });}catch(java.util.concurrent.RejectedExecutionException stopping){/* close owns final release */}
+    }
+    public void resume(){
+        if(closed.get()||!lifecyclePaused.compareAndSet(true,false))return;
+        retryAfterNanos=Long.MIN_VALUE;lastQueuedDetection=Long.MIN_VALUE;lastOutlineFrame=Long.MIN_VALUE;lastAcceptedFrameNanos.set(Long.MIN_VALUE);
+        try{detectorExecutor.execute(()->{if(!closed.get()&&!lifecyclePaused.get()&&motionContext!=null)flowBridge.attach(motionContext);});}catch(java.util.concurrent.RejectedExecutionException stopping){/* closing */}
+    }
     public long visualEpoch(){return targetBounds.epoch();}
 
     /** Captures the next frame that reaches recognition, using its exact analyzed pixels. */
@@ -856,9 +879,11 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
     }
 
     private void deliverResult(RecognitionResult result) {
+        if(!currentDetection())return;
         try {
             if(diagnosticGray!=null&&diagnosticRequest!=null){
                 try{result=globalValidation(result,diagnosticGray,diagnosticRequest);}catch(RuntimeException unavailable){Log.w(TAG,"Optional cross-reference hint unavailable",unavailable);}
+                if(!currentDetection())return;
                 RecognitionResult.SpatialAnchor seed=result.getSpatialAnchor();
                 if(seed==null&&result.getPose()!=null&&result.getProjectedCorners().size()==4&&result.getReferenceId()!=null&&result.getComponentId()!=null)seed=new RecognitionResult.SpatialAnchor(result.getReferenceId(),result.getComponentId(),result.getProjectedCorners(),result.getPose());
                 boolean wrong=result.getDiagnosticMetrics()!=null&&result.getDiagnosticMetrics().mismatch!=null;
@@ -866,6 +891,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                 // Visual localization is delivered BEFORE workflow completion. Its owner is
                 // the camera screen, not the scan token that changes when Next unlocks.
                 deliverTarget(result);
+                if(!currentDetection())return;
                 if(!visualOnlyFrame)callback.onResult(result);
                 boolean phase2Inventory=diagnosticRequest.getPhase2Stage()==1||diagnosticRequest.getPhase2Stage()==2;
                 boolean inventoryReady=!phase2Inventory||diagnosticRequest.getExpectedInstanceCount()<=1
@@ -896,7 +922,9 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
         if(MeasurementRecorder.enabled())measurements.log(metadata,request,result,(SystemClock.elapsedRealtimeNanos()-started)/1e6,captured);
         return rgb;
     }
+    private boolean currentDetection(){return !closed.get()&&!lifecyclePaused.get()&&detectionEpoch==lifecycleEpoch.get();}
     private void deliverTarget(RecognitionResult result){
+        if(!currentDetection())return;
         java.util.List<java.util.List<VisionPoint>> regions=new java.util.ArrayList<>();
         for(RecognitionResult.InstanceObservation part:result.getInstanceObservations())if(part.getProjectedCorners().size()==4&&regions.size()<4)regions.add(part.getProjectedCorners());
         if(regions.isEmpty()&&result.hasLocatedComponent()&&result.getProjectedCorners().size()==4)regions.add(result.getProjectedCorners());
@@ -913,7 +941,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
         }
         if(regions.isEmpty()||id==null)return;
         TargetBoundingTracker.Target located=targetBounds.detect(diagnosticGray,result.getFrameTimestampNanos(),id,ComponentContourTemplates.name(id,name),ComponentContourTemplates.name(expected,expected),state,regions,verified);
-        callback.onTargetTracking(located,diagnosticFrame,diagnosticRequest.getRequestTag());
+        if(currentDetection())callback.onTargetTracking(located,diagnosticFrame,diagnosticRequest.getRequestTag());else targetBounds.reset();
     }
 
     private RecognitionResult globalValidation(RecognitionResult result,Mat gray,RecognitionRequest request){

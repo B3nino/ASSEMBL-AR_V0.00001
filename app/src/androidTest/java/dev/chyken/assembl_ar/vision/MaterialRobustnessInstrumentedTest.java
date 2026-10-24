@@ -137,7 +137,7 @@ public final class MaterialRobustnessInstrumentedTest {
     }
     @Test public void actualBackwardDriverPhotosRejectAtTabletScaleAndCameraRotations()throws Exception{
         List<ComponentReferenceSpec> bank=new ArrayList<>(),wrong=new ArrayList<>();
-        for(ComponentReferenceSpec s:Phase3AssetCatalog.references(app.getAssets()))if(Phase3AssetCatalog.installed(Phase3AssetCatalog.referenceRole(s.getReferenceId()))){bank.add(s);if("invalid".equals(Phase3AssetCatalog.referenceRole(s.getReferenceId())))wrong.add(s);}
+        for(ComponentReferenceSpec s:Phase3AssetCatalog.references(app.getAssets()))if(Phase3AssetCatalog.installed(Phase3AssetCatalog.referenceRole(s.getReferenceId()))){bank.add(s);if("invalid".equals(Phase3AssetCatalog.referenceRole(s.getReferenceId()))&&Phase35VideoReferences.annotation(s.getJpegAssetPath())==null)wrong.add(s);}
         assertEquals("Physical backward-installation photos and two tablet calibrations",9,wrong.size());
         List<ComponentReferenceSpec> probes=Arrays.asList(wrong.get(0),wrong.get(3),wrong.get(6));bank.removeAll(probes);
         try(ReferenceDatabase db=ReferenceDatabase.load(app.getAssets(),bank,config,cache());Phase3ReferenceMatcher matcher=new Phase3ReferenceMatcher(db,config)){

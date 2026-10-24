@@ -1113,11 +1113,15 @@ public final class ComponentRecognizer implements AutoCloseable {
         void release() {
             valid = false;
             pairs.clear();
+            keypoints = new KeyPoint[0];
             source.release();
             normalized.release();
             descriptors.release();
         }
     }
+
+    /** Release camera-owned images on the detector worker; reference banks stay warm. */
+    public synchronized void releaseCameraFrameCache(){frameCache.release();}
 
     static List<DMatch> uniqueFrameMatches(List<DMatch> matches) {
         java.util.Map<Integer, DMatch> unique = new LinkedHashMap<>();

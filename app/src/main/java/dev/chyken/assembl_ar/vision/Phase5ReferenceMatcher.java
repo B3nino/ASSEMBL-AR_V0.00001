@@ -74,9 +74,13 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
         DiagnosticHammingMatcher.context(ref.spec);PhotoFeaturePartition s=split(ref,v);double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
         List<Point> a=new ArrayList<>(),z=new ArrayList<>();collect(s.body,live,rows,a,z);Mat mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45)),bh=null;int contextInliers=Integer.MAX_VALUE;
         try{
-            if(installed&&mh==null&&a.size()>=6&&bodyRecoveries<2){bodyRecoveries++;Mat seed=proposal(a,z);
-                if(seed!=null)try{try(ComponentDetailExtractor.Sample sample=details.extract(raw,project(ref,seed,1),480)){
-                    if(sample!=null){extracted+=sample.keys.length;a.clear();z.clear();collect(s.body,sample.keys,sample.descriptors,a,z);mh=homography(a,z,10,Math.max(15,w*.45),Math.max(15,h*.45));}
+            if(mh==null&&a.size()>=6&&bodyRecoveries<2){bodyRecoveries++;Mat seed=proposal(a,z);
+                // A few full-frame matches only propose a crop. Fresh local inliers
+                // must still meet the original loose/installed identity thresholds.
+                if(seed!=null)try{for(int extent:installed?new int[]{480}:new int[]{0,480}){
+                    try(ComponentDetailExtractor.Sample sample=details.extract(raw,project(ref,seed,1),extent)){
+                        if(sample!=null){extracted+=sample.keys.length;a.clear();z.clear();collect(s.body,sample.keys,sample.descriptors,a,z);mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45));}
+                    }if(mh!=null)break;
                 }}finally{seed.release();}
             }
             if(mh==null)return null;
@@ -160,7 +164,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
         boolean explicitInvalid;
         final EnumMap<Phase5Observation.State,Match> matches=new EnumMap<>(Phase5Observation.State.class);
         double score(Phase5Observation.State s){Match m=matches.get(s);return m==null?0:m.score;}
-        void add(String role,Match m){Phase5Observation.State state=role.equals("front")?Phase5Observation.State.FRONT:role.equals("back")?Phase5Observation.State.FLIPPED:Phase5Observation.placement(m.expected,m.actual);if(role.equals("invalid")&&state!=Phase5Observation.State.SEARCHING){if(state!=Phase5Observation.State.PLACED)return;state=Phase5Observation.State.MISALIGNED;explicitInvalid=true;}if(m.score>score(state))matches.put(state,m);}
+        void add(String role,Match m){Phase5Observation.State state=role.equals("front")?Phase5Observation.State.FRONT:role.equals("back")?Phase5Observation.State.FLIPPED:Phase5Observation.placement(m.expected,m.actual);if(role.equals("invalid")&&state!=Phase5Observation.State.SEARCHING){if(state!=Phase5Observation.State.PLACED)return;state=Phase5AssetCatalog.reversedInstallationReference(m.id)?Phase5Observation.State.BACKWARD:Phase5Observation.State.MISALIGNED;explicitInvalid=true;}if(m.score>score(state))matches.put(state,m);}
     }
     private static final class Context{final Mat pose;final int inliers;Context(Mat pose,int inliers){this.pose=pose;this.inliers=inliers;}}
     private static final class Match{final String id;final int score;final List<VisionPoint> actual,expected;Match(String id,int score,List<VisionPoint> actual,List<VisionPoint> expected){this.id=id;this.score=score;this.actual=actual;this.expected=expected;}}

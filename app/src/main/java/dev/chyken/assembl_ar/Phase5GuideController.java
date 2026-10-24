@@ -94,7 +94,7 @@ final class Phase5GuideController implements AutoCloseable {
         boolean warning=evidence!=null&&(evidence.state==Phase5Observation.State.FLIPPED||evidence.state==Phase5Observation.State.BACKWARD||evidence.state==Phase5Observation.State.MISALIGNED);
         if(warning){
             lastWarning=evidence.state;
-            status(evidence.state==Phase5Observation.State.FLIPPED?"The microcontroller is upside down. Please flip it over to its top side.":"Microcontroller orientation is incorrect or pins are misaligned. Check the USB port direction and re-seat.");
+            status(evidence.state==Phase5Observation.State.FLIPPED?"Arduino Nano is inverted. Flip the board so the USB port and chips face up.":evidence.state==Phase5Observation.State.BACKWARD?"Arduino Nano is installed backward. Rotate it so the USB port faces the rear power connector, then re-seat all pins.":"Microcontroller orientation is incorrect or pins are misaligned. Check the USB port direction and re-seat.");
         }else if(accepted){lastWarning=null;status("Scan successful · Next unlocked");}
         else return; // Keep the entering instruction/correction visible; searching frames must not interrupt its speech.
         ArHudView hud=activity.findViewById(R.id.arHudView);hud.update(accepted?ArHudView.HudState.MATCHED:warning?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING,"Arduino Nano",accepted||warning?activity.normalizeCorners(result.getProjectedCorners()):null);

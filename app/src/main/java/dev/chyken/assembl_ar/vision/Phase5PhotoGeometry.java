@@ -10,6 +10,7 @@ import java.util.*;
 final class Phase5PhotoGeometry {
     static final int VERSION=1;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        if(dev.chyken.assembl_ar.camera.Phase35VideoReferences.find(source.getJpegAssetPath())!=null)return source;
         MatOfByte encoded=new MatOfByte(bytes);Mat rgb=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR),hsv=new Mat(),mask=new Mat(),hierarchy=new Mat();
         List<MatOfPoint> contours=new ArrayList<>();
         try{

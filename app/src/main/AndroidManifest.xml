@@ -21,6 +21,7 @@
         android:required="true" />
 
     <application
+        android:name=".AssemblArApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

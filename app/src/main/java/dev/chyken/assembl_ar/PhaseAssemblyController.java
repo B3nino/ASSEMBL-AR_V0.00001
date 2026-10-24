@@ -284,12 +284,14 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         currentSection = sectionNumber(progressRecord.getCurrentStepId());
         AssemblyPhase resumed = PhaseProgress.resume(currentSection,
                 PhaseProgressStore.records(activity, NeobotSeedData.PROJECT_ID));
-        if (resumed == null) {
+        PhaseSessionCheckpoint saved=activity.recreationCheckpoint();
+        boolean recreating=saved!=null;
+        if(saved==null)saved=PhaseProgressStore.session(activity,NeobotSeedData.PROJECT_ID);
+        pendingSession=saved!=null&&(recreating?saved.canRestoreActivity(resumed):saved.canRestore(resumed))?saved:null;
+        if (resumed == null&&pendingSession==null) {
             activity.openCompletion();
             return;
         }
-        PhaseSessionCheckpoint saved=PhaseProgressStore.session(activity,NeobotSeedData.PROJECT_ID);
-        pendingSession=saved!=null&&saved.canRestore(resumed)?saved:null;
         if(pendingSession!=null){
             devNavigationActive=pendingSession.developer;
             resumed=AssemblyPhaseCatalog.byId(pendingSession.phaseId);

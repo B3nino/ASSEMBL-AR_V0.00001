@@ -29,6 +29,17 @@ public final class PhaseSessionCheckpointTest {
         assertNotNull(restored);assertEquals(4,restored.chapter);assertEquals(2,restored.inventoryIndex);
         assertTrue(restored.inventoryComplete);assertEquals(PhaseFlow.Mode.DEMO,restored.mode);assertEquals("",restored.gearState);
     }
+    @Test public void activityRecreationRetainsCompletedNanoReviewWithoutSkippingFutureWork(){
+        Phase5MicrocontrollerFlow nano=new Phase5MicrocontrollerFlow(0);nano.devComplete();nano.previous(1);
+        PhaseSessionCheckpoint checkpoint=new PhaseSessionCheckpoint(AssemblyPhaseCatalog.MICROCONTROLLER_FIT,false,PhaseFlow.Mode.VERIFY,0,0,true,false,nano.snapshot());
+        PhaseSessionCheckpoint restored=PhaseSessionCheckpoint.decode(checkpoint.encode());
+        assertTrue(restored.canRestoreActivity(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.SENSOR_WIRING)));
+        assertFalse(restored.canRestore(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.SENSOR_WIRING)));
+        assertFalse(restored.canRestoreActivity(AssemblyPhaseCatalog.byId(AssemblyPhaseCatalog.BOARD_PREPARATION)));
+        assertTrue(restored.canRestoreActivity(null));
+        Phase5MicrocontrollerFlow screen=Phase5MicrocontrollerFlow.restore(restored.gearState,100);
+        assertEquals(3,screen.step());assertTrue(screen.complete());assertFalse(screen.scanning());
+    }
     @Test public void malformedSessionsFallBackToVerifiedProgress(){
         assertNull(PhaseSessionCheckpoint.decode(null));assertNull(PhaseSessionCheckpoint.decode("broken"));
         assertNull(PhaseSessionCheckpoint.decode("1;motor_assemblies;true;NOT_A_MODE;0;0;false;false;"));

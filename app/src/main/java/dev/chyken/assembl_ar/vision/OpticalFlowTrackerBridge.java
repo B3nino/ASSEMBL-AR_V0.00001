@@ -13,7 +13,7 @@ public final class OpticalFlowTrackerBridge implements AutoCloseable,SensorEvent
     private double vx,vy;private volatile double gyroX,gyroY,gyroZ;private volatile double angularSpeed;private volatile long imuAt;
     private boolean closed;
     private SensorManager sensors;private HandlerThread thread;
-    public void attach(Context c){if(sensors!=null)return;sensors=(SensorManager)c.getSystemService(Context.SENSOR_SERVICE);Sensor gyro=sensors==null?null:sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);if(gyro!=null){thread=new HandlerThread("ar-motion");thread.start();sensors.registerListener(this,gyro,SensorManager.SENSOR_DELAY_GAME,new Handler(thread.getLooper()));}}
+    public synchronized void attach(Context c){if(closed||sensors!=null)return;sensors=(SensorManager)c.getSystemService(Context.SENSOR_SERVICE);Sensor gyro=sensors==null?null:sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);if(gyro!=null){thread=new HandlerThread("ar-motion");thread.start();sensors.registerListener(this,gyro,SensorManager.SENSOR_DELAY_GAME,new Handler(thread.getLooper()));}}
     public synchronized void reset(){if(closed)return;tracker.reset();last=null;measuredAt=Long.MIN_VALUE;detectedAt=Long.MIN_VALUE;prediction=false;vx=vy=0;}
     public synchronized boolean hasAnchor(){return last!=null;}
     public synchronized boolean predicted(){return prediction;}
@@ -49,6 +49,11 @@ public final class OpticalFlowTrackerBridge implements AutoCloseable,SensorEvent
         if(latestGray!=null)latestGray.release();latestGray=gray.clone();latestTime=time;latestCalibration=calibration;
         if(last==null)return null;
         return update(gray,time,null,calibration);
+    }
+    /** Backgrounding releases camera images and unregisters motion, preserving the reusable bridge. */
+    public synchronized void pause(){
+        reset();if(latestGray!=null)latestGray.release();latestGray=null;latestTime=Long.MIN_VALUE;latestCalibration=null;imuAt=0;
+        if(sensors!=null)sensors.unregisterListener(this);if(thread!=null)thread.quitSafely();thread=null;sensors=null;
     }
     private static VisionPoint center(RecognitionResult.SpatialAnchor a){double x=0,y=0;for(VisionPoint p:a.getProjectedCorners()){x+=p.getX()/4;y+=p.getY()/4;}return new VisionPoint(x,y);}
     public static final class Motion {

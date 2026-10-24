@@ -93,7 +93,7 @@ final class Phase3GuideController implements AutoCloseable {
         Phase3Observation evidence=result.getPhase3Observation();boolean accepted=evidence!=null&&evidence.accepted(flow.step());flow.observe(accepted);
         boolean warning=evidence!=null&&(evidence.state==Phase3Observation.State.FLIPPED||evidence.state==Phase3Observation.State.BACKWARD||evidence.state==Phase3Observation.State.MISALIGNED);
         if(warning){
-            message=evidence.state==Phase3Observation.State.FLIPPED?"The motor driver is upside down. Please flip it over to its front side.":evidence.state==Phase3Observation.State.MISALIGNED?"The motor driver is not aligned with its socket. Lift it gently, align all header pins, and re-seat it before adding screws.":"Motor driver is inserted backward. Rotate it 180 degrees before adding screws.";
+            message=evidence.state==Phase3Observation.State.FLIPPED?"Motor driver is upside down. Flip it so the chips and terminal blocks face up.":evidence.state==Phase3Observation.State.MISALIGNED?"The motor driver is not aligned with its socket. Lift it gently, align all header pins, and re-seat it before adding screws.":"Motor driver is inserted backward. Rotate it 180 degrees before adding screws.";
             if(lastWarning!=evidence.state){say(message,"warning:"+evidence.state+":"+flow.tag());lastWarning=evidence.state;}
         }else if(accepted){message="Scan successful · Next unlocked";say(message, "matched:"+flow.tag());lastWarning=null;}
         else message=flow.step()==1?"Keep the front face visible inside the recommended frame.":"Keep the driver and nearby board visible. Move loose wires aside if they cover the chips or header row; avoid glare.";
