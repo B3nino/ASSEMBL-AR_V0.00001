@@ -1,0 +1,60 @@
+Phase 7-9 verification; 2026-10-25
+Tablet: 2603ARP14G / serial 368e278b
+Build: assembleDebug and assembleDebugAndroidTest PASS
+Host: 408 tests PASS
+Reference manifest: 42 JPEG hashes/masks, 30 disjoint replay timestamps verified
+
+Native invocations (aggregate overlaps the three phase-specific groups):
+allNewVideoCases: PASS
+assembledWheelCheckOutlinesAllThreePartsAndRejectsEitherMissingWheel: PASS
+catalogDiscoveryIncludesEveryReviewedAsset: PASS
+completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence: PASS
+darkAchromaticTrackerPairRequiresCasterInTheSameFrame: PASS
+darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines: PASS
+desaturatedMetalStandoffStillNeedsLocalGeometry: PASS
+driverHeldOutFrontBackAndMountedOrientationsKeepOutlines: PASS
+individualToolPublishesMeasuredOutlinesForTheReviewedLooseParts: PASS
+installedSensorHandlesPartialHighlightAndRejectsMissingSensor: PASS
+isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult: PASS
+nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence: PASS
+opticalBridgePauseReleasesLatestImageAndCanResumeTracking: PASS
+pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive: PASS
+rawBoardBracketsAndMotorsUseTheSharedCameraPipeline: PASS
+rawInstalledTopLeftRightRequireHardwareAndKeepOutlines: PASS
+resetAndCloseReleaseFrameBuffersAcrossRepeatedScans: PASS
+reviewedBracketPhotosCannotCreateAMissingFourthPart: PASS
+reviewedMasksAreUsableAtTabletSampling: PASS
+sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations: PASS
+wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines: PASS
+
+KNOWN LIMITATION, NOT COUNTED AS PASS: standaloneStandoffExploratoryReplay remains ignored after actual loose-standoff frames failed spatial consensus. Normal assembly bypasses this scan.
+Motion-blurred inward sensor frame 170 must stay blocked; no false orientation claim is required for that blurred image. Clear inward frames 150, 188, 201 require warnings and tracked outlines.
+
+Final aggregate frame-call timing (includes searches and negatives): 85 calls; median 1003.3 ms; maximum 2691.0 ms. Not a preview FPS or academic accuracy measurement.
+
+Selected actual log evidence:
+I/Phase789Video(13615): p7 trackerwork 12 attempt=0 count=1 bodies=2 mounts=2 caster=true outlines=3 corners=0 ms=2218.872083
+I/Phase789Video(13615): p7 trackerwork 35 attempt=0 count=1 bodies=2 mounts=2 caster=true outlines=3 corners=0 ms=1709.518645
+I/Phase789Video(13615): p7 trackerwork 65 attempt=0 count=0 bodies=1 mounts=0 caster=false outlines=1 corners=0 ms=921.441354
+I/Phase789Video(13615): p7 trackerwork 65 attempt=1 count=1 bodies=2 mounts=2 caster=true outlines=3 corners=0 ms=1204.594583
+I/Phase789Video(13615): p7 trackerwork 83 attempt=0 count=1 bodies=2 mounts=2 caster=true outlines=3 corners=0 ms=971.740572
+I/Phase789Video(13615): p8 invalid 150 attempt=0 state=SEARCHING outlines=0 corners=0 ms=1003.327135
+I/Phase789Video(13615): p8 invalid 150 attempt=1 state=SEARCHING outlines=0 corners=0 ms=1138.411093
+I/Phase789Video(13615): p8 invalid 150 attempt=2 state=SEARCHING outlines=0 corners=0 ms=1243.202344
+I/Phase789Video(13615): p8 invalid 150 attempt=3 state=SEARCHING outlines=0 corners=0 ms=1283.641354
+I/Phase789Video(13615): p8 invalid 150 attempt=4 state=INWARD outlines=0 corners=4 ms=965.293645
+I/Phase789Video(13615): p8 invalid 170 attempt=0 state=SEARCHING outlines=0 corners=0 ms=1090.505364
+I/Phase789Video(13615): p8 invalid 170 attempt=1 state=SEARCHING outlines=0 corners=0 ms=1559.654062
+I/Phase789Video(13615): p8 invalid 170 attempt=2 state=SEARCHING outlines=0 corners=0 ms=1016.065104
+I/Phase789Video(13615): p8 invalid 170 attempt=3 state=SEARCHING outlines=0 corners=0 ms=1149.583073
+I/Phase789Video(13615): p8 invalid 170 attempt=4 state=SEARCHING outlines=0 corners=0 ms=936.639531
+I/Phase789Video(13615): p8 invalid 170 attempt=5 state=SEARCHING outlines=0 corners=0 ms=1107.699896
+I/Phase789Video(13615): p8 invalid 188 attempt=0 state=INWARD outlines=0 corners=4 ms=1017.311562
+I/Phase789Video(13615): p8 invalid 201 attempt=0 state=SEARCHING outlines=0 corners=0 ms=960.277708
+I/Phase789Video(13615): p8 invalid 201 attempt=1 state=SEARCHING outlines=0 corners=0 ms=919.841458
+I/Phase789Video(13615): p8 invalid 201 attempt=2 state=INWARD outlines=0 corners=4 ms=1105.04953
+I/Phase789Video(13615): p9 assembly 10 attempt=0 loose=0 stand=true left=true right=true outlines=3 corners=4 ms=835.416146
+I/Phase789Video(13615): p9 assembly 31 attempt=0 loose=0 stand=true left=true right=true outlines=3 corners=4 ms=429.977499
+I/Phase789Video(13615): p9 assembly 55 attempt=0 loose=0 stand=true left=true right=true outlines=3 corners=4 ms=434.221823
+I/CandidateReplay(13615): vision.Phase789VideoReplayInstrumentedTest#allNewVideoCases PASS ms=116256
+I/OutlineRegression(11798): 220 scan/reset cycles: all owned frame/keypoint allocations released; concurrent-process native heap delta=-2153792

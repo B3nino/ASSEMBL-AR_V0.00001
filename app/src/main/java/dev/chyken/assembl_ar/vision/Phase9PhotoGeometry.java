@@ -10,11 +10,13 @@ import java.util.*;
 final class Phase9PhotoGeometry {
     static final int VERSION=3;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes,java.io.File cache){
+        if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         java.io.File sidecar=cache==null?null:new java.io.File(cache.getPath()+".regions2");List<List<VisionPoint>> regions=ReferenceRegionCache.read(sidecar);
         if(regions!=null)try{return withRegions(source,regions);}catch(IllegalArgumentException corrupt){/* Rebuild from the original photo. */}
         ComponentReferenceSpec resolved=resolve(source,bytes);ReferenceRegionCache.write(sidecar,resolved.getFeatureRegionsNormalized());return resolved;
     }
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         MatOfByte encoded=new MatOfByte(bytes);Mat bgr=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR);
         try{
             if(bgr.empty())throw new IllegalArgumentException("Unreadable Phase 9 reference");

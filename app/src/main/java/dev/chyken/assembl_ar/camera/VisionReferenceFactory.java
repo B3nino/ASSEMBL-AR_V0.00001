@@ -44,6 +44,7 @@ public final class VisionReferenceFactory {
         Set<String> referenceIds = new HashSet<>();
         for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase1())if(referenceIds.add(spec.getReferenceId()))result.add(spec);
         for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.reviewedPhase35Parts())if(referenceIds.add(spec.getReferenceId()))result.add(spec);
+        for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.reviewedPhase789Parts())if(referenceIds.add(spec.getReferenceId()))result.add(spec);
         if(assets!=null)for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase11(assets))if(referenceIds.add(spec.getReferenceId()))result.add(spec);
         if(assets!=null)for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase10(assets))if(referenceIds.add(spec.getReferenceId()))result.add(spec);
         if(assets!=null)for(ComponentReferenceSpec spec:AssemblyProgressReferenceCatalog.dynamicPhase9(assets))if(referenceIds.add(spec.getReferenceId()))result.add(spec);

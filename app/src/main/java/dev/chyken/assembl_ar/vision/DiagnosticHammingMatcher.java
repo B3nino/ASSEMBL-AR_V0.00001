@@ -20,8 +20,11 @@ final class DiagnosticHammingMatcher {
     /** BFMatcher's native Hamming top-two operation, read as two flat matrices instead
      * of thousands of MatOfDMatch/DMatch wrappers. Production thresholds are unchanged. */
     List<DMatch> ratioMatches(Mat query,Mat train,double ratio,int maximumDistance){
+        return ratioMatches(query,train,null,ratio,maximumDistance);
+    }
+    List<DMatch> ratioMatches(Mat query,Mat train,Mat mask,double ratio,int maximumDistance){
         State state=STATE.get();long started=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
-        try{pairs=NearestDescriptorPairs.compute(query,train);}finally{state.matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}
+        try{pairs=NearestDescriptorPairs.compute(query,train,mask);}finally{state.matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}
         List<DMatch> accepted=new ArrayList<>();int good=0,total=0;
         for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)){
             total++;float best=pairs.bestDistance(i),second=pairs.secondDistance(i);

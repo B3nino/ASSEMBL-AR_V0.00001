@@ -24,6 +24,7 @@ public final class Phase9AssetCatalog {
         List<ComponentReferenceSpec> result=new ArrayList<>();Set<String> seen=new HashSet<>();
         for(String path:paths){if(!path.startsWith(ROOT+"/")||!Phase2AssetCatalog.image(path)||!seen.add(path))continue;
             String role=role(path.substring(ROOT.length()+1).split("/")[0]);if(role==null)continue;
+            ComponentReferenceSpec reviewed=Phase789VideoReferences.find(path);if(reviewed!=null){result.add(reviewed);continue;}
             String id=role.equals("standoff")?NeobotSeedData.STANDOFF:installed(role)?NeobotSeedData.MAIN_BOARD:NeobotSeedData.WHEEL;
             result.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,id,"Standoff and wheels",installed(role)?180:role.equals("standoff")?5:65,installed(role)?180:role.equals("standoff")?40:65)
                 .jpegAssetPath(path).assemblyStepNumber(9).maximumImageDimension(1280).polarityAnchorsVerified(false).build());

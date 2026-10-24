@@ -10,6 +10,7 @@ import java.util.*;
 final class Phase7PhotoGeometry {
     static final int VERSION=7;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source, byte[] bytes, java.io.File cache) {
+        if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         java.io.File geometry = cache == null ? null : new java.io.File(cache.getPath() + ".regions1");
         List<List<VisionPoint>> regions = ReferenceRegionCache.read(geometry);
         if (regions != null) {
@@ -22,6 +23,7 @@ final class Phase7PhotoGeometry {
     }
 
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         String role=Phase7AssetCatalog.referenceRole(source.getReferenceId());boolean installed=Phase7AssetCatalog.installed(role),negative=Phase7AssetCatalog.negative(role);
         MatOfByte encoded=new MatOfByte(bytes);Mat bgr=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR),gray=new Mat(),hsv=new Mat(),blue=new Mat(),mask=new Mat(),hierarchy=new Mat();
         List<MatOfPoint> contours=new ArrayList<>();List<Rect> trackers=new ArrayList<>();Rect ball=null;double ballScore=0;

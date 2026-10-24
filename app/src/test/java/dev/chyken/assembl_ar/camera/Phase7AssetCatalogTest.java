@@ -23,7 +23,8 @@ public final class Phase7AssetCatalogTest {
             roles.put(role,roles.getOrDefault(role,0)+1);assertEquals(7,spec.getAssemblyStepNumber());assertEquals(1280,spec.getMaximumImageDimension());assertFalse(spec.hasVerifiedPolarityAnchors());
             int eligible=0;for(int step=1;step<=4;step++)if(Phase7AssetCatalog.eligible(role,step))eligible++;assertEquals(1,eligible);
         }
-        assertEquals(Integer.valueOf(42),roles.get("trackers"));assertTrue(roles.get("trackerwork")>=40);
+        long reviewed=Phase789VideoReferences.all().stream().filter(s->s.getAssemblyStepNumber()==7&&"trackers".equals(Phase7AssetCatalog.referenceRole(s.getReferenceId()))).count();
+        assertEquals(42+reviewed,roles.get("trackers").longValue());assertTrue(roles.get("trackerwork")>=40);
         paths.addAll(new ArrayList<>(paths));assertEquals(specs.size(),Phase7AssetCatalog.referencesForPaths(paths).size());
     }
     @Test public void promptSpellingAndRealFolderAliasesAreAccepted(){

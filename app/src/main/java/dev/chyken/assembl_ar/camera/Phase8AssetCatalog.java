@@ -50,6 +50,7 @@ public final class Phase8AssetCatalog {
         List<ComponentReferenceSpec> result=new ArrayList<>();Set<String> seen=new HashSet<>();for(String path:paths){
             if(!path.startsWith(ROOT+"/")||!Phase2AssetCatalog.image(path)||!seen.add(path))continue;
             String role=role(path.substring(ROOT.length()+1).split("/")[0]);if(role==null)continue;
+            ComponentReferenceSpec reviewed=Phase789VideoReferences.find(path);if(reviewed!=null){result.add(reviewed);continue;}
             result.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,NeobotSeedData.DISTANCE_SENSOR,"Ultrasonic distance sensor",45,20)
                 .jpegAssetPath(path).assemblyStepNumber(8).maximumImageDimension(1280).polarityAnchorsVerified(false).build());
         }return Collections.unmodifiableList(result);

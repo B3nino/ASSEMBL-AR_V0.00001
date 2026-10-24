@@ -29,12 +29,21 @@ final class Phase9DescriptorSampler {
                 List<VisionPoint> box=regions.get(part);int x=Math.max(0,(int)(box.get(0).getX()*gray.cols())),y=Math.max(0,(int)(box.get(0).getY()*gray.rows()));
                 int w=Math.min(gray.cols()-x,(int)Math.round((box.get(2).getX()-box.get(0).getX())*gray.cols())),h=Math.min(gray.rows()-y,(int)Math.round((box.get(2).getY()-box.get(0).getY())*gray.rows()));
                 if(w<3||h<3)continue;
-                Mat crop=gray.submat(new Rect(x,y,w,h)),image=new Mat(),empty=new Mat();
+                boolean standoff=dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(spec.getJpegAssetPath())!=null&&"center_standoff".equals(spec.getComponentId());
+                // ORB's edge threshold used to discard both end faces of this
+                // narrow metal part. Keep REAL surrounding pixels for descriptor
+                // neighborhoods, with keypoint centers still masked to the body.
+                if(standoff){int right=Math.min(gray.cols(),x+w+16),bottom=Math.min(gray.rows(),y+h+16);x=Math.max(0,x-16);y=Math.max(0,y-16);w=right-x;h=bottom-y;}
+                Rect area=new Rect(x,y,w,h);Mat crop=gray.submat(area),image=new Mat(),empty=new Mat(),sourceMask=standoff?mask.submat(area):null;
                 try{
-                    double scale=512.0/Math.max(w,h);Imgproc.resize(crop,image,new Size(),scale,scale,scale<1?Imgproc.INTER_AREA:Imgproc.INTER_LINEAR);
+                  boolean reviewed=dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(spec.getJpegAssetPath())!=null;
+                  for(int extent:reviewed?new int[]{128,256,512}:new int[]{512}){
+                    double scale=extent/(double)Math.max(w,h);Imgproc.resize(crop,image,new Size(),scale,scale,scale<1?Imgproc.INTER_AREA:Imgproc.INTER_LINEAR);
+                    if(sourceMask!=null)Imgproc.resize(sourceMask,empty,image.size(),0,0,Imgproc.INTER_NEAREST);
                     List<AdminDescriptorBlobCodec.DescriptorVariant> local=AdminDescriptorBlobCodec.computeVariants(image,empty,detail,clahe);levels.addAll(local);
                     for(AdminDescriptorBlobCodec.DescriptorVariant v:local)for(KeyPoint k:v.keypoints){k.pt.x=k.pt.x/scale+x;k.pt.y=k.pt.y/scale+y;k.size/=scale;}
-                }finally{crop.release();image.release();empty.release();}
+                  }
+                }finally{crop.release();image.release();empty.release();if(sourceMask!=null)sourceMask.release();}
             }
             for(ReferenceDatabase.PhotometricVariant photo:ReferenceDatabase.PhotometricVariant.values()){
                 List<KeyPoint> keys=new ArrayList<>();List<Mat> rows=new ArrayList<>();

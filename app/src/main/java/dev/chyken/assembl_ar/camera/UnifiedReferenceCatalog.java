@@ -22,6 +22,7 @@ public final class UnifiedReferenceCatalog {
     public static dev.chyken.assembl_ar.vision.RecognitionRequest request(ComponentReferenceSpec s,dev.chyken.assembl_ar.vision.CameraCalibration c){
         String id=s.getReferenceId();int p=phase(s);
         dev.chyken.assembl_ar.vision.RecognitionRequest r=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component(s.getComponentId()),c,null,null,p==2&&"brackets".equals(Phase2AssetCatalog.referenceRole(id))?4:p==2&&"motors".equals(Phase2AssetCatalog.referenceRole(id))?2:1,p);
+        if(id.startsWith("video789_")&&s.getAssemblyStepNumber()==0)return r;
         if(p==2){String role=Phase2AssetCatalog.referenceRole(id);return role==null?r:r.withPhase2Stage("brackets".equals(role)?1:"motors".equals(role)?2:5);}
         if(p==3)return s.getReferenceId().startsWith("video35_")?r:r.withPhase3Stage(assembly(s)?4:1);
         if(p==5)return s.getReferenceId().startsWith("video35_")?r:r.withPhase5Stage(assembly(s)?3:1);
@@ -46,7 +47,7 @@ public final class UnifiedReferenceCatalog {
     public static boolean assembly(ComponentReferenceSpec s) {
         // Isolated, reviewed crops live beside their phase's scene photographs.
         // Folder names must not turn a loose part into an installed assembly.
-        if(s.getAssemblyStepNumber()==0&&(s.getReferenceId().startsWith("video12_")||s.getReferenceId().startsWith("video35_")))return false;
+        if(s.getAssemblyStepNumber()==0&&(s.getReferenceId().startsWith("video12_")||s.getReferenceId().startsWith("video35_")||s.getReferenceId().startsWith("video789_")))return false;
         String p2=Phase2AssetCatalog.referenceRole(s.getReferenceId());
         // Phase 2 scene photos include contextual multi-part inventory groups;
         // a group must not become one giant standalone-component homography.
@@ -55,6 +56,8 @@ public final class UnifiedReferenceCatalog {
         if(driver!=null)return Phase3AssetCatalog.installed(driver);
         String nano=Phase5AssetCatalog.referenceRole(s.getReferenceId());
         if(nano!=null)return Phase5AssetCatalog.installed(nano);
+        String p7=Phase7AssetCatalog.referenceRole(s.getReferenceId());
+        if(p7!=null)return Phase7AssetCatalog.installed(p7);
         String path=String.valueOf(s.getJpegAssetPath()).toUpperCase(Locale.ROOT);
         return s.getAssemblyStepNumber()>0&&path.contains("REFERENCES/ASSEMBLY/")||path.contains("STEP9_2DUALWHEELS")||path.contains("STEP2_1_BRACKETS")||path.contains("STEP2_2_MOTORSCANS")||path.contains("ASSEMBLYSCAN")||path.contains("HARDWARE")||path.contains("MOUNTED")
                 ||path.contains("BOTTOMSCANS")||path.contains("DUALTRACKER SCANS")||path.contains("MOUNTINGSCAN")

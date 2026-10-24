@@ -1,11 +1,12 @@
 """Extract built app code/resources and test fixtures for isolated native replay.
 
 Build first, update the separate test APK, push this archive to the target app's
-external-files directory, and use CandidateCodeReplayInstrumentedTest. Reference
-assets must be identical between the installed app and the candidate source.
+external-files directory, and use CandidateCodeReplayInstrumentedTest. Reviewed
+video assets travel with the candidate; legacy assets come from the installed app.
 """
 from pathlib import Path
 import hashlib
+import json
 import re
 import zipfile
 
@@ -16,7 +17,7 @@ target.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
     # Carry the small tablet-authored exemplars for isolated asset replay too.
     # Existing large reference/video assets still come from the installed app.
-    names = sorted(n for n in apk.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n) or n in ('resources.arsc','AndroidManifest.xml') or n.startswith('res/') or n.startswith('assets/references/Phase3/STEP3_5ASSEMBLYSCAN/TABLET_DRIVER_PLACEMENT') or n.startswith('assets/references/Phase3/STEP3_1MOTORDRIVER_INVALID/') or '/var_light/VIDEO_' in n or '/var_light/VIDEO35_' in n)
+    names = sorted(n for n in apk.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n) or n in ('resources.arsc','AndroidManifest.xml') or n.startswith('res/') or n.startswith('assets/references/Phase3/STEP3_5ASSEMBLYSCAN/TABLET_DRIVER_PLACEMENT') or n.startswith('assets/references/Phase3/STEP3_1MOTORDRIVER_INVALID/') or '/var_light/VIDEO_' in n or '/var_light/VIDEO35_' in n or '/var_light/VIDEO789_' in n)
     if not names:
         raise SystemExit('No DEX in the built APK')
     for name in names:
@@ -27,5 +28,14 @@ with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DE
     with zipfile.ZipFile(tests) as fixtures:
         for index, name in enumerate(sorted(n for n in fixtures.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n))):
             output.writestr(f'classes{100 + index}.dex', fixtures.read(name))
+    # Test-only held-out pixels never enter the production reference registry/APK.
+    manifest=root/'tools/phase789_video_manifest.json'
+    if manifest.is_file():
+        replay=root/'app/build/tmp/phase789-raw'
+        paths=[replay/row['path'] for row in json.loads(manifest.read_text())['held_out']]
+        if all(path.is_file() for path in paths):
+            for path in paths:output.write(path,'assets/replay/phase789/'+path.name)
+        else:
+            print('Phase 7–9 raw replay files absent; native fixtures require separately pushed frames or re-ingestion.')
 print(target)
 print(f'{target.stat().st_size} bytes; SHA256 {hashlib.sha256(target.read_bytes()).hexdigest()}')

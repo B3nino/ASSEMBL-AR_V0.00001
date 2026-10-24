@@ -10,6 +10,7 @@ import java.util.*;
 final class Phase8PhotoGeometry {
     static final int VERSION=5;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         MatOfByte encoded=new MatOfByte(bytes);Mat rgb=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR),hsv=new Mat(),mask=new Mat(),hierarchy=new Mat();List<MatOfPoint> contours=new ArrayList<>();
         try{
             if(rgb.empty())throw new IllegalArgumentException("Unreadable Phase 8 photo");double scale=Math.min(1,1280.0/Math.max(rgb.cols(),rgb.rows()));if(scale<1)Imgproc.resize(rgb,rgb,new Size(),scale,scale,Imgproc.INTER_AREA);

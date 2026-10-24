@@ -11,13 +11,13 @@ public final class Phase7AssetCatalog {
     private Phase7AssetCatalog(){}
     public static String role(String folder){
         switch(Phase2AssetCatalog.normalize(folder)){
-            case "STEP71CASTERWHEELSCANS":return "caster";
+            case "STEP71CASTERWHEEL":case "STEP71CASTERWHEELSCANS":return "caster";
             case "STEP71CASTERWHEELSCANSINVALID":return "casterbad";
-            case "STEP72LINETRACKERSSCANS":case "IRTRACKERSINDIVID":return "trackers";
+            case "STEP72LINETRACKERS":case "STEP72LINETRACKERSSCANS":case "IRTRACKERSINDIVID":return "trackers";
             case "IRTRACKERSINDIVIDINVALID":return "trackerbad";
             case "STEP73CASTERBOTTOMSCANS":return "casterwork";
             case "STEP73CASTERBOTTOMSCANSINVALID":return "casterworkbad";
-            case "STEP74DUALTRACKERSCANSVALIDS":return "trackerwork";
+            case "STEP7TOPVIEW":case "STEP74DUALTRACKERSCANSVALIDS":return "trackerwork";
             case "STEP74DUALTRACKERSCANSINVALID":return "trackerworkbad";
             default:return null;
         }
@@ -32,6 +32,7 @@ public final class Phase7AssetCatalog {
         for(String path:paths){
             if(!path.startsWith(ROOT+"/")||!Phase2AssetCatalog.image(path)||!seen.add(path))continue;
             String role=role(path.substring(ROOT.length()+1).split("/")[0]);if(role==null)continue;
+            ComponentReferenceSpec reviewed=Phase789VideoReferences.find(path);if(reviewed!=null){result.add(reviewed);continue;}
             String component=installed(role)?MAIN_BOARD:role.startsWith("caster")?CASTER_WHEEL:LINE_TRACKER;
             result.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,component,installed(role)?"Bottom-view installation":role.startsWith("caster")?"Caster wheel":"Line tracker",
                     installed(role)?100:role.startsWith("caster")?48:14,installed(role)?120:role.startsWith("caster")?24:50)

@@ -17,6 +17,10 @@ final class Phase7TrackerSearch implements AutoCloseable {
     List<Rect> windows(Mat gray, Mat rgb) {
         int w = gray.cols(), h = gray.rows();
         List<Rect> result = new ArrayList<>();
+        // Blue trim pots can merge into one horizontal proposal spanning TWO
+        // modules, or disappear in warm shadows. Always search neutral rigid
+        // bodies first; color remains a hint and cannot suppress these windows.
+        addDarkModuleWindows(gray, result);
         if (rgb != null && !rgb.empty()) {
             Mat scaled = new Mat(), bgr = new Mat();
             try {
@@ -31,10 +35,8 @@ final class Phase7TrackerSearch implements AutoCloseable {
                     double r = region.get(2).getX() * w, b = region.get(2).getY() * h;
                     if (r-l > 5 && b-t > 5) add(result, w, h, l-8, t-8, r+8, b+8);
                 }
-                if (result.size() < 2) addDarkModuleWindows(gray, result);
             } finally { scaled.release(); bgr.release(); }
         }
-        if (rgb == null || rgb.empty()) addDarkModuleWindows(gray, result);
         // Color is an optional search hint. Neutral lighting, monochrome fixtures and different
         // trim-pot colors still receive independent spatial searches, in either camera rotation.
         add(result, w, h, 0, 0, w*.56, h);

@@ -29,7 +29,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                 List<Rect> windows=proposals(gray,bgr,stage);List<List<VisionPoint>> bodies=new ArrayList<>();
                 List<ReferenceDatabase.PreparedReference> refs=references(stage,false);
                 for(Rect window:windows){
-                    if(System.nanoTime()>deadline&&count>0)break;Found best=null;ReferenceDatabase.PreparedReference selected=null;
+                    if(System.nanoTime()>deadline)break;Found best=null;ReferenceDatabase.PreparedReference selected=null;
                     // Native sampling comes first, then an independent detail pass. Both
                     // instances use fresh local descriptor pools, even for identical wheels.
                     for(int extent:new int[]{0,512}){
@@ -125,6 +125,11 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
     }
     /** Cheap sparse descriptor ranking only schedules candidates; it never certifies a part. */
     private List<ReferenceDatabase.PreparedReference> ranked(List<ReferenceDatabase.PreparedReference> refs,Live live,boolean board,ReferenceDatabase.PreparedReference preferred,int cursor,int stage){DiagnosticHammingMatcher.context(preferred==null?null:preferred.spec);
+        if(!board){
+            LinkedHashSet<ReferenceDatabase.PreparedReference> window=new LinkedHashSet<>();if(preferred!=null&&refs.contains(preferred))window.add(preferred);
+            for(ReferenceDatabase.PreparedReference ref:refs)if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(ref.spec.getJpegAssetPath())!=null)window.add(ref);
+            for(int i=0;i<Math.min(6,refs.size());i++)window.add(refs.get(Math.floorMod(cursor+i,refs.size())));refs=new ArrayList<>(window);
+        }
         Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
         for(ReferenceDatabase.PreparedReference ref:refs){int best=0;
             for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){
@@ -142,7 +147,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         // different positive viewpoint first. Low sparse scores cannot starve a photo forever.
         if(preferred==null&&cursor>0&&!result.isEmpty()){
             List<ReferenceDatabase.PreparedReference> eligible=new ArrayList<>();for(ReferenceDatabase.PreparedReference r:result)if(stage!=4||!"invalid".equals(Phase9AssetCatalog.referenceRole(r.spec.getReferenceId())))eligible.add(r);
-            if(!eligible.isEmpty()){ReferenceDatabase.PreparedReference r=eligible.get(Math.floorMod(cursor,eligible.size()));result.remove(r);result.add(0,r);}
+            if(!eligible.isEmpty()){ReferenceDatabase.PreparedReference r=eligible.get(Math.floorMod(cursor,eligible.size()));result.remove(r);result.add(board?0:Math.min(2,result.size()),r);}
         }
         return result;
     }
@@ -181,6 +186,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
             Point p=v.keypoints[i].pt;
             if(part>=0?inside(p,regions.get(part),ref):!inside(p,regions.get(0),ref)&&!inside(p,regions.get(1),ref)&&!inside(p,regions.get(2),ref))ids.add(i);
         }
+        int limit=part<0?1000:700;if(ids.size()>limit&&dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(ref.spec.getJpegAssetPath())!=null){List<Integer> selected=new ArrayList<>();for(int i=0;i<limit;i++)selected.add(ids.get(i*ids.size()/limit));ids=selected;}
         KeyPoint[] keys=new KeyPoint[ids.size()];Mat rows=ids.isEmpty()?new Mat():new Mat(ids.size(),v.descriptors.cols(),v.descriptors.type());
         if(!ids.isEmpty()){int stride=v.descriptors.cols();byte[] source=new byte[v.descriptors.rows()*stride],selected=new byte[ids.size()*stride];v.descriptors.get(0,0,source);for(int i=0;i<ids.size();i++){keys[i]=v.keypoints[ids.get(i)];System.arraycopy(source,ids.get(i)*stride,selected,i*stride,stride);}rows.put(0,0,selected);}
         found=new Features(keys,rows);cache.put(part,found);return found;
@@ -193,7 +199,18 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         MatOfPoint2f from=new MatOfPoint2f(),to=new MatOfPoint2f();Mat inliers=new Mat(),h=null;
         try{
             from.fromList(a);to.fromList(b);h=DiagnosticHammingMatcher.homography(from,to,Calib3d.RANSAC,3.5,inliers,1600,.995);int n=h.empty()?0:Core.countNonZero(inliers);
-            if(n<minimum||n<a.size()*.5)return null;
+            if(n<minimum)return null;
+            if(n<a.size()*.5){
+                String role=Phase9AssetCatalog.referenceRole(ref.spec.getReferenceId());
+                // Repeated spokes produce several rotational hypotheses. A strong
+                // measured seed may constrain a second fresh descriptor search;
+                // final consensus and installed-wheel thresholds stay unchanged.
+                if(board||!("wheel".equals(role)||"pair".equals(role))||n<10||n<a.size()*.25)return null;
+                Mat domain=GeometricMatchDomain.mask(source.keys,live.keys,h,7);
+                try{if(domain.empty())return null;good=ComponentRecognizer.uniqueFrameMatches(matcher.ratioMatches(source.rows,live.rows,domain,.76,64));if(good.size()<16)return null;
+                    a.clear();b.clear();for(DMatch m:good){a.add(source.keys[m.queryIdx].pt);b.add(live.keys[m.trainIdx].pt);}from.fromList(a);to.fromList(b);h.release();h=DiagnosticHammingMatcher.homography(from,to,Calib3d.RANSAC,3.5,inliers,1200,.995);n=h.empty()?0:Core.countNonZero(inliers);if(n<16||n<a.size()*.5)return null;
+                }finally{domain.release();}
+            }
             double l=Double.MAX_VALUE,t=l,r=-l,bt=-l;for(int i=0;i<a.size();i++)if(inliers.get(i,0)[0]!=0){Point p=a.get(i);l=Math.min(l,p.x);r=Math.max(r,p.x);t=Math.min(t,p.y);bt=Math.max(bt,p.y);}
             List<VisionPoint> region=board?Arrays.asList(new VisionPoint(0,0),new VisionPoint(1,0),new VisionPoint(1,1),new VisionPoint(0,1)):ref.spec.getFeatureRegionsNormalized().get(part);
             double width=(region.get(2).getX()-region.get(0).getX())*ref.imageWidth,height=(region.get(2).getY()-region.get(0).getY())*ref.imageHeight;
