@@ -135,8 +135,8 @@ public final class VisionConfig {
         private double claheClipLimit = 2.0;
         private int claheTileGridWidth = 8;
         private int claheTileGridHeight = 8;
-        private float knnRatioThreshold = 0.75f;
-        private float maximumHammingDistance = 64.0f;
+        private float knnRatioThreshold = (float)OrbMatchPolicy.LOWE_RATIO;
+        private float maximumHammingDistance = OrbMatchPolicy.MAX_HAMMING;
         private int minimumGoodMatches = 12;
         private int minimumInliers = 8;
         private double minimumInlierRatio = 0.45;
@@ -183,6 +183,8 @@ public final class VisionConfig {
 
         public Builder matching(float ratioThreshold, float maxHammingDistance,
                                 int minGoodMatches) {
+            if(ratioThreshold!=(float)OrbMatchPolicy.LOWE_RATIO||maxHammingDistance!=OrbMatchPolicy.MAX_HAMMING)
+                throw new IllegalArgumentException("Lowe/Hamming policy is fixed at 0.75 / 64");
             this.knnRatioThreshold = ratioThreshold;
             this.maximumHammingDistance = maxHammingDistance;
             this.minimumGoodMatches = minGoodMatches;

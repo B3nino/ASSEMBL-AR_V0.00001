@@ -5,13 +5,13 @@ Mirrors the Java policy against the raw assets. Requires numpy + OpenCV; accepts
 tablet or certify mechanical fastening (the physical checklist does that).
 """
 from pathlib import Path
+from orb_match_policy import accepts
 import sys, json, argparse, time
 if '--opencv-path' in sys.argv:
     sys.path.insert(0, sys.argv[sys.argv.index('--opencv-path') + 1])
 import cv2 as cv
 import numpy as np
 from reference_sampling import reference_pyramid
-cv.setNumThreads(2)
 cv.setNumThreads(2)
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,7 +137,7 @@ def match(ref,source,descriptors,live,desc,roi=None,force_loose=False,identity=N
     query_ids=np.arange(len(source)) if installed else np.flatnonzero(inside(source,roi))
     if len(query_ids)<(18 if installed else 10):return None
     query=descriptors if installed else ref.setdefault('_queries',{}).setdefault((id(descriptors),tuple(roi)),descriptors[query_ids])
-    good=sorted((p[0] for p in BF.knnMatch(query,desc,k=2) if len(p)==2 and p[0].distance<65 and p[0].distance<p[1].distance*.76),key=lambda m:m.distance)
+    good=sorted((p[0] for p in BF.knnMatch(query,desc,k=2) if len(p)==2 and accepts(p[0].distance,p[1].distance)),key=lambda m:m.distance)
     used=set();a=[];b=[]
     for m in good:
         if m.trainIdx in used: continue
@@ -180,7 +180,7 @@ def match(ref,source,descriptors,live,desc,roi=None,force_loose=False,identity=N
 
 def pairs_for(source,descriptors,live,desc):
     if descriptors is None or desc is None:return np.empty((0,2),np.float32),np.empty((0,2),np.float32)
-    good=sorted((p[0] for p in BF.knnMatch(descriptors,desc,k=2) if len(p)==2 and p[0].distance<65 and p[0].distance<p[1].distance*.76),key=lambda m:m.distance)
+    good=sorted((p[0] for p in BF.knnMatch(descriptors,desc,k=2) if len(p)==2 and accepts(p[0].distance,p[1].distance)),key=lambda m:m.distance)
     used=set();a=[];b=[]
     for m in good:
         if m.trainIdx in used:continue
@@ -198,7 +198,7 @@ def orb_nut_proof(source,descriptors,live,desc,roi,h):
     canonical=cv.perspectiveTransform(live[None],np.linalg.inv(h))[0]
     li=np.flatnonzero(inside(canonical,(l-(r-l)*.15,t-(bot-t)*.15,r+(r-l)*.15,bot+(bot-t)*.15)))
     if len(si)<3 or len(li)<3:return False
-    good=sorted((p[0] for p in BF.knnMatch(descriptors[si],desc[li],k=2) if len(p)==2 and p[0].distance<75 and p[0].distance<p[1].distance*.85),key=lambda m:m.distance)
+    good=sorted((p[0] for p in BF.knnMatch(descriptors[si],desc[li],k=2) if len(p)==2 and accepts(p[0].distance,p[1].distance)),key=lambda m:m.distance)
     used=set();points=[]
     for m in good:
         if m.trainIdx in used:continue

@@ -309,6 +309,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     private void startPhase(AssemblyPhase next) {
+        if(savingPhase||activity.isGone())return;
         if(gearGuide!=null){gearGuide.close();gearGuide=null;}
         if(driverGuide!=null){driverGuide.close();driverGuide=null;}
         if(wiringGuide!=null){wiringGuide.close();wiringGuide=null;}
@@ -555,6 +556,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     private void onPhaseSaved(AssemblyPhase finished, List<String> stepIds, ProjectProgress saved) {
+        if(phase!=finished)return;
         savingPhase = false;
         devNavigationActive = false;
         if (activity.isGone()) return;
@@ -686,6 +688,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
     }
 
     private void reviewPhase(AssemblyPhase earlier, boolean lastChapter) {
+        if(savingPhase||activity.isGone())return;
         if(microcontrollerGuide!=null&&phase!=null&&phase.getNumber()==5)microcontrollerGuide.prepareForReview();
         if(driverWiringGuide!=null&&phase!=null&&phase.getNumber()==6)driverWiringGuide.prepareForReview();
         if(casterTrackerGuide!=null&&phase!=null&&phase.getNumber()==7)casterTrackerGuide.prepareForReview();

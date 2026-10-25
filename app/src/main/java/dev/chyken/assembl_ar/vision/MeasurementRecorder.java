@@ -42,6 +42,7 @@ public final class MeasurementRecorder {
         return thread;
     });
     private final AtomicInteger pendingWrites = new AtomicInteger();
+    private final java.util.concurrent.atomic.AtomicBoolean closed=new java.util.concurrent.atomic.AtomicBoolean();
     private long lastCaptureNanos = Long.MIN_VALUE;
     private int captures;
     @Nullable private String session;
@@ -58,7 +59,7 @@ public final class MeasurementRecorder {
 
     /** Analysis thread only: whether this frame should be saved. */
     boolean captureDue(long frameNanos) {
-        return application != null && Log.isLoggable(CAPTURE_TAG, Log.DEBUG)
+        return !closed.get() && application != null && Log.isLoggable(CAPTURE_TAG, Log.DEBUG)
                 && captures < MAXIMUM_CAPTURES
                 && (lastCaptureNanos == Long.MIN_VALUE
                 || frameNanos - lastCaptureNanos >= CAPTURE_INTERVAL_NANOS)
@@ -69,7 +70,7 @@ public final class MeasurementRecorder {
     @Nullable
     String capture(Mat rgb, long frameNanos) {
         Context context = application;
-        if (rgb == null || rgb.empty() || context == null) return null;
+        if (closed.get() || rgb == null || rgb.empty() || context == null) return null;
         if (session == null) {
             session = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
         }
@@ -77,24 +78,26 @@ public final class MeasurementRecorder {
         captures++;
         String name = frameNanos + ".jpg";
         String folder = session;
-        Mat bgr = new Mat();
-        Imgproc.cvtColor(rgb, bgr, Imgproc.COLOR_RGB2BGR);
-        pendingWrites.incrementAndGet();
-        writer.execute(() -> {
-            MatOfInt quality = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 92);
-            try {
-                File directory = new File(context.getExternalFilesDir("measure"), folder);
-                if (!directory.isDirectory() && !directory.mkdirs()) return;
-                Imgcodecs.imwrite(new File(directory, name).getAbsolutePath(), bgr, quality);
-            } catch (RuntimeException failure) {
-                Log.w(CAPTURE_TAG, "Frame capture failed", failure);
-            } finally {
-                quality.release();
-                bgr.release();
-                pendingWrites.decrementAndGet();
-            }
-        });
-        return folder + "/" + name;
+        Mat bgr = new Mat();boolean submitted=false;
+        try{
+            Imgproc.cvtColor(rgb,bgr,Imgproc.COLOR_RGB2BGR);
+            pendingWrites.incrementAndGet();
+            try{
+                writer.execute(()->{
+                    MatOfInt quality=null;
+                    try{
+                        quality=new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY,92);
+                        File directory=new File(context.getExternalFilesDir("measure"),folder);
+                        if(!directory.isDirectory()&&!directory.mkdirs())return;
+                        Imgcodecs.imwrite(new File(directory,name).getAbsolutePath(),bgr,quality);
+                    }catch(RuntimeException failure){Log.w(CAPTURE_TAG,"Frame capture failed",failure);}
+                    finally{if(quality!=null)quality.release();bgr.release();pendingWrites.decrementAndGet();}
+                });
+                submitted=true;
+            }catch(java.util.concurrent.RejectedExecutionException stopped){pendingWrites.decrementAndGet();return null;}
+            catch(RuntimeException|Error failure){pendingWrites.decrementAndGet();throw failure;}
+            return folder+"/"+name;
+        }finally{if(!submitted)bgr.release();}
     }
 
     /** Analysis thread only. */
@@ -147,7 +150,7 @@ public final class MeasurementRecorder {
     }
 
     void close() {
-        writer.shutdown();
+        if(closed.compareAndSet(false,true))writer.shutdown();
     }
 
     private static double poseError(@Nullable RecognitionResult.Pose pose) {

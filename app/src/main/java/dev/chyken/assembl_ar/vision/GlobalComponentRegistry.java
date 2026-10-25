@@ -165,12 +165,12 @@ public final class GlobalComponentRegistry {
         Map<Template,Integer> votes=new HashMap<>();
         {
             NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(pooled,liveDescriptors);
-            for(int row=0;row<pairs.size();row++)if(pairs.hasTwo(row)&&pairs.bestDistance(row)<64&&pairs.bestDistance(row)<.75*pairs.secondDistance(row))votes.merge(owners.get(row),1,Integer::sum);
+            for(int row=0;row<pairs.size();row++)if(pairs.hasTwo(row)&&OrbMatchPolicy.accepts(pairs.bestDistance(row),pairs.secondDistance(row)))votes.merge(owners.get(row),1,Integer::sum);
             List<Template> ranked=new ArrayList<>(votes.keySet());ranked.removeIf(t->UnifiedReferenceCatalog.negative(t.spec));ranked.sort((a,b)->Integer.compare(votes.get(b),votes.get(a)));
             Match best=null;
             for(Template t:ranked.subList(0,Math.min(12,ranked.size()))){
                 NearestDescriptorPairs localPairs=NearestDescriptorPairs.compute(t.descriptors,liveDescriptors);List<DMatch> filtered=new ArrayList<>();
-                for(int i=0;i<localPairs.size();i++)if(localPairs.hasTwo(i)&&localPairs.bestDistance(i)<64&&localPairs.bestDistance(i)<.75*localPairs.secondDistance(i))filtered.add(localPairs.best(i));
+                for(int i=0;i<localPairs.size();i++)if(localPairs.hasTwo(i)&&OrbMatchPolicy.accepts(localPairs.bestDistance(i),localPairs.secondDistance(i)))filtered.add(localPairs.best(i));
                 List<DMatch> good=ComponentRecognizer.uniqueFrameMatches(filtered);if(good.size()<15)continue;
                 List<Point> src=new ArrayList<>(),dst=new ArrayList<>();
                 for(DMatch m:good){if(m.queryIdx<t.points.size()&&m.trainIdx<live.length){src.add(t.points.get(m.queryIdx));dst.add(live[m.trainIdx].pt);}}
@@ -202,15 +202,16 @@ public final class GlobalComponentRegistry {
         Map<Template,Integer> scores=new IdentityHashMap<>();int visited=0;
         for(Template t:candidates){if(visited++>=8&&android.os.SystemClock.elapsedRealtimeNanos()>deadline)break;if(scores.containsKey(t))continue;
             NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(t.representative,liveDescriptors);int n=0;
-            for(int j=0;j<pairs.size();j++)if(pairs.hasTwo(j)&&pairs.bestDistance(j)<=64&&pairs.bestDistance(j)<.75*pairs.secondDistance(j))n++;if(n>=2)scores.put(t,n);
+            for(int j=0;j<pairs.size();j++)if(pairs.hasTwo(j)&&OrbMatchPolicy.accepts(pairs.bestDistance(j),pairs.secondDistance(j)))n++;if(n>=2)scores.put(t,n);
         }
         List<Template> ranked=new ArrayList<>(scores.keySet());ranked.sort((a,b)->Integer.compare(scores.get(b),scores.get(a)));Match best=null;Map<String,Match> identities=new HashMap<>();
         for(Template t:ranked.subList(0,Math.min(4,ranked.size()))){
-            NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(t.descriptors,liveDescriptors);List<DMatch> raw=new ArrayList<>();for(int j=0;j<pairs.size();j++)if(pairs.hasTwo(j)&&pairs.bestDistance(j)<=64&&pairs.bestDistance(j)<.75*pairs.secondDistance(j))raw.add(pairs.best(j));
+            NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(t.descriptors,liveDescriptors);List<DMatch> raw=new ArrayList<>();for(int j=0;j<pairs.size();j++)if(pairs.hasTwo(j)&&OrbMatchPolicy.accepts(pairs.bestDistance(j),pairs.secondDistance(j)))raw.add(pairs.best(j));
             List<DMatch> good=ComponentRecognizer.uniqueFrameMatches(raw);if(good.size()<8)continue;
             MatOfPoint2f source=new MatOfPoint2f(),target=new MatOfPoint2f();Mat mask=new Mat(),h=null;
             try{List<Point> a=new ArrayList<>(),b=new ArrayList<>();for(DMatch m:good){a.add(t.points.get(m.queryIdx));b.add(live[m.trainIdx].pt);}source.fromList(a);target.fromList(b);
-                h=Calib3d.findHomography(source,target,Calib3d.RANSAC,3,mask,500,.99);if(h.empty())continue;
+                DiagnosticHammingMatcher.context(t.spec,t.width,t.height);DiagnosticHammingMatcher.attempted(pairs.size());
+                h=DiagnosticHammingMatcher.homography(source,target,Calib3d.RANSAC,3,mask,500,.99);if(h.empty())continue;
                 int in=Core.countNonZero(mask);if(in<8||in<good.size()*.6)continue;byte[] keep=new byte[(int)mask.total()];mask.get(0,0,keep);
                 List<VisionPoint> evidence=new ArrayList<>();for(int j=0;j<a.size();j++)if(keep[j]!=0)evidence.add(new VisionPoint(a.get(j).x/t.width,a.get(j).y/t.height));
                 int identity=identitySupport(t.spec,evidence);if(identity<0||!distributed(t,evidence))continue;

@@ -1,0 +1,86 @@
+DIAGNOSTIC TELEMETRY VERIFICATION — 2026-10-25
+
+Build: BUILD SUCCESSFUL in 24s
+Host: OK (442 tests)
+Android lint: BUILD SUCCESSFUL in 49s; 0 errors, 193 warnings.
+Git diff --check: passed (line-ending notices only).
+Tablet: 2603ARP14G, ADB serial 368e278b.
+Main app: not installed/replaced by this verification. No progress reset.
+Candidate archive: app/build/tmp/tablet-audit/candidate-code.zip
+Candidate SHA256: f208cad9ba2fc9c681a6a0a7c8502cb0bc802671f3e56302bc0d7bbc871e14b3
+
+TELEMETRY / MATHEMATICAL CHECKS — 8/8 PASS
+The adapter invokes eight fixture methods and reports one outer JUnit test:
+OK (1 test), Time: 7.37 seconds.
+PASS vision.DiagnosticTelemetryInstrumentedTest#higherMatchCountOnAnotherReferenceCannotOwnCandidateTelemetry
+PASS vision.DiagnosticTelemetryInstrumentedTest#sharedAnalyzerPublishesOneVerifiedCandidateAndTruePoseResiduals
+PASS vision.DiagnosticTelemetryInstrumentedTest#checkerboardTreIsThreeDimensionalAndUnavailableWithoutMetricIntrinsics
+PASS vision.DiagnosticTelemetryInstrumentedTest#bothHudStatesKeepAllFifteenLinesAndColorOnlyTheFinalOutput
+PASS vision.DiagnosticTelemetryInstrumentedTest#realCasterAndSensorCandidatesOwnTheirRoiTelemetry
+PASS vision.ImageOutlineTrackerInstrumentedTest#allocationLightRatioProbeMatchesNativeDMatchValues
+PASS vision.GlobalOutlineRegistryInstrumentedTest#bodyDescriptorsIdentifyTheWrongPartAndRejectItsEmptyBoardContext
+PASS vision.GlobalOutlineRegistryInstrumentedTest#ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem
+
+BROADER TABLET REPLAY GROUPS — 19/20 PASS
+PASS vision.StartupQualityInstrumentedTest#compactIndexPreservesEveryCountGeometryAndDescriptorWithoutFullBankReload
+PASS vision.StartupQualityInstrumentedTest#corruptOrDifferentCatalogCannotPublishPartialGlobalEvidence
+PASS vision.StartupQualityInstrumentedTest#previewSkipIsVisibleAccessibleAndCannotLeakIntoNonVideoContent
+PASS vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive
+PASS vision.CameraPauseResumeInstrumentedTest#opticalBridgePauseReleasesLatestImageAndCanResumeTracking
+PASS vision.ImageOutlineTrackerInstrumentedTest#resetAndCloseReleaseFrameBuffersAcrossRepeatedScans
+PASS DynamicOutlinePipelineInstrumentedTest#completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence
+PASS vision.Phase789VideoReplayInstrumentedTest#darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines
+FAIL vision.Phase789VideoReplayInstrumentedTest#sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations
+PASS vision.Phase789VideoReplayInstrumentedTest#wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines
+PASS vision.Phase1011VideoReplayInstrumentedTest#individualToolShowsOutlinesBeforeSuccessForEveryNewLoosePart
+PASS DynamicOutlineUiInstrumentedTest#welcomeFooterIsVisibleEnabledAndContrastingAtLargeFonts
+PASS DynamicOutlineUiInstrumentedTest#bothCamerasHaveAnIndependentFullSizeDynamicOverlay
+PASS DynamicOutlineUiInstrumentedTest#phaseOneDeveloperCompletionShowsAnEnabledFooterWithoutCameraEvidence
+PASS PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling
+PASS vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines
+PASS vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline
+PASS vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines
+PASS vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence
+PASS vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult
+
+KNOWN STRICT-POLICY LIMITATION — NOT A PASS
+Phase 8 heldout-p8-assembly-75.jpg, a motion-blurred outward-sensor frame,
+remains unmatched at the shared d1<0.75*d2 AND d1<=64 rule. The existing
+positive replay assertion is retained and fails; it has not been weakened,
+removed or relabeled. An unrestricted reviewed-bank search also did not
+establish the required two-transducer consensus on that frame. Clear outward
+assembly frame 82 and wired frames 10/42 passed. Clear inward views and
+missing/occluded sensor rejection checks passed. The blurred inward frame
+170 retains its earlier fail-closed behavior. No success rate is inferred
+from these same-session recordings for unseen rooms or devices.
+
+RECORDED TELEMETRY EXAMPLES (real frame pixels)
+Caster: reference inventory 4227; unique live 715; good/attempted 49/600;
+8.17% (FAIL); extraction 38 ms; matching 353 ms; pose Correct/Forward;
+projected (292.80,196.68); observed (295.12,191.49); distance 5.68 px;
+TRE Unmeasured; diagnostic Output Mismatch.
+Distance sensor: inventory 8923; unique live 3002; good/attempted 22/700;
+3.14% (FAIL); extraction 82 ms; matching 552 ms; pose Correct/Forward;
+projected (365.76,265.82); observed (385.14,242.69); distance 30.18 px;
+TRE Unmeasured; diagnostic Output Mismatch.
+These are single replay measurements, not guaranteed device latency averages.
+The reference inventory and selected ROI-query denominator have different
+scopes. Low descriptor-pair yield is never converted into a fake 85% pass.
+Assembly geometry acceptance and the diagnostic percentage gate remain
+separate; mandatory camera/physical checklist requirements are preserved.
+
+PRIMARY COMMANDS
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_tablet_debug.ps1
+python tools/run_host_tests.py
+python tools/prepare_candidate_replay.py
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_quality_replay.ps1 -Serial 368e278b
+
+The final quality command intentionally exits non-success for the recorded
+Phase 8 limitation above. This is not an all-green native replay result.
+Per-group and full command outputs are in app/build/tmp/qa-overhaul/:
+telemetry-build.txt, telemetry-host.txt, telemetry-lint.txt,
+telemetry-final-native.txt, telemetry-final-regressions.txt,
+telemetry-earlier-phases.txt.
+
+Android Studio deployment: run the current source on the tablet, keeping
+application data. No live camera recording of the other room was required.

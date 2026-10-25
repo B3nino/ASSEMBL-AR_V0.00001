@@ -48,10 +48,10 @@ final class Phase9DescriptorSampler {
             for(ReferenceDatabase.PhotometricVariant photo:ReferenceDatabase.PhotometricVariant.values()){
                 List<KeyPoint> keys=new ArrayList<>();List<Mat> rows=new ArrayList<>();
                 for(AdminDescriptorBlobCodec.DescriptorVariant v:levels)if(v.photometricVariant==photo&&!v.descriptors.empty()){Collections.addAll(keys,v.keypoints);rows.add(v.descriptors);}
-                if(rows.isEmpty())continue;Mat merged=new Mat();Core.vconcat(rows,merged);result.add(new AdminDescriptorBlobCodec.DescriptorVariant(photo,keys.toArray(new KeyPoint[0]),merged,true));
+                if(!rows.isEmpty())AdminDescriptorBlobCodec.concatenateInto(result,photo,keys,rows);
             }
             return result;
-        }catch(RuntimeException failure){for(AdminDescriptorBlobCodec.DescriptorVariant v:result)v.release();throw failure;}
+        }catch(RuntimeException|Error failure){for(AdminDescriptorBlobCodec.DescriptorVariant v:result)v.release();throw failure;}
         finally{for(AdminDescriptorBlobCodec.DescriptorVariant v:levels)v.release();detail.clear();context.clear();}
     }
 }

@@ -29,7 +29,7 @@ public final class DynamicOutlinePipelineInstrumentedTest {
                 dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest=null;int recorded=diagnostics.get();
                 Mat transform=Mat.eye(2,3,CvType.CV_64F),moved=new Mat();try{transform.put(0,2,24);Imgproc.warpAffine(rgb,moved,transform,rgb.size(),Imgproc.INTER_LINEAR,Core.BORDER_CONSTANT,new Scalar(180,180,180));
                     analyzer.analyzeForReplay(AssemblyReplayHarness.image(moved,now+400_000_000L));
-                    assertEquals("Visual-only rechecks must not verify or advance again",1,evidence.get());assertEquals("complete-generation",visualTag.get());assertEquals("Visual frames do not publish missing or fabricated scan samples",recorded,diagnostics.get());
+                    assertEquals("Visual-only rechecks must not verify or advance again",1,evidence.get());assertEquals("complete-generation",visualTag.get());assertTrue("Visual-only detections keep diagnostic snapshots fresh without advancing workflow",diagnostics.get()>recorded);
                     assertTrue("Outline follows the new board location after completion",last.get().regions.get(0).get(0).getX()>before+8);
                     long old=last.get().epoch;analyzer.resetAssemblyTracking();assertTrue("Queued old visual frames can be rejected",analyzer.visualEpoch()>old);
                 }finally{transform.release();moved.release();}

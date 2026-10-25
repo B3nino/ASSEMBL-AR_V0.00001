@@ -95,7 +95,7 @@ public final class IndividualPartTestCatalog {
     public static List<ComponentReferenceSpec> withLegacyBaselines(List<ComponentReferenceSpec> specs) {
         // Compatibility entry point: rejected contextual images must not return through the
         // tester. Missing coverage is shown explicitly instead of counting unrelated templates.
-        return UnifiedReferenceCatalog.individual(UnifiedReferenceCatalog.mergeRegistered(specs));
+        return UnifiedReferenceCatalog.individual(UnifiedReferenceCatalog.mergeRegistered(filter(specs)));
     }
 
     /** No pose direction, polarity, board anchor, repeated instance, or assembly pass is requested. */

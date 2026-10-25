@@ -875,7 +875,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                     @Override public boolean requiresMetricTracking(){return dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.running();}
                 },
                 new AssemblyVisionAnalyzer.Callback() {
-                    @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(activityResumed&&isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).setText(sample.hudText());});}
+                    @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(activityResumed&&isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).showTelemetry(sample.telemetry);});}
                     @Override public void onTargetTracking(dev.chyken.assembl_ar.vision.TargetBoundingTracker.Target target,AssemblyVisionAnalyzer.FrameMetadata frame,Object tag){
                         int visible=assemblyVisibilityGeneration;
                         outlineUpdates.submit(()->{if(!activityResumed||visible!=assemblyVisibilityGeneration||!isVisionGenerationActive(generation)||bankGeneration!=referenceBankGeneration||phaseController!=null&&!phaseController.isCameraModeFocused()||target!=null&&(analyzer==null||target.epoch!=analyzer.visualEpoch()))return;
@@ -2180,7 +2180,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private void updateDiagnostics(RecognitionResult result) {
         dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView floating=findViewById(R.id.devDiagnosticsOverlay);
         dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample=dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest;
-        if(sample!=null)floating.setText(sample.hudText());
+        if(sample!=null)floating.showTelemetry(sample.telemetry);
 
         long captureNanos = result.getFrameTimestampNanos();
         if (lastDiagnosticCaptureNanos != Long.MIN_VALUE

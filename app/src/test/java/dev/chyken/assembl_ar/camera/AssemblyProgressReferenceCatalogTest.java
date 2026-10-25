@@ -2,8 +2,6 @@ package dev.chyken.assembl_ar.camera;
 
 import org.junit.Test;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -16,23 +14,21 @@ import static org.junit.Assert.*;
 public final class AssemblyProgressReferenceCatalogTest {
     private static File root() {
         File directory = new File(System.getProperty("user.dir"));
-        while (directory != null && !new File(directory, "docs/ONETOEIGHT_IMAGE_PLAN.md").isFile()) {
+        while (directory != null && !new File(directory, "app/src/main/assets").isDirectory()) {
             directory = directory.getParentFile();
         }
         assertNotNull("Repository root", directory);
         return directory;
     }
 
-    @Test public void assetsAreSmallUniquePoolSourcesWithReviewedGeometry() throws Exception {
+    @Test public void bundledAssetsAreSmallUniqueAndKeepReviewedGeometry() throws Exception {
         File root = root();
-        String labels = new String(Files.readAllBytes(new File(root,
-                "references/processed/onetoeight-20261005/labels/labels.json").toPath()), StandardCharsets.UTF_8);
         Set<String> ids = new HashSet<>();
         Set<String> assets = new HashSet<>();
         long bytes = 0;
         for (ComponentReferenceSpec spec : AssemblyProgressReferenceCatalog.all()) {
             assertTrue(ids.add(spec.getReferenceId()));
-            File asset = new File(root, "android-app/app/src/main/assets/" + spec.getJpegAssetPath());
+            File asset = new File(root, "app/src/main/assets/" + spec.getJpegAssetPath());
             assertTrue(asset.toString(), asset.isFile());
             if (assets.add(spec.getJpegAssetPath())) bytes += asset.length();
             assertEquals(1280, spec.getMaximumImageDimension());
@@ -40,13 +36,8 @@ public final class AssemblyProgressReferenceCatalogTest {
             assertFalse(spec.hasVerifiedPolarityAnchors());
             Matcher source = Pattern.compile("20261005_\\d{6}\\.jpg").matcher(asset.getName());
             assertTrue(source.find());
-            // Each entry starts with name and ends at split; nested component objects
-            // occur between them, so a flat-object regex would silently lose labels.
-            Matcher entry = Pattern.compile("\\\"name\\\"\\s*:\\s*\\\""
-                    + Pattern.quote(source.group()) + "\\\"(?:(?!\\\"name\\\").)*?\\\"split\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"",
-                    Pattern.DOTALL).matcher(labels);
-            assertTrue(source.group(), entry.find());
-            assertEquals("pool", entry.group(1));
+            // Historical upstream split labels are not shipped in this checkout.
+            // This test checks the actual bundled asset/geometry contract instead.
             assertEquals(4, spec.getPlanarCornersNormalized().size());
             for (VisionPoint point : spec.getPlanarCornersNormalized()) unit(point);
             assertFalse(spec.getFeatureRegionsNormalized().isEmpty());

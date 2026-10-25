@@ -17,7 +17,7 @@ public final class AcademicBenchmarkRunnerTest {
     @Test public void lowPairYieldIsNeverRelabeledAsAcademicPass(){
         DiagnosticSample s=sample(1,183,7590,"Normal","ORB_HOMOGRAPHY");
         assertEquals(2.411067,s.accuracy(),.00001);assertTrue(s.hudText().contains("85% gate FAIL"));
-        assertTrue(s.hudText().contains("Workflow: VERIFIED"));assertTrue(s.csv().endsWith(",FAIL"));
+        assertTrue(s.hudText().contains("Workflow: VERIFIED"));assertEquals("FAIL",s.csv().split(",",-1)[26]);
     }
-    @Test public void exportsRetainCsvBoundariesAndUnknownMeasurements(){DiagnosticSample s=sample(1,4,10,"Normal","ORB_HOMOGRAPHY");assertTrue(s.csv().contains("40.0000"));assertFalse(s.csv().contains("NaN"));assertEquals(DiagnosticSample.HEADER.split(",").length,27);}
+    @Test public void exportsRetainCsvBoundariesAndUnknownMeasurements(){DiagnosticSample s=sample(1,4,10,"Normal","ORB_HOMOGRAPHY");assertTrue(s.csv().contains("40.0000"));assertFalse(s.csv().contains("NaN"));assertEquals(DiagnosticSample.HEADER.split(",").length,36);}
 }

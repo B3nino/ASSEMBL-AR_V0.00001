@@ -1,5 +1,6 @@
 """Photo-level parity check for Phase 2's six hardware ROIs; not an Android timing benchmark."""
 from pathlib import Path
+from orb_match_policy import accepts
 import argparse, sys, json
 parser=argparse.ArgumentParser();parser.add_argument('--opencv-path');parser.add_argument('--output');args=parser.parse_args()
 if args.opencv_path:sys.path.insert(0,args.opencv_path)
@@ -48,7 +49,7 @@ def inspect(frame):
  best=0;counts=[];debug=[]
  if rows is None:return best,counts
  for name,w,h,rs,source,descriptors,patches in bank:
-  pairs=bf.knnMatch(descriptors,rows,k=2);good=[m[0] for m in pairs if len(m)==2 and m[0].distance<=64 and m[0].distance<.76*m[1].distance];good.sort(key=lambda m:m.distance);used=set();unique=[]
+  pairs=bf.knnMatch(descriptors,rows,k=2);good=[m[0] for m in pairs if len(m)==2 and accepts(m[0].distance,m[1].distance)];good.sort(key=lambda m:m.distance);used=set();unique=[]
   for m in good:
    if m.trainIdx not in used:used.add(m.trainIdx);unique.append(m)
   if len(unique)<16:continue

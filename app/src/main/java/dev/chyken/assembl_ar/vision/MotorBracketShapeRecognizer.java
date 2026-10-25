@@ -332,11 +332,13 @@ final class MotorBracketShapeRecognizer {
     private static List<MatOfPoint> children(List<MatOfPoint> contours, Mat hierarchy, int parent) {
         List<MatOfPoint> holes = new ArrayList<>();
         int child = (int)hierarchy.get(0, parent)[2];
-        while (child >= 0 && child < contours.size()) {
+        int remaining=contours.size();
+        while (child >= 0 && child < contours.size() && remaining-- > 0) {
             holes.add(contours.get(child));
             child = (int)hierarchy.get(0, child)[0];
         }
-        return holes;
+        // OpenCV normally emits a forest. Corrupted hierarchy links fail closed.
+        return child>=0?Collections.emptyList():holes;
     }
 
     /** Select a valid triplet among extra highlight contours; never accept two holes as three. */

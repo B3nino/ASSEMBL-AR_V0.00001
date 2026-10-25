@@ -16,17 +16,18 @@ public final class GlobalOutlineRegistryInstrumentedTest {
             for(ReferenceDatabase.PreparedReference ref:db.preparedReferences())registry.prepared(ref);registry.publish();
             GlobalComponentRegistry.Match correct=query(registry,nano);assertNotNull(correct);assertEquals("arduino_nano_microcontroller",correct.componentId);assertTrue(correct.identityCertain);
             GlobalComponentRegistry.Match wrong=query(registry,driver);assertNotNull(wrong);assertEquals("dual_motor_driver",wrong.componentId);assertTrue(wrong.identityCertain);assertTrue(wrong.incompatible(5,"arduino_nano_microcontroller"));assertEquals(1,wrong.bodyRegions.size());
+            VerifiedScanEvidence evidence=DiagnosticHammingMatcher.bindGlobal(wrong,null);assertNotNull(evidence);assertEquals("Driver",evidence.componentName);assertEquals(wrong.referenceId,evidence.source.getReferenceId());assertEquals(wrong.good,evidence.good);assertEquals(wrong.total,evidence.total);assertNull(evidence.pose);
             Mat empty=nano.clone();try{Imgproc.rectangle(empty,new Point(160,80),new Point(448,320),new Scalar(180),-1);assertNull("Unchanged board background is not the missing module",query(registry,empty));}finally{empty.release();}
-        }finally{nano.release();driver.release();a.delete();b.delete();}
+        }finally{DiagnosticHammingMatcher.end();nano.release();driver.release();a.delete();b.delete();}
     }
     @Test public void ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem()throws Exception{
         Context c=InstrumentationRegistry.getInstrumentation().getTargetContext();Mat source=scene(812);File file=File.createTempFile("outline-ambiguous-",".png",c.getCacheDir());Imgcodecs.imwrite(file.getPath(),source);
         List<ComponentReferenceSpec> refs=new ArrayList<>();for(String id:new String[]{"arduino_nano_microcontroller","dual_motor_driver"})refs.add(ComponentReferenceSpec.builder("ambiguous-"+id,id,id,40,40).localImageFilePath(file.getPath()).planarReferenceCornersNormalized(new VisionPoint(.25,.2),new VisionPoint(.70,.2),new VisionPoint(.70,.8),new VisionPoint(.25,.8)).build());
         GlobalComponentRegistry registry=new GlobalComponentRegistry();try(ReferenceDatabase db=ReferenceDatabase.load(c.getAssets(),refs,VisionConfig.defaults(),null)){
-            for(ReferenceDatabase.PreparedReference ref:db.preparedReferences())registry.prepared(ref);registry.publish();GlobalComponentRegistry.Match found=query(registry,source);assertNotNull(found);assertFalse("A tied visual match cannot trigger a named correction",found.identityCertain);
-        }finally{source.release();file.delete();}
+            for(ReferenceDatabase.PreparedReference ref:db.preparedReferences())registry.prepared(ref);registry.publish();GlobalComponentRegistry.Match found=query(registry,source);assertNotNull(found);assertFalse("A tied visual match cannot trigger a named correction",found.identityCertain);assertNull(DiagnosticHammingMatcher.bindGlobal(found,null));
+        }finally{DiagnosticHammingMatcher.end();source.release();file.delete();}
     }
     private Mat scene(int seed){Mat image=new Mat(400,640,CvType.CV_8UC1);Core.setRNGSeed(4);Core.randu(image,130,220);Mat body=image.submat(new Rect(160,80,288,240));try{Core.setRNGSeed(seed);Core.randu(body,10,240);Imgproc.GaussianBlur(body,body,new Size(3,3),.7);}finally{body.release();}return image;}
     private GlobalComponentRegistry.Match query(GlobalComponentRegistry registry,Mat gray){ORB orb=OpenCvVisionUtils.createOrb(VisionConfig.defaults());org.opencv.imgproc.CLAHE clahe=OpenCvVisionUtils.createClahe(VisionConfig.defaults());Mat normal=new Mat(),mask=new Mat(),rows=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();
-        try{clahe.apply(gray,normal);orb.detectAndCompute(normal,mask,keys,rows);return registry.queryForOverlay(rows,keys.toArray(),"arduino_nano_microcontroller",5);}finally{normal.release();mask.release();rows.release();keys.release();orb.clear();clahe.clear();}}
+        try{DiagnosticHammingMatcher.begin();clahe.apply(gray,normal);orb.detectAndCompute(normal,mask,keys,rows);DiagnosticHammingMatcher.captureLive(keys.toArray(),rows,1);return registry.queryForOverlay(rows,keys.toArray(),"arduino_nano_microcontroller",5);}finally{normal.release();mask.release();rows.release();keys.release();orb.clear();clahe.clear();}}
 }

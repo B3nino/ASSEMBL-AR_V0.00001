@@ -33,6 +33,11 @@ final class ComponentDetailExtractor implements AutoCloseable {
         }finally{for(Mat c:contours)c.release();mask.release();hierarchy.release();kernel.release();}
     }
     Sample extract(Mat gray,List<VisionPoint> quad,int extent){
+        return extract(gray,quad,extent,null);
+    }
+    /** Optional projected rigid-body masks exclude wires outside metal barrels.
+     * Closing acts on the mask, never inventing texture in the camera pixels. */
+    Sample extract(Mat gray,List<VisionPoint> quad,int extent,List<List<VisionPoint>> regions){
         if(quad.size()!=4)return null;
         double l=Double.MAX_VALUE,t=l,r=-l,b=-l;
         for(VisionPoint p:quad){l=Math.min(l,p.getX());r=Math.max(r,p.getX());t=Math.min(t,p.getY());b=Math.max(b,p.getY());}
@@ -45,6 +50,11 @@ final class ComponentDetailExtractor implements AutoCloseable {
             double scale=extent==0?1:Math.min(4,Math.max(1,extent/(double)Math.max(crop.cols(),crop.rows())));
             Imgproc.resize(crop,work,new Size(),scale,scale,Imgproc.INTER_LINEAR);
             DiagnosticHammingMatcher.normalize(clahe,work,work);
+            if(regions!=null){
+                mask.create(work.size(),CvType.CV_8UC1);mask.setTo(new Scalar(0));
+                for(List<VisionPoint> region:regions){MatOfPoint polygon=new MatOfPoint();try{Point[] p=new Point[region.size()];for(int i=0;i<p.length;i++)p[i]=new Point((region.get(i).getX()-x)*scale,(region.get(i).getY()-y)*scale);polygon.fromArray(p);Imgproc.fillConvexPoly(mask,polygon,new Scalar(255));}finally{polygon.release();}}
+                closeMask(mask);
+            }
             DiagnosticHammingMatcher.extract(orb,work,mask,keys,rows);
             KeyPoint[] points=keys.toArray();double sx=crop.cols()/(double)work.cols(),sy=crop.rows()/(double)work.rows();
             for(KeyPoint k:points){k.pt.x=x+k.pt.x*sx;k.pt.y=y+k.pt.y*sy;k.size*=sx;}
@@ -52,6 +62,7 @@ final class ComponentDetailExtractor implements AutoCloseable {
         }catch(RuntimeException|Error failure){rows.release();throw failure;}
         finally{crop.release();work.release();mask.release();keys.release();}
     }
+    static void closeMask(Mat mask){Mat kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(3,3));try{Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_CLOSE,kernel);}finally{kernel.release();}}
     static final class Sample implements AutoCloseable {
         final KeyPoint[] keys;final Mat descriptors;
         Sample(KeyPoint[] keys,Mat descriptors){this.keys=keys;this.descriptors=descriptors;}

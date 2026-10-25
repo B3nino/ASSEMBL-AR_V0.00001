@@ -89,11 +89,11 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
             return RecognitionResult.builder(time).identity(selected==null?"phase3:photo":selected.referenceId,"dual_motor_driver","Motor Driver")
                     .method(corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
                     .validation(result.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:state==Phase3Observation.State.FLIPPED||state==Phase3Observation.State.BACKWARD||state==Phase3Observation.State.MISALIGNED?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
-                    .corners(corners).matches(extractedPoints,(int)score,(int)score,score>0?1:0).confidence(result.accepted(step)?.85:0)
+                    .corners(corners).matches(extractedPoints,0,0,0).confidence(result.accepted(step)?.85:0)
                     .latency(new RecognitionResult.Latency(extractionNanos/1e6,Math.max(0,android.os.SystemClock.elapsedRealtimeNanos()-start-extractionNanos)/1e6,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase3Observation(result);
         }finally{database.releaseAfterRecognition();raw.release();work.release();descriptors.release();empty.release();keypoints.release();}
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat raw,double scale,boolean installed,boolean refine,boolean recoverContext){DiagnosticHammingMatcher.context(ref.spec);
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat raw,double scale,boolean installed,boolean refine,boolean recoverContext){DiagnosticHammingMatcher.context(ref);
         Split split=splits.get(variant);if(split==null){split=new Split(ref,variant);splits.put(variant,split);}
         List<Point> module=new ArrayList<>(),moduleLive=new ArrayList<>(),board=new ArrayList<>(),boardLive=new ArrayList<>();
         List<VisionPoint> c=ref.spec.getPlanarCornersNormalized();
@@ -195,7 +195,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
     private void collect(Features source,KeyPoint[] live,Mat descriptors,List<Point> reference,List<Point> target){
         if(source.descriptors.empty()||descriptors.rows()<2)return;
         List<DMatch> good=new ArrayList<>();
-        good.addAll(matcher.ratioMatches(source.descriptors,descriptors,.76,64));
+        good.addAll(matcher.ratioMatches(source.descriptors,descriptors));
         good.sort(Comparator.comparingDouble(p->p.distance));Set<Integer> used=new HashSet<>();
         for(DMatch m:good)if(used.add(m.trainIdx)){reference.add(source.keys[m.queryIdx].pt);target.add(live[m.trainIdx].pt);}
     }
@@ -212,7 +212,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
                 if(split.probe.empty()||live.rows()<2)continue;
                 long started=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
                 try{pairs=NearestDescriptorPairs.compute(split.probe,live);}finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}
-                int good=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&pairs.bestDistance(i)<=64&&pairs.bestDistance(i)<.76*pairs.secondDistance(i))good++;
+                int good=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))good++;
                 best=Math.max(best,good);
             }
             scores.put(ref,best);("invalid".equals(role)||"back".equals(role)?negative:positive).add(ref);
@@ -239,8 +239,10 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
         final Mat descriptors;final KeyPoint[] keys;
         Features(ReferenceDatabase.PreparedOrbVariant v,List<Integer> indexes){
             keys=new KeyPoint[indexes.size()];descriptors=indexes.isEmpty()?new Mat():new Mat(indexes.size(),v.descriptors.cols(),v.descriptors.type());if(indexes.isEmpty())return;
+            try{
             int stride=v.descriptors.cols()*(int)v.descriptors.elemSize();byte[] original=new byte[v.descriptors.rows()*stride],selected=new byte[indexes.size()*stride];v.descriptors.get(0,0,original);
             for(int i=0;i<indexes.size();i++){int n=indexes.get(i);keys[i]=v.keypoints[n];System.arraycopy(original,n*stride,selected,i*stride,stride);}descriptors.put(0,0,selected);
+            }catch(RuntimeException|Error failure){descriptors.release();throw failure;}
         }
     }
     private static final class Split{
@@ -258,21 +260,23 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
                 if(p.x>=l&&p.x<=r&&p.y>=t&&p.y<=b)a.add(i);
                 else if(p.x<l-(r-l)*.15||p.x>r+(r-l)*.15||p.y<t-(b-t)*.15||p.y>b+(b-t)*.15)other.add(i);
             }
-            local=new Features(v,a);context=new Features(v,other);
+            local=new Features(v,a);try{context=new Features(v,other);}catch(RuntimeException|Error failure){local.descriptors.release();throw failure;}
             int count=Math.min(32,local.descriptors.rows());probe=count==0?new Mat():new Mat(count,local.descriptors.cols(),local.descriptors.type());
+            try{
             if(count>0){int stride=local.descriptors.cols();byte[] all=new byte[local.descriptors.rows()*stride],sample=new byte[count*stride];local.descriptors.get(0,0,all);for(int i=0;i<count;i++)System.arraycopy(all,(i*local.descriptors.rows()/count)*stride,sample,i*stride,stride);probe.put(0,0,sample);}
+            }catch(RuntimeException|Error failure){local.descriptors.release();context.descriptors.release();probe.release();throw failure;}
         }
     }
     private static final class Candidate{final ReferenceDatabase.PreparedReference ref;final ReferenceDatabase.PreparedOrbVariant variant;final int contextScore;Candidate(ReferenceDatabase.PreparedReference r,ReferenceDatabase.PreparedOrbVariant v,int score){ref=r;variant=v;contextScore=score;}}
     private Mat homography(List<Point> a,List<Point> b,int minimum,double minimumWidth,double minimumHeight){
         if(a.size()<minimum)return null;MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
         try{src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
-            int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){h.release();return null;}
+            int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){return null;}
             double minX=Double.MAX_VALUE,minY=minX,maxX=-minX,maxY=-minX;
             for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){Point p=a.get(i);minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}
             // A terminal row or a small unchanged patch alone cannot certify the whole module.
-            if(maxX-minX<minimumWidth||maxY-minY<minimumHeight){h.release();return null;}return h;
-        }finally{src.release();dst.release();mask.release();}
+            if(maxX-minX<minimumWidth||maxY-minY<minimumHeight){return null;}Mat owned=h;h=null;return owned;
+        }finally{src.release();dst.release();mask.release();if(h!=null)h.release();}
     }
     private List<VisionPoint> project(List<VisionPoint> corners,int width,int height,Mat h,double scale){
         MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();
@@ -299,5 +303,5 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
         Match selected(Phase3Observation.State state){Match selected=matches.get(state);if(selected==null)for(Match m:matches.values())if(selected==null||m.score>selected.score)selected=m;return selected;}
     }
     private static final class Match{final String referenceId;final double score;final List<VisionPoint> actual,expected;Match(String id,double score,List<VisionPoint> actual,List<VisionPoint> expected){referenceId=id;this.score=score;this.actual=actual;this.expected=expected;}}
-    public void close(){for(Split s:splits.values()){s.local.descriptors.release();s.context.descriptors.release();s.probe.release();}splits.clear();refinements.clear();details.close();orb.clear();clahe.clear();matcher.clear();}
+    public void close(){for(Split s:splits.values()){s.local.descriptors.release();s.context.descriptors.release();s.probe.release();}splits.clear();refinements.clear();details.close();orb.clear();clahe.clear();}
 }

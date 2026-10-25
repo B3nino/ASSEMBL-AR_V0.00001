@@ -5,6 +5,7 @@ the actual assets, plus camera rotations and synthetic wrong/missing module prob
 This is an algorithm check, not an Android camera/device benchmark.
 """
 from pathlib import Path
+from orb_match_policy import accepts
 import json, sys
 # A temporary --target installation can be supplied without changing the application's deps.
 if '--opencv-path' in sys.argv:
@@ -65,7 +66,7 @@ def homography(a,b,minimum,min_width=15,min_height=15):
 def match(ref,live,desc,installed):
     if desc is None or ref['desc'] is None:return None
     pairs=BF.knnMatch(ref['desc'],desc,k=2)
-    candidates=sorted((p[0] for p in pairs if len(p)==2 and p[0].distance<65 and p[0].distance<p[1].distance*.76),key=lambda p:p.distance)
+    candidates=sorted((p[0] for p in pairs if len(p)==2 and accepts(p[0].distance,p[1].distance)),key=lambda p:p.distance)
     used=set();a=[];b=[]
     for p in candidates:
         if p.trainIdx in used:continue

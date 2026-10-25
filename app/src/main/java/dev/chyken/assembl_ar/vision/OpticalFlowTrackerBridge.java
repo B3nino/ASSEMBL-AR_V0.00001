@@ -10,10 +10,28 @@ public final class OpticalFlowTrackerBridge implements AutoCloseable,SensorEvent
     private final AssemblyAnchorTracker tracker=new AssemblyAnchorTracker();
     private Mat latestGray;private long latestTime=Long.MIN_VALUE;private CameraCalibration latestCalibration;
     private RecognitionResult.SpatialAnchor last;private long measuredAt=Long.MIN_VALUE,outputAt,detectedAt=Long.MIN_VALUE;private boolean prediction;
-    private double vx,vy;private volatile double gyroX,gyroY,gyroZ;private volatile double angularSpeed;private volatile long imuAt;
+    private double vx,vy;
+    private static final class GyroSample {
+        static final GyroSample EMPTY=new GyroSample(0,0,0,0);
+        final double x,y,z,speed;final long at;
+        GyroSample(double x,double y,double z,long at){this.x=x;this.y=y;this.z=z;this.at=at;speed=Math.sqrt(x*x+y*y+z*z);}
+    }
+    private volatile GyroSample gyro=GyroSample.EMPTY;
+    private volatile boolean imuEnabled;
+    private volatile long imuSessionStart=Long.MAX_VALUE;
+    private GyroSample motionSample(){GyroSample sample=gyro;return imuEnabled&&sample.at>=imuSessionStart?sample:GyroSample.EMPTY;}
+
     private boolean closed;
     private SensorManager sensors;private HandlerThread thread;
-    public synchronized void attach(Context c){if(closed||sensors!=null)return;sensors=(SensorManager)c.getSystemService(Context.SENSOR_SERVICE);Sensor gyro=sensors==null?null:sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);if(gyro!=null){thread=new HandlerThread("ar-motion");thread.start();sensors.registerListener(this,gyro,SensorManager.SENSOR_DELAY_GAME,new Handler(thread.getLooper()));}}
+    public synchronized void attach(Context c){
+        if(closed||sensors!=null)return;sensors=(SensorManager)c.getSystemService(Context.SENSOR_SERVICE);Sensor sensor=sensors==null?null:sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        if(sensor!=null){
+            imuSessionStart=SystemClock.elapsedRealtimeNanos();gyro=GyroSample.EMPTY;
+            thread=new HandlerThread("ar-motion");thread.start();
+            imuEnabled=sensors.registerListener(this,sensor,SensorManager.SENSOR_DELAY_GAME,new Handler(thread.getLooper()));
+            if(!imuEnabled){thread.quitSafely();thread=null;}
+        }
+    }
     public synchronized void reset(){if(closed)return;tracker.reset();last=null;measuredAt=Long.MIN_VALUE;detectedAt=Long.MIN_VALUE;prediction=false;vx=vy=0;}
     public synchronized boolean hasAnchor(){return last!=null;}
     public synchronized boolean predicted(){return prediction;}
@@ -35,8 +53,8 @@ public final class OpticalFlowTrackerBridge implements AutoCloseable,SensorEvent
         }
         if(last==null||time<=outputAt||time-measuredAt>MAX_PERSISTENCE_NS){reset();return null;}
         // Without a recent gyro sample use a short static hold, not invented inertial motion.
-        boolean imu=imuAt>0&&Math.abs(time-imuAt)<250_000_000L;
-        if(!imu&&time-measuredAt>500_000_000L||imu&&angularSpeed>1.2){reset();return null;}
+        GyroSample motion=motionSample();boolean imu=motion.at>0&&Math.abs(time-motion.at)<250_000_000L;
+        if(!imu&&time-measuredAt>500_000_000L||imu&&motion.speed>1.2){reset();return null;}
         prediction=true;
         double dt=(time-measuredAt)/1e9;double decayedSeconds=(1-Math.exp(-dt*2))/2;double dx=imu?vx*decayedSeconds:0,dy=imu?vy*decayedSeconds:0;
         double max=Math.min(gray.cols(),gray.rows())*.15;double length=Math.hypot(dx,dy);if(length>max){dx*=max/length;dy*=max/length;}
@@ -46,13 +64,13 @@ public final class OpticalFlowTrackerBridge implements AutoCloseable,SensorEvent
     }
     public synchronized RecognitionResult.SpatialAnchor trackLatest(Mat gray,long time,CameraCalibration calibration){
         if(closed||time<=latestTime)return null;
-        if(latestGray!=null)latestGray.release();latestGray=gray.clone();latestTime=time;latestCalibration=calibration;
+        if(latestGray==null)latestGray=new Mat();gray.copyTo(latestGray);latestTime=time;latestCalibration=calibration;
         if(last==null)return null;
         return update(gray,time,null,calibration);
     }
     /** Backgrounding releases camera images and unregisters motion, preserving the reusable bridge. */
     public synchronized void pause(){
-        reset();if(latestGray!=null)latestGray.release();latestGray=null;latestTime=Long.MIN_VALUE;latestCalibration=null;imuAt=0;
+        reset();if(latestGray!=null)latestGray.release();latestGray=null;latestTime=Long.MIN_VALUE;latestCalibration=null;imuEnabled=false;imuSessionStart=Long.MAX_VALUE;gyro=GyroSample.EMPTY;
         if(sensors!=null)sensors.unregisterListener(this);if(thread!=null)thread.quitSafely();thread=null;sensors=null;
     }
     private static VisionPoint center(RecognitionResult.SpatialAnchor a){double x=0,y=0;for(VisionPoint p:a.getProjectedCorners()){x+=p.getX()/4;y+=p.getY()/4;}return new VisionPoint(x,y);}
@@ -64,10 +82,14 @@ public final class OpticalFlowTrackerBridge implements AutoCloseable,SensorEvent
     /** Gyro projection is a short image prediction, never a metric world anchor. */
     public Motion imageMotion(CameraCalibration calibration,int rotation){
         double focal=calibration==null?640:calibration.getCameraMatrixRowMajor()[0];
-        double x=-gyroY*focal,y=gyroX*focal,angle=Math.toRadians(rotation),c=Math.cos(angle),s=Math.sin(angle);
-        return new Motion(imuAt,c*x-s*y,s*x+c*y,-gyroZ);
+        GyroSample motion=motionSample();double x=-motion.y*focal,y=motion.x*focal,angle=Math.toRadians(rotation),c=Math.cos(angle),s=Math.sin(angle);
+        return new Motion(motion.at,c*x-s*y,s*x+c*y,-motion.z);
     }
-    @Override public void onSensorChanged(SensorEvent e){gyroX=e.values[0];gyroY=e.values[1];gyroZ=e.values[2];angularSpeed=Math.sqrt(e.values[0]*e.values[0]+e.values[1]*e.values[1]+e.values[2]*e.values[2]);imuAt=e.timestamp;}
+    @Override public void onSensorChanged(SensorEvent e){
+        if(!imuEnabled||e.timestamp<imuSessionStart||e.values.length<3)return;
+        GyroSample sample=new GyroSample(e.values[0],e.values[1],e.values[2],e.timestamp);
+        if(imuEnabled&&sample.at>=imuSessionStart)gyro=sample;
+    }
     @Override public void onAccuracyChanged(Sensor s,int accuracy){}
-    @Override public synchronized void close(){if(closed)return;closed=true;tracker.close();if(latestGray!=null)latestGray.release();latestGray=null;if(sensors!=null)sensors.unregisterListener(this);if(thread!=null)thread.quitSafely();sensors=null;last=null;}
+    @Override public synchronized void close(){if(closed)return;closed=true;imuEnabled=false;imuSessionStart=Long.MAX_VALUE;gyro=GyroSample.EMPTY;tracker.close();if(latestGray!=null)latestGray.release();latestGray=null;if(sensors!=null)sensors.unregisterListener(this);if(thread!=null)thread.quitSafely();thread=null;sensors=null;last=null;}
 }

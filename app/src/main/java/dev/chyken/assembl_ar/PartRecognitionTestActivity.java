@@ -495,7 +495,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                                     handleTestResult(frame.generation, result, frame.width, frame.height);
                                 });
                             }
-                            @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(resumed&&testing&&analyzerBank==bankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).setText(sample.hudText());});}
+                            @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(resumed&&testing&&analyzerBank==bankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).showTelemetry(sample.telemetry);});}
                             @Override public void onTargetTracking(dev.chyken.assembl_ar.vision.TargetBoundingTracker.Target target,AssemblyVisionAnalyzer.FrameMetadata frame,Object tag){outlineUpdates.submit(()->{
                                 if(analyzerBank!=bankGeneration||!resumed||!testing||activeTest==null||!java.util.Objects.equals(activeTest.generation,tag)||target!=null&&(analyzer==null||target.epoch!=analyzer.visualEpoch()))return;
                                 java.util.List<float[]> regions=new java.util.ArrayList<>();if(target!=null)for(java.util.List<VisionPoint> region:target.regions)regions.add(dev.chyken.assembl_ar.vision.PreviewOutlineCoordinates.normalize(region,frame.getAnalyzedWidth(),frame.getAnalyzedHeight(),preview.getWidth(),preview.getHeight()));

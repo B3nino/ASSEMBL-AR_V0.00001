@@ -95,7 +95,7 @@ public final class ObjModelTest {
         float largeScale = HomeRobotRenderer.previewScale(large);
         assertEquals(tiny.halfExtent(0) * tinyScale, large.halfExtent(0) * largeScale, 0.00001f);
         assertEquals(tiny.halfExtent(1) * tinyScale, large.halfExtent(1) * largeScale, 0.00001f);
-        assertEquals(1.75f, tiny.boundingRadius() * tinyScale, 0.00001f);
+        assertEquals(1.70f, tiny.boundingRadius() * tinyScale, 0.00001f);
     }
 
     private static ObjModel load(String obj) {

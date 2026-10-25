@@ -74,11 +74,10 @@ final class ReferenceDescriptorPyramid {
                 List<KeyPoint> keys=new ArrayList<>();List<Mat> descriptors=new ArrayList<>();
                 for(AdminDescriptorBlobCodec.DescriptorVariant v:levels)if(v.photometricVariant==photo&&!v.descriptors.empty()){Collections.addAll(keys,v.keypoints);descriptors.add(v.descriptors);}
                 if(descriptors.isEmpty())continue;
-                Mat merged=new Mat();Core.vconcat(descriptors,merged);
-                result.add(new AdminDescriptorBlobCodec.DescriptorVariant(photo,keys.toArray(new KeyPoint[0]),merged,true));
+                AdminDescriptorBlobCodec.concatenateInto(result,photo,keys,descriptors);
             }
             return result;
-        }catch(RuntimeException failure){for(AdminDescriptorBlobCodec.DescriptorVariant v:result)v.release();throw failure;}
+        }catch(RuntimeException|Error failure){for(AdminDescriptorBlobCodec.DescriptorVariant v:result)v.release();throw failure;}
         finally{for(AdminDescriptorBlobCodec.DescriptorVariant v:levels)v.release();}
     }
 
@@ -95,11 +94,13 @@ final class ReferenceDescriptorPyramid {
             if(safe){keys.add(k);ids.add(i);}
         }
         Mat rows=ids.isEmpty()?new Mat():new Mat(ids.size(),v.descriptors.cols(),v.descriptors.type());
+        try{
         if(!ids.isEmpty()){
             int stride=v.descriptors.cols()*(int)v.descriptors.elemSize();byte[] source=new byte[v.descriptors.rows()*stride],selected=new byte[ids.size()*stride];v.descriptors.get(0,0,source);
             for(int i=0;i<ids.size();i++)System.arraycopy(source,ids.get(i)*stride,selected,i*stride,stride);rows.put(0,0,selected);
         }
         return new AdminDescriptorBlobCodec.DescriptorVariant(v.photometricVariant,keys.toArray(new KeyPoint[0]),rows,true);
+        }catch(RuntimeException|Error failure){rows.release();throw failure;}
     }
 }
 

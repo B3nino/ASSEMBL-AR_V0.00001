@@ -95,7 +95,7 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
             if(primary==null) primary=RecognitionResult.builder(timestamp)
                     .identity(locatedId==null?"phase2:scene":locatedId,component,stage==1?"Motor brackets":stage==2?"TT motors":"Motor assembly")
                     .method(corners.isEmpty()?RecognitionResult.DetectionMethod.NONE:RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY)
-                    .matches(live.length,(int)positive,(int)positive,positive>0?1:0)
+                    .matches(live.length,0,0,0)
                     .corners(corners).instances(instances).confidence(observation.referenceSupported?.8:0)
                     .validation(observation.referenceSupported?RecognitionResult.ValidationState.EXPECTED_COMPONENT:RecognitionResult.ValidationState.NO_COMPONENT)
                     .build();
@@ -110,12 +110,12 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
     /** Sparse rows schedule full checks only. They never supply acceptance/count evidence. */
     private List<ReferenceDatabase.PreparedReference> ranked(Mat live,int stage,String view,boolean housingPossible){
         List<ReferenceDatabase.PreparedReference> positive=new ArrayList<>(),negative=new ArrayList<>();
-        Map<ReferenceDatabase.PreparedReference,Integer> score=new IdentityHashMap<>();DiagnosticHammingMatcher.context(null);
+        Map<ReferenceDatabase.PreparedReference,Integer> score=new IdentityHashMap<>();DiagnosticHammingMatcher.context((ComponentReferenceSpec)null);
         for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
             String role=Phase2AssetCatalog.referenceRole(ref.spec.getReferenceId());
             if(role==null||stage==1&&!role.equals("brackets")||stage==2&&!role.equals("motors")||stage==5&&(role.equals("brackets")||role.equals("motors")))continue;
             if(stage==5&&!housingPossible&&!role.equals("invalid"))continue;
-            Mat sparse=shortlist.get(ref);score.put(ref,sparse==null?0:matcher.ratioMatches(sparse,live,.80,72).size());
+            Mat sparse=shortlist.get(ref);score.put(ref,sparse==null?0:matcher.ratioMatches(sparse,live).size());
             (role.equals("invalid")?negative:positive).add(ref);
         }
         int start=cursor++;if(!positive.isEmpty())Collections.rotate(positive,-Math.floorMod(start,positive.size()));
@@ -137,10 +137,10 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
         return new ArrayList<>(result);
     }
     private Evidence match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,
-                           KeyPoint[] live,Mat descriptors,double scale,String role,int width,int height,Mat frame,Mat raw,Mat rgb) {DiagnosticHammingMatcher.context(ref.spec);
+                           KeyPoint[] live,Mat descriptors,double scale,String role,int width,int height,Mat frame,Mat raw,Mat rgb) {DiagnosticHammingMatcher.context(ref);
          List<Point> source=new ArrayList<>(),target=new ArrayList<>();
         {
-            List<DMatch> good=matcher.ratioMatches(variant.descriptors,descriptors,.76,64);
+            List<DMatch> good=matcher.ratioMatches(variant.descriptors,descriptors);
             // Sampling alternatives are not additional objects. Keep the best descriptor
             // for each physical live keypoint, independently of extraction-level order.
             for(DMatch m:ComponentRecognizer.uniqueFrameMatches(good)){
@@ -311,5 +311,5 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
         final double score;final List<VisionPoint> corners;final boolean complete;final List<List<VisionPoint>> bodies;
         Evidence(double score,List<VisionPoint> corners,boolean complete,List<List<VisionPoint>> bodies) {this.score=score;this.corners=corners;this.complete=complete;this.bodies=bodies;}
     }
-    @Override public void close(){for(Mat rows:shortlist.values())rows.release();shortlist.clear();preferred.clear();orb.clear();hardwareOrb.clear();clahe.clear();matcher.clear();}
+    @Override public void close(){for(Mat rows:shortlist.values())rows.release();shortlist.clear();preferred.clear();orb.clear();hardwareOrb.clear();clahe.clear();}
 }

@@ -24,8 +24,8 @@ final class LocalPhotometricRefiner implements AutoCloseable {
     }
     static Mat contextMask(ComponentReferenceSpec spec,int width,int height,Rect region){
         Mat mask=new Mat(region.height,region.width,CvType.CV_8UC1,new Scalar(255));
-        double[] b=bounds(spec,width,height);double w=b[2]-b[0],h=b[3]-b[1];
-        Imgproc.rectangle(mask,new Point(b[0]-.15*w-region.x,b[1]-.15*h-region.y),new Point(b[2]+.15*w-region.x,b[3]+.15*h-region.y),new Scalar(0),-1);return mask;
+        try{double[] b=bounds(spec,width,height);double w=b[2]-b[0],h=b[3]-b[1];
+        Imgproc.rectangle(mask,new Point(b[0]-.15*w-region.x,b[1]-.15*h-region.y),new Point(b[2]+.15*w-region.x,b[3]+.15*h-region.y),new Scalar(0),-1);return mask;}catch(RuntimeException|Error failure){mask.release();throw failure;}
     }
     ComponentDetailExtractor.Sample context(Mat gray,ComponentReferenceSpec spec,int width,int height,Mat hypothesis){
         long geometryStart=android.os.SystemClock.elapsedRealtimeNanos();
@@ -44,8 +44,9 @@ final class LocalPhotometricRefiner implements AutoCloseable {
     static List<AdminDescriptorBlobCodec.DescriptorVariant> prepare(ComponentReferenceSpec spec,Mat gray,CLAHE clahe){
         Rect region=window(spec,gray.cols(),gray.rows());Mat crop=gray.submat(region),mask=contextMask(spec,gray.cols(),gray.rows(),region);
         ORB orb=ORB.create(2400,1.2f,8,12,0,2,ORB.HARRIS_SCORE,31,7);
+        List<AdminDescriptorBlobCodec.DescriptorVariant> variants=Collections.emptyList();
         try{
-            List<AdminDescriptorBlobCodec.DescriptorVariant> variants=AdminDescriptorBlobCodec.computeVariants(crop,mask,orb,clahe);
+            variants=AdminDescriptorBlobCodec.computeVariants(crop,mask,orb,clahe);
             double[] body=bounds(spec,gray.cols(),gray.rows());
             for(int i=0;i<variants.size();i++){
                 AdminDescriptorBlobCodec.DescriptorVariant v=variants.get(i);
@@ -55,7 +56,8 @@ final class LocalPhotometricRefiner implements AutoCloseable {
                 AdminDescriptorBlobCodec.DescriptorVariant safe=ReferenceDescriptorPyramid.keepIndependentPatches(v,body);variants.set(i,safe);v.release();
             }
             return variants;
-        }finally{crop.release();mask.release();orb.clear();}
+        }catch(RuntimeException|Error failure){for(AdminDescriptorBlobCodec.DescriptorVariant v:variants)v.release();throw failure;}
+        finally{crop.release();mask.release();orb.clear();}
     }
     @Override public void close(){orb.clear();clahe.clear();}
 }

@@ -52,7 +52,7 @@ public final class CircularFallbackInstrumentedTest {
         config = VisionConfig.builder()
                 // Keep the unrelated asset from becoming an ORB candidate. These tests are solely
                 // about the actual fallback path, not about helper selection functions.
-                .matching(0.70f, 64.0f, 500)
+                .matching(0.75f, 64.0f, 500)
                 .homography(500, 0.90, 2.0, 500, 0.99)
                 .circularFallback(30.0, 90.0, 5, 1.0,
                         72.0, 12.0, 18, 70, 1)

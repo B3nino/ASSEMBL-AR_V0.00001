@@ -49,7 +49,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             return RecognitionResult.builder(time).identity(selected==null?"phase5:photo":selected.id,"arduino_nano_microcontroller","Arduino Nano")
                 .method(corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
                 .validation(observation.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:state==Phase5Observation.State.FLIPPED||state==Phase5Observation.State.BACKWARD||state==Phase5Observation.State.MISALIGNED?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
-                .corners(corners).matches(extracted,(int)observation.score,(int)observation.score,observation.score>0?1:0).confidence(observation.accepted(step)?.85:0)
+                .corners(corners).matches(extracted,0,0,0).confidence(observation.accepted(step)?.85:0)
                 .latency(new RecognitionResult.Latency(timing.featureNs/1e6,timing.matchingNs/1e6,timing.geometryNs/1e6,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase5Observation(observation);
         }finally{database.releaseAfterRecognition();raw.release();work.release();rows.release();empty.release();keys.release();}
     }
@@ -61,7 +61,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants)if(v.hasOrbData()){
                 PhotoFeaturePartition s=split(ref,v);long began=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
                 try{pairs=NearestDescriptorPairs.compute(s.probe,live);}finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-began;}
-                int n=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&pairs.bestDistance(i)<=64&&pairs.bestDistance(i)<.76*pairs.secondDistance(i))n++;score=Math.max(score,n);
+                int n=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))n++;score=Math.max(score,n);
             }
             scores.put(ref,score);((role.equals("back")||role.equals("invalid"))?negative:positive).add(ref);
         }
@@ -71,7 +71,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
         cursor++;List<ReferenceDatabase.PreparedReference> result=new ArrayList<>(chosen);result.sort(order);return result;
     }
     private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v,KeyPoint[] live,Mat rows,Mat raw,double scale,boolean installed){
-        DiagnosticHammingMatcher.context(ref.spec);PhotoFeaturePartition s=split(ref,v);double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
+        DiagnosticHammingMatcher.context(ref);PhotoFeaturePartition s=split(ref,v);double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
         List<Point> a=new ArrayList<>(),z=new ArrayList<>();collect(s.body,live,rows,a,z);Mat mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45)),bh=null;int contextInliers=Integer.MAX_VALUE;
         try{
             if(mh==null&&a.size()>=6&&bodyRecoveries<2){bodyRecoveries++;Mat seed=proposal(a,z);
@@ -119,14 +119,14 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             }
         }finally{guess.release();turn.release();empty.release();}
     }
-    private void collect(Rows source,KeyPoint[] live,Mat rows,List<Point> a,List<Point> z){if(source.rows.empty()||rows.rows()<2)return;append(source,live,new ArrayList<>(matcher.ratioMatches(source.rows,rows,.76,64)),a,z);}
+    private void collect(Rows source,KeyPoint[] live,Mat rows,List<Point> a,List<Point> z){if(source.rows.empty()||rows.rows()<2)return;append(source,live,new ArrayList<>(matcher.ratioMatches(source.rows,rows)),a,z);}
     private void guided(Rows source,KeyPoint[] live,Mat rows,double radius,List<Point> a,List<Point> z){
         if(source.rows.empty()||rows.rows()<2)return;long geometryStart=android.os.SystemClock.elapsedRealtimeNanos();int length=source.keys.length*live.length;
         guidanceMask.create(source.keys.length,live.length,CvType.CV_8UC1);if(guidanceBytes.length<length)guidanceBytes=new byte[length];else Arrays.fill(guidanceBytes,0,length,(byte)0);double limit=radius*radius;
         for(int i=0;i<source.keys.length;i++)for(int j=0;j<live.length;j++){double dx=source.keys[i].pt.x-live[j].pt.x,dy=source.keys[i].pt.y-live[j].pt.y;if(dx*dx+dy*dy<limit)guidanceBytes[i*live.length+j]=1;}
         DiagnosticHammingMatcher.snapshot().geometryNs+=android.os.SystemClock.elapsedRealtimeNanos()-geometryStart;
         long start=android.os.SystemClock.elapsedRealtimeNanos();List<DMatch> good=new ArrayList<>();
-        try{guidanceMask.put(0,0,guidanceBytes,0,length);NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(source.rows,rows,guidanceMask);for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&pairs.bestDistance(i)<=64&&pairs.bestDistance(i)<.76*pairs.secondDistance(i))good.add(pairs.best(i));}
+        try{guidanceMask.put(0,0,guidanceBytes,0,length);NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(source.rows,rows,guidanceMask);for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))good.add(pairs.best(i));}
         finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-start;}
         // Guided geometry does not replace Test A's unconstrained Lowe probe.
         append(source,live,good,a,z);
@@ -146,12 +146,12 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     private Mat homography(List<Point> a,List<Point> b,int minimum,double minimumWidth,double minimumHeight){
         if(a.size()<minimum)return null;MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
         try{src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
-            int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){h.release();return null;}
+            int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){return null;}
             double minX=Double.MAX_VALUE,minY=minX,maxX=-minX,maxY=-minX;
             for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){Point p=a.get(i);minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}
             // A terminal row or a small unchanged patch alone cannot certify the whole module.
-            if(maxX-minX<minimumWidth||maxY-minY<minimumHeight){h.release();return null;}return h;
-        }finally{src.release();dst.release();mask.release();}
+            if(maxX-minX<minimumWidth||maxY-minY<minimumHeight){return null;}Mat owned=h;h=null;return owned;
+        }finally{src.release();dst.release();mask.release();if(h!=null)h.release();}
     }
     private List<VisionPoint> project(List<VisionPoint> corners,int width,int height,Mat h,double scale){
         MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();
@@ -168,5 +168,5 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     }
     private static final class Context{final Mat pose;final int inliers;Context(Mat pose,int inliers){this.pose=pose;this.inliers=inliers;}}
     private static final class Match{final String id;final int score;final List<VisionPoint> actual,expected;Match(String id,int score,List<VisionPoint> actual,List<VisionPoint> expected){this.id=id;this.score=score;this.actual=actual;this.expected=expected;}}
-    public void close(){for(PhotoFeaturePartition s:splits.values())s.close();splits.clear();guidanceMask.release();guidanceBytes=new byte[0];details.close();local.close();orb.clear();clahe.clear();matcher.clear();}
+    public void close(){for(PhotoFeaturePartition s:splits.values())s.close();splits.clear();guidanceMask.release();guidanceBytes=new byte[0];details.close();local.close();orb.clear();clahe.clear();}
 }

@@ -1,0 +1,50 @@
+PHASE 7-9 FOLLOW-UP VERIFICATION — 2026-10-25
+
+Build: BUILD SUCCESSFUL (tablet arm64 debug app and test APKs).
+Host: OK (710 tests), 131 discovered host test classes.
+Native: 57 distinct groups verified on tablet 2603ARP14G (serial 368e278b).
+  Original full run: 55/56 PASS; one process interrupted by Android SwipeUpClean.
+  Interrupted direct replay/close race: 3/3 reruns PASS (356 ms, 141 ms, 132 ms).
+  Additional Phase 8 YUV/RGB camera-analyzer test: PASS, including outline before result and 2 consecutive successful frames.
+  The additional test changed test DEX only: all production DEX, resources, references and replay bytes matched the original 56-group candidate exactly.
+  No ignored or disabled assertion was used to resolve the interruption.
+
+Android lint: 0 errors, 193 warnings (same warning count as previous baseline).
+Dataset: 58 reviewed reference JPEGs and 43 held-out replay JPEGs verified by SHA256.
+  Current task: 14 new reference JPEGs, 1,090,880 bytes.
+  All 42 tracked baseline JPEG hashes unchanged.
+  New-room replay timestamps >=2 seconds from all training timestamps in their recording.
+  Persistent replay fixtures: 5,002,803 bytes, outside production APK assets.
+
+Original 56-group candidate SHA256: ceef1bf3f73ac52a660eb1e6dc5b4bb0d0cd548c524d01d76595b8cac5f2b7c4
+Final candidate with additional test SHA256: c365b7fd7bcf365302f7796a494dde52ace8f83d66e68ed88037e1fd35cfa296
+
+Progress verification: all four file hashes IDENTICAL before/after all tests.
+e9c3b6cc7bce91144b2cbebf014a981a7c2a7dade847e75499d0ff1ceef66902  shared_prefs/assembly_phase_progress.xml
+3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793  shared_prefs/guided_assembly_steps.xml
+d7ece400619d4e4f07de486a626fd6f8a3c01e8b6d0b3be8af72f9edc02969f5  shared_prefs/astra_ui.xml
+1e8b99a3ca751f3b77c60e0e098879ee26311e656843832ffea613e3ac58e38f  databases/assembl_ar.db
+
+No main-app install, uninstall, database migration, preference reset, or progress clear was performed by these offline replays.
+
+Saved evidence (workspace-relative):
+  app/build/tmp/phase789-followup/host.log
+  app/build/tmp/phase789-followup/build.log
+  app/build/tmp/phase789-followup/lint.log
+  app/build/tmp/phase789-followup/final-all.txt
+  app/build/tmp/qa-overhaul/hygiene-native-all-results.json (original 55 PASS + 1 interrupted)
+  app/build/tmp/phase789-followup/verified-57-results.json (separate resolution ledger)
+  app/build/tmp/phase789-followup/process-exits.txt (SwipeUpClean)
+  app/build/tmp/phase789-followup/lifecycle-rerun.txt
+  app/build/tmp/phase789-followup/candidate-final-log.txt
+  app/build/tmp/phase789-followup/phase8-camera-integration.txt
+
+Reproduction:
+  powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_tablet_debug.ps1
+  python -B tools/run_host_tests.py
+  python -B tools/ingest_phase789_videos.py --verify
+  python -B tools/prepare_candidate_replay.py
+  adb -s 368e278b push app/build/tmp/tablet-audit/candidate-code.zip /sdcard/Android/data/dev.chyken.assembl_ar/files/candidate-code.zip
+  powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_quality_replay.ps1 -Suite all
+
+Approval review note: geometry-first short-circuiting was rejected because it could bypass photo evidence. The implemented loose-standoff fallback runs AFTER photo matching fails. No bypass was applied.

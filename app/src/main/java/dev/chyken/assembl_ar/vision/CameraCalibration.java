@@ -126,7 +126,7 @@ public final class CameraCalibration {
      * {@link #deskew(VisionPoint)} so Camera2's optional skew is retained exactly rather than
      * silently discarded.
      */
-    Mat toOpenCvCameraMatrix() {
+    public Mat toOpenCvCameraMatrix() {
         Mat matrix = new Mat(3, 3, CvType.CV_64FC1);
         double[] zeroSkew = cameraMatrix.clone();
         zeroSkew[1] = 0.0;
@@ -134,7 +134,7 @@ public final class CameraCalibration {
         return matrix;
     }
 
-    VisionPoint deskew(VisionPoint point) {
+    public VisionPoint deskew(VisionPoint point) {
         double normalizedY = (point.getY() - cameraMatrix[5]) / cameraMatrix[4];
         return new VisionPoint(
                 point.getX() - cameraMatrix[1] * normalizedY,

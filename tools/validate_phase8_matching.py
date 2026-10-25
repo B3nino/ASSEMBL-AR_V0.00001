@@ -4,6 +4,7 @@ Checks source localization, leave-one-photo-out matching and valid/invalid separ
 Requires numpy/OpenCV; --opencv-path accepts a local dependency directory.
 """
 from pathlib import Path
+from orb_match_policy import accepts
 import sys,json,argparse,hashlib
 from functools import lru_cache
 if '--opencv-path' in sys.argv:sys.path.insert(0,sys.argv[sys.argv.index('--opencv-path')+1])
@@ -55,7 +56,7 @@ def match(ref,live,installed,local_only=False):
  def collect(mask):
   source=points[mask];query=des[mask]
   if not len(query):return np.empty((0,2),np.float32),np.empty((0,2),np.float32)
-  pairs=BF.knnMatch(query,ld,k=2);pairs=sorted((p[0] for p in pairs if len(p)==2 and p[0].distance<65 and p[0].distance<p[1].distance*.76),key=lambda m:m.distance);used=set();pairs=[m for m in pairs if not(m.trainIdx in used or used.add(m.trainIdx))]
+  pairs=BF.knnMatch(query,ld,k=2);pairs=sorted((p[0] for p in pairs if len(p)==2 and accepts(p[0].distance,p[1].distance)),key=lambda m:m.distance);used=set();pairs=[m for m in pairs if not(m.trainIdx in used or used.add(m.trainIdx))]
   return np.array([source[m.queryIdx] for m in pairs],np.float32),np.array([lp[m.trainIdx] for m in pairs],np.float32)
  a,b=collect(inside)
  H,n=hom(a,b,10,max(15,(r-l)*.45),max(12,(bt-t)*(.08 if role=='assembly' or inward(ref[0]) else .20 if installed else .45)))

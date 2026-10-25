@@ -1,45 +1,100 @@
 package dev.chyken.assembl_ar.vision;
-import org.opencv.core.*;import org.opencv.features2d.BFMatcher;import java.util.*;
-/** Transparent native matcher with a standardized diagnostic Lowe probe (.75, Hamming <=64).
- * Production callers retain their own filters. No additional matching pass is performed. */
+
+import org.opencv.core.*;
+import org.opencv.calib3d.Calib3d;
+import java.util.*;
+
+/** Per-detector-thread evidence recorder. Search probes cannot publish candidate telemetry. */
 final class DiagnosticHammingMatcher {
-    private final BFMatcher nativeMatcher=BFMatcher.create(Core.NORM_HAMMING,false);
     private static final ThreadLocal<State> STATE=ThreadLocal.withInitial(State::new);
-    static final class State {ComponentReferenceSpec current,best;int good=-1,total=-1;long started=android.os.SystemClock.elapsedRealtimeNanos(),featureNs,matchingNs,geometryNs;Mat live;KeyPoint[] liveKeys;boolean recovery;}
+    static final class State {
+        ComponentReferenceSpec current;int width,height,uniqueLive=-1;double scale=1;
+        long started=android.os.SystemClock.elapsedRealtimeNanos(),featureNs,matchingNs,geometryNs;
+        Mat live;KeyPoint[] liveKeys;boolean recovery;int attempted=-1;
+        final List<Fit> fits=new ArrayList<>();
+    }
+    static final class Fit {
+        final ComponentReferenceSpec source;final int width,height,good,total;final double scale;
+        final float[] from,to;final byte[] keep;final double[] h;
+        List<Point> reference;List<VisionPoint> observed,corners;List<List<VisionPoint>> outlines;
+        double bodyFraction;
+        Fit(State s,MatOfPoint2f src,MatOfPoint2f dst,byte[] mask,double[] homography){
+            source=s.current;width=s.width;height=s.height;total=s.attempted;good=(int)src.total();scale=s.scale;keep=mask;h=homography;
+            from=new float[good*2];to=new float[good*2];src.get(0,0,from);dst.get(0,0,to);
+        }
+        // Defer object/ROI materialization until AFTER the bounded detector search.
+        // Logging must not consume its camera-recognition search deadline.
+        void geometry(){if(reference!=null)return;reference=new ArrayList<>();observed=new ArrayList<>();outlines=new ArrayList<>();int inside=0;
+            for(int i=0;i<good;i++)if(keep[i]!=0){reference.add(new Point(from[i*2],from[i*2+1]));observed.add(new VisionPoint(to[i*2]/scale,to[i*2+1]/scale));if(inPolygon(from[i*2]/width,from[i*2+1]/height,source.getPlanarCornersNormalized()))inside++;}
+            bodyFraction=reference.isEmpty()?0:inside/(double)reference.size();corners=project(source.getPlanarCornersNormalized());outlines.add(corners);
+            List<List<VisionPoint>> regions=new ArrayList<>(source.getFeatureRegionsNormalized());regions.addAll(ComponentContourTemplates.forReference(source));
+            double l=1,t=1,r=0,b=0;for(List<VisionPoint> region:source.getFeatureRegionsNormalized())for(VisionPoint p:region){l=Math.min(l,p.getX());t=Math.min(t,p.getY());r=Math.max(r,p.getX());b=Math.max(b,p.getY());}
+            if(r>l&&b>t)regions.add(Arrays.asList(new VisionPoint(l,t),new VisionPoint(r,t),new VisionPoint(r,b),new VisionPoint(l,b)));
+            regions.add(Arrays.asList(new VisionPoint(0,0),new VisionPoint(1,0),new VisionPoint(1,1),new VisionPoint(0,1)));
+            for(List<VisionPoint> region:regions)if(region.size()==4)outlines.add(project(region));
+        }
+        private List<VisionPoint> project(List<VisionPoint> region){List<VisionPoint> out=new ArrayList<>();for(VisionPoint p:region){double x=p.getX()*width,y=p.getY()*height,z=h[6]*x+h[7]*y+h[8];out.add(new VisionPoint((h[0]*x+h[1]*y+h[2])/z/scale,(h[3]*x+h[4]*y+h[5])/z/scale));}return out;}
+    }
     static void recovery(boolean enabled){STATE.get().recovery=enabled;}
     static void begin(){end();STATE.set(new State());}
-    static void end(){State s=STATE.get();if(s.live!=null)s.live.release();s.live=null;s.liveKeys=null;}
-    static void captureLive(KeyPoint[] keys,Mat descriptors,double scale){State s=STATE.get();if(s.live!=null||descriptors.empty())return;s.live=descriptors.clone();s.liveKeys=keys;if(scale!=1){s.liveKeys=new KeyPoint[keys.length];for(int i=0;i<keys.length;i++){KeyPoint k=keys[i];s.liveKeys[i]=new KeyPoint((float)(k.pt.x/scale),(float)(k.pt.y/scale),k.size,k.angle,k.response,k.octave,k.class_id);}}}
+    static void end(){State s=STATE.get();if(s.live!=null)s.live.release();s.live=null;s.liveKeys=null;s.fits.clear();}
+    static State snapshot(){return STATE.get();}
+    static void captureLive(KeyPoint[] keys,Mat descriptors,double scale){
+        State s=STATE.get();s.scale=scale;if(s.live!=null||descriptors.empty())return;s.live=descriptors.clone();s.liveKeys=keys;
+        Set<Long> unique=new HashSet<>();for(KeyPoint k:keys)unique.add(((long)Float.floatToIntBits((float)k.pt.x)<<32)|(Float.floatToIntBits((float)k.pt.y)&0xffffffffL));s.uniqueLive=unique.size();
+        if(scale!=1){s.liveKeys=new KeyPoint[keys.length];for(int i=0;i<keys.length;i++){KeyPoint k=keys[i];s.liveKeys[i]=new KeyPoint((float)(k.pt.x/scale),(float)(k.pt.y/scale),k.size,k.angle,k.response,k.octave,k.class_id);}}
+    }
     static void normalize(org.opencv.imgproc.CLAHE clahe,Mat src,Mat dst){long t=android.os.SystemClock.elapsedRealtimeNanos();Mat balanced=null;try{if(STATE.get().recovery){balanced=new Mat();IlluminationRecovery.balance(src,balanced);clahe.apply(balanced,dst);}else clahe.apply(src,dst);}finally{if(balanced!=null)balanced.release();STATE.get().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
     static void extract(org.opencv.features2d.ORB orb,Mat src,Mat mask,MatOfKeyPoint keys,Mat descriptors){long t=android.os.SystemClock.elapsedRealtimeNanos();try{orb.detectAndCompute(src,mask,keys,descriptors);}finally{STATE.get().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
-    static Mat homography(MatOfPoint2f src,MatOfPoint2f dst,int method,double threshold,Mat mask,int iterations,double confidence){long t=android.os.SystemClock.elapsedRealtimeNanos();try{return org.opencv.calib3d.Calib3d.findHomography(src,dst,method,threshold,mask,iterations,confidence);}finally{STATE.get().geometryNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
+    static void context(ReferenceDatabase.PreparedReference ref){State s=STATE.get();s.current=ref.spec;s.width=ref.imageWidth;s.height=ref.imageHeight;}
+    static void context(ComponentReferenceSpec spec){State s=STATE.get();s.current=spec;s.width=s.height=0;s.attempted=-1;}
+    static void context(ComponentReferenceSpec spec,int width,int height){State s=STATE.get();s.current=spec;s.width=width;s.height=height;s.scale=1;s.attempted=-1;}
+    static void attempted(int rows){STATE.get().attempted=rows;}
+    static Mat homography(MatOfPoint2f src,MatOfPoint2f dst,int method,double threshold,Mat mask,int iterations,double confidence){
+        long t=android.os.SystemClock.elapsedRealtimeNanos();
+        Mat h=null;boolean transferred=false;
+        try{h=Calib3d.findHomography(src,dst,method,threshold,mask,iterations,confidence);recordFit(src,dst,h,mask);transferred=true;return h;
+        }finally{if(!transferred&&h!=null)h.release();STATE.get().geometryNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}
+    }
+    static void recordFit(MatOfPoint2f src,MatOfPoint2f dst,Mat h,Mat mask){State s=STATE.get();
+            if(!h.empty()&&s.current!=null&&s.width>0&&s.height>0&&s.attempted>0&&mask.total()==src.total()){
+                int n=Core.countNonZero(mask);if(n>=8&&n>=src.total()*.45){byte[] keep=new byte[(int)mask.total()];mask.get(0,0,keep);double[] matrix=new double[9];h.get(0,0,matrix);
+                    Fit fit=new Fit(s,src,dst,keep,matrix);if(fit.good<=fit.total)s.fits.add(fit);if(s.fits.size()>64)s.fits.remove(0);
+                }
+            }}
     static Mat homography(MatOfPoint2f src,MatOfPoint2f dst,int method,double threshold,Mat mask){return homography(src,dst,method,threshold,mask,2000,.995);}
-    static void context(ComponentReferenceSpec s){STATE.get().current=s;}
-    static State snapshot(){return STATE.get();}
-    static void record(ComponentReferenceSpec source,int good,int total){State state=STATE.get();if(good>state.good||good==state.good&&total>state.total){state.best=source;state.good=good;state.total=total;}}
-    /** BFMatcher's native Hamming top-two operation, read as two flat matrices instead
-     * of thousands of MatOfDMatch/DMatch wrappers. Production thresholds are unchanged. */
-    List<DMatch> ratioMatches(Mat query,Mat train,double ratio,int maximumDistance){
-        return ratioMatches(query,train,null,ratio,maximumDistance);
+    List<DMatch> ratioMatches(Mat query,Mat train){return ratioMatches(query,train,null);}
+    List<DMatch> ratioMatches(Mat query,Mat train,Mat mask){
+        State s=STATE.get();long t=android.os.SystemClock.elapsedRealtimeNanos();
+        try{NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(query,train,mask);s.attempted=pairs.size();List<DMatch> accepted=new ArrayList<>();
+            for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))accepted.add(pairs.best(i));
+            accepted.sort(Comparator.comparingDouble((DMatch m)->m.distance).thenComparingInt(m->m.queryIdx));
+            return ComponentRecognizer.uniqueFrameMatches(accepted);
+        }finally{s.matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}
     }
-    List<DMatch> ratioMatches(Mat query,Mat train,Mat mask,double ratio,int maximumDistance){
-        State state=STATE.get();long started=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
-        try{pairs=NearestDescriptorPairs.compute(query,train,mask);}finally{state.matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}
-        List<DMatch> accepted=new ArrayList<>();int good=0,total=0;
-        for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)){
-            total++;float best=pairs.bestDistance(i),second=pairs.secondDistance(i);
-            if(best<=64&&best<.75*second)good++;
-            if(best<=maximumDistance&&best<ratio*second)accepted.add(pairs.best(i));
+    static VerifiedScanEvidence bind(RecognitionResult result,CameraCalibration calibration){
+        if(result.getDetectionMethod()!=RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY||!result.hasLocatedComponent())return null;
+        State s=STATE.get();Fit selected=null;double best=Double.POSITIVE_INFINITY;
+        for(Fit f:s.fits){
+            boolean component=Objects.equals(f.source.getComponentId(),result.getComponentId());
+            boolean trackerAssembly=result.getPhase7Observation()!=null&&"line_tracker_module".equals(result.getComponentId())&&"trackerwork".equals(dev.chyken.assembl_ar.camera.Phase7AssetCatalog.referenceRole(f.source.getReferenceId()));
+            if(!component&&!trackerAssembly)continue;
+            String id=result.getReferenceId();if(id!=null&&!id.startsWith("phase")&&!id.equals(f.source.getReferenceId()))continue;
+            f.geometry();
+            double distance=Double.POSITIVE_INFINITY;for(List<VisionPoint> outline:f.outlines){distance=Math.min(distance,distance(outline,result.getProjectedCorners()));
+                for(RecognitionResult.InstanceObservation instance:result.getInstanceObservations())if(Objects.equals(instance.getComponentId(),result.getComponentId()))distance=Math.min(distance,distance(outline,instance.getProjectedCorners()));}
+            // Exact output geometry binds evidence. A nearby unrelated fit is not a candidate.
+            if(distance<.025&&(distance<best||Math.abs(distance-best)<1e-6&&selected!=null&&f.bodyFraction>selected.bodyFraction)){best=distance;selected=f;}
         }
-        if(state.current!=null)record(state.current,good,total);
-        return accepted;
+        if(selected==null)return null;Fit context=null;
+        for(Fit f:s.fits)if(f!=selected&&f.source.getReferenceId().equals(selected.source.getReferenceId())&&f.bodyFraction<.2&&f.observed.size()>=14&&(context==null||f.observed.size()>context.observed.size()))context=f;
+        return new VerifiedScanEvidence(selected,s,Objects.equals(selected.source.getComponentId(),result.getComponentId())?calibration:null,context,result.getDisplayName());
     }
-    void knnMatch(Mat query,Mat train,List<MatOfDMatch> pairs,int k){
-        State state=STATE.get();long started=android.os.SystemClock.elapsedRealtimeNanos();try{nativeMatcher.knnMatch(query,train,pairs,k);}finally{state.matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}if(state.current==null)return;
-        // MatOfDMatch stores CV_32FC4 rows: query, train, image, distance. Reuse
-        // one buffer; constructing another DMatch[] for every queried row caused GC churn.
-        int good=0,total=0;float[] p=new float[8];for(MatOfDMatch pair:pairs){if(pair.total()>=2){pair.get(0,0,p);total++;if(p[3]<=64&&p[3]<.75*p[7])good++;}}
-        if(good>state.good||good==state.good&&total>state.total){state.best=state.current;state.good=good;state.total=total;}
+    static VerifiedScanEvidence bindGlobal(GlobalComponentRegistry.Match candidate,CameraCalibration calibration){
+        if(candidate==null||!candidate.identityCertain)return null;
+        return bind(RecognitionResult.builder(0).identity(candidate.referenceId,candidate.componentId,candidate.name)
+                .method(RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY).corners(candidate.targetCorners).build(),calibration);
     }
-    void clear(){nativeMatcher.clear();}
+    private static double distance(List<VisionPoint> a,List<VisionPoint> b){if(a.size()!=4||b.size()!=4)return Double.POSITIVE_INFINITY;double sum=0;for(int i=0;i<4;i++)sum+=Math.hypot(a.get(i).getX()-b.get(i).getX(),a.get(i).getY()-b.get(i).getY());double diagonal=Math.hypot(b.get(0).getX()-b.get(2).getX(),b.get(0).getY()-b.get(2).getY());return diagonal>0?sum/(4*diagonal):Double.POSITIVE_INFINITY;}
+    private static boolean inPolygon(double x,double y,List<VisionPoint> p){boolean inside=false;for(int i=0,j=p.size()-1;i<p.size();j=i++){VisionPoint a=p.get(i),b=p.get(j);if((a.getY()>y)!=(b.getY()>y)&&x<(b.getX()-a.getX())*(y-a.getY())/(b.getY()-a.getY())+a.getX())inside=!inside;}return inside;}
 }

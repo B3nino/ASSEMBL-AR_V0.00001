@@ -117,4 +117,22 @@ public final class OrderedMatchingExecutorTest {
             assertEquals(1, matcher.workerCount());
         }
     }
+    @Test public void partialSubmissionFailureDrainsPreviouslyAcceptedReaders() throws Exception {
+        CountDownLatch started=new CountDownLatch(1),release=new CountDownLatch(1),rejected=new CountDownLatch(1);
+        AtomicBoolean readerDone=new AtomicBoolean(),callerDone=new AtomicBoolean();AtomicReference<Throwable> observed=new AtomicReference<>();
+        RuntimeException expected=new java.util.concurrent.RejectedExecutionException("later submission failed");
+        try(OrderedMatchingExecutor matcher=new OrderedMatchingExecutor(2,1)){
+            List<java.util.concurrent.Callable<String>> batches=new java.util.AbstractList<java.util.concurrent.Callable<String>>(){
+                public int size(){return 2;}
+                public java.util.concurrent.Callable<String> get(int index){
+                    if(index==0)return ()->{started.countDown();assertTrue(release.await(2,TimeUnit.SECONDS));readerDone.set(true);return "read complete";};
+                    try{assertTrue(started.await(2,TimeUnit.SECONDS));}catch(InterruptedException e){Thread.currentThread().interrupt();throw new AssertionError(e);}rejected.countDown();throw expected;
+                }
+            };
+            Thread caller=new Thread(()->{try{matcher.compute(batches);}catch(Throwable error){observed.set(error);}finally{callerDone.set(true);}});
+            caller.start();assertTrue(rejected.await(2,TimeUnit.SECONDS));caller.join(100);assertFalse(callerDone.get());release.countDown();caller.join(2000);
+            assertFalse(caller.isAlive());assertTrue(readerDone.get());assertSame(expected,observed.get());
+        }finally{release.countDown();}
+    }
+
 }

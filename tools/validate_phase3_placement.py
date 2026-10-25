@@ -3,6 +3,7 @@ Uses bundled photos at 640x400 with preserved aspect, held-out references, light
 changes, partial wire occlusion, and missing/reversed module controls. No image writes.
 """
 from pathlib import Path
+from orb_match_policy import accepts
 import json, sys, time
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'app/build/tmp/cv-test-deps'))
@@ -36,7 +37,7 @@ def features(image,mask=None,reference=False):
 def collect(source,live):
     p,d=source;q,e=live
     if d is None or e is None or len(e)<2:return np.empty((0,2),np.float32),np.empty((0,2),np.float32)
-    good=[v[0] for v in bf.knnMatch(d,e,k=2) if len(v)==2 and v[0].distance<65 and v[0].distance<.76*v[1].distance]
+    good=[v[0] for v in bf.knnMatch(d,e,k=2) if len(v)==2 and accepts(v[0].distance,v[1].distance)]
     good.sort(key=lambda m:m.distance);seen=set();unique=[]
     for m in good:
         if m.trainIdx not in seen:seen.add(m.trainIdx);unique.append(m)

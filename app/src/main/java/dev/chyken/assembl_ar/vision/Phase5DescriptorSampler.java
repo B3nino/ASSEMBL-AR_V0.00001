@@ -19,10 +19,10 @@ final class Phase5DescriptorSampler {
                 try{
                     for(AdminDescriptorBlobCodec.DescriptorVariant v:original)if(v.photometricVariant==photo){
                         List<Integer> chosen=new ArrayList<>();for(int i=0;i<v.keypoints.length;i++){Point p=v.keypoints[i].pt;if(p.x>=b[0]&&p.x<=b[2]&&p.y>=b[1]&&p.y<=b[3]){chosen.add(i);keys.add(v.keypoints[i]);}}
-                        if(!chosen.isEmpty()){Mat rows=new Mat(chosen.size(),32,CvType.CV_8UC1);byte[] all=new byte[v.descriptors.rows()*32],selected=new byte[chosen.size()*32];v.descriptors.get(0,0,all);for(int i=0;i<chosen.size();i++)System.arraycopy(all,chosen.get(i)*32,selected,i*32,32);rows.put(0,0,selected);parts.add(rows);}
+                        if(!chosen.isEmpty()){Mat rows=new Mat(chosen.size(),32,CvType.CV_8UC1);boolean published=false;try{byte[] all=new byte[v.descriptors.rows()*32],selected=new byte[chosen.size()*32];v.descriptors.get(0,0,all);for(int i=0;i<chosen.size();i++)System.arraycopy(all,chosen.get(i)*32,selected,i*32,32);rows.put(0,0,selected);parts.add(rows);published=true;}finally{if(!published)rows.release();}}
                     }
                     for(AdminDescriptorBlobCodec.DescriptorVariant v:context)if(v.photometricVariant==photo&&!v.descriptors.empty()){Collections.addAll(keys,v.keypoints);parts.add(v.descriptors.clone());}
-                    if(!parts.isEmpty()){Mat merged=new Mat();Core.vconcat(parts,merged);result.add(new AdminDescriptorBlobCodec.DescriptorVariant(photo,keys.toArray(new KeyPoint[0]),merged,true));}
+                    if(!parts.isEmpty())AdminDescriptorBlobCodec.concatenateInto(result,photo,keys,parts);
                 }finally{for(Mat rows:parts)rows.release();}
             }
             return result;

@@ -2,6 +2,7 @@
 Desktop OpenCV parity only: these are not raw camera frames or device timings.
 """
 from pathlib import Path
+from orb_match_policy import accepts
 import argparse,json,time,sys
 ap=argparse.ArgumentParser();ap.add_argument('--input-dir',type=Path,required=True);ap.add_argument('--opencv-path');ap.add_argument('--controls',action='store_true');ap.add_argument('--baseline',action='store_true');args=ap.parse_args()
 if args.opencv_path:sys.path.insert(0,args.opencv_path)
@@ -29,7 +30,7 @@ def pairs(source,live,radius=None):
  if d is None or e is None or len(d)==0 or len(e)<2:return np.empty((0,2),np.float32),np.empty((0,2),np.float32)
  mask=None if radius is None else (np.sum((a[:,None,:]-b[None,:,:])**2,axis=2)<radius*radius).astype(np.uint8)
  matches=cv.BFMatcher(cv.NORM_HAMMING).knnMatch(d,e,k=2,mask=mask)
- good=sorted([m[0] for m in matches if len(m)==2 and m[0].distance<=64 and m[0].distance<.76*m[1].distance],key=lambda m:m.distance)
+ good=sorted([m[0] for m in matches if len(m)==2 and accepts(m[0].distance,m[1].distance)],key=lambda m:m.distance)
  used=set();good=[m for m in good if m.trainIdx not in used and not used.add(m.trainIdx)]
  return np.float32([a[m.queryIdx] for m in good]).reshape(-1,2),np.float32([b[m.trainIdx] for m in good]).reshape(-1,2)
 
@@ -60,7 +61,7 @@ def context(g,ref,source,H):
 
 def probe_score(source,live):
  if source[1] is None or live[1] is None or len(source[1])==0 or len(live[1])<2:return 0
- return sum(len(m)==2 and m[0].distance<=64 and m[0].distance<.76*m[1].distance for m in cv.BFMatcher(cv.NORM_HAMMING).knnMatch(source[1],live[1],k=2))
+ return sum(len(m)==2 and accepts(m[0].distance,m[1].distance) for m in cv.BFMatcher(cv.NORM_HAMMING).knnMatch(source[1],live[1],k=2))
 
 def inspect(g,refs,cursor,preferred):
  live=extract(g,p.LIVE_ORB);rank=[]

@@ -84,7 +84,9 @@ public final class LoosePartShapeRecognizer {
         return NeobotSeedData.MOTOR_BRACKET.equals(id)
                 || NeobotSeedData.GEAR_MOTOR.equals(id)
                 || NeobotSeedData.MOTOR_DRIVER.equals(id)
+                || NeobotSeedData.DATA_CABLE.equals(id)
                 || NeobotSeedData.CASTER_WHEEL.equals(id)
+                || NeobotSeedData.STANDOFF.equals(id)&&request.getPhase9Stage()==0
                 || request.getSpatialAnchorComponentId() == null
                 && (NeobotSeedData.MICROCONTROLLER.equals(id)
                 || NeobotSeedData.DISTANCE_SENSOR.equals(id)
@@ -197,6 +199,13 @@ public final class LoosePartShapeRecognizer {
                 BallCasterShapeRecognizer.Candidate caster = BallCasterShapeRecognizer.find(rgb, minimumAreaRatio(request));
                 candidate = caster == null ? null : new ShapeCandidate("shape:rob-231-ball-caster-v1",
                         "Ball caster wheel", caster.confidence, caster.corners, 50.0, 25.0);
+            } else if (NeobotSeedData.DATA_CABLE.equals(componentId)) {
+                RibbonCableGeometryVerifier.Detection cable=RibbonCableGeometryVerifier.find(grayscale,rgb);
+                candidate=cable==null?null:new ShapeCandidate("shape:kit-idc-ribbon-v1","Data extension cable",.85,cable.corners,150.0,20.0);
+            } else if (NeobotSeedData.STANDOFF.equals(componentId)) {
+                Mat bgr=new Mat();try{Imgproc.cvtColor(rgb,bgr,Imgproc.COLOR_RGB2BGR);StandoffGeometryVerifier.Detection stand=StandoffGeometryVerifier.find(grayscale,bgr);
+                    candidate=stand==null?null:new ShapeCandidate("shape:loose-standoff-v1","Metal standoff",stand.confidence,stand.corners,5.0,40.0);
+                }finally{bgr.release();}
             } else if (NeobotSeedData.MICROCONTROLLER.equals(componentId)) {
                 LooseNanoShapeRecognizer.Candidate nano = LooseNanoShapeRecognizer.find(
                         rgb, minimumAreaRatio(request));

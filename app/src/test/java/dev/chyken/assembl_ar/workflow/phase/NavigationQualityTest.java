@@ -26,7 +26,9 @@ public final class NavigationQualityTest {
  @Test public void skippedDemosStillRequireTheirNextPhysicalGate(){
   Phase9StandoffWheelsFlow p9=new Phase9StandoffWheelsFlow(1);
   for(Phase9StandoffWheelsFlow.Screen s:Phase9StandoffWheelsFlow.Screen.values())if(s.video()){
-   p9.devJump(s.ordinal()+1,2);p9.confirm();assertTrue(p9.next(3));assertTrue(p9.screen().scan());assertFalse(p9.complete());assertFalse(p9.canRescan());
+   p9.devJump(s.ordinal()+1,2);p9.confirm();assertTrue(p9.next(3));
+   assertEquals(s==Phase9StandoffWheelsFlow.Screen.STANDOFF_DEMO?Phase9StandoffWheelsFlow.Screen.STANDOFF_CHECK:Phase9StandoffWheelsFlow.Screen.WHEELS_WORK_SCAN,p9.screen());
+   assertFalse(p9.complete());assertFalse(p9.canRescan());
   }
   Phase10ExtensionBoardFlow p10=new Phase10ExtensionBoardFlow(1);
   for(Phase10ExtensionBoardFlow.Screen s:Phase10ExtensionBoardFlow.Screen.values())if(s.video()){

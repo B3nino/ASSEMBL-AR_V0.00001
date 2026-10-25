@@ -22,7 +22,7 @@ public final class PartRecognitionTestSessionTest {
 
     @Test public void crossPhaseRejectionCannotBeCountedAsExpectedOrLocked() throws Exception {
         PartRecognitionTestSession session=new PartRecognitionTestSession();long token=session.selectPart("motor","Motor",.001f);
-        for(int i=0;i<5;i++)session.observe(token,frame(i*100,"motor",ORB,true).withDiagnosticMetrics(new RecognitionResult.DiagnosticMetrics(100,100,"Normal","Wrong assembly phase")),QUAD);
+        for(int i=0;i<5;i++)session.observe(token,frame(i*100,"motor",ORB,true).withDiagnosticMetrics(new RecognitionResult.DiagnosticMetrics("Wrong assembly phase")),QUAD);
         PartRecognitionTestSession.Snapshot snapshot=session.getSnapshot("motor");assertFalse(snapshot.isLocked());assertEquals(5,snapshot.getWrongComponentFrames());assertEquals(0,snapshot.getExpectedOrbFrames());
     }
 

@@ -103,15 +103,13 @@ public final class ImageOutlineTrackerInstrumentedTest {
         }finally{start.release();next.release();}
     }
     @Test public void allocationLightRatioProbeMatchesNativeDMatchValues(){
-        Mat query=new Mat(200,32,CvType.CV_8UC1),train=new Mat(240,32,CvType.CV_8UC1);Core.randu(query,0,256);Core.randu(train,0,256);
-        Mat head=train.rowRange(0,150),source=query.rowRange(0,150);source.copyTo(head);head.release();source.release();
-        DiagnosticHammingMatcher probe=new DiagnosticHammingMatcher();List<MatOfDMatch> pairs=new ArrayList<>();
-        DiagnosticHammingMatcher.begin();DiagnosticHammingMatcher.context(ComponentReferenceSpec.builder("probe","part","Part",20,20).jpegAssetPath("references/probe.jpg").build());
-        try{probe.knnMatch(query,train,pairs,2);int good=0,total=0;for(MatOfDMatch p:pairs){DMatch[] m=p.toArray();if(m.length==2){total++;if(m[0].distance<=64&&m[0].distance<.75*m[1].distance)good++;}}
-            assertEquals(total,DiagnosticHammingMatcher.snapshot().total);assertEquals(good,DiagnosticHammingMatcher.snapshot().good);
-            assertTrue(DiagnosticHammingMatcher.snapshot().matchingNs>0);
-            List<DMatch> flat=probe.ratioMatches(query,train,.75,64);assertEquals(good,flat.size());
-            assertEquals(total,DiagnosticHammingMatcher.snapshot().total);assertEquals(good,DiagnosticHammingMatcher.snapshot().good);
-        }finally{for(Mat m:pairs)m.release();probe.clear();DiagnosticHammingMatcher.end();query.release();train.release();}
+        org.opencv.features2d.BFMatcher nativeMatcher=org.opencv.features2d.BFMatcher.create(Core.NORM_HAMMING,false);
+        Mat query=new Mat(96,32,CvType.CV_8UC1),train=new Mat(180,32,CvType.CV_8UC1);java.util.List<MatOfDMatch> pairs=new java.util.ArrayList<>();DiagnosticHammingMatcher probe=new DiagnosticHammingMatcher();
+        try{Core.randu(query,0,256);Core.randu(train,0,256);Mat same=train.rowRange(0,96);try{query.copyTo(same);}finally{same.release();}
+            nativeMatcher.knnMatch(query,train,pairs,2);java.util.List<DMatch> expected=new java.util.ArrayList<>();for(MatOfDMatch p:pairs){DMatch[] m=p.toArray();if(m.length==2&&OrbMatchPolicy.accepts(m[0].distance,m[1].distance))expected.add(m[0]);}
+            expected=ComponentRecognizer.uniqueFrameMatches(expected);DiagnosticHammingMatcher.begin();java.util.List<DMatch> actual=probe.ratioMatches(query,train);
+            assertEquals(expected.size(),actual.size());for(int i=0;i<actual.size();i++){assertEquals(expected.get(i).queryIdx,actual.get(i).queryIdx);assertEquals(expected.get(i).trainIdx,actual.get(i).trainIdx);}
+            assertEquals(query.rows(),DiagnosticHammingMatcher.snapshot().attempted);
+        }finally{for(Mat p:pairs)p.release();query.release();train.release();nativeMatcher.clear();DiagnosticHammingMatcher.end();}
     }
 }

@@ -109,9 +109,11 @@ public final class ComponentRecognizer implements AutoCloseable {
     synchronized RecognitionResult inspectPhase7(Mat gray,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase7(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,rgb,timestamp,step);}
     synchronized RecognitionResult inspectPhase11(Mat gray,long timestamp,int stage){ensureOpen();return phase11Matcher.inspect(gray,timestamp,stage);}
+    synchronized RecognitionResult inspectPhase10(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return phase10Matcher.inspect(gray,rgb,timestamp,stage);}
     synchronized RecognitionResult inspectPhase10(Mat gray,long timestamp,int stage){ensureOpen();return phase10Matcher.inspect(gray,timestamp,stage);}
     synchronized RecognitionResult inspectPhase9(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return phase9Matcher.inspect(gray,rgb,timestamp,stage);}
     synchronized RecognitionResult inspectPhase8(Mat gray,long timestamp,int step){ensureOpen();return phase8Matcher.inspect(gray,timestamp,step);}
+    synchronized RecognitionResult inspectPhase8(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase8Matcher.inspect(gray,rgb,timestamp,step);}
     synchronized RecognitionResult inspectPhase5(Mat gray,long timestamp,int step){ensureOpen();return phase5Matcher.inspect(gray,timestamp,step);}
     synchronized RecognitionResult inspectPhase3(Mat gray,long timestamp,int step){ensureOpen();return phase3Matcher.inspect(gray,timestamp,step);}
 
@@ -200,7 +202,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 || board.getProjectedCorners().size() != 4) {
             return board;
         }
-        OrientationEstimate orientation = classifyOrientation(board.getProjectedCorners(), request);
+        OrientationEstimate orientation = classifyOrientation(board.getPose(),board.getProjectedCorners(), request);
         RecognitionResult.ValidationState validation = validateExpectedComponent(
                 board.getComponentId(), orientation.matchesExpectation, board.getPolarityState(), request);
         return board.withOrientationValidation(orientation.classification, orientation.degrees, validation);
@@ -954,15 +956,13 @@ public final class ComponentRecognizer implements AutoCloseable {
                         continue;
                     }
                     float best = pairs.bestDistance(row);
-                    if (best <= config.getMaximumHammingDistance()
-                            && best < config.getKnnRatioThreshold() * pairs.secondDistance(row)) {
+                    if (OrbMatchPolicy.accepts(best,pairs.secondDistance(row))) {
                         goodMatches.add(pairs.best(row));
                     }
                 }
                 // Repeated PCB holes, connector pins and fastener edges can map multiple
                 // source descriptors to one live feature. They are one observation, for
                 // every catalog view, and must not inflate consensus or identity ranking.
-                int ratioGoodMatchCount=goodMatches.size();DiagnosticHammingMatcher.record(reference.spec,ratioGoodMatchCount,pairs.size());
                 goodMatches = uniqueFrameMatches(goodMatches);
                 double distanceSum = 0.0;
                 for (DMatch match : goodMatches) distanceSum += match.distance;
@@ -974,7 +974,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 }
                 if (goodMatches.size() >= config.getMinimumGoodMatches()) {
                     candidates.add(new RawCandidate(reference, variant, frameKeypoints,
-                            goodMatches, distanceSum / goodMatches.size(),ratioGoodMatchCount));
+                            goodMatches, distanceSum / goodMatches.size()));
                 }
             }
         }
@@ -1175,8 +1175,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                         }
                         float best = pairs.bestDistance(row);
                         if (row >= variant.keypoints.length
-                                || best > config.getMaximumHammingDistance()
-                                || !(best < config.getKnnRatioThreshold() * pairs.secondDistance(row))) {
+                                || !OrbMatchPolicy.accepts(best,pairs.secondDistance(row))) {
                             continue;
                         }
                         Point canonical = project(transform, variant.keypoints[row].pt);
@@ -1680,6 +1679,8 @@ public final class ComponentRecognizer implements AutoCloseable {
         try {
             source.fromList(referencePoints);
             destination.fromList(imagePoints);
+            DiagnosticHammingMatcher.context(raw.reference);
+            DiagnosticHammingMatcher.attempted(raw.referenceVariant.descriptors.rows());
             homography = DiagnosticHammingMatcher.homography(
                     source,
                     destination,
@@ -1806,7 +1807,6 @@ public final class ComponentRecognizer implements AutoCloseable {
                     referencePoints.size(), inliers, inlierRatio,
                     confidence, rankingScore, poseInliers.objectPointsMm,
                     poseInliers.imagePoints);
-            candidate.referenceKeypoints=raw.referenceVariant.keypoints.length;candidate.ratioGoodMatchCount=raw.ratioGoodMatchCount;
             return candidate;
         } finally {
             if (homography != null) {
@@ -2030,7 +2030,8 @@ public final class ComponentRecognizer implements AutoCloseable {
                                    RecognitionRequest request,
                                    int frameKeypointCount) {
         ComponentReferenceSpec spec = candidate.reference.spec;
-        OrientationEstimate orientation = classifyOrientation(candidate.corners, request);
+        RecognitionResult.Pose pose = estimatePose(candidate, request.getCameraCalibration());
+        OrientationEstimate orientation = classifyOrientation(pose,candidate.corners, request);
         RecognitionRequest.AssemblyExpectation expectation = request.getExpectation();
         boolean isExpectedIdentity = expectation == null
                 || expectation.getComponentId().equals(spec.getComponentId());
@@ -2041,7 +2042,6 @@ public final class ComponentRecognizer implements AutoCloseable {
                 : RecognitionResult.PolarityState.UNCONFIRMED;
         RecognitionResult.ValidationState validation = validateExpectedComponent(
                 spec.getComponentId(), orientation.matchesExpectation, polarity, request);
-        RecognitionResult.Pose pose = estimatePose(candidate, request.getCameraCalibration());
         List<RecognitionResult.InstanceObservation> observations = new ArrayList<>();
         for (SpatialCandidate instance : instanceCandidates) {
             ComponentReferenceSpec instanceSpec = instance.reference.spec;
@@ -2060,7 +2060,6 @@ public final class ComponentRecognizer implements AutoCloseable {
                 .validation(validation)
                 .orientation(orientation.classification, orientation.degrees)
                 .polarity(polarity)
-                .orbMetrics(candidate.referenceKeypoints,candidate.referenceKeypoints,candidate.ratioGoodMatchCount)
                 .matches(frameKeypointCount, candidate.goodMatchCount,
                         candidate.inlierCount, candidate.inlierRatio)
                 .confidence(candidate.confidence)
@@ -2104,7 +2103,6 @@ public final class ComponentRecognizer implements AutoCloseable {
                 .validation(validation)
                 .orientation(RecognitionResult.OrientationClassification.UNKNOWN, Double.NaN)
                 .polarity(polarity)
-                .orbMetrics(candidate.referenceVariant.keypoints.length,candidate.referenceVariant.keypoints.length,candidate.ratioGoodMatchCount)
                 .matches(frameKeypointCount, candidate.goodMatches.size(), 0, 0.0)
                 .confidence(confidence);
     }
@@ -2541,6 +2539,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         Mat translationVector = new Mat();
         Mat rotationMatrix = new Mat();
         MatOfPoint2f reprojectedPoints = new MatOfPoint2f();
+        long poseStarted=SystemClock.elapsedRealtimeNanos();
         try {
             boolean solved = Calib3d.solvePnP(
                     objectPoints,
@@ -2582,6 +2581,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                     rvec, tvec, toOpenGlModelView(rotation, tvec), poseError);
         } finally {
             reprojectedPoints.release();
+            DiagnosticHammingMatcher.snapshot().geometryNs+=SystemClock.elapsedRealtimeNanos()-poseStarted;
             rotationMatrix.release();
             translationVector.release();
             rotationVector.release();
@@ -2661,6 +2661,18 @@ public final class ComponentRecognizer implements AutoCloseable {
         return true;
     }
 
+    private OrientationEstimate classifyOrientation(RecognitionResult.Pose pose,List<VisionPoint> corners,RecognitionRequest request){
+        if(pose==null)return classifyOrientation(corners,request);
+        Mat vector=new Mat(3,1,CvType.CV_64F),matrix=new Mat();
+        try{vector.put(0,0,pose.getRotationVector());Calib3d.Rodrigues(vector,matrix);double[] values=new double[9];matrix.get(0,0,values);PoseOrientation o=PoseOrientation.fromRotation(values,null);
+            RecognitionResult.OrientationClassification classification=!o.frontFacing?RecognitionResult.OrientationClassification.MIRRORED:o.label.equals("Backward")?RecognitionResult.OrientationClassification.UPSIDE_DOWN:o.yaw>30?RecognitionResult.OrientationClassification.ROTATED_CLOCKWISE:o.yaw< -30?RecognitionResult.OrientationClassification.ROTATED_COUNTERCLOCKWISE:RecognitionResult.OrientationClassification.UPRIGHT;
+            boolean matches=o.frontFacing||request.inspectsLooseBracketSet();RecognitionRequest.AssemblyExpectation expected=request.getExpectation();
+            if(expected!=null&&expected.getOrientationDegrees()!=null)matches&=angularDistance(o.yaw,expected.getOrientationDegrees())<=(expected.getOrientationToleranceDegrees()==null?config.getDefaultOrientationToleranceDegrees():expected.getOrientationToleranceDegrees());
+            return new OrientationEstimate(classification,o.yaw,matches);
+        }finally{vector.release();matrix.release();}
+    }
+
+    /** Image winding is a fallback only when calibrated 3D pose is unavailable. */
     private OrientationEstimate classifyOrientation(List<VisionPoint> corners,
                                                     RecognitionRequest request) {
         double signedArea = signedArea(corners);
@@ -3338,7 +3350,6 @@ public final class ComponentRecognizer implements AutoCloseable {
         final KeyPoint[] frameKeypoints;
         final List<DMatch> goodMatches;
         final double averageDistance;
-        final int ratioGoodMatchCount;
         int validMatchCount = -1;
         int homographyInlierCount = -1;
         double homographyInlierRatio = Double.NaN;
@@ -3347,9 +3358,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         RawCandidate(ReferenceDatabase.PreparedReference reference,
                      ReferenceDatabase.PreparedOrbVariant referenceVariant,
                      KeyPoint[] frameKeypoints,
-                     List<DMatch> goodMatches, double averageDistance) {this(reference,referenceVariant,frameKeypoints,goodMatches,averageDistance,goodMatches.size());}
-        RawCandidate(ReferenceDatabase.PreparedReference reference,ReferenceDatabase.PreparedOrbVariant referenceVariant,KeyPoint[] frameKeypoints,List<DMatch> goodMatches,double averageDistance,int ratioGoodMatchCount){
-            this.ratioGoodMatchCount=ratioGoodMatchCount;
+                     List<DMatch> goodMatches, double averageDistance) {
             this.reference = reference;
             this.referenceVariant = referenceVariant;
             this.frameKeypoints = frameKeypoints;
@@ -3379,7 +3388,6 @@ public final class ComponentRecognizer implements AutoCloseable {
         final ReferenceDatabase.PreparedReference reference;
         final Mat homography;
         final List<VisionPoint> corners;
-        int referenceKeypoints=-1,ratioGoodMatchCount=-1;
         final int goodMatchCount;
         final int inlierCount;
         final double inlierRatio;

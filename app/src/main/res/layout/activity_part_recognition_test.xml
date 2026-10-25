@@ -15,5 +15,5 @@
     <dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView android:id="@+id/devDiagnosticsOverlay"
         android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="top|start"
         android:layout_marginTop="80dp" android:layout_marginStart="12dp" android:elevation="999dp"
-        android:maxWidth="260dp" android:maxLines="3" android:ellipsize="end" />
+        android:maxWidth="360dp" android:maxLines="2147483647" />
 </FrameLayout>

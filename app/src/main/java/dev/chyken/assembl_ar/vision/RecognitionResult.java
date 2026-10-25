@@ -59,15 +59,24 @@ public final class RecognitionResult {
     }
 
     public static final class DiagnosticMetrics {
-        public final String preprocessing;
-        public final int totalMatches,referenceKeypoints,probeGood;public final String lighting,mismatch,probeReference;
-        public DiagnosticMetrics(int total,int assigned,String lighting,String mismatch){this(total,assigned,lighting,mismatch,-1,null);}
-        public DiagnosticMetrics(int total,int assigned,String lighting,String mismatch,int probeGood,String probeReference){this(total,assigned,lighting,mismatch,probeGood,probeReference,"unspecified");}
-        public DiagnosticMetrics(int total,int assigned,String lighting,String mismatch,int probeGood,String probeReference,String preprocessing){this.preprocessing=preprocessing;totalMatches=total;referenceKeypoints=assigned;this.lighting=lighting;this.mismatch=mismatch;this.probeGood=probeGood;this.probeReference=probeReference;}
+        public final VerifiedScanEvidence verified;
+        public final String preprocessing,mismatch;
+        /** Explicit correction metadata without inventing a measured candidate. */
+        public DiagnosticMetrics(String mismatch){this(null,mismatch,"unspecified");}
+        DiagnosticMetrics(VerifiedScanEvidence evidence,String mismatch,String preprocessing){
+            verified=evidence;this.mismatch=mismatch;this.preprocessing=preprocessing;
+        }
     }
     private final DiagnosticMetrics diagnosticMetrics;
     public DiagnosticMetrics getDiagnosticMetrics(){return diagnosticMetrics;}
     public RecognitionResult withDiagnosticMetrics(DiagnosticMetrics m){Builder b=copyBuilder();b.diagnosticMetrics=m;return b.build();}
+    RecognitionResult withVerifiedScanEvidence(VerifiedScanEvidence e,String mismatch,String preprocessing){
+        DiagnosticMetrics m=new DiagnosticMetrics(e,mismatch,preprocessing);
+        Builder b=copyBuilder();b.diagnosticMetrics=m;
+        if(e!=null)b.matches(e.liveKeypoints,e.good,e.inliers,e.good>0?e.inliers/(double)e.good:0);
+        else b.matches(Math.max(0,DiagnosticHammingMatcher.snapshot().uniqueLive),0,0,0);
+        return b.build();
+    }
     private final long frameTimestampNanos;
     private final String referenceId;
     private final String componentId;
@@ -422,8 +431,6 @@ public final class RecognitionResult {
 
     static final class Builder {
         private DiagnosticMetrics diagnosticMetrics;
-        Builder orbMetrics(int total,int assigned,int good){diagnosticMetrics=new DiagnosticMetrics(total,assigned,"Unknown",null,good,null);return this;}
-        Builder orbMetrics(int total,int assigned){diagnosticMetrics=new DiagnosticMetrics(total,assigned,"Unknown",null);return this;}
         private Phase2Observation phase2Observation;
         private Phase7Observation phase7Observation;
         private Phase8Observation phase8Observation;

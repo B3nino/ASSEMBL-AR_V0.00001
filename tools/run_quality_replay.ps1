@@ -1,10 +1,10 @@
-param([string]$Serial='368e278b')
+param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','all')][string]$Suite='quality')
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskAdb=Join-Path $env:LOCALAPPDATA 'Android/Sdk/platform-tools/adb.exe'
 $taskLogs=Join-Path $taskRoot 'app/build/tmp/qa-overhaul'
 New-Item -ItemType Directory -Path $taskLogs -Force | Out-Null
-$taskCases=@(
+$taskQualityCases=@(
  'vision.StartupQualityInstrumentedTest#compactIndexPreservesEveryCountGeometryAndDescriptorWithoutFullBankReload',
  'vision.StartupQualityInstrumentedTest#corruptOrDifferentCatalogCannotPublishPartialGlobalEvidence',
  'vision.StartupQualityInstrumentedTest#previewSkipIsVisibleAccessibleAndCannotLeakIntoNonVideoContent',
@@ -21,12 +21,74 @@ $taskCases=@(
  'DynamicOutlineUiInstrumentedTest#phaseOneDeveloperCompletionShowsAnEnabledFooterWithoutCameraEvidence',
  'PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling'
 )
+$taskAuditCases=@(
+ 'vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission',
+ 'vision.HygieneSafetyInstrumentedTest#pauseFromOutlineCallbackDropsTheRemainingTrackingCallback',
+ 'vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader',
+ 'vision.HygieneSafetyInstrumentedTest#directReplayAndCloseShareTheSameNativeOwnershipGuard',
+ 'vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence',
+ 'vision.HygieneSafetyInstrumentedTest#threeThousandFlowFramesReuseBuffersAndResetReleasesEveryOwner',
+ 'vision.HygieneSafetyInstrumentedTest#rejectedCaptureWritesDoNotLeakAdmissionCounters',
+ 'vision.HygieneSafetyInstrumentedTest#cyclicContourHierarchyTerminatesWithoutInventingRepeatedHoles',
+ 'vision.HygieneSafetyInstrumentedTest#failedDescriptorPublicationPreservesBorrowedInputsAndSuccessfulOutputOwnsItsRows',
+ 'vision.DiagnosticTelemetryInstrumentedTest#higherMatchCountOnAnotherReferenceCannotOwnCandidateTelemetry',
+ 'vision.DiagnosticTelemetryInstrumentedTest#sharedAnalyzerPublishesOneVerifiedCandidateAndTruePoseResiduals',
+ 'vision.DiagnosticTelemetryInstrumentedTest#checkerboardTreIsThreeDimensionalAndUnavailableWithoutMetricIntrinsics',
+ 'vision.DiagnosticTelemetryInstrumentedTest#bothHudStatesKeepAllFifteenLinesAndColorOnlyTheFinalOutput',
+ 'vision.DiagnosticTelemetryInstrumentedTest#realCasterAndSensorCandidatesOwnTheirRoiTelemetry',
+ 'vision.ImageOutlineTrackerInstrumentedTest#allocationLightRatioProbeMatchesNativeDMatchValues',
+ 'vision.GlobalOutlineRegistryInstrumentedTest#bodyDescriptorsIdentifyTheWrongPartAndRejectItsEmptyBoardContext',
+ 'vision.GlobalOutlineRegistryInstrumentedTest#ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem',
+ 'vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines',
+ 'vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart',
+ 'vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline',
+ 'vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines',
+ 'vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence',
+ 'vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult',
+ 'vision.ImageOutlineTrackerInstrumentedTest#photoOnlyOutlineFollowsMeasuredPanAndClearsWhenOccluded',
+ 'vision.ImageOutlineTrackerInstrumentedTest#delayedRecognitionCatchesUpToLatestCameraFrame',
+ 'vision.ImageOutlineTrackerInstrumentedTest#sparseEightToElevenCornerTargetsCatchUpButCannotTrackABlankFrame',
+ 'vision.ImageOutlineTrackerInstrumentedTest#mountedPairKeepsTwoSeparateMovingOutlines',
+ 'vision.ImageOutlineTrackerInstrumentedTest#multiSecondDetectorSeedIsRelocatedAgainstTheNewestMeasuredImage'
+)
+$taskPhase1011Cases=@(
+ 'vision.Phase1011VideoReplayInstrumentedTest#phase10LoosePartsAndRealBoardBottomRequireCorrectOrientation',
+ 'vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard',
+ 'vision.Phase1011VideoReplayInstrumentedTest#phase11LooseOledBatteryAndBackFaceKeepTheirIdentity',
+ 'vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence',
+ 'vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence'
+)
+$taskPhase789FollowupCases=@(
+ 'vision.Phase789FollowupReplayInstrumentedTest#shadowedBottomAssemblyRequiresBothTrackersAndCasterWithOutlines',
+ 'vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPalmHasMeasuredOutlines',
+ 'vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPaperAndRotatedFrontHasMeasuredOutlines',
+ 'vision.Phase789FollowupReplayInstrumentedTest#clippedSensorCannotBecomeACompleteFrontFace',
+ 'vision.Phase789FollowupReplayInstrumentedTest#restoredLooseStandoffScanUsesFreshGeometricEvidence',
+ 'vision.Phase789FollowupReplayInstrumentedTest#blurredStandoffDoesNotInventACompletePose',
+ 'vision.Phase789FollowupReplayInstrumentedTest#standoffScanRejectsYellowWheelHubs',
+ 'vision.Phase789FollowupReplayInstrumentedTest#phase8CameraAnalyzerPublishesTheOutlineBeforeConsecutiveSuccess',
+ 'vision.Phase789VideoReplayInstrumentedTest#standaloneStandoffKeepsMeasuredIndividualToolOutlines'
+)
+$taskPhase10FollowupCases=@(
+ 'vision.Phase10FollowupReplayInstrumentedTest#looseCableRequiresBothConnectorHeadsAndVisibleOutline',
+ 'vision.Phase10FollowupReplayInstrumentedTest#protectorUnderGlareRequiresIndependentFrameAndBoardEvidence',
+ 'vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence',
+ 'vision.Phase10FollowupReplayInstrumentedTest#boardOnlyCannotPassStackedAssembly',
+ 'vision.Phase10FollowupReplayInstrumentedTest#clippedCableCannotPassAsBothCompleteConnectors',
+ 'vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess',
+ 'vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames'
+)
+$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases}}
 $taskFailed=@()
+$taskResults=@()
 foreach($taskCase in $taskCases){
  Write-Output "Running $taskCase"
  $taskText=(& $taskAdb -s $Serial shell am instrument -w -r -e class dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest -e candidateDex /sdcard/Android/data/dev.chyken.assembl_ar/files/candidate-code.zip -e candidateCases $taskCase dev.chyken.assembl_ar.test/androidx.test.runner.AndroidJUnitRunner) -join "`n"
  $taskText | Set-Content -LiteralPath (Join-Path $taskLogs ($taskCase.Replace('#','-')+'.txt')) -Encoding utf8
- if($taskText -notmatch 'OK \(1 test\)'){$taskFailed+=$taskCase;Write-Output $taskText}else{Write-Output 'PASS'}
+ $taskPassed=$taskText -match 'OK \(1 test\)'
+ $taskResults += [pscustomobject]@{case=$taskCase;passed=$taskPassed}
+ if(!$taskPassed){$taskFailed+=$taskCase;Write-Output $taskText}else{Write-Output 'PASS'}
 }
+$taskResults | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskLogs ("hygiene-native-"+$Suite+"-results.json")) -Encoding utf8
 if($taskFailed.Count){throw ('Failed groups: '+($taskFailed -join ', '))}
 Write-Output "All $($taskCases.Count) tablet regression groups passed."

@@ -15,17 +15,23 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
     private final ORB orb;
     private final CLAHE clahe;
     private final ComponentDetailExtractor details;
+    private final DetailSamplingSchedule recoverySchedule=new DetailSamplingSchedule();
+    private int lastStage;
     private int refinementCursor;
     private int searchCursor;
     private final Map<String,ReferenceDatabase.PreparedReference> preferred=new HashMap<>();
     private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     Phase8ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;details=new ComponentDetailExtractor(config);orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);clahe=OpenCvVisionUtils.createClahe(config);}
-    RecognitionResult inspect(Mat gray,long time,int step){
+    RecognitionResult inspect(Mat gray,long time,int step){return inspect(gray,null,time,step);}
+    RecognitionResult inspect(Mat gray,Mat rgb,long time,int step){
+        if(lastStage!=step){lastStage=step;recoverySchedule.reset();}
+        boolean requestedRecovery=DiagnosticHammingMatcher.snapshot().recovery;
         long start=android.os.SystemClock.elapsedRealtimeNanos(),deadline=System.nanoTime()+900_000_000L;Mat raw=new Mat(),work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keypoints=new MatOfKeyPoint();
         double scale=Math.min(1,1280.0/Math.max(gray.cols(),gray.rows()));
         double front=0,back=0,placed=0,reversed=0,invalid=0,inward=0,missing=0;List<VisionPoint> corners=Collections.emptyList();
         database.acquireForRecognition();
         try{
+            DiagnosticHammingMatcher.recovery(recoverySchedule.recoveryFor(requestedRecovery));
             if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);
             work.copyTo(raw);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
             List<Candidate> candidates=new ArrayList<>();
@@ -78,16 +84,71 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
                 }
             }
             }
+            if(step==1&&front==0&&back==0){
+                // A small loose sensor can be only ~100 pixels wide at 640x400.
+                // Sample its rigid body locally, rather than rewarding background
+                // texture or requiring the user to fill the entire camera view.
+                // Dark regions propose windows ONLY: the same 10-inlier, coverage,
+                // ratio/distance and front/back geometric gates still decide.
+                int windows=0;long proposalStart=android.os.SystemClock.elapsedRealtimeNanos();
+                List<List<VisionPoint>> proposals=looseSensorWindows(raw);
+                if(rgb!=null&&!rgb.empty()){
+                    Mat compatible=new Mat();try{if(rgb.cols()!=raw.cols()||rgb.rows()!=raw.rows())Imgproc.resize(rgb,compatible,raw.size(),0,0,Imgproc.INTER_AREA);else rgb.copyTo(compatible);
+                        LooseSensorShapeRecognizer.Candidate body=LooseSensorShapeRecognizer.findUltrasonic(compatible,.002);
+                        // Appearance only proposes an ROI. Fresh reference-to-live
+                        // ORB/RANSAC evidence below remains mandatory for Phase 8.
+                        if(body!=null)proposals.add(0,body.corners);
+                    }finally{compatible.release();}
+                }
+                DiagnosticHammingMatcher.snapshot().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-proposalStart;
+                for(List<VisionPoint> window:proposals){
+                    if(windows++>=2)break;
+                    try(ComponentDetailExtractor.Sample detail=details.extract(raw,window,256)){
+                        if(detail==null)continue;
+                        long localDeadline=System.nanoTime()+400_000_000L;int tried=0;
+                        for(ReferenceDatabase.PreparedReference ref:ranked(detail.keys,detail.descriptors,1)){
+                            if(tried++>=2&&System.nanoTime()>localDeadline)break;
+                            String role=Phase8AssetCatalog.referenceRole(ref.spec.getReferenceId());
+                            for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){
+                                if(!v.hasOrbData())continue;Match found=match(ref,v,detail.keys,detail.descriptors,scale,false);if(found==null)continue;
+                                preferred.put(role,ref);
+                                if("front".equals(role)&&found.score>front){front=found.score;corners=found.actual;}
+                                if("back".equals(role)&&found.score>back){back=found.score;if(back>front)corners=found.actual;}
+                            }
+                        }
+                    }
+                    if(front>0||back>0)break;
+                }
+            }
             Phase8Observation.State state=Phase8Observation.classify(step,front,back,placed,reversed,invalid);
             if(state==Phase8Observation.State.INVALID&&inward>0&&inward>missing)state=Phase8Observation.State.INWARD;
             double score=Math.max(Math.max(front,back),Math.max(invalid,Math.max(placed,reversed)));
             Phase8Observation result=new Phase8Observation(state,score);
+            recoverySchedule.observe(result.accepted(step),DiagnosticHammingMatcher.snapshot().recovery);
             return RecognitionResult.builder(time).identity("phase8:photo","ultrasonic_distance_sensor","Distance sensor")
                     .method(corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
                     .validation(result.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:state==Phase8Observation.State.FLIPPED||state==Phase8Observation.State.INVALID||state==Phase8Observation.State.INWARD?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
-                    .corners(corners).matches(live.length,(int)score,(int)score,score>0?1:0).confidence(result.accepted(step)?.85:0)
+                    .corners(corners).matches(live.length,0,0,0).confidence(result.accepted(step)?.85:0)
                     .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase8Observation(result);
-        }finally{database.releaseAfterRecognition();raw.release();work.release();descriptors.release();empty.release();keypoints.release();}
+        }finally{DiagnosticHammingMatcher.recovery(requestedRecovery);database.releaseAfterRecognition();raw.release();work.release();descriptors.release();empty.release();keypoints.release();}
+    }
+    private static List<List<VisionPoint>> looseSensorWindows(Mat gray){
+        Mat mask=new Mat(),hierarchy=new Mat(),kernel=Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));
+        List<MatOfPoint> contours=new ArrayList<>();List<Rect> boxes=new ArrayList<>();
+        try{
+            for(int threshold:new int[]{35,50,80,110}){
+                for(Mat c:contours)c.release();contours.clear();Imgproc.threshold(gray,mask,threshold,255,Imgproc.THRESH_BINARY_INV);
+                Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_CLOSE,kernel);Imgproc.findContours(mask,contours,hierarchy,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_SIMPLE);
+                List<Rect> candidates=new ArrayList<>();for(MatOfPoint contour:contours)candidates.add(Imgproc.boundingRect(contour));
+                for(Rect r:candidates){double aspect=Math.max(r.width,r.height)/(double)Math.max(1,Math.min(r.width,r.height));
+                    if(Math.max(r.width,r.height)<25||Math.min(r.width,r.height)<12||r.area()>gray.total()*.20||aspect<1.35||aspect>4.5)continue;
+                    boolean duplicate=false;for(Rect b:boxes){int w=Math.max(0,Math.min(r.x+r.width,b.x+b.width)-Math.max(r.x,b.x)),h=Math.max(0,Math.min(r.y+r.height,b.y+b.height)-Math.max(r.y,b.y));if(w*h>Math.min(r.area(),b.area())*.65){duplicate=true;break;}}
+                    if(!duplicate)boxes.add(r);
+                }
+            }
+            boxes.sort(Comparator.comparingDouble(r->Math.abs(Math.log(Math.max(r.width,r.height)/(double)Math.min(r.width,r.height)/2.2))+.4*Math.hypot(r.x+r.width*.5-gray.cols()*.5,r.y+r.height*.5-gray.rows()*.5)/Math.max(gray.cols(),gray.rows())));
+            List<List<VisionPoint>> result=new ArrayList<>();for(int i=0;i<Math.min(3,boxes.size());i++){Rect r=boxes.get(i);result.add(Arrays.asList(new VisionPoint(r.x,r.y),new VisionPoint(r.x+r.width,r.y),new VisionPoint(r.x+r.width,r.y+r.height),new VisionPoint(r.x,r.y+r.height)));}return result;
+        }finally{for(Mat c:contours)c.release();mask.release();hierarchy.release();kernel.release();}
     }
     /** Sparse probes only schedule work; full distributed RANSAC still proves
      * identity. Each frame gets BOTH orientation families and a rotating fallback,
@@ -133,9 +194,9 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
     }
     private static int probe(Mat source,Mat live){
         if(source.empty()||live.rows()<2)return 0;NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(source,live);int n=0;
-        for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&pairs.bestDistance(i)<=64&&pairs.bestDistance(i)<.80*pairs.secondDistance(i))n++;return n;
+        for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))n++;return n;
     }
-    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,boolean installed){DiagnosticHammingMatcher.context(ref.spec);
+    private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,double scale,boolean installed){DiagnosticHammingMatcher.context(ref);
         Split split=splits.get(variant);if(split==null){split=new Split(ref,variant);splits.put(variant,split);}
         List<VisionPoint> c=ref.spec.getPlanarCornersNormalized();double l=c.get(0).getX()*ref.imageWidth,t=c.get(0).getY()*ref.imageHeight,r=c.get(2).getX()*ref.imageWidth,b=c.get(2).getY()*ref.imageHeight;
         List<Point> module=new ArrayList<>(),moduleLive=new ArrayList<>(),board=new ArrayList<>(),boardLive=new ArrayList<>();
@@ -150,14 +211,17 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         }finally{if(mh!=null)mh.release();if(bh!=null)bh.release();}
     }
     private Match refine(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat raw,double scale){
-        DiagnosticHammingMatcher.context(ref.spec);
+        DiagnosticHammingMatcher.context(ref);
         Split split=splits.computeIfAbsent(variant,v->new Split(ref,v));
         List<Point> a=new ArrayList<>(),b=new ArrayList<>();collect(split.context,live,descriptors,a,b);
         Mat board=homography(a,b,14,15,15);if(board==null)return null;
         try{
             List<VisionPoint> c=ref.spec.getPlanarCornersNormalized(),search=project(c,ref.imageWidth,ref.imageHeight,board,1);
             double width=(c.get(2).getX()-c.get(0).getX())*ref.imageWidth,height=(c.get(2).getY()-c.get(0).getY())*ref.imageHeight;
-            for(int extent:new int[]{0,360})try(ComponentDetailExtractor.Sample detail=details.extract(raw,search,extent)){
+            List<List<VisionPoint>> barrels=null;
+            dev.chyken.assembl_ar.camera.Phase789VideoReferences.Entry authored=dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(ref.spec.getJpegAssetPath());
+            if(authored!=null){barrels=new ArrayList<>();for(List<VisionPoint> cap:authored.identity){List<VisionPoint> projected=project(cap,ref.imageWidth,ref.imageHeight,board,1);if(projected.size()!=4)continue;double cx=0,cy=0;for(VisionPoint p:projected){cx+=p.getX()/4;cy+=p.getY()/4;}List<VisionPoint> padded=new ArrayList<>();for(VisionPoint p:projected)padded.add(new VisionPoint(cx+(p.getX()-cx)*1.4,cy+(p.getY()-cy)*1.4));barrels.add(padded);}}
+            for(int extent:new int[]{0,360})try(ComponentDetailExtractor.Sample detail=details.extract(raw,search,extent,barrels)){
                 if(detail==null)continue;
                 boolean reviewed=dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(ref.spec.getJpegAssetPath())!=null;
                 for(int guidance=0;guidance<(reviewed?2:1);guidance++){
@@ -195,7 +259,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
     }
     private void collect(Features source,KeyPoint[] live,Mat descriptors,Mat domain,List<Point> reference,List<Point> target){
         if(source.descriptors.empty())return;List<DMatch> good=new ArrayList<>();
-        good.addAll(matcher.ratioMatches(source.descriptors,descriptors,domain,.76,64));
+        good.addAll(matcher.ratioMatches(source.descriptors,descriptors,domain));
         good.sort(Comparator.comparingDouble(p->p.distance));Set<Integer> used=new HashSet<>();for(DMatch m:good)if(used.add(m.trainIdx)){reference.add(source.keys[m.queryIdx].pt);target.add(live[m.trainIdx].pt);}
     }
     private static final class Features{
@@ -203,9 +267,11 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         Features(ReferenceDatabase.PreparedOrbVariant v,List<Integer> indexes,int limit){
             if(indexes.size()>limit){List<Integer> selected=new ArrayList<>();for(int i=0;i<limit;i++)selected.add(indexes.get(i*indexes.size()/limit));indexes=selected;}
             keys=new KeyPoint[indexes.size()];descriptors=indexes.isEmpty()?new Mat():new Mat(indexes.size(),v.descriptors.cols(),v.descriptors.type());int count=Math.min(24,indexes.size());sparse=count==0?new Mat():new Mat(count,v.descriptors.cols(),v.descriptors.type());if(indexes.isEmpty())return;
+            try{
             int stride=v.descriptors.cols()*(int)v.descriptors.elemSize();byte[] source=new byte[v.descriptors.rows()*stride],selected=new byte[indexes.size()*stride];v.descriptors.get(0,0,source);
             for(int i=0;i<indexes.size();i++){int index=indexes.get(i);keys[i]=v.keypoints[index];System.arraycopy(source,index*stride,selected,i*stride,stride);}descriptors.put(0,0,selected);
             byte[] sample=new byte[count*stride];for(int i=0;i<count;i++)System.arraycopy(selected,(i*indexes.size()/count)*stride,sample,i*stride,stride);sparse.put(0,0,sample);
+            }catch(RuntimeException|Error failure){descriptors.release();sparse.release();throw failure;}
         }
     }
     private static boolean sensorCaps(ReferenceDatabase.PreparedReference ref){
@@ -231,7 +297,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
                     if(!cylinders||vertical>.08&&vertical<(inward?.90:.72)&&(u>.08&&u<.45||u>.55&&u<.92))a.add(i);
                 }else if(p.x<l-(r-l)*.15||p.x>r+(r-l)*.15||p.y<t-(b-t)*.15||p.y>b+(b-t)*.15)other.add(i);
             }
-            local=new Features(v,a,reviewed==null?Integer.MAX_VALUE:700);context=new Features(v,other,reviewed==null?Integer.MAX_VALUE:1000);
+            local=new Features(v,a,reviewed==null?Integer.MAX_VALUE:700);try{context=new Features(v,other,reviewed==null?Integer.MAX_VALUE:1000);}catch(RuntimeException|Error failure){local.descriptors.release();local.sparse.release();throw failure;}
         }
     }
     /** Each real cylinder needs fresh inliers. A shiny edge or the unchanged
@@ -263,12 +329,12 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         double l=Double.MAX_VALUE,t=l,r=-l,bt=-l;for(Point p:a){l=Math.min(l,p.x);r=Math.max(r,p.x);t=Math.min(t,p.y);bt=Math.max(bt,p.y);}if(r-l<minimumWidth||bt-t<minimumHeight)return null;
         MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),h=null;
         try{src.fromList(a);dst.fromList(b);h=DiagnosticHammingMatcher.homography(src,dst,Calib3d.RANSAC,3.5,mask,1800,.995);
-            int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){h.release();return null;}
+            int n=h.empty()?0:Core.countNonZero(mask);if(n<minimum||n<a.size()*.5){return null;}
             double minX=Double.MAX_VALUE,minY=minX,maxX=-minX,maxY=-minX;
             for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){Point p=a.get(i);minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}
             // A terminal row or a small unchanged patch alone cannot certify the whole module.
-            if(maxX-minX<minimumWidth||maxY-minY<minimumHeight){h.release();return null;}return h;
-        }finally{src.release();dst.release();mask.release();}
+            if(maxX-minX<minimumWidth||maxY-minY<minimumHeight){return null;}Mat owned=h;h=null;return owned;
+        }finally{src.release();dst.release();mask.release();if(h!=null)h.release();}
     }
     private Mat affine(List<Point> a,List<Point> b,int minimum,double width,double height){
         if(a.size()<minimum)return null;MatOfPoint2f src=new MatOfPoint2f(),dst=new MatOfPoint2f();Mat mask=new Mat(),fit=null,h=null;
@@ -276,7 +342,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         try{src.fromList(a);dst.fromList(b);fit=Calib3d.estimateAffine2D(src,dst,mask,Calib3d.RANSAC,3.5,1200,.995,10);
             if(fit.empty()||Core.countNonZero(mask)<minimum||Core.countNonZero(mask)<a.size()*.5)return null;
             double l=Double.MAX_VALUE,t=l,r=-l,bt=-l;for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){Point p=a.get(i);l=Math.min(l,p.x);r=Math.max(r,p.x);t=Math.min(t,p.y);bt=Math.max(bt,p.y);}
-            if(r-l<width||bt-t<height)return null;h=Mat.eye(3,3,CvType.CV_64F);Mat rows=h.rowRange(0,2);try{fit.copyTo(rows);}finally{rows.release();}Mat result=h;h=null;return result;
+            if(r-l<width||bt-t<height)return null;h=Mat.eye(3,3,CvType.CV_64F);Mat rows=h.rowRange(0,2);try{fit.copyTo(rows);DiagnosticHammingMatcher.recordFit(src,dst,h,mask);}finally{rows.release();}Mat result=h;h=null;return result;
         }finally{src.release();dst.release();mask.release();if(fit!=null)fit.release();if(h!=null)h.release();DiagnosticHammingMatcher.snapshot().geometryNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;}
     }
     private List<VisionPoint> project(List<VisionPoint> corners,int width,int height,Mat h,double scale){
@@ -287,5 +353,5 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         }finally{src.release();dst.release();}
     }
     private static final class Match{final double score;final List<VisionPoint> actual,expected;Match(double score,List<VisionPoint> actual,List<VisionPoint> expected){this.score=score;this.actual=actual;this.expected=expected;}}
-    public void close(){for(Split split:splits.values()){split.local.descriptors.release();split.context.descriptors.release();split.local.sparse.release();split.context.sparse.release();}splits.clear();details.close();orb.clear();clahe.clear();matcher.clear();}
+    public void close(){for(Split split:splits.values()){split.local.descriptors.release();split.context.descriptors.release();split.local.sparse.release();split.context.sparse.release();}splits.clear();details.close();orb.clear();clahe.clear();}
 }

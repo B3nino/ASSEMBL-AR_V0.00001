@@ -32,7 +32,7 @@ with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DE
     manifest=root/'tools/phase789_video_manifest.json'
     if manifest.is_file():
         replay=root/'app/build/tmp/phase789-raw'
-        paths=[replay/row['path'] for row in json.loads(manifest.read_text())['held_out']]
+        paths=[(root/'tools/replay_fixtures/phase789'/row['path']) if (root/'tools/replay_fixtures/phase789'/row['path']).is_file() else replay/row['path'] for row in json.loads(manifest.read_text())['held_out']]
         if all(path.is_file() for path in paths):
             for path in paths:output.write(path,'assets/replay/phase789/'+path.name)
         else:
@@ -40,7 +40,7 @@ with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DE
     manifest1011=root/'tools/phase1011_video_manifest.json'
     if manifest1011.is_file():
         replay=root/'app/build/tmp/phase1011-raw'
-        paths=[replay/row['path'] for row in json.loads(manifest1011.read_text())['held_out']]
+        paths=[(root/'tools/replay_fixtures/phase1011'/row['path']) if (root/'tools/replay_fixtures/phase1011'/row['path']).is_file() else replay/row['path'] for row in json.loads(manifest1011.read_text())['held_out']]
         if all(path.is_file() for path in paths):
             for path in paths:output.write(path,'assets/replay/phase1011/'+path.name)
         else:print('Phase 10–11 raw replay files absent; regenerate them from the recordings.')

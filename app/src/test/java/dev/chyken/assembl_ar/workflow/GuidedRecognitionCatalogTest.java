@@ -17,6 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+// This suite deliberately verifies the retained legacy guided-step adapter.
+@SuppressWarnings("deprecation")
 public final class GuidedRecognitionCatalogTest {
     @Test
     public void bracketInsertionsRequireTheirOwnBoardRelativeSlots() {
@@ -175,11 +177,11 @@ public final class GuidedRecognitionCatalogTest {
         assertSubject(10, "Fit the second tracker's nut", NeobotSeedData.NUT);
         assertSubject(12, "Insert the standoff", NeobotSeedData.STANDOFF);
         assertSubject(12, "Fit the retaining nut", NeobotSeedData.NUT);
-        assertSubject(14, "Insert the first mounting fastener", NeobotSeedData.MOUNTING_SCREW);
-        assertSubject(14, "Insert the second mounting fastener", NeobotSeedData.MOUNTING_SCREW);
+        assertSubject(14, "Insert the first 20mm screw", NeobotSeedData.SCREW_20MM);
+        assertSubject(14, "Insert the second 20mm screw", NeobotSeedData.SCREW_20MM);
         assertSubject(14, "Fit the first fastener's nut", NeobotSeedData.NUT);
         assertSubject(14, "Fit the second fastener's nut", NeobotSeedData.NUT);
-        assertSubject(16, "Insert the screw retained on the center standoff", NeobotSeedData.MOUNTING_SCREW);
+        assertSubject(16, "Insert the top screw saved from the center standoff", NeobotSeedData.MOUNTING_SCREW);
         assertSubject(16, "Tighten the center screw", NeobotSeedData.MOUNTING_SCREW);
     }
 

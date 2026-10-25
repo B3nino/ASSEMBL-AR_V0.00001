@@ -15,6 +15,15 @@ public final class DevDiagnosticsOverlayView extends androidx.appcompat.widget.A
     private final Runnable windowSync=this::syncWindow;
     private final int[] location=new int[2];
     private int windowX,windowY,windowWidth,windowHeight;
+    private long shownFrame=-1;
+    public void showTelemetry(dev.chyken.assembl_ar.diagnostics.DiagnosticScanTelemetry telemetry){
+        if(telemetry==null)return;
+        if(android.os.Looper.myLooper()!=android.os.Looper.getMainLooper()){post(()->showTelemetry(telemetry));return;}
+        if(telemetry.totalAnalyzedFrames<shownFrame)return;shownFrame=telemetry.totalAnalyzedFrames;
+        String text=telemetry.hudText();android.text.SpannableString styled=new android.text.SpannableString(text);
+        int start=text.lastIndexOf("Output: ");styled.setSpan(new android.text.style.ForegroundColorSpan(telemetry.outputStatus.equals("Match")?0xFF00FF7F:0xFFFF3B30),start,text.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        setMaxLines(Integer.MAX_VALUE);setEllipsize(null);setText(styled);
+    }
     public DevDiagnosticsOverlayView(Context c,AttributeSet a){
         super(c,a);style(this);setElevation(999*c.getResources().getDisplayMetrics().density);
         // The high Z is for ordering only. A 999dp shadow can allocate a surface
@@ -22,7 +31,7 @@ public final class DevDiagnosticsOverlayView extends androidx.appcompat.widget.A
         setOutlineProvider(null);setStateListAnimator(null);
         setClickable(false);setFocusable(false);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
-    private static void style(TextView t){t.setTextColor(0xFFE6F2E2);t.setTextSize(11);t.setTypeface(android.graphics.Typeface.MONOSPACE);t.setBackgroundColor(0xE51A211B);t.setPadding(12,8,12,8);}
+    private static void style(TextView t){t.setTextColor(0xFFE6F2E2);t.setTextSize(10);t.setTypeface(android.graphics.Typeface.MONOSPACE);t.setBackgroundColor(0xE51A211B);t.setPadding(12,8,12,8);}
     private void scheduleWindowSync(){if(attached){removeCallbacks(windowSync);post(windowSync);}}
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();attached=true;scheduleWindowSync();}
     @Override protected void onDetachedFromWindow(){attached=false;removeCallbacks(windowSync);dismiss();super.onDetachedFromWindow();}
@@ -33,7 +42,7 @@ public final class DevDiagnosticsOverlayView extends androidx.appcompat.widget.A
     private void syncWindow(){
         if(!attached||!isShown()||!hasWindowFocus()||getWindowToken()==null||getWidth()==0||getHeight()==0){dismiss();return;}
         if(window==null){mirror=new androidx.appcompat.widget.AppCompatTextView(getContext());style(mirror);mirror.setMaxWidth(getMaxWidth());mirror.setMaxLines(getMaxLines());mirror.setEllipsize(getEllipsize());mirror.setOutlineProvider(null);window=new PopupWindow(mirror,getWidth(),getHeight(),false);window.setTouchable(false);window.setFocusable(false);window.setOutsideTouchable(false);window.setElevation(0);window.setAnimationStyle(0);}
-        if(!android.text.TextUtils.equals(mirror.getText(),getText()))mirror.setText(getText());getLocationInWindow(location);
+        mirror.setMaxLines(getMaxLines());if(!android.text.TextUtils.equals(mirror.getText(),getText()))mirror.setText(getText());getLocationInWindow(location);
         int x=location[0],y=location[1],w=getWidth(),h=getHeight();
         if(!window.isShowing()){window.showAtLocation(getRootView(),Gravity.TOP|Gravity.LEFT,x,y);}
         else if(x!=windowX||y!=windowY||w!=windowWidth||h!=windowHeight){window.update(x,y,w,h);}

@@ -429,6 +429,14 @@ public final class AdminDescriptorBlobCodec {
         }
     }
 
+    /** Publish one owned concatenation; input rows remain borrowed on every exit. */
+    static void concatenateInto(List<DescriptorVariant> output,ReferenceDatabase.PhotometricVariant photo,
+                                List<KeyPoint> keypoints,List<Mat> inputs){
+        Mat merged=new Mat();
+        try{Core.vconcat(inputs,merged);output.add(new DescriptorVariant(photo,keypoints.toArray(new KeyPoint[0]),merged,true));}
+        catch(RuntimeException|Error failure){merged.release();throw failure;}
+    }
+
     static final class DescriptorVariant {
         final ReferenceDatabase.PhotometricVariant photometricVariant;
         final KeyPoint[] keypoints;

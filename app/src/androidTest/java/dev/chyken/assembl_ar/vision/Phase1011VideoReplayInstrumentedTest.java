@@ -48,13 +48,13 @@ public final class Phase1011VideoReplayInstrumentedTest {
             java.lang.reflect.Method match=Phase10ReferenceMatcher.class.getDeclaredMethod("match",ReferenceDatabase.PreparedReference.class,ReferenceDatabase.PreparedOrbVariant.class,KeyPoint[].class,Mat.class,double.class,int.class,Mat.class);match.setAccessible(true);
             for(ReferenceDatabase.PreparedReference ref:db.preparedReferences())for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants()){
                 begin(0);DiagnosticHammingMatcher diagnostic=new DiagnosticHammingMatcher();try{
-                    List<DMatch> good=diagnostic.ratioMatches(v.descriptors,descriptors,.76,64);good.sort(Comparator.comparingDouble(m->m.distance));Set<Integer> used=new HashSet<>();List<Point> a=new ArrayList<>(),b=new ArrayList<>();for(DMatch m:good)if(used.add(m.trainIdx)){a.add(v.keypoints[m.queryIdx].pt);b.add(live[m.trainIdx].pt);}
+                    List<DMatch> good=diagnostic.ratioMatches(v.descriptors,descriptors);good.sort(Comparator.comparingDouble(m->m.distance));Set<Integer> used=new HashSet<>();List<Point> a=new ArrayList<>(),b=new ArrayList<>();for(DMatch m:good)if(used.add(m.trainIdx)){a.add(v.keypoints[m.queryIdx].pt);b.add(live[m.trainIdx].pt);}
                     MatOfPoint2f source=new MatOfPoint2f(),target=new MatOfPoint2f();Mat mask=new Mat(),h=null;
                     try{int n=0;double l=99999,t=l,r=0,bottom=0;if(a.size()>=4){source.fromList(a);target.fromList(b);h=org.opencv.calib3d.Calib3d.findHomography(source,target,org.opencv.calib3d.Calib3d.RANSAC,3.5,mask,1800,.995);if(!h.empty()){n=Core.countNonZero(mask);for(int i=0;i<a.size();i++)if(mask.get(i,0)[0]!=0){l=Math.min(l,a.get(i).x);r=Math.max(r,a.get(i).x);t=Math.min(t,a.get(i).y);bottom=Math.max(bottom,a.get(i).y);}}}
                         Object found=match.invoke(inspector,ref,v,live,descriptors,1.0,2,gray);
                         android.util.Log.i("Phase1011Audit",ref.spec.getJpegAssetPath()+" rows="+v.descriptors.rows()+" good="+a.size()+" inliers="+n+" span="+(r-l)+","+(bottom-t)+" accepted="+(found!=null));
                     }finally{source.release();target.release();mask.release();if(h!=null)h.release();}
-                }finally{diagnostic.clear();DiagnosticHammingMatcher.end();}
+                }finally{DiagnosticHammingMatcher.end();}
             }
         }finally{rgb.release();gray.release();work.release();descriptors.release();empty.release();keys.release();orb.clear();clahe.clear();}
     }
@@ -70,7 +70,7 @@ public final class Phase1011VideoReplayInstrumentedTest {
                 for(int time:times[row]) {
                     Mat rgb=raw(10,roles[row],time),gray=new Mat();boolean found=false;
                     try{Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);
-                        for(int a=0;a<8;a++) {begin(a);RecognitionResult r=matcher.inspect(gray,a+1,stage);Phase10Observation o=r.getPhase10Observation();
+                        for(int a=0;a<8;a++) {begin(a);RecognitionResult r=matcher.inspect(gray,rgb,a+1,stage);Phase10Observation o=r.getPhase10Observation();
                             android.util.Log.i("Phase1011Video","P10 "+roles[row]+" "+time+" attempt="+a+" state="+o.state+" score="+o.score+" ms="+r.getLatency().getTotalMs());
                             if(expectations[row]<=0)assertFalse("Incorrect P10 "+roles[row]+" "+time+" cannot pass",o.accepted());
                             if(expectations[row]>0&&o.accepted()||expectations[row]<0&&o.flipped()){found=true;movingOutline(gray,r);break;}

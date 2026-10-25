@@ -71,8 +71,7 @@ public final class Phase789VideoReplayInstrumentedTest {
     @Test public void individualToolPublishesMeasuredOutlinesForTheReviewedLooseParts()throws Exception{
         individualParts(new String[]{"caster_wheel","line_tracker_module","drive_wheel"});
     }
-    @Ignore("Recorded loose standoff still has insufficient spatial consensus at 640x400. Normal assembly explicitly bypasses it; retain this opt-in false-negative fixture.")
-    @Test public void standaloneStandoffExploratoryReplay()throws Exception{
+    @Test public void standaloneStandoffKeepsMeasuredIndividualToolOutlines()throws Exception{
         individualParts(new String[]{"center_standoff"});
     }
     private void individualParts(String[] ids)throws Exception{

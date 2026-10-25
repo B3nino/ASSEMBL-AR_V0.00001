@@ -23,6 +23,11 @@ if args.verify:
         for poly in [row['body']]+row['regions']+row['identity']+row['context']:
             assert len(poly)==4 and all(0<=x<=1 and 0<=y<=1 for x,y in poly),row['path']
     assert not train.intersection((r['video'],r['time']) for r in manifest['held_out'])
+    for row in manifest['held_out']:
+        fixture=root/'tools/replay_fixtures/phase789'/row['path']
+        assert hashlib.sha256(fixture.read_bytes()).hexdigest()==row['sha256'],row['path']
+        if row['video'] in ('ggWoqrQ_','WLOolNW8','DdVKZNhz'):
+            assert min(abs(row['time']-r['time']) for r in references if r['video']==row['video'])>=2
     print(f'Verified {len(references)} real JPEG hashes/masks and {len(manifest["held_out"])} disjoint replay timestamps')
     raise SystemExit(0)
 if not args.source_dir:p.error('--source-dir is required when ingesting videos')
@@ -36,6 +41,8 @@ cv.setNumThreads(2)
 assets = root / 'app/src/main/assets'
 out = root / 'app/build/tmp/phase789-raw'
 out.mkdir(parents=True, exist_ok=True)
+fixtures=root/'tools/replay_fixtures/phase789'
+fixtures.mkdir(parents=True,exist_ok=True)
 records, heldout, pending = [], [], {}
 
 def q(l, t, r, b):
@@ -48,6 +55,10 @@ def read(video, time):
         ok, image = capture.read()
         if not ok:
             raise RuntimeError(f'Cannot decode {video} at {time}')
+        # Portrait recordings are rotated losslessly into the tablet's landscape
+        # camera axes. No stretching, generated pixels or illumination baking.
+        if video in ('ggWoqrQ_', 'DdVKZNhz'):
+            image = cv.rotate(image, cv.ROTATE_90_COUNTERCLOCKWISE)
         return image
     finally:
         capture.release()
@@ -61,7 +72,7 @@ def bounds(regions, pad=0):
 def norm(region, w, h):
     return [[round(x/w, 8), round(y/h, 8)] for x, y in region]
 
-def add(video, time, phase, role, regions, body=None, identity=None, context=None, crop=False):
+def add(video, time, phase, role, regions, body=None, identity=None, context=None, crop=False, sample_extent=0):
     image = read(video, time)
     body = body or bounds(regions)
     identity = identity or regions
@@ -83,12 +94,19 @@ def add(video, time, phase, role, regions, body=None, identity=None, context=Non
         regions = [shift(region) for region in regions]
         identity = [shift(region) for region in identity]
         context = [shift(region) for region in context]
+    if sample_extent:
+        scale = min(1.0, sample_extent/max(image.shape[:2]))
+        image = cv.resize(image, None, fx=scale, fy=scale, interpolation=cv.INTER_AREA)
+        def scaled(poly): return [[x*scale,y*scale] for x,y in poly]
+        body=scaled(body);regions=[scaled(v) for v in regions]
+        identity=[scaled(v) for v in identity];context=[scaled(v) for v in context]
     h, w = image.shape[:2]
     folder = {
         (7, 'caster'): 'STEP7_1CASTERWHEEL', (7, 'trackers'): 'STEP7_2LINETRACKERS',
         # Legacy filename requested by the user; pixels are BOTTOM-view work.
         (7, 'trackerwork'): 'STEP7_TOPVIEW',
         (8, 'assembly'): 'STEP8_2DISTANCESENSORHARDWARESCAN',
+        (8, 'front'): 'STEP8_1SCANDISTANCESENSOR',
         (8, 'invalid'): 'STEP8_2DISTANCESENSORHARDWARESCAN_INVALID',
         (9, 'standoff'): 'STEP9_1STANDOFFSCANNING', (9, 'wheel'): 'WHEELSREF',
         (9, 'pair'): 'STEP9_2DUALWHEELS', (9, 'assembly'): 'STEP9_4ASSEMBLYSCAN',
@@ -102,6 +120,8 @@ def add(video, time, phase, role, regions, body=None, identity=None, context=Non
         body=norm(body,w,h), regions=[norm(v,w,h) for v in regions],
         identity=[norm(v,w,h) for v in identity], context=[norm(v,w,h) for v in context],
         width=w, height=h, sharpness=round(sharpness,3),
+        rotation_ccw=90 if video in ('ggWoqrQ_', 'DdVKZNhz') else 0,
+        sample_extent=sample_extent,
         sha256=hashlib.sha256(pending[path]).hexdigest()))
 
 # Each installed tracker has its own body, mounting stud and rigid identity area.
@@ -154,6 +174,9 @@ for time, box in [(4,(482,189,848,420)),(17,(487,230,799,405)),(19,(346,232,750,
 # contain real wire clutter; none are labelled as proof of electrical continuity.
 for video, time, role, body, caps, board in [
     ('fDOmql_e',70,'assembly',(441,165,704,292),[(470,166,558,241),(580,163,679,239)],[(456,303,650,365),(480,390,660,530)]),
+    # Shadow/metal variants reviewed separately from replay timestamps 75/82.
+    ('fDOmql_e',73,'assembly',(458,164,742,279),[(475,167,568,247),(634,166,732,249)],[(523,331,666,485),(466,372,516,489),(680,333,721,484)]),
+    ('fDOmql_e',79,'assembly',(453,232,741,351),[(467,235,564,315),(627,253,726,336)],[(507,414,645,550),(449,412,489,557),(666,414,699,558)]),
     ('fDOmql_e',95,'assembly',(456,129,664,242),[(473,132,541,194),(574,139,648,204)],[(490,247,603,355),(493,412,600,563)]),
     ('fDOmql_e',80,'assembly',(350,280,641,471),[(369,282,475,374),(527,293,631,388)],[(421,451,550,574),(258,301,335,463),(649,339,733,471)]),
     ('vuE18C1A',6,'assembly',(421,16,640,122),[(438,20,506,88),(550,17,620,86)],[(495,324,596,515),(344,104,412,186),(623,106,708,177)]),
@@ -168,7 +191,7 @@ for video, time, role, body, caps, board in [
 ]:
     add(video,time,8,role,[q(*body)],body=q(*body),identity=[q(*v) for v in caps],context=[q(*v) for v in board])
 
-for time, box in [(10,(496,94,563,471)),(38,(569,173,631,498))]:
+for time, box in [(10,(496,94,563,471)),(20,(493,39,543,298)),(38,(569,173,631,498)),(46,(492,281,802,408))]:
     add('Zi6cD-KG',time,9,'standoff',[q(*box)],crop=True)
 for time, boxes, role in [
     (64,[(365,127,786,547)],'wheel'),(86,[(331,83,716,457)],'wheel'),
@@ -185,6 +208,31 @@ for time, boxes in [
 ]:
     add('vuE18C1A',time,9,'assembly',[q(*v) for v in boxes],body=q(70,10,990,575))
 
+# Follow-up: shadowed bottom-view PCB with independently angled tracker bodies.
+# Slots: left/right body, left/right mounting studs, left/right rigid identity,
+# center caster. Context stays on the PCB, never on the paper/hand/table.
+for time,bodies,nuts,pots,plate,body in [
+    (8,[[[207,120],[252,111],[299,328],[248,340]],[[683,141],[728,158],[665,351],[615,334]]],[(211,113,254,154),(683,140,729,183)],[(221,151,285,294),(631,179,710,311)],(339,104,600,233),(174,83,737,575)),
+    (11,[[[210,118],[262,109],[313,334],[258,349]],[[706,149],[760,171],[692,354],[636,335]]],[(213,109,264,155),(717,123,763,167)],[(226,153,294,309),(648,180,735,324)],(344,98,622,232),(166,64,772,575)),
+    (17,[[[319,129],[360,119],[394,278],[354,291]],[[660,145],[699,157],[656,292],[614,279]]],[(320,120,360,153),(663,133,703,169)],[(326,157,378,252),(630,168,688,264)],(414,111,606,207),(307,89,710,550)),
+    (32,[[[344,61],[385,49],[423,224],[382,237]],[[724,52],[767,68],[711,225],[669,210]]],[(346,49,387,88),(729,49,770,88)],[(357,85,409,199),(685,83,746,197)],(450,35,662,143),(332,20,780,518)),
+    (49,[[[386,111],[419,102],[453,269],[416,279]],[[725,123],[759,136],[704,277],[672,266]]],[(385,102,421,136),(724,120,760,151)],[(395,138,446,244),(688,153,745,245)],(478,99,667,187),(367,77,771,508)),
+    (67,[[[472,126],[516,113],[553,312],[506,325]],[[938,131],[978,149],[905,337],[857,319]]],[(476,114,518,151),(937,130,979,171)],[(482,151,539,287),(872,177,962,297)],(592,106,847,222),(444,86,993,575)),
+]:
+    add('ggWoqrQ_',time,7,'trackerwork',bodies+[q(*v) for v in nuts]+[q(*v) for v in pots]+[q(*plate)],body=q(*body),sample_extent=640 if time==11 else 0)
+
+# Loose front-face sensors. Mask the rigid PCB/eyes only: palm, paper, shadows
+# and background PCB cannot become sensor identity. In-plane rotation is valid.
+for video,time,body in [
+    ('WLOolNW8',4,[[423,221],[720,218],[727,349],[427,355]]),
+    ('WLOolNW8',25,[[453,256],[730,243],[734,367],[454,380]]),
+    ('DdVKZNhz',6,[[399,255],[635,240],[645,344],[399,361]]),
+    ('DdVKZNhz',20,[[581,187],[829,170],[834,293],[580,308]]),
+    ('DdVKZNhz',35,[[334,180],[742,178],[752,363],[325,368]]),
+    ('DdVKZNhz',58,[[318,207],[744,209],[748,397],[315,402]]),
+]:
+    add(video,time,8,'front',[body],body=body,identity=[body],crop=True)
+
 # Real held-out video pixels only; not registered or copied into reference assets.
 for video, phase, role, times in [
     ('b_60MVLl',7,'trackerwork',[12,35,65,83]),('Uzk5p7AF',7,'trackers',[10,44]),
@@ -194,12 +242,19 @@ for video, phase, role, times in [
     ('fDOmql_e',8,'missing',[8,25]),('vuE18C1A',8,'wired',[10,42]),
     ('Zi6cD-KG',9,'wheel',[70,90]),('Zi6cD-KG',9,'pair',[114,129]),
     ('Zi6cD-KG',9,'standoff',[15,42]),('vuE18C1A',9,'assembly',[10,31,55]),
+    ('ggWoqrQ_',7,'shadowtrackers',[14,36,58,73]),
+    ('WLOolNW8',8,'palm',[8,18,29,35]),
+    ('DdVKZNhz',8,'paper',[13,28,40,61]),
+    ('DdVKZNhz',8,'outofframe',[49]),
 ]:
     for time in times:
         path=f'heldout-p{phase}-{role}-{time}.jpg'
         image=read(video,time)
         cv.imwrite(str(out/path),image,[cv.IMWRITE_JPEG_QUALITY,97])
-        heldout.append(dict(path=path,video=video,phase=phase,role=role,time=time))
+        (fixtures/path).write_bytes((out/path).read_bytes())
+        heldout.append(dict(path=path,video=video,phase=phase,role=role,time=time,
+            rotation_ccw=90 if video in ('ggWoqrQ_', 'DdVKZNhz') else 0,
+            sha256=hashlib.sha256((out/path).read_bytes()).hexdigest()))
 
 # Stage all bytes before publication, so a failed source decode cannot publish
 # half a manifest. No old photographic references are removed.
@@ -214,7 +269,7 @@ for name in sorted({row['video'] for row in records}):
         for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block)
     sources.append(dict(file=path.name,bytes=path.stat().st_size,sha256=digest.hexdigest()))
 manifest=dict(version=1, description='Real varied-lighting footage, reviewed body/identity/context masks; disjoint replay timestamps',sources=sources,
-    absent_video_categories=['loose ultrasonic front/back','loose tracker underside','loose caster underside','installed standoff top-screw-attached','missing-wheel assembly'],
+    absent_video_categories=['loose ultrasonic back','loose tracker underside','loose caster underside','installed standoff top-screw-attached','missing-wheel assembly'],
     references=records,held_out=heldout)
 (root/'tools/phase789_video_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 
@@ -222,7 +277,7 @@ lines=['package dev.chyken.assembl_ar.camera;', 'import java.util.*;',
     'import dev.chyken.assembl_ar.vision.*;',
     '/** Reviewed real camera pixels and hardware masks. Generated by ingest_phase789_videos.py. */',
     'public final class Phase789VideoReferences {',
-    ' public static final int DESCRIPTOR_VERSION=8;',
+    ' public static final int DESCRIPTOR_VERSION=11;',
     ' private Phase789VideoReferences(){}',
     ' private static final Map<String,ComponentReferenceSpec> REFS=new LinkedHashMap<>();',
     ' private static final Map<String,Entry> ENTRIES=new LinkedHashMap<>();',

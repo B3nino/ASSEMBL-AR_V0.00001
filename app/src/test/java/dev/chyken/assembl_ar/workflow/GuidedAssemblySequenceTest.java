@@ -160,8 +160,8 @@ public final class GuidedAssemblySequenceTest {
         assertEquals(InstructionType.ACTION,
                 findPrimary(guidedSteps(10), "second tracker's mounting screw")
                         .getPrimaryInstruction().getType());
-        assertContainsPrimary(guidedSteps(14), "first mounting fastener");
-        assertContainsPrimary(guidedSteps(14), "second mounting fastener");
+        assertContainsPrimary(guidedSteps(14), "first 20mm screw");
+        assertContainsPrimary(guidedSteps(14), "second 20mm screw");
 
         List<GuidedStep> casterSteps = guidedSteps(9);
         assertEquals(InstructionType.CHECK,

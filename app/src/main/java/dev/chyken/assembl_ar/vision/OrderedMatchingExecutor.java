@@ -30,9 +30,15 @@ final class OrderedMatchingExecutor implements AutoCloseable {
 
     <T> List<T> compute(List<? extends Callable<T>> batches) {
         List<Future<T>> pending = new ArrayList<>(batches.size());
-        for (Callable<T> batch : batches) pending.add(workers.submit(batch));
-        List<T> results = new ArrayList<>(batches.size());
         Throwable failure = null;
+        try {
+            for (Callable<T> batch : batches) pending.add(workers.submit(batch));
+        } catch (RuntimeException | Error submissionFailure) {
+            // Already submitted native readers still own the caller's Mats.
+            // Drain them below even when a later submit/iterator fails.
+            failure = submissionFailure;
+        }
+        List<T> results = new ArrayList<>(pending.size());
         boolean interrupted = false;
         // A native call may ignore cancellation. Drain every reader before the caller releases
         // its frame/reference Mats, including when another batch failed or the caller stopped.

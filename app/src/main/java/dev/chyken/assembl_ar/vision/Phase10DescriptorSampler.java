@@ -16,8 +16,11 @@ final class Phase10DescriptorSampler {
                 if(within&&(hole||source.get(y,x)[0]>=65))continue;indexes.add(i);keys.add(key);
             }
             Mat rows=indexes.isEmpty()?new Mat():new Mat(indexes.size(),v.descriptors.cols(),v.descriptors.type());
-            if(!indexes.isEmpty()){int stride=v.descriptors.cols()*(int)v.descriptors.elemSize();byte[] original=new byte[v.descriptors.rows()*stride],selected=new byte[indexes.size()*stride];v.descriptors.get(0,0,original);for(int i=0;i<indexes.size();i++)System.arraycopy(original,indexes.get(i)*stride,selected,i*stride,stride);rows.put(0,0,selected);}
-            variants.set(vi,new AdminDescriptorBlobCodec.DescriptorVariant(v.photometricVariant,keys.toArray(new KeyPoint[0]),rows,true));v.release();
+            boolean transferred=false;
+            try{
+                if(!indexes.isEmpty()){int stride=v.descriptors.cols()*(int)v.descriptors.elemSize();byte[] original=new byte[v.descriptors.rows()*stride],selected=new byte[indexes.size()*stride];v.descriptors.get(0,0,original);for(int i=0;i<indexes.size();i++)System.arraycopy(original,indexes.get(i)*stride,selected,i*stride,stride);rows.put(0,0,selected);}
+                variants.set(vi,new AdminDescriptorBlobCodec.DescriptorVariant(v.photometricVariant,keys.toArray(new KeyPoint[0]),rows,true));transferred=true;v.release();
+            }finally{if(!transferred)rows.release();}
         }
     }
 }

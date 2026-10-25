@@ -251,7 +251,7 @@ public final class GuidedRecognitionCatalog {
             case 14:
                 switch (order) {
                     case 2: case 3: return NeobotSeedData.OLED_PROTECTOR;
-                    case 4: case 5: case 8: return NeobotSeedData.MOUNTING_SCREW;
+                    case 4: case 5: case 8: return NeobotSeedData.SCREW_20MM;
                     case 6: case 7: return NeobotSeedData.NUT;
                     default: return null;
                 }
