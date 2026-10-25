@@ -925,7 +925,6 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                 // the camera screen, not the scan token that changes when Next unlocks.
                 deliverTarget(result);
                 if(!currentDetection())return;
-                if(!visualOnlyFrame)callback.onResult(result);
                 boolean phase2Inventory=diagnosticRequest.getPhase2Stage()==1||diagnosticRequest.getPhase2Stage()==2;
                 boolean inventoryReady=!phase2Inventory||diagnosticRequest.getExpectedInstanceCount()<=1
                         ||result.getDetectedInstanceCount(result.getComponentId())>=diagnosticRequest.getExpectedInstanceCount();
@@ -937,7 +936,11 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                 RecognitionResult.SpatialAnchor visual=null;
                 try{if(!wrong&&requestProvider.requiresMetricTracking())visual=flowBridge.update(diagnosticGray,result.getFrameTimestampNanos(),seed,diagnosticRequest.getCameraCalibration());else flowBridge.reset();}catch(RuntimeException trackingFailure){flowBridge.reset();Log.w(TAG,"Visual tracking unavailable",trackingFailure);}
                 if(visual!=null&&!flowBridge.predicted())dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.computedFrame(result.getFrameTimestampNanos());
-                try{{dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.record(result,diagnosticRequest,diagnosticGray,!visualOnlyFrame);if(dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest!=null)callback.onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest);}}catch(RuntimeException diagnosticFailure){Log.w(TAG,"Optional benchmark measurement unavailable",diagnosticFailure);}
+                dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample=null;
+                try{sample=dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.record(result,diagnosticRequest,diagnosticGray,!visualOnlyFrame);}catch(RuntimeException diagnosticFailure){Log.w(TAG,"Optional benchmark measurement unavailable",diagnosticFailure);}
+                if(!currentDetection())return;
+                if(!visualOnlyFrame)callback.onResultWithTelemetry(result,sample);
+                else if(sample!=null)callback.onDiagnosticSample(sample);
                 if(visual!=null)callback.onTracking(visual,diagnosticFrame,diagnosticRequest.getCameraCalibration(),flowBridge.predicted(),diagnosticRequest.getRequestTag());
             }else if(!visualOnlyFrame)callback.onResult(result);
         } catch (RuntimeException callbackFailure) {
@@ -1005,7 +1008,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             }finally{long finished=SystemClock.elapsedRealtimeNanos();probe.matchingNs+=Math.max(0,finished-started-(probe.geometryNs-geometryBefore));lastGlobalQuery=finished;}
         }
         VerifiedScanEvidence evidence=DiagnosticHammingMatcher.bind(result,request.getCameraCalibration());
-        if(evidence==null&&frameGlobalCandidate!=null&&GlobalComponentRegistry.competesWithLocalization(result,frameGlobalCandidate.targetCorners))
+        if(evidence==null&&!VerifiedScanEvidence.workflowAccepted(result,request)&&frameGlobalCandidate!=null&&GlobalComponentRegistry.competesWithLocalization(result,frameGlobalCandidate.targetCorners))
             evidence=DiagnosticHammingMatcher.bindGlobal(frameGlobalCandidate,request.getCameraCalibration());
         double extraction=probe.featureNs/1e6,geometry=probe.geometryNs/1e6;
         result=result.withLatency(new RecognitionResult.Latency(extraction,(probe.matchingNs+probe.geometryNs)/1e6,geometry,result.getLatency().getCircularFallbackMs(),Math.max(0,SystemClock.elapsedRealtimeNanos()-probe.started)/1e6));
@@ -1035,6 +1038,11 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
 
     public interface Callback {
         void onResult(RecognitionResult result);
+        /** One immutable frame/result pair; consumers must not read the singleton's newer frame. */
+        default void onResultWithTelemetry(RecognitionResult result,dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){
+            if(sample!=null)onDiagnosticSample(sample);
+            onResult(result);
+        }
         default void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample) { }
         default void onTargetTracking(TargetBoundingTracker.Target target,FrameMetadata frame,Object requestTag) { }
         default void onOutlineTracking(ImageOutlineTracker.Outline outline,FrameMetadata frame,Object requestTag) { }

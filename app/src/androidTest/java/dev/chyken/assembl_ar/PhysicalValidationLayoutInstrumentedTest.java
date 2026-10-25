@@ -83,7 +83,18 @@ public final class PhysicalValidationLayoutInstrumentedTest {
         Context base = ApplicationProvider.getApplicationContext();
         Configuration configuration = new Configuration(base.getResources().getConfiguration());
         configuration.fontScale = fontScale;
-        return new ContextThemeWrapper(base.createConfigurationContext(configuration), R.style.Theme_ASSEMBLAR);
+        Context configured=base.createConfigurationContext(configuration);
+        // Isolated candidate replay must use the candidate's resource table too.
+        // New control IDs can otherwise resolve to unrelated installed-app views.
+        String candidate=InstrumentationRegistry.getArguments().getString("candidateDex");
+        if(candidate!=null&&android.os.Build.VERSION.SDK_INT>=30)try{
+            android.content.res.loader.ResourcesLoader loader=new android.content.res.loader.ResourcesLoader();
+            try(android.os.ParcelFileDescriptor fd=android.os.ParcelFileDescriptor.open(new java.io.File(candidate),android.os.ParcelFileDescriptor.MODE_READ_ONLY)){
+                loader.addProvider(android.content.res.loader.ResourcesProvider.loadFromApk(fd));
+            }
+            configured.getResources().addLoaders(loader);
+        }catch(java.io.IOException failure){throw new AssertionError(failure);}
+        return new ContextThemeWrapper(configured, R.style.Theme_ASSEMBLAR);
     }
 
     private static ScrollView inflate(Context context) {

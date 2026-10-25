@@ -7,6 +7,37 @@ import org.opencv.imgproc.Imgproc;
 
 /** Values belonging to ONE selected RANSAC fit, never a shortlist/probe winner. */
 public final class VerifiedScanEvidence {
+    /** Existing spatial/phase decisions only; never shortlist scores or a rendered outline. */
+    public static boolean workflowAccepted(RecognitionResult r,RecognitionRequest request){
+        if(r==null||request==null||!r.hasLocatedComponent()
+                ||r.getDiagnosticMetrics()!=null&&r.getDiagnosticMetrics().mismatch!=null)return false;
+        RecognitionResult.ValidationState state=r.getValidationState();
+        if(state!=RecognitionResult.ValidationState.EXPECTED_COMPONENT
+                &&state!=RecognitionResult.ValidationState.RECOGNIZED)return false;
+        RecognitionRequest.AssemblyExpectation target=request.getExpectation();
+        boolean trackerAssembly=request.getPhase7Stage()==4&&r.getPhase7Observation()!=null
+                &&r.getPhase7Observation().accepted(4)&&target!=null&&"main_board".equals(target.getComponentId())
+                &&"line_tracker_module".equals(r.getComponentId());
+        if(target!=null&&!Objects.equals(target.getComponentId(),r.getComponentId())&&!trackerAssembly)return false;
+        if(r.getPhase2Observation()!=null&&request.getPhase2Stage()==5)return r.getPhase2Observation().referenceSupported;
+        if(r.getPhase3Observation()!=null)return r.getPhase3Observation().accepted(request.getPhase3Stage());
+        if(r.getPhase5Observation()!=null)return r.getPhase5Observation().accepted(request.getPhase5Stage());
+        if(r.getPhase7Observation()!=null)return r.getPhase7Observation().accepted(request.getPhase7Stage());
+        if(r.getPhase8Observation()!=null)return r.getPhase8Observation().accepted(request.getPhase8Stage());
+        if(r.getPhase9Observation()!=null)return r.getPhase9Observation().accepted(request.getPhase9Stage());
+        if(r.getPhase10Observation()!=null)return r.getPhase10Observation().accepted();
+        if(r.getPhase11Observation()!=null)return r.getPhase11Observation().accepted();
+        return state==RecognitionResult.ValidationState.EXPECTED_COMPONENT;
+    }
+    public static String verificationSource(RecognitionResult r){
+        switch(r.getDetectionMethod()){
+            case COLOR_SHAPE_FALLBACK:return r.getReferenceId()!=null&&r.getReferenceId().startsWith("phase")?"Photo + geometry":"Geometry/shape";
+            case MODEL_EDGE_MATCH:return "Model edges";
+            case CANNY_HOUGH_FALLBACK:return "Edge/circle geometry";
+            case ORB_HOMOGRAPHY:return "ORB + RANSAC";
+            default:return "Unmeasured";
+        }
+    }
     public final ComponentReferenceSpec source;
     public final String componentName;
     public final int good,total,inliers,liveKeypoints;

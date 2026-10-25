@@ -223,6 +223,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         findViewById(R.id.partTestResultsButton).setOnClickListener(view -> showResults());
         findViewById(R.id.partTestExportButton).setOnClickListener(view -> dev.chyken.assembl_ar.diagnostics.DiagnosticLogger.get(this).chooseExport(this,dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.report()));
         findViewById(R.id.partTestBenchmarkButton).setOnClickListener(view->DevDiagnosticsFragment.showControls(this));
+        findViewById(R.id.partTestHelpButton).setOnClickListener(view->{boolean wasRunning=pauseForDiagnostics();dev.chyken.assembl_ar.ui.DiagnosticControlsHelp.show(this,()->{if(wasRunning)resumeAfterDiagnostics();});});
         captureButton.setOnClickListener(view -> captureSample());
         replayButton.setOnClickListener(view -> sampleImport.launch(new String[]{
                 "application/zip", "application/octet-stream"}));
@@ -276,6 +277,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     private void renderSelection() {
+        ((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).clearTelemetry();
         Component component = components.get(selectedIndex);
         selectButton.setText(getString(R.string.part_test_selected,
                 activeTarget==null?selectedIndex+1:targets.indexOf(activeTarget)+1, activeTarget==null?components.size():targets.size(), activeTarget==null?component.getName():activeTarget.title));
@@ -329,6 +331,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         float minimumAreaRatio = minimumAreaRatio(part);
         long generation = session.selectPart(part.getId(), activeTarget==null?part.getName():activeTarget.title, minimumAreaRatio);
         activeTest = new ActiveTest(generation, part.getId(), minimumAreaRatio);
+        ((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).clearTelemetry();
         testing = true;
         resumeRequested=false;
         if(analyzer!=null)analyzer.resume();
@@ -487,15 +490,20 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 },
                         new AssemblyVisionAnalyzer.Callback() {
                             @Override public void onResult(RecognitionResult result) {
+                                onResultWithTelemetry(result,null);
+                            }
+                            @Override public void onResultWithTelemetry(RecognitionResult result,dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){
                                 FrameContext frame = contexts.remove(result.getFrameTimestampNanos());
                                 if (frame == null || analyzerBank!=bankGeneration) return;
                                 runOnUiThread(() -> {
                                     if(analyzerBank!=bankGeneration)return;
                                     latestCalibration = frame.calibration;
                                     handleTestResult(frame.generation, result, frame.width, frame.height);
+                                    if(sample!=null&&resumed&&testing&&activeTest!=null&&activeTest.generation==frame.generation)
+                                        ((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).showTelemetry(sample.telemetry);
                                 });
                             }
-                            @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(resumed&&testing&&analyzerBank==bankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).showTelemetry(sample.telemetry);});}
+                            @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(resumed&&testing&&analyzerBank==bankGeneration&&activeTest!=null&&sample.step.equals(String.valueOf(activeTest.generation)))((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).showTelemetry(sample.telemetry);});}
                             @Override public void onTargetTracking(dev.chyken.assembl_ar.vision.TargetBoundingTracker.Target target,AssemblyVisionAnalyzer.FrameMetadata frame,Object tag){outlineUpdates.submit(()->{
                                 if(analyzerBank!=bankGeneration||!resumed||!testing||activeTest==null||!java.util.Objects.equals(activeTest.generation,tag)||target!=null&&(analyzer==null||target.epoch!=analyzer.visualEpoch()))return;
                                 java.util.List<float[]> regions=new java.util.ArrayList<>();if(target!=null)for(java.util.List<VisionPoint> region:target.regions)regions.add(dev.chyken.assembl_ar.vision.PreviewOutlineCoordinates.normalize(region,frame.getAnalyzedWidth(),frame.getAnalyzedHeight(),preview.getWidth(),preview.getHeight()));
@@ -595,9 +603,6 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                     rejection.getRequiredInlierRatio() * 100));
         }
         liveMetrics.setText(metrics);
-        dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView diagnostic=findViewById(R.id.devDiagnosticsOverlay);
-        dev.chyken.assembl_ar.diagnostics.DiagnosticSample latest=dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest;
-        diagnostic.setText(latest==null?"Waiting for diagnostic sample":latest.hudText());
         if (!detected) status.setText(rejection == null
                 ? "No detection · save a sample and try another angle"
                 : "No detection · " + rejectionLabel(rejection.getReason()));

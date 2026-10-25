@@ -16,12 +16,13 @@ public final class DevDiagnosticsOverlayView extends androidx.appcompat.widget.A
     private final int[] location=new int[2];
     private int windowX,windowY,windowWidth,windowHeight;
     private long shownFrame=-1;
+    public void clearTelemetry(){shownFrame=-1;setText(dev.chyken.assembl_ar.R.string.diagnostic_waiting);}
     public void showTelemetry(dev.chyken.assembl_ar.diagnostics.DiagnosticScanTelemetry telemetry){
         if(telemetry==null)return;
         if(android.os.Looper.myLooper()!=android.os.Looper.getMainLooper()){post(()->showTelemetry(telemetry));return;}
         if(telemetry.totalAnalyzedFrames<shownFrame)return;shownFrame=telemetry.totalAnalyzedFrames;
         String text=telemetry.hudText();android.text.SpannableString styled=new android.text.SpannableString(text);
-        int start=text.lastIndexOf("Output: ");styled.setSpan(new android.text.style.ForegroundColorSpan(telemetry.outputStatus.equals("Match")?0xFF00FF7F:0xFFFF3B30),start,text.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int start=text.lastIndexOf("Output: ");styled.setSpan(new android.text.style.ForegroundColorSpan(telemetry.outputMatches()?0xFF00FF7F:0xFFFF3B30),start,text.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         setMaxLines(Integer.MAX_VALUE);setEllipsize(null);setText(styled);
     }
     public DevDiagnosticsOverlayView(Context c,AttributeSet a){

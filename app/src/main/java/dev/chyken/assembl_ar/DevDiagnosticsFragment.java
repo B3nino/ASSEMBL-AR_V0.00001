@@ -13,9 +13,10 @@ public final class DevDiagnosticsFragment extends Fragment {
         text(body,"Diagnostic test suite",23);text(body,"All assembly and individual references · A: recognition · B: measured pose · C: motion stability",14);
         text(body,"Phases 4 and 6 are wiring/checklist phases without camera reference datasets. B and C remain unmeasured wherever a reference has no calibrated physical pose plane.",12);
         LinearLayout tabs=new LinearLayout(a);body.addView(tabs);button(tabs,"Individual Component Tests",()->{assemblies=false;populate();});button(tabs,"Assembly Tests",()->{assemblies=true;populate();});
-        references=new Button(a);references.setAllCaps(false);references.setText("Choose a library target");body.addView(references);references.setOnClickListener(v->dev.chyken.assembl_ar.ui.DiagnosticTargetPicker.show(a,shown,target->{selectedTarget=target;selectedKey=target.key;references.setText(target.toString());}));inventory=text(body,"Opening prepared keypoint inventory…",13);
+        references=new com.google.android.material.button.MaterialButton(a,null,com.google.android.material.R.attr.materialButtonOutlinedStyle);references.setAllCaps(false);references.setTextColor(a.getColor(R.color.ink));references.setText("Choose a library target");body.addView(references,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));references.setOnClickListener(v->dev.chyken.assembl_ar.ui.DiagnosticTargetPicker.show(a,shown,target->{selectedTarget=target;selectedKey=target.key;references.setText(target.toString());}));inventory=text(body,"Opening prepared keypoint inventory…",13);
         button(body,"Open selected camera test",()->{if(shown.isEmpty())return;DiagnosticTargetCatalog.Target target=selectedTarget;if(target==null)return;startActivity(new Intent(a,PartRecognitionTestActivity.class).putExtra(PartRecognitionTestActivity.EXTRA_COMPONENT_ID,target.componentId).putExtra("reference_id",target.representative.getReferenceId()).putExtra("assembly_test",target.specialized));});
-        button(body,"Configure / run benchmark",()->showControls(a));button(body,"Download Diagnostic Logs",()->DiagnosticLogger.get(a).chooseExport(a,DiagnosticSession.INSTANCE.runner.report()));
+        button(body,"Diagnostic control guide",()->dev.chyken.assembl_ar.ui.DiagnosticControlsHelp.show(a));
+        button(body,"Benchmark & logging",()->showControls(a));button(body,"Download diagnostic logs",()->DiagnosticLogger.get(a).chooseExport(a,DiagnosticSession.INSTANCE.runner.report()));
         report=text(body,"",13);report.setTypeface(android.graphics.Typeface.MONOSPACE);
         VisionPreloadManager.get(a).start().whenComplete((list,error)->ui.post(()->{if(!isAdded()||inventory==null)return;if(error!=null)inventory.setText("Catalog unavailable: "+error.getMessage());else{all=list;populate();}}));
         return scroll;
@@ -38,17 +39,23 @@ public final class DevDiagnosticsFragment extends Fragment {
         boolean resumePart=a instanceof PartRecognitionTestActivity&&((PartRecognitionTestActivity)a).pauseForDiagnostics();
         if(a instanceof AssemblyActivity)((AssemblyActivity)a).pauseForDiagnostics();
         DiagnosticSession session=DiagnosticSession.INSTANCE;session.attach(a);LinearLayout b=column(a);ScrollView scroll=new ScrollView(a);scroll.addView(b);
-        Switch logging=new Switch(a);logging.setText("Developer Diagnostic Logging");logging.setChecked(PreferencesManager.logging(a));logging.setOnCheckedChangeListener((v,enabled)->PreferencesManager.logging(a,enabled));b.addView(logging);
+        androidx.appcompat.widget.SwitchCompat logging=new androidx.appcompat.widget.SwitchCompat(a);logging.setText("Developer Diagnostic Logging");logging.setChecked(PreferencesManager.logging(a));logging.setOnCheckedChangeListener((v,enabled)->PreferencesManager.logging(a,enabled));b.addView(logging);
+        logging.setTextColor(a.getColor(R.color.ink));
+        button(b,"Diagnostic control guide",()->dev.chyken.assembl_ar.ui.DiagnosticControlsHelp.show(a));
+        text(b,"Logging saves future scan measurements. Export shares recorded data; it does not start collection. Opening these controls pauses camera analysis until you return.",13);
         text(b,"Lighting is estimated automatically from the camera. Run 30 fresh scans in the room you are testing; no lighting selection is needed. These image-based categories are estimates, not lux measurements. The ORB benchmark and assembly verification have separate outcomes.",14);
+        text(b,"Movement sequence (perform this movement yourself)",13);
         Spinner motion=new Spinner(a);motion.setAdapter(new ArrayAdapter<>(a,android.R.layout.simple_spinner_dropdown_item,AcademicBenchmarkRunner.MOTIONS));b.addView(motion);
         button(b,"Start 30-trial batch",()->{session.motion=(String)motion.getSelectedItem();logging.setChecked(true);session.runner.start(30,session.motion,android.os.SystemClock.elapsedRealtimeNanos());Toast.makeText(a,"Batch running · automatic lighting estimate",Toast.LENGTH_SHORT).show();});
-        button(b,"Stop batch",session.runner::stop);button(b,"Clear benchmark trials",session.runner::clear);
+        button(b,"Stop batch",session.runner::stop);button(b,"Clear benchmark results",()->new androidx.appcompat.app.AlertDialog.Builder(a)
+            .setTitle("Clear benchmark results?").setMessage("Stops the batch and clears its in-memory trials and reports. Assembly progress, references and exported files are retained.")
+            .setNegativeButton("Cancel",null).setPositiveButton("Clear results",(d,w)->{session.runner.stop();session.runner.clear();}).show());
         button(b,"Configure checkerboard ground truth",()->calibration(a));
         button(b,"View live report",()->new androidx.appcompat.app.AlertDialog.Builder(a).setTitle("Academic measurements").setMessage(session.runner.report()).setPositiveButton("Close",null).show());
         button(b,"Download Diagnostic Logs",()->DiagnosticLogger.get(a).chooseExport(a,session.runner.report()));
         if(a instanceof AssemblyActivity)button(b,"Capture current scan frame",()->((AssemblyActivity)a).captureDiagnosticScanFrame());
-        text(b,"Frame recording: use Capture Sample on the test camera. Each capture is retained as a replayable .arpart.zip in the session bundle. Camera trials never modify assembly progress.",13);
-        androidx.appcompat.app.AlertDialog controls=new androidx.appcompat.app.AlertDialog.Builder(a).setTitle("Diagnostics & Settings").setView(scroll).setPositiveButton(a instanceof AssemblyActivity||a instanceof PartRecognitionTestActivity?"Return to camera":"Done",null).create();
+        text(b,"Frame recording: use Save sample on the test camera. Each capture is retained as a replayable .arpart.zip in the session bundle. Camera trials never modify assembly progress.",13);
+        androidx.appcompat.app.AlertDialog controls=new androidx.appcompat.app.AlertDialog.Builder(a).setTitle("Benchmark & logging").setView(scroll).setPositiveButton(a instanceof AssemblyActivity||a instanceof PartRecognitionTestActivity?"Return to camera":"Done",null).create();
         controls.setOnDismissListener(d->{if(a instanceof AssemblyActivity)((AssemblyActivity)a).resumeAfterDiagnostics();else if(resumePart&&!a.isFinishing())((PartRecognitionTestActivity)a).resumeAfterDiagnostics();});controls.show();
     }
     private static void calibration(Activity a){LinearLayout b=column(a);text(b,"Use a printed checkerboard coplanar with the target. Mark the first inner corner and measure target CENTER X/Y from it. Keep the same grid orientation. Values are millimeters. The grid must remain visible. These values must be measured independently of the AR overlay.",14);
@@ -58,7 +65,13 @@ public final class DevDiagnosticsFragment extends Fragment {
         ScrollView form=new ScrollView(a);form.addView(b);
         androidx.appcompat.app.AlertDialog d=new androidx.appcompat.app.AlertDialog.Builder(a).setTitle("Measured checkerboard reference").setView(form).setNegativeButton("Disable",(x,w)->DiagnosticSession.INSTANCE.groundTruth=null).setPositiveButton("Apply",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{try{DiagnosticSession.INSTANCE.groundTruth=new CheckerboardGroundTruth(Integer.parseInt(f[0].getText().toString()),Integer.parseInt(f[1].getText().toString()),Double.parseDouble(f[2].getText().toString()),Double.parseDouble(f[3].getText().toString()),Double.parseDouble(f[4].getText().toString()),(RecognitionResult.OrientationClassification)orientation.getSelectedItem());d.dismiss();}catch(RuntimeException bad){f[0].setError("Check the measurements");}}));d.show();
     }
-    private static LinearLayout column(Activity a){LinearLayout b=new LinearLayout(a);b.setOrientation(LinearLayout.VERTICAL);int p=Math.round(16*a.getResources().getDisplayMetrics().density);b.setPadding(p,p,p,p);return b;}
-    private static TextView text(LinearLayout b,String s,int size){TextView t=new TextView(b.getContext());t.setText(s);t.setTextSize(size);t.setPadding(0,8,0,8);b.addView(t);return t;}
-    private static void button(LinearLayout b,String s,Runnable r){com.google.android.material.button.MaterialButton v=new com.google.android.material.button.MaterialButton(b.getContext());v.setText(s);v.setAllCaps(false);b.addView(v);v.setOnClickListener(x->r.run());}
+    private static LinearLayout column(Activity a){LinearLayout b=new LinearLayout(a);b.setOrientation(LinearLayout.VERTICAL);b.setBackgroundColor(a.getColor(R.color.canvas));int p=Math.round(16*a.getResources().getDisplayMetrics().density);b.setPadding(p,p,p,p);return b;}
+    private static TextView text(LinearLayout b,String s,int size){TextView t=new TextView(b.getContext());t.setText(s);t.setTextSize(size);t.setTextColor(b.getContext().getColor(size>=18?R.color.ink:R.color.ink_soft));t.setPadding(0,8,0,8);b.addView(t);return t;}
+    private static void button(LinearLayout b,String s,Runnable r){
+        com.google.android.material.button.MaterialButton v=new com.google.android.material.button.MaterialButton(b.getContext(),null,
+                s.equals("Open selected camera test")||s.equals("Start 30-trial batch")?com.google.android.material.R.attr.materialButtonStyle:com.google.android.material.R.attr.materialButtonOutlinedStyle);
+        v.setText(s);v.setAllCaps(false);v.setTextColor(b.getContext().getColor(s.equals("Open selected camera test")||s.equals("Start 30-trial batch")?R.color.white:R.color.ink));
+        v.setMinHeight(Math.round(52*b.getResources().getDisplayMetrics().density));
+        b.addView(v,b.getOrientation()==LinearLayout.HORIZONTAL?new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1):new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));v.setOnClickListener(x->r.run());
+    }
 }

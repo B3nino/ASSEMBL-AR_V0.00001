@@ -192,8 +192,6 @@ public final class AssemblyActivity extends AppCompatActivity {
     private int unrecognizedFrames;
     private boolean diagnosticsVisible;
     private volatile boolean diagnosticsModal;
-    private long lastDiagnosticCaptureNanos = Long.MIN_VALUE;
-    private double diagnosticFps;
     private long lastHandledCaptureNanos = Long.MIN_VALUE;
     private boolean visionInitializationStarted;
     private volatile boolean destroyed;
@@ -290,6 +288,8 @@ public final class AssemblyActivity extends AppCompatActivity {
     private int cameraLayoutGeneration;
     private ImageAnalysis imageAnalysis;
     private AssemblyVisionAnalyzer analyzer;
+    private final dev.chyken.assembl_ar.diagnostics.DiagnosticTelemetryLocker diagnosticLocker=new dev.chyken.assembl_ar.diagnostics.DiagnosticTelemetryLocker();
+    private dev.chyken.assembl_ar.diagnostics.DiagnosticSample pairedDiagnosticSample;
     private ReferenceDatabase referenceDatabase;
     private ComponentRecognizer recognizer;
     private VisionConfig visionConfig;
@@ -875,7 +875,14 @@ public final class AssemblyActivity extends AppCompatActivity {
                     @Override public boolean requiresMetricTracking(){return dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.running();}
                 },
                 new AssemblyVisionAnalyzer.Callback() {
-                    @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){runOnUiThread(()->{if(activityResumed&&isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration)((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).showTelemetry(sample.telemetry);});}
+                    @Override public void onDiagnosticSample(dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){
+                        int visible=assemblyVisibilityGeneration;
+                        runOnUiThread(()->{if(activityResumed&&visible==assemblyVisibilityGeneration&&isVisionGenerationActive(generation)&&bankGeneration==referenceBankGeneration&&phaseController!=null
+                                &&sample.step.equals(String.valueOf(phaseController.currentTag()))){
+                            syncDiagnosticScope();
+                            showDiagnosticSnapshot(diagnosticLocker.stream(phaseController.currentTag(),sample.telemetry));
+                        }});
+                    }
                     @Override public void onTargetTracking(dev.chyken.assembl_ar.vision.TargetBoundingTracker.Target target,AssemblyVisionAnalyzer.FrameMetadata frame,Object tag){
                         int visible=assemblyVisibilityGeneration;
                         outlineUpdates.submit(()->{if(!activityResumed||visible!=assemblyVisibilityGeneration||!isVisionGenerationActive(generation)||bankGeneration!=referenceBankGeneration||phaseController!=null&&!phaseController.isCameraModeFocused()||target!=null&&(analyzer==null||target.epoch!=analyzer.visualEpoch()))return;
@@ -888,6 +895,9 @@ public final class AssemblyActivity extends AppCompatActivity {
                     }
                     @Override
                     public void onResult(RecognitionResult result) {
+                        onResultWithTelemetry(result,null);
+                    }
+                    @Override public void onResultWithTelemetry(RecognitionResult result,dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample){
                         long completedAt = SystemClock.elapsedRealtimeNanos();
                         int resultVisibilityGeneration = assemblyVisibilityGeneration;
                         runOnUiThread(() -> {
@@ -896,7 +906,8 @@ public final class AssemblyActivity extends AppCompatActivity {
                                 // before a pause/resume transition in any step.
                                 if (resultVisibilityGeneration
                                         != assemblyVisibilityGeneration) return;
-                                handleRecognition(result, completedAt);
+                                pairedDiagnosticSample=sample;
+                                try{handleRecognition(result, completedAt);}finally{pairedDiagnosticSample=null;}
                             }
                         });
                     }
@@ -1084,6 +1095,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         if (phases != null && !phases.isFrameForCurrentPhase(result)) return;
         if (result.getFrameTimestampNanos() <= lastHandledCaptureNanos) return;
         lastHandledCaptureNanos = result.getFrameTimestampNanos();
+        syncDiagnosticScope();
         if(result.getDiagnosticMetrics()!=null&&result.getDiagnosticMetrics().mismatch!=null){String warning=result.getDiagnosticMetrics().mismatch;calibrationByFrame.remove(result.getFrameTimestampNanos());updateDiagnostics(result);arHudView.update(ArHudView.HudState.MISMATCH,"Incorrect component",null);arGlView.hideGuidance();setBanner(warning,false,R.drawable.bg_camera_warning);voiceGuide.speak(warning,"global-mismatch:"+result.getRequestTag());return;}
         if (frame != null) {
             latestCalibration = frame.calibration;
@@ -1099,6 +1111,10 @@ public final class AssemblyActivity extends AppCompatActivity {
                     : phaseBoard.getDetection().getProjectedCorners()));
             if (phaseBoard != null && phaseBoard.isHeld()) return;
             phases.onResult(result, frameEvidenceNanos);
+            if(phases.currentScanVerified()&&pairedDiagnosticSample!=null){
+                diagnosticLocker.freeze(result.getRequestTag(),pairedDiagnosticSample.telemetry);
+                showDiagnosticSnapshot(diagnosticLocker.snapshot());
+            }
             logTrialFrame(result, completedAtNanos);
             return;
         }
@@ -2178,51 +2194,13 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private void updateDiagnostics(RecognitionResult result) {
-        dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView floating=findViewById(R.id.devDiagnosticsOverlay);
-        dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample=dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.latest;
-        if(sample!=null)floating.showTelemetry(sample.telemetry);
+        dev.chyken.assembl_ar.diagnostics.DiagnosticSample sample=pairedDiagnosticSample;
+        if(sample!=null&&sample.frameNanos==result.getFrameTimestampNanos())
+            showDiagnosticSnapshot(diagnosticLocker.stream(result.getRequestTag(),sample.telemetry));
 
-        long captureNanos = result.getFrameTimestampNanos();
-        if (lastDiagnosticCaptureNanos != Long.MIN_VALUE
-                && captureNanos > lastDiagnosticCaptureNanos) {
-            double currentFps = 1_000_000_000.0 / (captureNanos - lastDiagnosticCaptureNanos);
-            diagnosticFps = diagnosticFps == 0.0 ? currentFps
-                    : diagnosticFps * 0.75 + currentFps * 0.25;
-        }
-        lastDiagnosticCaptureNanos = captureNanos;
-        RecognitionResult.Latency latency = result.getLatency();
         CameraCalibration frameCalibration = latestCalibration;
-        String calibrationSource = frameCalibration == null ? "UNAVAILABLE"
-                : frameCalibration.getSource().name();
-        String anchorId = result.getSpatialAnchor() == null
-                ? "none" : result.getSpatialAnchor().getComponentId();
-        diagnosticsText.setText(String.format(Locale.US,
-                "id: %s\nanchor: %s\npose: %s\ncalibration: %s\nstate: %s\nmethod: %s\nkeypoints: %d\nmatches: %d\ninliers: %d (%.0f%%)\nconfidence: %.0f%%\norientation: %.1f°\npolarity: %s\nlatency: %.1f ms",
-                result.getComponentId(), anchorId,
-                result.getPose() == null ? "unavailable" : "locked",
-                calibrationSource,
-                result.getValidationState(), result.getDetectionMethod(),
-                result.getFrameKeypointCount(), result.getGoodMatchCount(), result.getInlierCount(),
-                result.getInlierRatio() * 100, result.getConfidence() * 100,
-                result.getOrientationDegrees(), result.getPolarityState(), latency.getTotalMs()));
-        diagnosticsText.append("\nrequest: " + result.getRequestTag()
-                + "\nbuild: " + BuildStamp.shortLabel());
+        String calibrationSource = frameCalibration == null ? "UNAVAILABLE" : frameCalibration.getSource().name();
         RecognitionResult.BoardObservation board = result.getBoardObservation();
-        if (board != null) diagnosticsText.append(String.format(Locale.US,
-                "\nFPS: %.1f\nORB keypoints: %d\ntracking: %s\nstep: %d"
-                        + "\nboardDetected: %s\nboard good/inliers: %d/%d",
-                diagnosticFps, board.getDetection().getFrameKeypointCount(),
-                board.isHeld() ? "pose hold" : board.isTracked() ? "LK tracking"
-                        : board.isDetected() ? "ORB detection" : "lost",
-                result.getAssemblyStepNumber(), board.isDetected(),
-                board.getDetection().getGoodMatchCount(), board.getDetection().getInlierCount()));
-        else diagnosticsText.append(String.format(Locale.US,"\nFPS: %.1f\nORB keypoints: %d\ntracking: %s",
-                diagnosticFps,result.getFrameKeypointCount(),result.getPhase2Observation()!=null
-                        ?result.getPhase2Observation().rejected?"rejected scene":result.getPhase2Observation().referenceSupported?"photo evidence":"searching scene"
-                        :result.hasLocatedComponent()?"component located":"searching"));
-        if(result.getPhase2Observation()!=null)diagnosticsText.append(String.format(Locale.US,
-                "\nscene: %s\npositive/negative: %.1f / %.1f\nvisible gearboxes: %d",result.getPhase2Observation().view,
-                result.getPhase2Observation().positiveScore,result.getPhase2Observation().negativeScore,result.getPhase2Observation().visibleMotors));
         if (diagnosticsVisible) {
             RecognitionResult.SpatialAnchor boardAnchor = board == null ? null : board.getAnchor();
             List<VisionPoint> boardCorners = boardAnchor == null
@@ -2252,7 +2230,9 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     private void setDiagnosticsVisible(boolean visible) {
         diagnosticsVisible = visible;
-        diagnosticsPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+        // The shared elevated HUD is the single readout in both camera modes.
+        // Retain the old container ID for layout compatibility, without a second overlapping panel.
+        diagnosticsPanel.setVisibility(View.GONE);
         findViewById(R.id.devDiagnosticsOverlay).setVisibility(visible?View.VISIBLE:View.GONE);
     }
 
@@ -3064,7 +3044,21 @@ public final class AssemblyActivity extends AppCompatActivity {
     void hideGuidance() { arGlView.hideGuidance(); }
     void showGuidance(ArGuidance guidance) { arGlView.showGuidance(guidance, cameraProjection()); }
 
+    private void syncDiagnosticScope(){
+        PhaseAssemblyController phases=phaseController;if(phases==null)return;
+        if(diagnosticLocker.enter(phases.diagnosticScope(),phases.currentTag(),phases.currentScanVerified())){
+            dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView view=findViewById(R.id.devDiagnosticsOverlay);
+            if(view!=null)view.clearTelemetry();
+        }
+    }
+    private void showDiagnosticSnapshot(dev.chyken.assembl_ar.diagnostics.DiagnosticScanTelemetry telemetry){
+        dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView view=findViewById(R.id.devDiagnosticsOverlay);
+        if(view!=null&&telemetry!=null)view.showTelemetry(telemetry);
+        if(diagnosticsText!=null&&telemetry!=null){String text=telemetry.hudText();if(!android.text.TextUtils.equals(diagnosticsText.getText(),text))diagnosticsText.setText(text);}
+    }
+
     void resetAnalyzerTracking() {
+        syncDiagnosticScope();
         outlineUpdates.clear();
         assemblyVisibilityGeneration++;
         dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView overlay=findViewById(R.id.dynamicOutlineOverlay);if(overlay!=null){overlay.clear();overlay.setCameraActive(false);}

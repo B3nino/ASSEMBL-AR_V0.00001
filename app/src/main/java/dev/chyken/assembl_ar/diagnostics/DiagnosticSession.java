@@ -22,12 +22,16 @@ public final class DiagnosticSession {
         }
         DiagnosticLogger log=logger;if(log!=null)log.recordOverlay(time,anchor!=null&&!predicted,predicted,pixels,offset,motion);
     }
-    public void record(RecognitionResult r,RecognitionRequest request,Mat gray){record(r,request,gray,true);}
-    public void record(RecognitionResult r,RecognitionRequest request,Mat gray,boolean includeTrial){
+    public DiagnosticSample record(RecognitionResult r,RecognitionRequest request,Mat gray){return record(r,request,gray,true);}
+    public DiagnosticSample record(RecognitionResult r,RecognitionRequest request,Mat gray,boolean includeTrial){
         RecognitionResult.DiagnosticMetrics m=r.getDiagnosticMetrics();VerifiedScanEvidence e=m==null?null:m.verified;
         boolean workflow=r.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT;
         Phase2Observation p=r.getPhase2Observation();if(p!=null&&request!=null&&request.getPhase2Stage()==5)workflow=p.referenceSupported;
         if(m!=null&&m.mismatch!=null)workflow=false;
+        boolean spatiallyVerified=VerifiedScanEvidence.workflowAccepted(r,request);
+        // A global hint cannot own an accepted local shape/phase candidate's metrics.
+        if(spatiallyVerified&&e!=null&&!java.util.Objects.equals(e.source.getComponentId(),r.getComponentId())
+                &&r.getPhase7Observation()==null)e=null;
         boolean pose=e!=null&&e.pose!=null&&e.orientation!=null;
         boolean correct=pose&&workflow&&e.orientation.frontFacing;
         RecognitionRequest.AssemblyExpectation target=request==null?null:request.getExpectation();
@@ -36,7 +40,10 @@ public final class DiagnosticSession {
             correct=Math.min(delta,360-delta)<=(target.getOrientationToleranceDegrees()==null?30:target.getOrientationToleranceDegrees());
         }
         RecognitionResult.Pose fitted=pose?e.pose:null;
-        CheckerboardGroundTruth gt=groundTruth;CheckerboardGroundTruth.Measurement measured=gt!=null&&fitted!=null?gt.measure(gray,r.getProjectedCorners(),fitted,request==null?null:request.getCameraCalibration()):null;
+        CheckerboardGroundTruth gt=groundTruth;CheckerboardGroundTruth.Measurement measured=null;
+        // Optional ground truth must not erase an otherwise valid scan's core telemetry.
+        if(gt!=null&&fitted!=null)try{measured=gt.measure(gray,r.getProjectedCorners(),fitted,request==null?null:request.getCameraCalibration());}
+        catch(RuntimeException unavailable){android.util.Log.w("DiagnosticSession","Checkerboard measurement unavailable",unavailable);}
         RecognitionResult.Latency latency=r.getLatency();
         DiagnosticScanTelemetry t=new DiagnosticScanTelemetry(e==null?"Unverified":e.componentName,e==null?null:e.source.getReferenceId(),
             e==null?-1:KeypointInventoryManager.INSTANCE.count(e.source.getReferenceId()),
@@ -46,6 +53,8 @@ public final class DiagnosticSession {
             e==null||e.projectedOrigin==null?null:new DiagnosticScanTelemetry.Point(e.projectedOrigin.getX(),e.projectedOrigin.getY()),
             e==null||e.observedCentroid==null?null:new DiagnosticScanTelemetry.Point(e.observedCentroid.getX(),e.observedCentroid.getY()),
             fitted==null?Double.NaN:fitted.getReprojectionErrorPx(),analyzed.get());
+        if(spatiallyVerified)t=t.withVerification(r.getDisplayName()==null||r.getDisplayName().trim().isEmpty()?r.getComponentId():r.getDisplayName(),
+                VerifiedScanEvidence.verificationSource(r),r.getConfidence());
         RecognitionResult.RejectionEvidence rejected=r.getRejectionEvidence();
         String reason=m!=null&&m.mismatch!=null?m.mismatch:p!=null&&p.rejected?"MISSING_MOTOR_OR_BRACKET":workflow?"ACCEPTED":rejected==null?r.getValidationState().name():rejected.getReason().name();
         DiagnosticSample sample=new DiagnosticSample(System.currentTimeMillis(),r.getFrameTimestampNanos(),request==null?0:request.getAssemblyStepNumber(),String.valueOf(r.getRequestTag()),
@@ -56,6 +65,7 @@ public final class DiagnosticSession {
         if(measured!=null)runner.overlay(measured.errorPx,motion.equals("Static")?measured.errorMm:Double.NaN);
         latestTelemetry=t;latest=sample;if(includeTrial)runner.observe(sample);DiagnosticLogger log=logger;
         if(log!=null){log.record(sample);log.recordOverlay(r.getFrameTimestampNanos(),pose,false,sample.anchorOffsetPx,sample.staticOffsetMm,motion);}
+        return sample;
     }
     private static String fallbackOrientation(RecognitionResult.OrientationClassification o){switch(o){case UPRIGHT:return "Upright";case UPSIDE_DOWN:return "Upside Down";case ROTATED_CLOCKWISE:return "Right";case ROTATED_COUNTERCLOCKWISE:return "Left";default:return "Unmeasured";}}
 }

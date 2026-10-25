@@ -1,12 +1,15 @@
 <resources>
+    <string name="diagnostic_control_guide">Diagnostic control guide</string>
+    <string name="diagnostic_benchmark_logging">Benchmark &amp; logging</string>
+    <string name="diagnostic_waiting">Waiting for current scan telemetry</string>
     <string name="part_test_title">Individual part AR test</string>
-    <string name="part_test_instructions">Place only the selected loose part in view, tap it to focus, then start. Save a sample when recognition struggles so the exact analyzed frame can be replayed after changes.</string>
+    <string name="part_test_instructions">Frame the selected part or assembly target, tap to focus, then start. Save a sample to replay a difficult view. Open the control guide for button explanations.</string>
     <string name="part_test_previous">Previous part</string>
     <string name="part_test_next">Next part</string>
     <string name="part_test_start">Start test</string>
     <string name="part_test_pause">Pause test</string>
-    <string name="part_test_reset">Reset part</string>
-    <string name="part_test_results">Results</string>
+    <string name="part_test_reset">Reset test results</string>
+    <string name="part_test_results">Recognition results</string>
     <string name="part_test_capture">Save sample</string>
     <string name="part_test_replay">Replay sample</string>
     <string name="part_test_capture_first">Start the test before saving a sample.</string>

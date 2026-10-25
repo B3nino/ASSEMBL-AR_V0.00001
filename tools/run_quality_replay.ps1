@@ -22,6 +22,8 @@ $taskQualityCases=@(
  'PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling'
 )
 $taskAuditCases=@(
+ 'vision.VerifiedTelemetryReplayInstrumentedTest#roomStackedAssemblyPairsAndFreezesVerifiedMetricsWhileTrackingStaysLive',
+ 'vision.VerifiedTelemetryReplayInstrumentedTest#geometryHudIsGreenAndUnmeasuredValuesStayHonestInBothLayouts',
  'vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission',
  'vision.HygieneSafetyInstrumentedTest#pauseFromOutlineCallbackDropsTheRemainingTrackingCallback',
  'vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader',

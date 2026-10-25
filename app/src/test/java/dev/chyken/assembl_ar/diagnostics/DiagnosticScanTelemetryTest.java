@@ -8,4 +8,19 @@ public final class DiagnosticScanTelemetryTest {
  @Test public void lowYieldNeverGetsRenamedAsAccuracyPass(){DiagnosticScanTelemetry t=make(183,7590,true,true,true);assertEquals(2.411067,t.matchPercentage,.00001);assertEquals("Mismatch",t.outputStatus);}
  @Test public void missingGeometryIsNotAZeroError(){DiagnosticScanTelemetry t=new DiagnosticScanTelemetry("Probe","probe",-1,25,-1,-1,0,0,false,false,false,null,Double.NaN,null,null,Double.NaN,4);assertEquals("Unverified",t.componentName);assertNull(t.referenceId);assertTrue(Float.isNaN(t.pixelDistance));assertTrue(Float.isNaN(t.reprojectionRmsPx));assertTrue(t.hudText().contains("Projected point per frame: Unmeasured"));}
  @Test public void pixelOffsetAndRmsAreSeparateQuantities(){DiagnosticScanTelemetry t=make(90,100,true,true,true);assertEquals(5,t.pixelDistance,0);assertEquals(.5,t.reprojectionRmsPx,0);assertTrue(Float.isNaN(t.treMm));}
+ @Test public void verifiedGeometryDoesNotInventOrbOrThreeDimensionalMeasurements(){
+  DiagnosticScanTelemetry raw=new DiagnosticScanTelemetry("Probe",null,-1,319,-1,-1,8,15,false,false,false,null,Double.NaN,null,null,Double.NaN,12);
+  DiagnosticScanTelemetry t=raw.withVerification("Extension Board","Photo + geometry",.85);
+  assertEquals("Match (VERIFIED)",t.outputStatus);assertTrue(t.outputMatches());assertEquals("Extension Board",t.componentName);
+  assertEquals("Unverified",raw.componentName);assertFalse(raw.workflowVerified);
+  assertEquals(-1,t.goodMatches);assertEquals(-1,t.totalMatches);assertTrue(Float.isNaN(t.matchPercentage));
+  assertFalse(t.poseMeasured);assertFalse(t.isCorrectPose);assertTrue(Float.isNaN(t.treMm));assertTrue(Float.isNaN(t.reprojectionRmsPx));
+  assertTrue(t.hudText().contains("Correct Pose: Unmeasured"));assertTrue(t.hudText().contains("verifier confidence 85.00%"));assertEquals(15,t.hudText().split("\n").length);
+ }
+ @Test public void workflowStatusDoesNotRewriteFailedAcademicGate(){
+  DiagnosticScanTelemetry t=make(183,7590,true,true,true).withVerification("Nano","ORB + RANSAC",.90);
+  assertEquals(2.411067,t.matchPercentage,.00001);assertEquals(183,t.goodMatches);assertEquals(7590,t.totalMatches);
+  assertTrue(t.hudText().contains("2.41% (FAIL · ORB gate)"));assertTrue(t.workflowVerified);assertEquals("Match (VERIFIED)",t.outputStatus);
+ }
+ @Test public void invalidVerifierConfidenceRemainsUnmeasured(){assertTrue(Double.isNaN(make(85,100,true,true,true).withVerification("Nano","Geometry",2).verificationConfidence));}
 }

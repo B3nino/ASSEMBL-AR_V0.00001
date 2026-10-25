@@ -2420,6 +2420,32 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, kind + " " + detail);
     }
 
+    /** Stable across pause/resume and scan completion; distinct for each scan/checkpoint. */
+    String diagnosticScope(){
+        String id=phase==null?"none":phase.getId();
+        if(gearGuide!=null)return id+":"+gearGuide.flow.step()+":"+gearGuide.flow.expectedHardwareView();
+        if(driverGuide!=null)return id+":"+driverGuide.flow.step();
+        if(microcontrollerGuide!=null)return id+":"+microcontrollerGuide.flow.step();
+        if(casterTrackerGuide!=null)return id+":"+casterTrackerGuide.flow.screenIndex();
+        if(sensorWiringGuide!=null)return id+":"+sensorWiringGuide.flow.step();
+        if(standoffWheelsGuide!=null)return id+":"+standoffWheelsGuide.flow.step();
+        if(extensionBoardGuide!=null)return id+":"+extensionBoardGuide.flow.step();
+        if(oledBatteryGuide!=null)return id+":"+oledBatteryGuide.flow.step();
+        return id;
+    }
+    /** Physical checklists and developer skip do not themselves produce telemetry evidence. */
+    boolean currentScanVerified(){
+        if(gearGuide!=null)return gearGuide.flow.step()==5?gearGuide.flow.currentHardwareViewComplete():gearGuide.flow.complete();
+        if(driverGuide!=null)return driverGuide.flow.complete();
+        if(microcontrollerGuide!=null)return microcontrollerGuide.flow.complete();
+        if(casterTrackerGuide!=null)return casterTrackerGuide.flow.scanned();
+        if(sensorWiringGuide!=null)return sensorWiringGuide.flow.complete();
+        if(standoffWheelsGuide!=null)return standoffWheelsGuide.flow.complete();
+        if(extensionBoardGuide!=null)return extensionBoardGuide.flow.complete();
+        if(oledBatteryGuide!=null)return oledBatteryGuide.flow.complete();
+        return phase!=null&&phase.getNumber()==1&&phaseOneScanConfirmed;
+    }
+
     /** Current request tag, for the trial log's frame rows. */
     @Nullable
     PhaseFlow.ScanTag currentTag() {
