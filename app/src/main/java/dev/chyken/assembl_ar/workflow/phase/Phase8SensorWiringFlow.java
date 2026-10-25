@@ -43,7 +43,8 @@ public final class Phase8SensorWiringFlow {
     public boolean next(long now){if(!complete()||screen==Screen.TRACKER_WIRING)return false;screen=Screen.values()[screen.ordinal()+1];window(now);return true;}
     public boolean previous(long now){if(screen==Screen.SENSOR_SCAN)return false;screen=Screen.values()[screen.ordinal()-1];window(now);return true;}
     /** A guarded rescan resets only this camera gate; earlier work and chosen colors survive. */
-    public void rescan(long now){if(!screen.scan())return;done.remove(screen);window(now);}
+    public boolean canRescan(){return AssemblyStepNavigationManager.canRescan(screen.scan(),complete());}
+    public void rescan(long now){if(!canRescan())return;if(!screen.scan())return;done.remove(screen);window(now);}
     public boolean canFinish(boolean developer){return screen==Screen.TRACKER_WIRING&&complete()&&(developer||allComplete());}
     public void pause(){paused=true;generation++;hits=0;}
     public void resume(long now){paused=false;window(now);}

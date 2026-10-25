@@ -52,7 +52,8 @@ public final class Phase9StandoffWheelsFlow {
     public void answerWheels(boolean secure){if(screen==Screen.WHEELS_CHECK){if(secure&&done.contains(Screen.WHEELS_WORK_SCAN))done.add(screen);else done.remove(screen);}}
     public boolean next(long now){if(!complete()||screen==Screen.WHEELS_CHECK)return false;screen=Screen.values()[screen.ordinal()+1];window(now);return true;}
     public boolean previous(long now){if(screen==Screen.HARDWARE_PREP)return false;screen=Screen.values()[screen.ordinal()-1];window(now);return true;}
-    public void rescan(long now){
+    public boolean canRescan(){return AssemblyStepNavigationManager.canRescan(screen.scan(),complete());}
+    public void rescan(long now){if(!canRescan())return;
         if(!screen.scan())return;done.remove(screen);
         if(screen==Screen.STANDOFF_WORK_SCAN){done.remove(Screen.STANDOFF_CHECK);nutLocked=false;topScrewRemoved=false;}
         if(screen==Screen.WHEELS_WORK_SCAN)done.remove(Screen.WHEELS_CHECK);

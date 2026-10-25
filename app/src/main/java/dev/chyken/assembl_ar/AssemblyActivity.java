@@ -614,10 +614,13 @@ public final class AssemblyActivity extends AppCompatActivity {
     private volatile int referenceBankGeneration;
     private String failedReferenceScope,referencePreparationMessage;
     private volatile boolean libraryPreparing;
+    private final ActivityResultLauncher<Intent> startupPreparation=registerForActivityResult(
+        new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),result->{
+            libraryPreparing=false;
+            if(result.getResultCode()!=RESULT_OK){finish();return;}
+            if(!destroyed){if(referenceCatalog==null){initializeVision();return;}if(activityResumed&&phaseController!=null)phaseController.onResume();refreshReferenceScope();}
+        });
     private volatile String libraryFailure;
-    private androidx.appcompat.app.AlertDialog libraryDialog;
-    private android.widget.ProgressBar libraryProgress;
-    private android.widget.TextView libraryText;
     private volatile int prefetchGeneration;
     private String prefetchingScope;
     private ReferenceBank prefetchedBank;
@@ -663,6 +666,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     void resumeAfterDiagnostics(){diagnosticsModal=false;if(!destroyed&&activityResumed){assemblyVisibilityGeneration++;if(phaseController!=null)phaseController.onResume();refreshReferenceScope();}}
     private void initializeVision() {
         if(visionInitializationStarted||destroyed)return;
+        if(!dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).isReady()){prepareReferenceLibrary();return;}
         visionInitializationStarted=true;int generation=++visionGeneration;
         startCamera(generation);
         recognitionText.removeCallbacks(referenceScopeMonitor);recognitionText.post(referenceScopeMonitor);
@@ -687,23 +691,12 @@ public final class AssemblyActivity extends AppCompatActivity {
     private File referenceCacheDirectory(){return new File(getNoBackupFilesDir(),"orb_reference_cache_v3");}
     private void prepareReferenceLibrary(){
         if(destroyed||libraryPreparing)return;
-        libraryFailure=null;libraryPreparing=true;if(phaseController!=null)phaseController.onPause();voiceGuide.stop();arHudView.setScanningEnabled(false);
-        android.widget.LinearLayout body=dev.chyken.assembl_ar.ui.PhysicalCheckUi.body(this);
-        libraryText=dev.chyken.assembl_ar.ui.PhysicalCheckUi.prompt(this,"Checking the component reference library…");body.addView(libraryText);
-        libraryProgress=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);body.addView(libraryProgress);
-        libraryDialog=new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Prepare recognition library").setView(body).setCancelable(false).setNegativeButton("Save and exit",(d,w)->finish()).create();
-        libraryDialog.setOnShowListener(d->{if(libraryDialog!=null)dev.chyken.assembl_ar.ui.PhysicalCheckUi.style(libraryDialog);});
-        recognitionText.postDelayed(new Runnable(){public void run(){if(destroyed||!libraryPreparing||libraryDialog==null)return;
-            dev.chyken.assembl_ar.vision.VisionPreloadManager preload=dev.chyken.assembl_ar.vision.VisionPreloadManager.get(AssemblyActivity.this);
-            int total=preload.totalCount(),done=preload.completedCount();libraryProgress.setIndeterminate(total==0);libraryProgress.setMax(Math.max(1,total));libraryProgress.setProgress(done);libraryText.setText("Preparing shared reference index · "+done+" / "+total+"\nCompiled photos are reused on later runs.");if(!libraryDialog.isShowing())libraryDialog.show();recognitionText.postDelayed(this,500);
-        }},600);
-        int generation=visionGeneration;
-        visionLoaderExecutor.execute(()->{
-            try{
-                dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).start().get();
-                runOnUiThread(()->{if(!isVisionGenerationActive(generation))return;libraryPreparing=false;if(libraryDialog!=null){libraryDialog.dismiss();libraryDialog=null;}if(activityResumed&&phaseController!=null)phaseController.onResume();refreshReferenceScope();});
-            }catch(Throwable failure){Log.e("AssemblyActivity","Whole-build reference preparation failed",failure);runOnUiThread(()->{if(!isVisionGenerationActive(generation))return;libraryPreparing=false;if(libraryDialog!=null){libraryDialog.dismiss();libraryDialog=null;}libraryFailure="Library preparation interrupted · tap to retry";visionInitializationStarted=false;setBanner(libraryFailure,false,R.drawable.bg_camera_warning);});}
-        });
+        if(dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).isReady()){
+            libraryFailure=null;if(activityResumed&&phaseController!=null)phaseController.onResume();refreshReferenceScope();return;
+        }
+        libraryPreparing=true;libraryFailure=null;
+        if(phaseController!=null)phaseController.onPause();voiceGuide.stop();arHudView.setScanningEnabled(false);
+        startupPreparation.launch(new Intent(this,SplashActivity.class));
     }
     private void installReferenceBank(ReferenceBank bank){
         detachReferenceBank();referenceBankGeneration++;
@@ -720,7 +713,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         visionLoaderExecutor.execute(()->{
             ReferenceDatabase db=null;ComponentRecognizer worker=null;
             try{
-                db=ReferenceDatabase.load(getAssets(),specs,visionConfig,referenceCacheDirectory(),()->!destroyed&&token==prefetchGeneration,(d,t)->{});
+                db=dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).loadBank(specs,()->!destroyed&&token==prefetchGeneration,(d,t)->{});
                 if(destroyed||token!=prefetchGeneration){db.close();return;}worker=new ComponentRecognizer(visionConfig,db);ReferenceBank ready=new ReferenceBank(scope,db,worker);
                 runOnUiThread(()->{if(destroyed||token!=prefetchGeneration){ready.close();return;}prefetchingScope=null;
                     if(scope.equals(dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(activeReferenceRequest()))){installReferenceBank(ready);prefetchNext(next);}else prefetchedBank=ready;
@@ -751,7 +744,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         visionLoaderExecutor.execute(()->{
             ReferenceDatabase db=null;ComponentRecognizer worker=null;long started=SystemClock.elapsedRealtime();
             try{
-                db=ReferenceDatabase.load(getAssets(),specs,visionConfig,referenceCacheDirectory(),
+                db=dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).loadBank(specs,
                     ()->!destroyed&&bank==referenceBankGeneration,(done,total)->{});
                 if(destroyed||bank!=referenceBankGeneration){db.close();return;}
                 worker=new ComponentRecognizer(visionConfig,db);ReferenceDatabase readyDb=db;ComponentRecognizer readyWorker=worker;
@@ -3182,7 +3175,6 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         destroyed = true;prefetchGeneration++;
-        if(libraryDialog!=null){libraryDialog.dismiss();libraryDialog=null;}
         if(prefetchedBank!=null){prefetchedBank.close();prefetchedBank=null;}
         if(wiringReviewDialog!=null)wiringReviewDialog.dismiss();
         if(componentPreview!=null) componentPreview.dispose();

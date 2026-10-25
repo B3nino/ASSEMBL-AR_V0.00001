@@ -227,7 +227,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         nextButton = activity.findViewById(R.id.nextGuidedStepButton);
         phaseOneGuide=activity.findViewById(R.id.phaseOneGuide);
         phaseOneGuide.setNextAction(() -> jumpChapter(1));
-        phaseOneGuide.setRescanAction(()->{phaseOneRescanDialog=RescanConfirmationDialog.show(activity,()->{
+        phaseOneGuide.setRescanAction(()->{if(phase==null||phase.getNumber()!=1||savingPhase||!phaseOneScanConfirmed)return;phaseOneRescanDialog=RescanConfirmationDialog.show(activity,()->{
             phaseOneRescanDialog=null;
             if(phase==null||phase.getNumber()!=1||savingPhase)return;
             if(!devNavigationActive)PhaseProgressStore.setInventoryComplete(activity,NeobotSeedData.PROJECT_ID,phase.getId(),false);

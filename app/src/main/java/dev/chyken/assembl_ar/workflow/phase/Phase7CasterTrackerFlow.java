@@ -19,8 +19,8 @@ public final class Phase7CasterTrackerFlow {
     public boolean stageComplete(){return step<=2&&!hardwareView?scanned():complete();}
     public int screenIndex(){return step<=2?(step-1)*2+(hardwareView?1:0):step+1;}
     public boolean demoReady(){return demo[step];}
-    /** Replayed assembly demos retain a direct route back to verification, even before a match. */
-    public boolean canRescan(){return step!=3&&(scanned()||step==4&&demoReady());}
+    /** Rescan requires actual prior scan evidence, including when reviewing a demo. */
+    public boolean canRescan(){return AssemblyStepNavigationManager.canRescan(step!=3&&!preparingHardware(),scanned());}
     public boolean checklistReady(){return step==3?demo[3]&&!demoView:step==4&&scan[4]&&!demoView;}
     public boolean viewingDemo(){return step>=3&&demoView;}
     public boolean sandwiched(){return sandwiched;}
@@ -44,7 +44,7 @@ public final class Phase7CasterTrackerFlow {
     public boolean canFinish(boolean developer){return step==4&&complete()&&(developer||allComplete());}
     public boolean next(long now){if(!complete()||step==4||step<=2&&!hardwareView)return false;step++;hardwareView=false;armed=false;demoView=step>=3;window(now);return true;}
     public boolean previous(long now){if(preparingHardware()){hardwareView=false;window(now);return true;}if(step>=3&&!demoView){replayDemo(now);return true;}if(step==1)return false;step--;hardwareView=step<=2;armed=false;demoView=step>=3;window(now);return true;}
-    public void rescan(long now){if(step==3)return;scan[step]=false;hardwareView=false;demoView=false;armed=step>=3&&demo[step];if(step==2)trackers=0;if(step==3)sandwiched=swivels=false;if(step==4)stable=false;window(now);}
+    public void rescan(long now){if(!canRescan())return;if(step==3)return;scan[step]=false;hardwareView=false;demoView=false;armed=step>=3&&demo[step];if(step==2)trackers=0;if(step==3)sandwiched=swivels=false;if(step==4)stable=false;window(now);}
     public void replayDemo(long now){if(step>=3){demoView=true;armed=false;window(now);}}
     public void suspendScan(long now){replayDemo(now);}
     public void pause(){paused=true;window(evidenceStart);}

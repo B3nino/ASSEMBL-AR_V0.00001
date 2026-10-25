@@ -27,6 +27,11 @@ public final class LearningActivity extends AppCompatActivity {
     private LinearLayout modulesContainer;
     private View curriculumSequenceCard;
     private View emptyState;
+    private dev.chyken.assembl_ar.ui.DeferredCardBinder<LearningModule> cardBinder;
+    private final java.util.List<ModuleCard> cards=new java.util.ArrayList<>();
+    private LinearLayout currentTabletRow;
+    private String activeQuery="";
+    private static final class ModuleCard {final View view,row;final String search;ModuleCard(View view,View row,String search){this.view=view;this.row=row;this.search=search;}}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +54,7 @@ public final class LearningActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence text, int start, int before, int count) {
-                populateModules(text.toString());
+                filterModules(text.toString());
             }
 
             @Override
@@ -61,18 +66,12 @@ public final class LearningActivity extends AppCompatActivity {
     }
 
     private void populateModules(String query) {
-        modulesContainer.removeAllViews();
-        LayoutInflater inflater = LayoutInflater.from(this);
-        String normalizedQuery = normalize(query).trim();
-        String[] terms = normalizedQuery.isEmpty() ? new String[0] : normalizedQuery.split("\\s+");
-        curriculumSequenceCard.setVisibility(normalizedQuery.isEmpty() ? View.VISIBLE : View.GONE);
-        int visibleModuleCount = 0;
-        LinearLayout currentTabletRow = null;
-        for (LearningModule module : modules) {
-            if (!matchesQuery(module, terms)) {
-                continue;
-            }
-
+        activeQuery=query;modulesContainer.removeAllViews();cards.clear();currentTabletRow=null;
+        if(cardBinder!=null)cardBinder.close();
+        cardBinder=new dev.chyken.assembl_ar.ui.DeferredCardBinder<>(modulesContainer,modules,this::bindModule,()->filterModules(activeQuery));
+    }
+    private void bindModule(LearningModule module){
+        LayoutInflater inflater=LayoutInflater.from(this);
             View card = inflater.inflate(R.layout.item_learning_module, modulesContainer, false);
             TextView eyebrow = card.findViewById(R.id.moduleEyebrow);
             TextView title = card.findViewById(R.id.moduleTitle);
@@ -93,7 +92,7 @@ public final class LearningActivity extends AppCompatActivity {
                 startActivity(intent);
             });
             if (UiUtils.isLargeTabletWindow(this)) {
-                if (visibleModuleCount % 2 == 0) {
+                if (cards.size() % 2 == 0) {
                     currentTabletRow = new LinearLayout(this);
                     currentTabletRow.setOrientation(LinearLayout.HORIZONTAL);
                     currentTabletRow.setGravity(android.view.Gravity.TOP);
@@ -111,25 +110,21 @@ public final class LearningActivity extends AppCompatActivity {
             } else {
                 modulesContainer.addView(card);
             }
-            visibleModuleCount++;
-        }
 
-        if (UiUtils.isLargeTabletWindow(this)
-                && currentTabletRow != null
-                && visibleModuleCount % 2 != 0) {
-            View spacer = new View(this);
-            currentTabletRow.addView(spacer, new LinearLayout.LayoutParams(
-                    0,
-                    1,
-                    1f));
-        }
-
-        boolean hasResults = visibleModuleCount > 0;
-        modulesContainer.setVisibility(hasResults ? View.VISIBLE : View.GONE);
-        emptyState.setVisibility(hasResults ? View.GONE : View.VISIBLE);
+        cards.add(new ModuleCard(card,(View)card.getParent(),searchableModule(module)));
+        filterModules(activeQuery);
     }
+    private void filterModules(String query){
+        activeQuery=query;String normalized=normalize(query).trim();String[] terms=normalized.isEmpty()?new String[0]:normalized.split("\\s+");
+        curriculumSequenceCard.setVisibility(normalized.isEmpty()?View.VISIBLE:View.GONE);
+        java.util.Map<View,Integer> rowCounts=new java.util.HashMap<>();int visible=0;
+        for(ModuleCard card:cards){boolean matches=true;for(String term:terms)if(!card.search.contains(term)){matches=false;break;}card.view.setVisibility(matches?View.VISIBLE:View.GONE);if(matches)visible++;if(card.row!=modulesContainer)rowCounts.put(card.row,rowCounts.getOrDefault(card.row,0)+(matches?1:0));}
+        for(java.util.Map.Entry<View,Integer> row:rowCounts.entrySet())row.getKey().setVisibility(row.getValue()>0?View.VISIBLE:View.GONE);
+        boolean pending=cardBinder!=null&&!cardBinder.complete();modulesContainer.setVisibility(visible>0||pending?View.VISIBLE:View.GONE);emptyState.setVisibility(visible==0&&!pending?View.VISIBLE:View.GONE);
+    }
+    @Override protected void onDestroy(){if(cardBinder!=null)cardBinder.close();super.onDestroy();}
 
-    private static boolean matchesQuery(LearningModule module, String[] terms) {
+    private static String searchableModule(LearningModule module) {
         StringBuilder searchableText = new StringBuilder()
                 .append(module.getTitle()).append(' ')
                 .append(module.getOverview()).append(' ')
@@ -144,13 +139,7 @@ public final class LearningActivity extends AppCompatActivity {
                     .append(' ').append(step.getContentType().name());
         }
 
-        String normalizedText = normalize(searchableText.toString());
-        for (String term : terms) {
-            if (!normalizedText.contains(term)) {
-                return false;
-            }
-        }
-        return true;
+        return normalize(searchableText.toString());
     }
 
     private static String normalize(String value) {

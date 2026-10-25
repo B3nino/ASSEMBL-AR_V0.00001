@@ -120,7 +120,7 @@ final class Phase10GuideController implements AutoCloseable {
             });
         });dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
-    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
+    private void rescan(){if(closed||paused||saving||!flow.canRescan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
     private int videoIndex(){return flow.screen().videoIndex();}
     private void startVideo(){
         final Screen screen=flow.screen();final int index=videoIndex();List<String> clips=Phase10AssetCatalog.videos(activity.getAssets(),index);
@@ -140,7 +140,7 @@ final class Phase10GuideController implements AutoCloseable {
         if(closed)return;Screen s=flow.screen();plan=!paused&&!saving&&!modal&&(!reviewing||reviewScan)&&flow.scanning()?new Plan(s.scanStage(),flow.tag()):null;
         boolean unlocked=flow.complete()&&(s!=Screen.CABLE_TOP_CHECK||reviewing||flow.canFinish(developer));
         String details="Keep power disconnected. Identify the component front faces before installation. The red edge stripe and connector shape help orient the data cable; never force a reversed plug. Use two 20mm screws and two M3 nuts for the protector. Reuse the standoff screw saved in Phase 9. Route wires between the boards without pinching. Photos verify visible placement; physical checks confirm tight fasteners and secure connectors.";
-        card.render(1000+flow.step(),"Phase 10 · "+s.label()+" · "+flow.step()+"/15",instruction(),details,message,unlocked,true,s.scan()&&flow.complete());
+        card.render(1000+flow.step(),"Phase 10 · "+s.label()+" · "+flow.step()+"/15",instruction(),details,message,unlocked,true,flow.canRescan());
         card.next.setText(s==Screen.CABLE_TOP_CHECK?reviewing?"Return to current phase":"Continue to Phase 11 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);card.next.setVisibility(s.video()&&!reviewing&&!(developer&&flow.complete())?View.GONE:View.VISIBLE);
         boolean actionable=s.preparation()||s.check()||s.video();card.action.setVisibility(actionable&&(!reviewing||reviewScan)&&(!flow.complete()||s.video())?View.VISIBLE:View.GONE);
         card.action.setText(s.video()?videoError?"Retry demo":demoAction():s.preparation()?s==Screen.STANDOFF_SCREW_PREP?"I Have This":"I Have These":"Complete physical check");card.action.setEnabled(!saving&&(!s.video()||watched[videoIndex()]||developer&&flow.complete()||videoError));card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
@@ -152,6 +152,8 @@ final class Phase10GuideController implements AutoCloseable {
             else{String id=s==Screen.CABLE_SCAN||s==Screen.CABLE_MAIN_CHECK||s==Screen.CABLE_TOP_CHECK?NeobotSeedData.DATA_CABLE:s==Screen.PROTECTOR_SCAN||s==Screen.PROTECTOR_CHECK?NeobotSeedData.OLED_PROTECTOR:NeobotSeedData.EXTENSION_BOARD;preview.showComponent(id,AssemblyPhaseCatalog.componentName(id));}}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:warning?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next step unlocked":message.isEmpty()?s.label():message,plan!=null,warning?R.drawable.bg_camera_warning:flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(flow.screen().video(),paused,saving)?this::skipPreview:null);
     }
     String checkpointState(){if(video!=null)positions[videoIndex()]=video.position();StringBuilder state=new StringBuilder(flow.snapshot());for(int i=0;i<4;i++)state.append('|').append(watched[i]).append('|').append(positions[i]);return state.toString();}
     private void save(){String state=checkpointState();if(!state.equals(savedState)){savedState=state;if(!developer&&!reviewing)PhaseProgressStore.saveExtensionBoardState(activity,NeobotSeedData.PROJECT_ID,state);checkpointChanged.run();}}
@@ -168,4 +170,6 @@ final class Phase10GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devComplete();changed();}
     void restart(){Arrays.fill(watched,false);Arrays.fill(positions,0);flow.restart(now());changed();}
     @Override public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(flow.screen().video(),paused,saving))return;watched[videoIndex()]=true;flow.confirm();if(flow.next(now()))changed();}
 }

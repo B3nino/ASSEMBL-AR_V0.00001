@@ -27,7 +27,7 @@ import dev.chyken.assembl_ar.workflow.phase.AssemblyPhase.VisualTarget;
 import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
 
 /**
- * The NEOBOT guide grouped into 14 learner-visible phases.
+ * The NEOBOT guide grouped into 11 learner-visible phases.
  *
  * <p>All 18 manual sections and their 152 source instructions are preserved. Sections 4–5
  * form one motor-lead job; driver power and control share Phase 6; sections 9–10 share
@@ -38,7 +38,7 @@ import static dev.chyken.assembl_ar.data.NeobotSeedData.*;
  * verbatim; authored lines consolidate fastening and seating facts the camera cannot see.</p>
  */
 public final class AssemblyPhaseCatalog {
-    /** Planned roadmap. Later phase membership awaits the user's revised grouping. */
+    /** Current learner roadmap; legacy manual IDs remain stable for saved progress. */
     public static final int ROADMAP_PHASE_COUNT=11;
     /** Bump whenever phase membership, targets or checklists change; shown in the build stamp. */
     public static final int REVISION = 7;

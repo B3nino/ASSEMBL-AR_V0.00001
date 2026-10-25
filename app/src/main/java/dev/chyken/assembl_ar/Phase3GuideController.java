@@ -72,7 +72,7 @@ final class Phase3GuideController implements AutoCloseable {
             if(videoError){previewStep=-1;videoError=false;render();}
             else if(watched[demoIndex()]){flow.confirmDemo(true);if(flow.next(now()))changed();}
         }else if(flow.step()==6)stability();});
-        card.rescan.setOnClickListener(v->{if(dialog!=null)dialog.dismiss();dialog=RescanConfirmationDialog.show(activity,()->{flow.rescan(now());changed();});});
+        card.rescan.setOnClickListener(v->{if(closed||paused||saving||!flow.canRescan())return;if(dialog!=null)dialog.dismiss();dialog=RescanConfirmationDialog.show(activity,()->{flow.rescan(now());changed();});});
     }
     private long now(){return SystemClock.elapsedRealtimeNanos();}
     void start(){changed();}
@@ -130,7 +130,7 @@ final class Phase3GuideController implements AutoCloseable {
         String summary=HUD[step];if(demoStep())summary+="\n\n"+LINES[demoIndex()];
         String details=HUD[step]+"\n\nThe driver controls the two motors. Align its header row with the board sockets. Check placement before adding screws. The camera checks the module and board orientation; the final hands-on check confirms the screws, hidden nuts and firmness.";
         boolean unlocked=flow.complete()&&(step!=6||flow.canFinish(developer)||reviewing);
-        card.render(30+step,"Phase 3 · Step 3."+step+" of 6",summary,details,message,unlocked,true,flow.complete()&&(step==1||step==4));
+        card.render(30+step,"Phase 3 · Step 3."+step+" of 6",summary,details,message,unlocked,true,flow.canRescan());
         card.next.setText(step==6?reviewing?"Return to current phase":"Continue to Phase 4 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
         card.next.setVisibility(demoStep()&&!flow.complete()?View.GONE:View.VISIBLE);
         card.action.setVisibility((step==2||demoStep()||step==6)&&!flow.complete()?View.VISIBLE:View.GONE);
@@ -141,6 +141,8 @@ final class Phase3GuideController implements AutoCloseable {
         if(previewStep!=step){stopVideo();previewStep=step;if(step==2)preview.showFasteners(true);else if(demoStep())startVideo();else preview.showComponent(NeobotSeedData.MOTOR_DRIVER,"Motor Driver");}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:lastWarning!=null?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next unlocked":message.isEmpty()?HUD[step].split("\n")[0]:message,flow.scanning(),lastWarning!=null?R.drawable.bg_camera_warning:flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(demoStep(),paused,saving)?this::skipPreview:null);
     }
     private void startVideo(){
         final int step=flow.step(),index=demoIndex();List<String> selected=new ArrayList<>();for(String clip:clips)if(Phase3AssetCatalog.clipOrder(clip)==index)selected.add(clip);
@@ -171,4 +173,6 @@ final class Phase3GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devComplete();render();save();}
     void restart(){stopVideo();previewStep=-1;flow.restart(now());Arrays.fill(watched,false);Arrays.fill(positions,0);changed();}
     public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(demoStep(),paused,saving))return;watched[demoIndex()]=true;flow.confirmDemo(true);if(flow.next(now()))changed();}
 }

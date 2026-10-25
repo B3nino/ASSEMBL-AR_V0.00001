@@ -42,13 +42,14 @@ public final class Phase7CasterTrackerFlowTest {
         f.restart(110);f.devSkipStage(111);assertTrue(f.preparingHardware());assertTrue(f.scanned());assertFalse(f.hardwareReady());
         f.devSkipStage(112);assertTrue(f.hardwareReady());assertTrue(f.nextStage(113));assertEquals(2,f.step());
     }
-    @Test public void replayedAssemblyStepsOfferRescanEvenBeforeTheirFirstSuccessfulMatch(){
+    @Test public void unverifiedAssemblyCanReplayDemoButCannotRescanBeforeItsFirstMatch(){
         for(int step:new int[]{4}){
             Phase7CasterTrackerFlow f=new Phase7CasterTrackerFlow(100);
             f.devJump(step,101);assertFalse(f.canRescan());
-            f.demoFinished();f.armScan(102);assertTrue(f.canRescan());
-            f.previous(103);assertTrue(f.viewingDemo());assertFalse(f.scanned());assertTrue(f.canRescan());
-            f.rescan(104);assertEquals(step,f.step());assertFalse(f.viewingDemo());assertTrue(f.scanning());
+            f.demoFinished();f.armScan(102);assertFalse(f.canRescan());
+            f.previous(103);assertTrue(f.viewingDemo());assertFalse(f.scanned());assertFalse(f.canRescan());
+            String before=f.snapshot();f.rescan(104);assertEquals(before,f.snapshot());
+            f.armScan(105);assertEquals(step,f.step());assertFalse(f.viewingDemo());assertTrue(f.scanning());
         }
     }
     @Test public void rescanningAReviewedAssemblyStepKeepsTheOtherCompletedSteps(){

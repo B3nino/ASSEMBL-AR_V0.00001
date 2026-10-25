@@ -20,6 +20,7 @@ import dev.chyken.assembl_ar.ui.UiUtils;
 public final class MainActivity extends AppCompatActivity {
     private HomeRobotSurfaceView robotModelView;
     private dev.chyken.assembl_ar.ui.BrandLaunchOverlay launch;
+    private dev.chyken.assembl_ar.ui.StartupPreparationCoordinator startup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,7 @@ public final class MainActivity extends AppCompatActivity {
         android.view.ViewGroup content=findViewById(android.R.id.content);
         launch=new dev.chyken.assembl_ar.ui.BrandLaunchOverlay(this,content.getChildAt(0));
         content.addView(launch,new android.view.ViewGroup.LayoutParams(-1,-1));
+        startup=new dev.chyken.assembl_ar.ui.StartupPreparationCoordinator(this,launch);
         robotModelView.setOnModelReady(()->{if(launch!=null)launch.modelReady();});
 
         findViewById(R.id.startAssemblyButton).setOnClickListener(view ->
@@ -45,7 +47,7 @@ public final class MainActivity extends AppCompatActivity {
                 robotModelView.resetView());
     }
 
-    @Override protected void onDestroy(){if(robotModelView!=null)robotModelView.setOnModelReady(null);if(launch!=null)launch.close();super.onDestroy();}
+    @Override protected void onDestroy(){if(robotModelView!=null)robotModelView.setOnModelReady(null);if(startup!=null)startup.close();else if(launch!=null)launch.close();super.onDestroy();}
 
     private void styleHeaderWordmark() {
         TextView wordmark = findViewById(R.id.headerWordmark);
@@ -93,7 +95,7 @@ public final class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(launch!=null)launch.resume();
+        if(startup!=null)startup.resume();
         if (robotModelView != null) {
             robotModelView.onResume();
         }
@@ -101,7 +103,7 @@ public final class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        if(launch!=null)launch.pause();
+        if(startup!=null)startup.pause();
         if (robotModelView != null) {
             robotModelView.onPause();
         }

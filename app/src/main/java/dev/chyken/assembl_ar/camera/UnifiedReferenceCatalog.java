@@ -21,14 +21,17 @@ public final class UnifiedReferenceCatalog {
     }
     public static dev.chyken.assembl_ar.vision.RecognitionRequest request(ComponentReferenceSpec s,dev.chyken.assembl_ar.vision.CameraCalibration c){
         String id=s.getReferenceId();int p=phase(s);
-        dev.chyken.assembl_ar.vision.RecognitionRequest r=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component(s.getComponentId()),c,null,null,p==2&&"brackets".equals(Phase2AssetCatalog.referenceRole(id))?4:p==2&&"motors".equals(Phase2AssetCatalog.referenceRole(id))?2:1,p);
+        String role2=Phase2AssetCatalog.referenceRole(id),role7=Phase7AssetCatalog.referenceRole(id),role9=Phase9AssetCatalog.referenceRole(id);
+        int count=p==2&&"brackets".equals(role2)?4:p==2&&"motors".equals(role2)||p==7&&("trackers".equals(role7)||"trackerbad".equals(role7))||p==9&&("wheel".equals(role9)||"pair".equals(role9))?2:1;
+        dev.chyken.assembl_ar.vision.RecognitionRequest r=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component(s.getComponentId()),c,null,null,count,p);
+        if(id.startsWith("video1011_")&&s.getAssemblyStepNumber()==0)return r;
         if(id.startsWith("video789_")&&s.getAssemblyStepNumber()==0)return r;
-        if(p==2){String role=Phase2AssetCatalog.referenceRole(id);return role==null?r:r.withPhase2Stage("brackets".equals(role)?1:"motors".equals(role)?2:5);}
+        if(p==2){String role=Phase2AssetCatalog.referenceRole(id);if(role==null)return r;int stage="brackets".equals(role)?1:"motors".equals(role)?2:5;r=r.withPhase2Stage(stage);return stage==5?r.withPhase2VerificationView("left".equals(role)?"left":"right".equals(role)?"right":"top"):r;}
         if(p==3)return s.getReferenceId().startsWith("video35_")?r:r.withPhase3Stage(assembly(s)?4:1);
         if(p==5)return s.getReferenceId().startsWith("video35_")?r:r.withPhase5Stage(assembly(s)?3:1);
         if(p==7){String role=Phase7AssetCatalog.referenceRole(id);return r.withPhase7Stage(role!=null&&role.startsWith("caster")?assembly(s)?3:1:assembly(s)?4:2);}
         if(p==8)return r.withPhase8Stage(assembly(s)?2:1);
-        if(p==9){String role=Phase9AssetCatalog.referenceRole(id);return r.withPhase9Stage("standoff".equals(role)?1:assembly(s)?4:2);}
+        if(p==9){String role=Phase9AssetCatalog.referenceRole(id);return r.withPhase9Stage("standoff".equals(role)?1:"wheel".equals(role)||"pair".equals(role)?2:4);}
         if(p==10){String role=Phase10AssetCatalog.referenceRole(id);return r.withPhase10Stage("cable".equals(role)?1:role!=null&&role.startsWith("extension")?2:role!=null&&role.startsWith("protector")?3:"protected".equals(role)?4:5);}
         if(p==11){String role=Phase11AssetCatalog.referenceRole(id);return r.withPhase11Stage("battery".equals(role)?2:"assembly".equals(role)?3:1);}
         return r;
@@ -47,7 +50,7 @@ public final class UnifiedReferenceCatalog {
     public static boolean assembly(ComponentReferenceSpec s) {
         // Isolated, reviewed crops live beside their phase's scene photographs.
         // Folder names must not turn a loose part into an installed assembly.
-        if(s.getAssemblyStepNumber()==0&&(s.getReferenceId().startsWith("video12_")||s.getReferenceId().startsWith("video35_")||s.getReferenceId().startsWith("video789_")))return false;
+        if(s.getAssemblyStepNumber()==0&&(s.getReferenceId().startsWith("video12_")||s.getReferenceId().startsWith("video35_")||s.getReferenceId().startsWith("video789_")||s.getReferenceId().startsWith("video1011_")))return false;
         String p2=Phase2AssetCatalog.referenceRole(s.getReferenceId());
         // Phase 2 scene photos include contextual multi-part inventory groups;
         // a group must not become one giant standalone-component homography.

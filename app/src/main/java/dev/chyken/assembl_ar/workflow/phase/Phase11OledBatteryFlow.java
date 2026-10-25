@@ -38,7 +38,8 @@ public final class Phase11OledBatteryFlow {
     }
     public boolean next(long now){if(!complete()||screen==Screen.CELEBRATION)return false;screen=Screen.values()[screen.ordinal()+1];window(now);return true;}
     public boolean previous(long now){if(screen==Screen.OLED_SCAN)return false;screen=Screen.values()[screen.ordinal()-1];window(now);return true;}
-    public void rescan(long now){if(!screen.scan())return;done.remove(screen);if(screen==Screen.OLED_WORK_SCAN)done.remove(Screen.OLED_CHECK);window(now);}
+    public boolean canRescan(){return AssemblyStepNavigationManager.canRescan(screen.scan(),complete());}
+    public void rescan(long now){if(!canRescan())return;if(!screen.scan())return;done.remove(screen);if(screen==Screen.OLED_WORK_SCAN)done.remove(Screen.OLED_CHECK);window(now);}
     public boolean canFinish(boolean developer){return screen==Screen.CELEBRATION&&(developer||allComplete());}
     public void pause(){paused=true;generation++;hits=0;}
     public void resume(long now){paused=false;window(now);}

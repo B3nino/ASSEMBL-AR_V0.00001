@@ -10,6 +10,7 @@ import java.util.*;
 final class Phase11PhotoGeometry {
     static final int VERSION=2;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes){
+        if(dev.chyken.assembl_ar.camera.Phase1011VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         MatOfByte encoded=new MatOfByte(bytes);Mat bgr=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_COLOR);
         try{if(bgr.empty())throw new IllegalArgumentException("Unreadable Phase 11 photo");double scale=Math.min(1,1280.0/Math.max(bgr.cols(),bgr.rows()));if(scale<1)Imgproc.resize(bgr,bgr,new Size(),scale,scale,Imgproc.INTER_AREA);
             boolean battery="battery".equals(Phase11AssetCatalog.referenceRole(source.getReferenceId())),installed="assembly".equals(Phase11AssetCatalog.referenceRole(source.getReferenceId()));Rect best=null;

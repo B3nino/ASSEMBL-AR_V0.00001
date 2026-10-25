@@ -22,6 +22,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private final TextView resizeHandle;
     private final TextView resizeCaption;
     private final android.widget.ImageButton contentAction;
+    private final com.google.android.material.button.MaterialButton skipPreview;
     private final Outline outline;
     private HomeRobotSurfaceView surface;
     private final android.widget.LinearLayout pairLabels;
@@ -97,6 +98,8 @@ public final class ComponentPreviewWindow extends FrameLayout {
         addView(resizeHandle,new LayoutParams(UiUtils.dp(context,44),UiUtils.dp(context,44),Gravity.LEFT|Gravity.BOTTOM));
         contentAction=new android.widget.ImageButton(context);contentAction.setImageResource(R.drawable.ic_expand_diagram);contentAction.setBackgroundColor(Color.TRANSPARENT);contentAction.setPadding(UiUtils.dp(context,12),UiUtils.dp(context,12),UiUtils.dp(context,12),UiUtils.dp(context,12));
         addView(contentAction,new LayoutParams(UiUtils.dp(context,48),UiUtils.dp(context,48),Gravity.RIGHT|Gravity.TOP));contentAction.setVisibility(GONE);
+        skipPreview=new com.google.android.material.button.MaterialButton(context);skipPreview.setText("Skip preview →");skipPreview.setTextSize(12);skipPreview.setMinHeight(UiUtils.dp(context,48));skipPreview.setTextColor(0xFFFFFFFF);skipPreview.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF2E6812));
+        LayoutParams skipParams=new LayoutParams(-2,UiUtils.dp(context,48),Gravity.TOP|Gravity.END);skipParams.topMargin=UiUtils.dp(context,31);skipParams.rightMargin=UiUtils.dp(context,6);addView(skipPreview,skipParams);skipPreview.setVisibility(GONE);
     }
 
     public void setResizeListener(@Nullable ResizeListener listener) { resizeListener=listener; }
@@ -107,6 +110,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         LayoutParams p=(LayoutParams)viewport.getLayoutParams();p.topMargin=UiUtils.dp(getContext(),value?36:58);p.bottomMargin=UiUtils.dp(getContext(),value?6:38);viewport.setLayoutParams(p);
     }
     public void showContent(View content,String name){
+        setSkipPreviewAction(null);
         hideModelChoices();setLegendMode(false);
         contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
@@ -117,6 +121,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
     }
 
     public void showComponent(String id, String name) {
+        setSkipPreviewAction(null);
         hideModelChoices();setLegendMode(false);
         contentAction.setVisibility(GONE);contentAction.setOnClickListener(null);
         pairLabels.setVisibility(GONE);
@@ -162,6 +167,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         spacerLabel.setVisibility(caster?GONE:VISIBLE);pairLabels.setVisibility(VISIBLE);
     }
     public void setContentAction(String label,Runnable action){contentAction.setContentDescription(label);contentAction.setOnClickListener(v->action.run());contentAction.setVisibility(VISIBLE);}
+    public void setSkipPreviewAction(@Nullable Runnable action){skipPreview.setVisibility(action==null?GONE:VISIBLE);skipPreview.setEnabled(action!=null);skipPreview.setOnClickListener(action==null?null:v->action.run());if(action!=null)skipPreview.bringToFront();}
 
     public void onHudState(ArHudView.HudState state) {
         if (outline.state==state) return;

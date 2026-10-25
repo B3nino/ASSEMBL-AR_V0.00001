@@ -11,6 +11,7 @@ import java.io.*;
 final class Phase10PhotoGeometry {
     static final int VERSION=4;
     static ComponentReferenceSpec resolve(ComponentReferenceSpec source,byte[] bytes,File cache)throws IOException{
+        if(dev.chyken.assembl_ar.camera.Phase1011VideoReferences.annotation(source.getJpegAssetPath())!=null)return source;
         File sidecar=cache==null?null:new File(cache.getPath()+".p10regions1");List<List<VisionPoint>> saved=ReferenceRegionCache.read(sidecar);
         if(saved!=null)try{return withRegions(source,saved);}catch(IllegalArgumentException corrupt){/* Rebuild source metadata. */}
         String role=Phase10AssetCatalog.referenceRole(source.getReferenceId());boolean board=role.equals("extension")||role.equals("extensionbad")||role.equals("protected")||role.equals("stacked");

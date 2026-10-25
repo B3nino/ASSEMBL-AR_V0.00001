@@ -114,7 +114,7 @@ final class Phase9GuideController implements AutoCloseable {
             });
         });dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
-    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
+    private void rescan(){if(closed||paused||saving||!flow.canRescan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
     private int videoIndex(){return flow.screen()==Screen.WHEELS_DEMO?1:0;}
     private void startVideo(){
         final Screen screen=flow.screen();final int index=videoIndex();List<String> clips=Phase9AssetCatalog.videos(activity.getAssets(),index==1);
@@ -133,7 +133,7 @@ final class Phase9GuideController implements AutoCloseable {
         if(closed)return;Screen s=flow.screen();plan=!paused&&!saving&&!modal&&(!reviewing||reviewScan)&&flow.scanning()?new Plan(s.scanStage(),flow.tag()):null;
         boolean unlocked=flow.complete()&&(s!=Screen.WHEELS_CHECK||reviewing||flow.canFinish(developer));
         String details="The center standoff will support the extension board later. Tighten its lower nut, remove the top screw and store it safely.\n\nWheel D-shaped hubs must match the flat motor shafts. The camera checks visible part identity and alignment. Your mandatory stability answers confirm axle grip and lower-nut tightness. Keep power disconnected during assembly.";
-        card.render(900+flow.step(),"Phase 9 · "+s.label()+" · "+flow.step()+"/"+Screen.values().length,instruction(),details,message,unlocked,true,s.scan()&&flow.complete());
+        card.render(900+flow.step(),"Phase 9 · "+s.label()+" · "+flow.step()+"/"+Screen.values().length,instruction(),details,message,unlocked,true,flow.canRescan());
         card.next.setText(s==Screen.WHEELS_CHECK?reviewing?"Return to current phase":"Continue to Phase 10 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);card.next.setVisibility(s.video()&&!reviewing?View.GONE:View.VISIBLE);
         boolean actionable=s.preparation()||s.check()||s.video();card.action.setVisibility(actionable&&!reviewing&&(!flow.complete()||s.video())?View.VISIBLE:View.GONE);
         card.action.setText(s.video()?videoError?"Retry demo":"Ready to Scan":s.preparation()?"I Have These":"Complete physical check");card.action.setEnabled(!saving&&(!s.video()||watched[videoIndex()]||videoError));card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
@@ -142,6 +142,8 @@ final class Phase9GuideController implements AutoCloseable {
         if(attached!=s){stopVideo();attached=s;if(s.video())startVideo();else if(s==Screen.HARDWARE_PREP)preview.showModelChoices(new String[]{NeobotSeedData.NUT,NeobotSeedData.PHILLIPS_SCREWDRIVER,NeobotSeedData.STANDOFF},new String[]{"1 × M3 nut","Phillips screwdriver","Metal standoff"},0,text->say(text,"model:"+(++sequence)));else preview.showComponent(s.ordinal()<=Screen.STANDOFF_CHECK.ordinal()&&s!=Screen.WHEELS_SCAN&&s!=Screen.WHEELS_READY?NeobotSeedData.STANDOFF:NeobotSeedData.WHEEL,s.ordinal()<=Screen.STANDOFF_CHECK.ordinal()&&s!=Screen.WHEELS_SCAN&&s!=Screen.WHEELS_READY?"Metal standoff":"Robot wheel");}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:warning?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next step unlocked":message.isEmpty()?s.label():message,plan!=null,warning?R.drawable.bg_camera_warning:flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(flow.screen().video(),paused,saving)?this::skipPreview:null);
     }
     String checkpointState(){if(video!=null)positions[videoIndex()]=video.position();return flow.snapshot()+"|"+watched[0]+"|"+positions[0]+"|"+watched[1]+"|"+positions[1];}
     private void save(){String state=checkpointState();if(!state.equals(savedState)){savedState=state;if(!developer&&!reviewing)PhaseProgressStore.saveStandoffWheelsState(activity,NeobotSeedData.PROJECT_ID,state);checkpointChanged.run();}}
@@ -158,4 +160,6 @@ final class Phase9GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devComplete();changed();}
     void restart(){Arrays.fill(watched,false);Arrays.fill(positions,0);flow.restart(now());changed();}
     @Override public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(flow.screen().video(),paused,saving))return;watched[videoIndex()]=true;flow.confirm();if(flow.next(now()))changed();}
 }

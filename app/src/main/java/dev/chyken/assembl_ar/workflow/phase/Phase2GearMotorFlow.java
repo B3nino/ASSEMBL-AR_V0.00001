@@ -65,7 +65,8 @@ public final class Phase2GearMotorFlow {
         if(step==5&&hardwareViewIndex>0)hardwareViewIndex--;else step--;
         openWindow(now);return true;
     }
-    public void rescan(long now){
+    public boolean canRescan(){return AssemblyStepNavigationManager.canRescan(step==1||step==2||step==5,canNext());}
+    public void rescan(long now){if(!canRescan())return;
         if(step!=1&&step!=2&&step!=5)return;
         done[step]=false;done[5]=false;done[6]=false;
         if(step==5)hardwareViews.removeAll(HARDWARE_ORDER.subList(hardwareViewIndex,3));

@@ -27,7 +27,8 @@ public final class Phase5MicrocontrollerFlow {
     public boolean canFinish(boolean developer){return step==4&&complete()&&(developer||allComplete());}
     public boolean next(long now){if(!complete()||step==4)return false;step++;window(now);return true;}
     public boolean previous(long now){if(step==1)return false;step--;window(now);return true;}
-    public void rescan(long now){if(step!=1&&step!=3)return;for(int i=step;i<=4;i++)done[i]=false;firm=false;pins=false;window(now);}
+    public boolean canRescan(){return AssemblyStepNavigationManager.canRescan(step==1||step==3,complete());}
+    public void rescan(long now){if(!canRescan())return;if(step!=1&&step!=3)return;for(int i=step;i<=4;i++)done[i]=false;firm=false;pins=false;window(now);}
     public void pause(){paused=true;generation++;lastFrame=Long.MIN_VALUE;}
     public void resume(long now){paused=false;window(now);}
     private void window(long now){generation++;evidenceStart=now;lastFrame=Long.MIN_VALUE;}

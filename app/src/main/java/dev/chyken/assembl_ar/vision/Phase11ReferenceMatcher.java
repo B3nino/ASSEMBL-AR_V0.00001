@@ -19,6 +19,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
     private final ReferenceDatabase.PreparedReference[] preferred=new ReferenceDatabase.PreparedReference[4];
     private final CLAHE clahe;
     private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
+    private final Phase1011ReferenceSearch search=new Phase1011ReferenceSearch();
     Phase11ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);clahe=OpenCvVisionUtils.createClahe(config);}
     RecognitionResult inspect(Mat gray,long time,int step){
         long start=android.os.SystemClock.elapsedRealtimeNanos();Mat raw=new Mat(),work=new Mat(),descriptors=new Mat(),empty=new Mat();MatOfKeyPoint keypoints=new MatOfKeyPoint();
@@ -30,10 +31,11 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
             if(step==3)work.copyTo(raw);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
             List<ReferenceDatabase.PreparedReference> positive=new ArrayList<>(),negative=new ArrayList<>();
             for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){String role=Phase11AssetCatalog.referenceRole(ref.spec.getReferenceId());if(Phase11AssetCatalog.eligible(role,step))(role.equals("back")?negative:positive).add(ref);}
-            List<ReferenceDatabase.PreparedReference> candidates=new ArrayList<>();if(preferred[step]!=null)candidates.add(preferred[step]);int cursor=cursors[step]++;
+            List<ReferenceDatabase.PreparedReference> candidates=new ArrayList<>();int cursor=cursors[step]++;
+            positive=search.order(positive,descriptors,cursor,preferred[step]);negative=search.order(negative,descriptors,cursor,null);
             for(int i=0;i<4;i++){
-                if(!negative.isEmpty()){ReferenceDatabase.PreparedReference ref=negative.get(Math.floorMod(cursor+i,negative.size()));if(!candidates.contains(ref))candidates.add(ref);}
-                if(!positive.isEmpty()){ReferenceDatabase.PreparedReference ref=positive.get(Math.floorMod(cursor+i,positive.size()));if(!candidates.contains(ref))candidates.add(ref);}
+                if(i<negative.size())candidates.add(negative.get(i));
+                if(i<positive.size())candidates.add(positive.get(i));
             }
             Set<String> seen=new HashSet<>();long deadline=System.nanoTime()+650_000_000L;int tried=0;
             if(!descriptors.empty())for(ReferenceDatabase.PreparedReference ref:candidates){
@@ -57,6 +59,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
                 if(negative.isEmpty()&&(front>=12||placed>=10))break;
             }
             Phase11Observation.State state=Phase11Observation.classify(step,front,back,placed,Math.max(reversed,invalid));
+            if(front<12&&placed<10)preferred[step]=null;
             double score=Math.max(Math.max(front,back),Math.max(invalid,Math.max(placed,reversed)));
             if(step==3&&state==Phase11Observation.State.SEARCHING&&boardEvidence>=14)state=Phase11Observation.State.BOARD_LOCATED;
             Phase11Observation result=new Phase11Observation(state,score,boardEvidence);
@@ -161,5 +164,5 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
         }finally{src.release();dst.release();}
     }
     private static final class Match{final double score;final List<VisionPoint> actual,expected;Match(double score,List<VisionPoint> actual,List<VisionPoint> expected){this.score=score;this.actual=actual;this.expected=expected;}}
-    public void close(){for(Split split:splits.values()){split.local.descriptors.release();split.context.descriptors.release();}splits.clear();detailOrb.clear();orb.clear();clahe.clear();matcher.clear();}
+    public void close(){search.close();for(Split split:splits.values()){split.local.descriptors.release();split.context.descriptors.release();}splits.clear();detailOrb.clear();orb.clear();clahe.clear();matcher.clear();}
 }

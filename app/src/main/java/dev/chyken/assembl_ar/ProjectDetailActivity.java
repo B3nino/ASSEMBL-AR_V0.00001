@@ -44,6 +44,7 @@ public final class ProjectDetailActivity extends AppCompatActivity {
     private TextView progressLabel;
     private LinearLayout stepsContainer;
     private ProjectProgress currentProgress;
+    private dev.chyken.assembl_ar.workflow.phase.PhaseProgressSummary phaseSummary;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,9 +91,9 @@ public final class ProjectDetailActivity extends AppCompatActivity {
 
     private void render(AssemblyProject project, ProjectProgress progress) {
         currentProgress = progress;
-        progressIndicator.setProgressCompat(progress.getPercentComplete(), true);
-        progressLabel.setText(progress.getCompletedSteps() + " of " + progress.getTotalSteps()
-                + " manual sections verified · " + progress.getPercentComplete() + "%");
+        phaseSummary=dev.chyken.assembl_ar.workflow.phase.PhaseProgressSummary.from(progress,PhaseProgressStore.records(this,NeobotSeedData.PROJECT_ID));
+        progressIndicator.setProgressCompat(phaseSummary.percent(), true);
+        progressLabel.setText(getString(R.string.phase_completion_summary,phaseSummary.completed(),phaseSummary.total(),phaseSummary.percent()));
         if (progress.isComplete()) {
             startButton.setText(R.string.review_project);
         } else if (progress.isStarted()) {
@@ -127,14 +128,14 @@ public final class ProjectDetailActivity extends AppCompatActivity {
                 // Retain later-phase instructions until their new grouping is supplied.
                 subtitle.setText(phase.getSummary());
             }
-            boolean anyStarted=false,sectionsDone=true;
+            boolean anyStarted=false;
             for(int section:phase.getSections()){
                 for(AssemblyStep step:steps)if(step.getStepNumber()==section){
                     StepStatus saved=statusByStep.get(step.getId());
-                    sectionsDone&=saved==StepStatus.COMPLETED;anyStarted|=saved!=null&&saved!=StepStatus.NOT_STARTED;
+                    anyStarted|=saved!=null&&saved!=StepStatus.NOT_STARTED;
                 }
             }
-            boolean complete=sectionsDone||phase.getSections().size()==1&&PhaseProgressStore.records(this,NeobotSeedData.PROJECT_ID).isPhaseComplete(phase.getId());
+            boolean complete=phaseSummary.completed(phase.getId());
             status.setVisibility(complete?View.VISIBLE:View.GONE);
             item.setAlpha(complete||anyStarted?1f:.72f);stepsContainer.addView(item);
         }
@@ -166,7 +167,7 @@ public final class ProjectDetailActivity extends AppCompatActivity {
     private void confirmRestart() {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.restart_assembly)
-                .setMessage("This clears every verified manual section and returns to guided step 1.")
+                .setMessage("This clears your assembly progress and returns to Phase 1.")
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(R.string.restart_assembly, (dialog, which) -> {
                     databaseExecutor.execute(() -> {

@@ -50,11 +50,6 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="Widget.ASSEMBLAR.IconButton" parent="Widget.Material3.Button.IconButton">
-        <item name="android:minWidth">48dp</item>
-        <item name="android:minHeight">48dp</item>
-        <item name="iconTint">@color/ink</item>
-    </style>
 
     <!--
         Media sizing lives in styles so width-qualified resources can constrain tablet artwork

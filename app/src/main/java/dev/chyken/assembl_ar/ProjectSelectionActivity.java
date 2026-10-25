@@ -79,11 +79,9 @@ public final class ProjectSelectionActivity extends AppCompatActivity {
     }
 
     private void renderProgress(ProjectProgress progress) {
-        progressIndicator.setProgressCompat(progress.getPercentComplete(), true);
-        progressLabel.setText(progress.getCompletedSteps() == 0
-                ? "Ready to begin"
-                : progress.getCompletedSteps() + " of " + progress.getTotalSteps()
-                + " manual sections complete");
+        dev.chyken.assembl_ar.workflow.phase.PhaseProgressSummary summary=dev.chyken.assembl_ar.workflow.phase.PhaseProgressSummary.from(progress,dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.records(this,NeobotSeedData.PROJECT_ID));
+        progressIndicator.setProgressCompat(summary.percent(), true);
+        progressLabel.setText(getString(R.string.phase_completion_summary,summary.completed(),summary.total(),summary.percent()));
     }
 
     @Override

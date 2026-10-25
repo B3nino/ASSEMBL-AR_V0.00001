@@ -45,6 +45,8 @@ public final class IndividualPartTestCatalog {
 
     private IndividualPartTestCatalog() { }
 
+    public static java.util.List<DiagnosticTargetCatalog.Target> selectableTargets(java.util.List<ComponentReferenceSpec> references,java.util.function.ToIntFunction<String> counts){return DiagnosticTargetCatalog.build(references,counts);}
+
     /**
      * Test-only tuning for small and low-texture loose parts. Assembly keeps VisionConfig.defaults().
      * Four geometrically consistent inliers are still required; identity competition stays enabled.

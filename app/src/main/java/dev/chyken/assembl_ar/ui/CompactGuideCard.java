@@ -29,7 +29,7 @@ public final class CompactGuideCard extends FrameLayout {
         footer=new LinearLayout(context);footer.setOrientation(LinearLayout.VERTICAL);footer.setPadding(dp(14),0,dp(14),dp(12));
         addView(footer,new LayoutParams(-1,-2,Gravity.BOTTOM));
         handle=text(11,0xFFABB8B0);handle.setText("Hold here to move");handle.setMinHeight(dp(28));
-        heading=text(14,0xFFB4D58A);heading.setTypeface(null,1);
+        heading=text(14,0xFFB4D58A);heading.setTypeface(null,android.graphics.Typeface.BOLD);
         instruction=text(17,0xFFF3F5F1);instruction.setPadding(0,dp(8),0,dp(6));
         instruction.setAccessibilityLiveRegion(1);
         status=text(13,0xFFB4D58A);status.setAccessibilityLiveRegion(1);

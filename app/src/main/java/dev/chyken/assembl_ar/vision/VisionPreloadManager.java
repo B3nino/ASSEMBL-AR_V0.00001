@@ -95,9 +95,16 @@ public final class VisionPreloadManager {
                         context.getApplicationInfo().sourceDir, ReferenceDatabase.cacheRevision());
                 ReferenceCacheIndex.install(context.getAssets(), index);
                 indexed.complete(specs);
+                File compact=new File(directory,"global-shortlist-v1.gz");
+                boolean reused=GlobalComponentRegistry.INSTANCE.restoreCompact(compact,index,specs,config,KeypointInventoryManager.INSTANCE);
                 ReferenceDatabase.preloadLibrary(context.getAssets(), specs, config, directory, index,
                         (done, count) -> { completed = done; total = count; });
                 GlobalComponentRegistry.INSTANCE.publish();
+                if(!reused)try{GlobalComponentRegistry.INSTANCE.saveCompact(compact,index,specs,config,KeypointInventoryManager.INSTANCE);}
+                catch(IOException optionalCache){android.util.Log.w("ReferenceLibrary","Compact startup index could not be saved; full prepared banks remain available",optionalCache);}
+                ReferenceDatabase.warmReferences(context.getAssets(),
+                    dev.chyken.assembl_ar.camera.StartupReferencePlan.select(specs,
+                        dev.chyken.assembl_ar.workflow.phase.PhaseProgressStore.session(context,dev.chyken.assembl_ar.data.NeobotSeedData.PROJECT_ID)),config,directory);
                 attempt.complete(specs);
             } catch (Throwable problem) {
                 failure = problem;
@@ -121,10 +128,21 @@ public final class VisionPreloadManager {
     /** Call on the existing vision loader. Returned native matrices belong to this bank only. */
     public ReferenceDatabase loadBank(List<ComponentReferenceSpec> specs, BooleanSupplier active)
             throws IOException {
+        return loadBank(specs,active,(done,total)->{});
+    }
+    public ReferenceDatabase loadBank(List<ComponentReferenceSpec> specs,BooleanSupplier active,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException {
         if (Looper.myLooper() == Looper.getMainLooper())
             throw new IllegalStateException("Reference banks must be opened on a background loader");
         ACTIVE.put(context.getAssets(), this);
-        return ReferenceDatabase.load(context.getAssets(), specs, config, directory, active);
+        if(!isReady())throw new IOException("Complete startup preparation before opening a scanner");
+        return ReferenceDatabase.load(context.getAssets(), specs, config, directory, active,progress);
+    }
+
+    public ReferenceDatabase loadIndividualBank(List<ComponentReferenceSpec> specs,String component,BooleanSupplier active)throws IOException {
+        if(Looper.myLooper()==Looper.getMainLooper())throw new IllegalStateException("Reference banks must be opened on a background loader");
+        if(!isReady())throw new IOException("Complete startup preparation before opening a scanner");
+        ACTIVE.put(context.getAssets(),this);
+        return ReferenceDatabase.loadIndividualBank(context.getAssets(),specs,component,config,directory,active);
     }
 
     static VisionPreloadManager active(AssetManager assets) { return ACTIVE.get(assets); }

@@ -1,0 +1,318 @@
+Final native verification of Phase 10/11 and reference preparation.
+vision.Phase1011VideoReplayInstrumentedTest#phase10LoosePartsAndRealBoardBottomRequireCorrectOrientation
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 16.836
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 35.982
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.Phase1011VideoReplayInstrumentedTest#phase11LooseOledBatteryAndBackFaceKeepTheirIdentity
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 14.068
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 21.076
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.Phase1011VideoReplayInstrumentedTest#individualToolShowsOutlinesBeforeSuccessForEveryNewLoosePart
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 3.415
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 2.024
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.WholeLibraryPreparationInstrumentedTest#completeWholeCatalogAndReuseItsDiskIndex
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 28.734
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+vision.Phase789VideoReplayInstrumentedTest#allNewVideoCases
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest:
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.chyken.assembl_ar.CandidateCodeReplayInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=replayCandidateMatchers
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 386.799
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+
+Host verification: OK (417 tests)
+Manifest: 31 JPEGs; 25 disjoint replay timestamps.
+
+Final structured native evidence:
+I/Phase1011Video( 2319): P10 cable 51 attempt=0 state=FRONT_CONFIRMED score=77.0 ms=109.187969
+I/Phase1011Video( 2319): P10 cable 79 attempt=0 state=FRONT_CONFIRMED score=67.0 ms=877.108698
+I/Phase1011Video( 2319): P10 protector 9 attempt=0 state=SEARCHING score=0.0 ms=959.141978
+I/Phase1011Video( 2319): P10 protector 9 attempt=1 state=FRONT_CONFIRMED score=21.0 ms=394.253645
+I/Phase1011Video( 2319): P10 protector 27 attempt=0 state=FRONT_CONFIRMED score=79.0 ms=75.006407
+I/Phase1011Video( 2319): P10 extension 94 attempt=0 state=FRONT_CONFIRMED score=92.0 ms=1483.109114
+I/Phase1011Video( 2319): P10 extension 104 attempt=0 state=SEARCHING score=0.0 ms=1081.136563
+I/Phase1011Video( 2319): P10 extension 104 attempt=1 state=FRONT_CONFIRMED score=32.0 ms=1095.138073
+I/Phase1011Video( 2319): P10 extensionbad 120 attempt=0 state=FLIPPED score=406.0 ms=2108.506978
+I/Phase1011Video( 2319): P10 extensionbad 129 attempt=0 state=FLIPPED score=76.0 ms=1334.297031
+I/Phase1011Video( 2537): P10 protected 159 attempt=0 state=ASSEMBLY_CONFIRMED score=207.0 ms=566.313906
+I/Phase1011Video( 2537): P10 protected 190 attempt=0 state=ASSEMBLY_CONFIRMED score=233.0 ms=557.296615
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=0 state=SEARCHING score=0.0 ms=1410.542708
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=1 state=SEARCHING score=0.0 ms=1617.003489
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=2 state=SEARCHING score=0.0 ms=1102.500729
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=3 state=SEARCHING score=0.0 ms=1260.600573
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=4 state=SEARCHING score=0.0 ms=1706.764114
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=5 state=SEARCHING score=0.0 ms=1033.349062
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=6 state=SEARCHING score=0.0 ms=987.374114
+I/Phase1011Video( 2537): P10 missingprotector 94 attempt=7 state=SEARCHING score=0.0 ms=1629.807916
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=0 state=SEARCHING score=0.0 ms=1096.564791
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=1 state=SEARCHING score=0.0 ms=1420.012396
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=2 state=SEARCHING score=0.0 ms=1157.861093
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=3 state=SEARCHING score=0.0 ms=1327.874479
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=4 state=SEARCHING score=0.0 ms=1107.546302
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=5 state=SEARCHING score=0.0 ms=1182.856145
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=6 state=SEARCHING score=0.0 ms=1645.30677
+I/Phase1011Video( 2537): P10 missingtop 14 attempt=7 state=SEARCHING score=0.0 ms=1757.710416
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=0 state=SEARCHING score=0.0 ms=1627.201406
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=1 state=SEARCHING score=0.0 ms=1128.57099
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=2 state=SEARCHING score=0.0 ms=941.219999
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=3 state=SEARCHING score=0.0 ms=1616.544062
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=4 state=SEARCHING score=0.0 ms=1779.878021
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=5 state=SEARCHING score=0.0 ms=1020.064115
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=6 state=SEARCHING score=0.0 ms=935.198385
+I/Phase1011Video( 2537): P10 missingtop 47 attempt=7 state=SEARCHING score=0.0 ms=1439.1775
+I/Phase1011Video( 2877): P11 battery 9 attempt=0 state=COMPONENT score=123.0 board=0 ms=195.53375
+I/Phase1011Video( 2877): P11 battery 29 attempt=0 state=SEARCHING score=0.0 board=0 ms=1746.342864
+I/Phase1011Video( 2877): P11 battery 29 attempt=1 state=SEARCHING score=0.0 board=0 ms=1609.190364
+I/Phase1011Video( 2877): P11 battery 29 attempt=2 state=COMPONENT score=109.0 board=0 ms=280.102552
+I/Phase1011Video( 2877): P11 front 44 attempt=0 state=COMPONENT score=118.0 board=0 ms=945.38177
+I/Phase1011Video( 2877): P11 front 52 attempt=0 state=COMPONENT score=409.0 board=0 ms=728.067708
+I/Phase1011Video( 2877): P11 back 65 attempt=0 state=SEARCHING score=0.0 board=0 ms=1987.157812
+I/Phase1011Video( 2877): P11 back 65 attempt=1 state=FLIPPED score=61.0 board=0 ms=949.908593
+I/Phase1011Video( 2877): P11 back 72 attempt=0 state=FLIPPED score=22.0 board=0 ms=1046.874375
+I/Phase1011Video( 2983): P11 assembly 83 attempt=0 state=BOARD_LOCATED score=0.0 board=61 ms=734.963124
+I/Phase1011Video( 2983): P11 assembly 83 attempt=1 state=ASSEMBLY score=34.0 board=57 ms=940.577813
+I/Phase1011Video( 2983): P11 assembly 92 attempt=0 state=ASSEMBLY score=92.0 board=97 ms=314.823125
+I/Phase1011Video( 2983): P11 assembly 118 attempt=0 state=ASSEMBLY score=56.0 board=54 ms=355.344792
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=0 state=SEARCHING score=0.0 board=0 ms=858.26677
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=1 state=SEARCHING score=0.0 board=0 ms=1059.889739
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=2 state=SEARCHING score=0.0 board=0 ms=784.847969
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=3 state=SEARCHING score=0.0 board=0 ms=823.50276
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=4 state=SEARCHING score=0.0 board=0 ms=1172.463749
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=5 state=SEARCHING score=0.0 board=0 ms=1262.523281
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=6 state=SEARCHING score=0.0 board=0 ms=843.76802
+I/Phase1011Video( 2983): P11 missingoled 159 attempt=7 state=SEARCHING score=0.0 board=0 ms=1416.325103
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=0 state=SEARCHING score=0.0 board=0 ms=744.596198
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=1 state=SEARCHING score=0.0 board=0 ms=969.342239
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=2 state=SEARCHING score=0.0 board=0 ms=903.91651
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=3 state=SEARCHING score=0.0 board=0 ms=1005.95677
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=4 state=SEARCHING score=0.0 board=0 ms=745.070312
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=5 state=SEARCHING score=0.0 board=0 ms=1018.220677
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=6 state=SEARCHING score=0.0 board=0 ms=1108.056353
+I/Phase1011Video( 2983): P11 missingoled 190 attempt=7 state=SEARCHING score=0.0 board=0 ms=1012.105937
+I/Phase1011Video( 3166): individual extension_data_cable matched=true outline=true
+I/Phase1011Video( 3166): individual oled_protector matched=true outline=true
+I/Phase1011Video( 3166): individual extension_circuit_board matched=true outline=true
+I/Phase1011Video( 3166): individual oled_096_i2c matched=true outline=true
+I/Phase1011Video( 3166): individual battery_pack_7v_12v matched=true outline=true
+I/Phase1011Video( 3254): Motion-blurred battery 30 recognized=true; excluded from clear-view recognition successes. No forced identity.
+I/WholeLibrary( 3320): compiled=25/1081 elapsedMs=517
+I/WholeLibrary( 3320): compiled=50/1081 elapsedMs=1761
+I/WholeLibrary( 3320): compiled=75/1081 elapsedMs=2682
+I/WholeLibrary( 3320): compiled=100/1081 elapsedMs=3424
+I/WholeLibrary( 3320): compiled=125/1081 elapsedMs=4146
+I/WholeLibrary( 3320): compiled=150/1081 elapsedMs=5258
+I/WholeLibrary( 3320): compiled=175/1081 elapsedMs=6251
+I/WholeLibrary( 3320): compiled=200/1081 elapsedMs=7105
+I/WholeLibrary( 3320): compiled=225/1081 elapsedMs=7386
+I/WholeLibrary( 3320): compiled=250/1081 elapsedMs=7910
+I/WholeLibrary( 3320): compiled=275/1081 elapsedMs=9021
+I/WholeLibrary( 3320): compiled=300/1081 elapsedMs=10014
+I/WholeLibrary( 3320): compiled=325/1081 elapsedMs=10452
+I/WholeLibrary( 3320): compiled=350/1081 elapsedMs=11590
+I/WholeLibrary( 3320): compiled=375/1081 elapsedMs=12844
+I/WholeLibrary( 3320): compiled=400/1081 elapsedMs=14107
+I/WholeLibrary( 3320): compiled=425/1081 elapsedMs=15264
+I/WholeLibrary( 3320): compiled=450/1081 elapsedMs=15607
+I/WholeLibrary( 3320): compiled=475/1081 elapsedMs=16043
+I/WholeLibrary( 3320): compiled=500/1081 elapsedMs=16345
+I/WholeLibrary( 3320): compiled=525/1081 elapsedMs=17514
+I/WholeLibrary( 3320): compiled=550/1081 elapsedMs=18895
+I/WholeLibrary( 3320): compiled=575/1081 elapsedMs=19457
+I/WholeLibrary( 3320): compiled=600/1081 elapsedMs=20420
+I/WholeLibrary( 3320): compiled=625/1081 elapsedMs=20740
+I/WholeLibrary( 3320): compiled=650/1081 elapsedMs=21113
+I/WholeLibrary( 3320): compiled=675/1081 elapsedMs=21440
+I/WholeLibrary( 3320): compiled=700/1081 elapsedMs=21884
+I/WholeLibrary( 3320): compiled=725/1081 elapsedMs=22153
+I/WholeLibrary( 3320): compiled=750/1081 elapsedMs=22361
+I/WholeLibrary( 3320): compiled=775/1081 elapsedMs=22609
+I/WholeLibrary( 3320): compiled=800/1081 elapsedMs=23000
+I/WholeLibrary( 3320): compiled=825/1081 elapsedMs=23510
+I/WholeLibrary( 3320): compiled=850/1081 elapsedMs=23823
+I/WholeLibrary( 3320): compiled=875/1081 elapsedMs=24027
+I/WholeLibrary( 3320): compiled=900/1081 elapsedMs=24511
+I/WholeLibrary( 3320): compiled=925/1081 elapsedMs=24812
+I/WholeLibrary( 3320): compiled=950/1081 elapsedMs=25162
+I/WholeLibrary( 3320): compiled=975/1081 elapsedMs=25254
+I/WholeLibrary( 3320): compiled=1000/1081 elapsedMs=25257
+I/WholeLibrary( 3320): compiled=1025/1081 elapsedMs=25260
+I/WholeLibrary( 3320): compiled=1050/1081 elapsedMs=25690
+I/WholeLibrary( 3320): compiled=1075/1081 elapsedMs=26162
+I/WholeLibrary( 3320): PASS all 1081 terminal entries durable; elapsedMs=26448
+I/WholeLibrary( 3320): PASS warm index reused 1081 entries without rewriting descriptors; elapsedMs=301
+
+Inspection timings include complete ORB/geometry work, not camera FPS:
+all scored calls n=65 median=1046.9ms min=75.0ms max=2108.5ms
+clear-view accepted calls n=15 median=557.3ms min=75.0ms max=1483.1ms

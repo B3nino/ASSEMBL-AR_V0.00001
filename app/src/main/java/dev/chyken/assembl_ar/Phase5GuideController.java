@@ -71,7 +71,7 @@ final class Phase5GuideController implements AutoCloseable {
             if(videosReady){flow.confirmDemo(true);status("Demo reviewed · Next unlocked");render();save();}
             else if(videoError){previewStep=-1;videoError=false;render();}
         }else if(flow.step()==4)stability();});
-        card.rescan.setOnClickListener(v->{if(saving||reviewing)return;dismissDialog();dialog=RescanConfirmationDialog.show(activity,()->{flow.rescan(now());changed();});});
+        card.rescan.setOnClickListener(v->{if(closed||paused||saving||reviewing||!flow.canRescan())return;dismissDialog();dialog=RescanConfirmationDialog.show(activity,()->{flow.rescan(now());changed();});});
         card.setOnDetailsChanged(text->{if(!reviewing||!paused)say(text.isEmpty()?"Additional information hidden.":text,"details:"+(++sequence));});
     }
     void start(){changed();}
@@ -140,7 +140,7 @@ final class Phase5GuideController implements AutoCloseable {
         if(closed)return;int step=flow.step();plan=!saving&&!reviewing&&!infoShowing&&flow.scanning()?new Plan(step,flow.tag()):null;
         boolean unlocked=flow.complete()&&(step!=4||reviewing||flow.canFinish(developer));
         String details=INFO+"\n\nMatch both header rows before pressing evenly. The camera checks visible Nano placement and orientation; it cannot certify all hidden pins or physical firmness. Confirm those in Step 5.4.";
-        card.render(50+step,"Phase 5 · Step 5."+step+" of 4",HUD[step],details,message,unlocked,true,!reviewing&&flow.complete()&&(step==1||step==3));
+        card.render(50+step,"Phase 5 · Step 5."+step+" of 4",HUD[step],details,message,unlocked,true,!reviewing&&flow.canRescan());
         card.next.setText(step==4?reviewing?"Return to current phase":"Continue to Phase 6 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);
         card.action.setVisibility(step==1||(step==2||step==4)&&!flow.complete()&&!reviewing?View.VISIBLE:View.GONE);
         card.action.setText(step==1?"View Info":step==2?videoError?"Retry demo":"Ready to Scan":"Check pins & stability");
@@ -150,6 +150,8 @@ final class Phase5GuideController implements AutoCloseable {
         if(previewStep!=step){stopVideo();previewStep=step;if(step==2)startVideo();else preview.showComponent(NeobotSeedData.MICROCONTROLLER,"Arduino Nano");}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:lastWarning!=null?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next unlocked":message.isEmpty()?HUD[step].split("\n")[0]:message,plan!=null,lastWarning!=null?R.drawable.bg_camera_warning:flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(flow.step()==2,paused,saving)?this::skipPreview:null);
     }
     private void startVideo(){
         if(clips.isEmpty()){videoError=true;status("The Phase 5 installation demo is missing.");main.post(this::render);return;}
@@ -177,4 +179,6 @@ final class Phase5GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devComplete();render();save();}
     void restart(){flow.restart(now());videosReady=false;resumeClip=0;resumePosition=0;previewStep=-1;changed();}
     @Override public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(flow.step()==2,paused,saving))return;videosReady=true;flow.confirmDemo(true);if(flow.next(now()))changed();}
 }

@@ -6,25 +6,32 @@ import dev.chyken.assembl_ar.vision.*;import dev.chyken.assembl_ar.camera.*;impo
 
 /** Academic runner and catalog browser shared with the standalone camera. */
 public final class DevDiagnosticsFragment extends Fragment {
-    private final Handler ui=new Handler(Looper.getMainLooper());private TextView report,inventory;private Spinner references;private List<ComponentReferenceSpec> all=Collections.emptyList(),shown=Collections.emptyList();private boolean assemblies,inventoryRefreshed;
+    private final Handler ui=new Handler(Looper.getMainLooper());private TextView report,inventory;private Button references;private List<ComponentReferenceSpec> all=Collections.emptyList();private List<DiagnosticTargetCatalog.Target> shown=Collections.emptyList();private DiagnosticTargetCatalog.Target selectedTarget;private String selectedKey;private boolean assemblies,inventoryRefreshed;
     @Override public View onCreateView(LayoutInflater inflater,ViewGroup parent,Bundle saved){
-        Activity a=requireActivity();LinearLayout body=column(a);ScrollView scroll=new ScrollView(a);scroll.setFillViewport(true);scroll.addView(body);
+        Activity a=requireActivity();if(saved!=null){assemblies=saved.getBoolean("assemblies");selectedKey=saved.getString("target");}LinearLayout body=column(a);ScrollView scroll=new ScrollView(a);scroll.setFillViewport(true);scroll.addView(body);
         button(body,"Back",a::finish);
         text(body,"Diagnostic test suite",23);text(body,"All assembly and individual references · A: recognition · B: measured pose · C: motion stability",14);
         text(body,"Phases 4 and 6 are wiring/checklist phases without camera reference datasets. B and C remain unmeasured wherever a reference has no calibrated physical pose plane.",12);
         LinearLayout tabs=new LinearLayout(a);body.addView(tabs);button(tabs,"Individual Component Tests",()->{assemblies=false;populate();});button(tabs,"Assembly Tests",()->{assemblies=true;populate();});
-        references=new Spinner(a);body.addView(references);inventory=text(body,"Preparing shared keypoint inventory…",13);
-        button(body,"Open selected camera test",()->{if(shown.isEmpty())return;ComponentReferenceSpec s=shown.get(references.getSelectedItemPosition());startActivity(new Intent(a,PartRecognitionTestActivity.class).putExtra(PartRecognitionTestActivity.EXTRA_COMPONENT_ID,s.getComponentId()).putExtra("reference_id",s.getReferenceId()).putExtra("assembly_test",assemblies));});
+        references=new Button(a);references.setAllCaps(false);references.setText("Choose a library target");body.addView(references);references.setOnClickListener(v->dev.chyken.assembl_ar.ui.DiagnosticTargetPicker.show(a,shown,target->{selectedTarget=target;selectedKey=target.key;references.setText(target.toString());}));inventory=text(body,"Opening prepared keypoint inventory…",13);
+        button(body,"Open selected camera test",()->{if(shown.isEmpty())return;DiagnosticTargetCatalog.Target target=selectedTarget;if(target==null)return;startActivity(new Intent(a,PartRecognitionTestActivity.class).putExtra(PartRecognitionTestActivity.EXTRA_COMPONENT_ID,target.componentId).putExtra("reference_id",target.representative.getReferenceId()).putExtra("assembly_test",target.specialized));});
         button(body,"Configure / run benchmark",()->showControls(a));button(body,"Download Diagnostic Logs",()->DiagnosticLogger.get(a).chooseExport(a,DiagnosticSession.INSTANCE.runner.report()));
         report=text(body,"",13);report.setTypeface(android.graphics.Typeface.MONOSPACE);
-        VisionPreloadManager.get(a).catalog().whenComplete((list,error)->ui.post(()->{if(!isAdded())return;if(error!=null)inventory.setText("Catalog unavailable: "+error.getMessage());else{all=list;populate();}}));
+        VisionPreloadManager.get(a).start().whenComplete((list,error)->ui.post(()->{if(!isAdded()||inventory==null)return;if(error!=null)inventory.setText("Catalog unavailable: "+error.getMessage());else{all=list;populate();}}));
         return scroll;
     }
-    private void populate(){if(references==null)return;List<ComponentReferenceSpec> s=new ArrayList<>();for(ComponentReferenceSpec r:all)if(UnifiedReferenceCatalog.assembly(r)==assemblies||assemblies&&UnifiedReferenceCatalog.phase(r)==1&&r.getComponentId().equals("main_board"))s.add(r);shown=s;
-        List<String> names=new ArrayList<>();for(ComponentReferenceSpec r:s){int n=KeypointInventoryManager.INSTANCE.count(r.getReferenceId());names.add((UnifiedReferenceCatalog.phase(r)>0?"P"+UnifiedReferenceCatalog.phase(r)+" · ":"")+r.getDisplayName()+" · "+KeypointInventoryManager.INSTANCE.status(r.getReferenceId())+" · "+r.getReferenceId());}
-        references.setAdapter(new ArrayAdapter<>(requireContext(),android.R.layout.simple_spinner_dropdown_item,names));inventory.setText(s.size()+" registered reference files · "+KeypointInventoryManager.INSTANCE.preparedCount()+" prepared · "+GlobalComponentRegistry.INSTANCE.referenceCount()+" indexed");
+    private void populate(){
+        if(references==null)return;List<DiagnosticTargetCatalog.Target> targets=new ArrayList<>();
+        for(DiagnosticTargetCatalog.Target target:IndividualPartTestCatalog.selectableTargets(all,KeypointInventoryManager.INSTANCE::count))if(target.assembly==assemblies)targets.add(target);
+        shown=targets;selectedTarget=null;
+        for(DiagnosticTargetCatalog.Target target:targets)if(target.key.equals(selectedKey))selectedTarget=target;
+        if(selectedTarget==null&&!targets.isEmpty())selectedTarget=targets.get(0);
+        if(selectedTarget!=null){selectedKey=selectedTarget.key;references.setText(selectedTarget.toString());}
+        references.setEnabled(!targets.isEmpty());inventory.setText(targets.size()+" library targets · "+KeypointInventoryManager.INSTANCE.preparedCount()+" prepared references");
     }
-    private final Runnable refresh=new Runnable(){public void run(){if(!isAdded())return;if(report!=null)report.setText(DiagnosticSession.INSTANCE.runner.report());if(!inventoryRefreshed&&GlobalComponentRegistry.INSTANCE.isReady()){inventoryRefreshed=true;populate();}if(inventory!=null)inventory.setText(shown.size()+" reference files · "+KeypointInventoryManager.INSTANCE.preparedCount()+" prepared · registry "+(GlobalComponentRegistry.INSTANCE.isReady()?"ready":"preparing"));ui.postDelayed(this,1000);}};
+    @Override public void onSaveInstanceState(Bundle state){state.putBoolean("assemblies",assemblies);state.putString("target",selectedKey);super.onSaveInstanceState(state);}
+    @Override public void onDestroyView(){ui.removeCallbacks(refresh);references=null;report=null;inventory=null;super.onDestroyView();}
+    private final Runnable refresh=new Runnable(){public void run(){if(!isAdded())return;if(report!=null){String text=DiagnosticSession.INSTANCE.runner.report();if(!android.text.TextUtils.equals(report.getText(),text))report.setText(text);}if(!inventoryRefreshed&&GlobalComponentRegistry.INSTANCE.isReady()){inventoryRefreshed=true;populate();}if(inventory!=null)inventory.setText(shown.size()+" library targets · "+KeypointInventoryManager.INSTANCE.preparedCount()+" prepared references · registry "+(GlobalComponentRegistry.INSTANCE.isReady()?"ready":"preparing"));ui.postDelayed(this,1000);}};
     @Override public void onResume(){super.onResume();ui.post(refresh);}
     @Override public void onPause(){ui.removeCallbacks(refresh);super.onPause();}
     public static void showControls(Activity a){
@@ -51,7 +58,7 @@ public final class DevDiagnosticsFragment extends Fragment {
         ScrollView form=new ScrollView(a);form.addView(b);
         androidx.appcompat.app.AlertDialog d=new androidx.appcompat.app.AlertDialog.Builder(a).setTitle("Measured checkerboard reference").setView(form).setNegativeButton("Disable",(x,w)->DiagnosticSession.INSTANCE.groundTruth=null).setPositiveButton("Apply",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{try{DiagnosticSession.INSTANCE.groundTruth=new CheckerboardGroundTruth(Integer.parseInt(f[0].getText().toString()),Integer.parseInt(f[1].getText().toString()),Double.parseDouble(f[2].getText().toString()),Double.parseDouble(f[3].getText().toString()),Double.parseDouble(f[4].getText().toString()),(RecognitionResult.OrientationClassification)orientation.getSelectedItem());d.dismiss();}catch(RuntimeException bad){f[0].setError("Check the measurements");}}));d.show();
     }
-    private static LinearLayout column(Activity a){LinearLayout b=new LinearLayout(a);b.setOrientation(1);int p=Math.round(16*a.getResources().getDisplayMetrics().density);b.setPadding(p,p,p,p);return b;}
+    private static LinearLayout column(Activity a){LinearLayout b=new LinearLayout(a);b.setOrientation(LinearLayout.VERTICAL);int p=Math.round(16*a.getResources().getDisplayMetrics().density);b.setPadding(p,p,p,p);return b;}
     private static TextView text(LinearLayout b,String s,int size){TextView t=new TextView(b.getContext());t.setText(s);t.setTextSize(size);t.setPadding(0,8,0,8);b.addView(t);return t;}
     private static void button(LinearLayout b,String s,Runnable r){com.google.android.material.button.MaterialButton v=new com.google.android.material.button.MaterialButton(b.getContext());v.setText(s);v.setAllCaps(false);b.addView(v);v.setOnClickListener(x->r.run());}
 }

@@ -181,6 +181,8 @@ final class Phase7GuideController implements AutoCloseable {
         if(video==null&&previewKey!=flow.screenIndex()&&(!flow.viewingDemo()||videoError)){previewKey=flow.screenIndex();showModels();}
         preview.onHudState(warning?ArHudView.HudState.WRONG_ORIENTATION:flow.stageComplete()?ArHudView.HudState.MATCHED:ArHudView.HudState.SEARCHING);
         activity.setBanner(message.isEmpty()?instruction().split("\n")[0]:message,plan!=null,warning?R.drawable.bg_camera_warning:flow.stageComplete()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(flow.viewingDemo(),paused,saving)?this::skipPreview:null);
     }
     private void showModels(){
         if(flow.preparingHardware()){preview.showPhase7Hardware(flow.step()==1);return;}
@@ -220,5 +222,7 @@ final class Phase7GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devComplete();stopVideo();previewKey=-1;render();save();}
     void restart(){stopVideo();flow.restart(now());Arrays.fill(maxLine,-1);Arrays.fill(resumeClip,0);Arrays.fill(resumePosition,0);changed();}
     @Override public void close(){if(closed)return;pause();stopVideo();closed=true;alignment.showGuide(null);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(flow.viewingDemo(),paused,saving))return;flow.demoFinished();flow.armScan(now());changed();}
 }
 

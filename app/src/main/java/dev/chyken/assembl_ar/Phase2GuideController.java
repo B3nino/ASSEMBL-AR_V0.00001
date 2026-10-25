@@ -93,6 +93,7 @@ final class Phase2GuideController implements AutoCloseable {
                 ?"This step is complete. Review the instructions or choose Rescan to check it again.":TEXT[flow.step()],"phase2:"+flow.tag());
     }
     private void requestRescan(){
+        if(closed||paused||saving||!flow.canRescan())return;
         if(dialog!=null)dialog.dismiss();
         dialog=RescanConfirmationDialog.show(activity,()->{flow.rescan(now());changed();});
     }
@@ -219,7 +220,7 @@ final class Phase2GuideController implements AutoCloseable {
         boolean unlocked=flow.canNext()&&(step!=6||flow.canFinish(developer));
         card.render(step,"Phase 2 · Step 2."+step+" of 6",summary,more.toString(),
                 flow.complete()&&!unlocked?"Sub-step complete. Finish the remaining phase checkpoints to continue.":message,
-                unlocked,true,(step==1||step==2||step==5)&&flow.canNext());
+                unlocked,true,flow.canRescan());
         card.action.setVisibility((step==3||step==4||step==6)&&!flow.complete()?View.VISIBLE:View.GONE);
         card.action.setText(step==3?"I Have These":step==4?(videoError?"Retry demo":"Done Assembling"):"Check joint stability");
         card.action.setEnabled(!saving&&(step!=4||videosReady||videoError));
@@ -242,11 +243,13 @@ final class Phase2GuideController implements AutoCloseable {
         preview.onHudState(flow.canNext()?ArHudView.HudState.MATCHED:ArHudView.HudState.SEARCHING);
         activity.setBanner(step==5&&flow.currentHardwareViewComplete()?viewName(flow.expectedHardwareView())+" scanned · Next unlocked":flow.complete()?"Step complete · Next step unlocked":step==5?"Scan "+flow.hardwareViewNumber()+" / 3 · "+viewName(flow.expectedHardwareView()):TEXT[step].split("\n")[0],
                 flow.scanning(),flow.canNext()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(flow.step()==4,paused,saving)?this::skipPreview:null);
     }
     private void showToolsPreview(){
         LinearLayout row=new LinearLayout(activity);row.setGravity(android.view.Gravity.CENTER);
         for(String id:new String[]{SCREW_30MM,NUT,PHILLIPS_SCREWDRIVER}){
-            LinearLayout item=new LinearLayout(activity);item.setOrientation(1);item.setGravity(android.view.Gravity.CENTER);
+            LinearLayout item=new LinearLayout(activity);item.setOrientation(LinearLayout.VERTICAL);item.setGravity(android.view.Gravity.CENTER);
             Component part=activity.component(id);ImageView image=new ImageView(activity);image.setScaleType(ImageView.ScaleType.FIT_CENTER);
             item.addView(image,new LinearLayout.LayoutParams(-1,0,1));
             if(part!=null)AssetImageLoader.loadBounded(image,activity.partReferenceAsset(part),512);
@@ -312,4 +315,6 @@ final class Phase2GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devCompletePhase();changed();}
     void restart(){flow.restart(now());videosReady=false;maxLine=-1;resumeClip=0;resumePosition=0;changed();}
     @Override public void close(){if(closed)return;pause();closed=true;stopVideo();alignment.showGuide(null);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(flow.step()==4,paused,saving))return;videosReady=true;maxLine=2;flow.confirmAssembly(true);if(flow.next(now()))changed();}
 }

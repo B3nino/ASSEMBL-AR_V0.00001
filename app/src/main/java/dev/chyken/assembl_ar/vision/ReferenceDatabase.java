@@ -296,9 +296,10 @@ public final class ReferenceDatabase implements AutoCloseable {
         try{for(ComponentReferenceSpec spec:specs){checkLoadActive(active);if(index.isSkipped(spec,config)){KeypointInventoryManager.INSTANCE.skipped(spec);progress.accept(++done,specs.size());continue;}if(!index.terminal(spec,config)||!GlobalComponentRegistry.INSTANCE.isReady()){
             PreparedReference ready=null;
             try{ready=prepareReference(assets,spec,orb,clahe,config,directory);if(spec.getAdminDescriptorBlob()!=null)index.administrator(spec,config);}
+            catch(ReferenceCacheWriteException storage){throw new IOException("Reference "+(done+1)+" / "+specs.size()+" could not be cached: "+spec.getJpegAssetPath(),storage);}
             catch(IOException|RuntimeException unusable){Log.w("ReferenceLibrary","Unusable reference: "+spec.getReferenceId(),unusable);index.skipped(spec,config);KeypointInventoryManager.INSTANCE.skipped(spec);}
             finally{if(ready!=null)ready.release();}
-            if(!index.terminal(spec,config))throw new IOException("Compiled reference could not be saved. Check available app storage.");
+            if(!index.terminal(spec,config))throw new IOException("Reference "+(done+1)+" / "+specs.size()+" has no durable cache entry: "+spec.getJpegAssetPath());
         }progress.accept(++done,specs.size());}checkLoadActive(active);}finally{orb.clear();clahe.clear();}
     }
     public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":p3manual"+Phase3ReferenceAnnotations.VERSION+":"+Phase5PhotoGeometry.VERSION+":p5local"+Phase5DescriptorSampler.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION;}
@@ -307,18 +308,22 @@ public final class ReferenceDatabase implements AutoCloseable {
     static String cacheRevision(ComponentReferenceSpec spec){
         int phase=spec.getAssemblyStepNumber();
         int geometry=phase==2?Phase2PhotoGeometry.CACHE_VERSION:phase==3?Phase3PhotoGeometry.VERSION:phase==5?Phase5PhotoGeometry.VERSION:phase==7?Phase7PhotoGeometry.VERSION:phase==8?Phase8PhotoGeometry.VERSION:phase==9?Phase9PhotoGeometry.VERSION:phase==10?Phase10PhotoGeometry.VERSION:phase==11?Phase11PhotoGeometry.VERSION:0;
-        return "scoped-library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+phase+":"+geometry+(Phase5DescriptorSampler.installed(spec)?":p5local"+Phase5DescriptorSampler.VERSION:"")+(Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath())==null?"":":p3manual"+Phase3ReferenceAnnotations.VERSION)+(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(spec.getJpegAssetPath())==null?"":":video789_"+dev.chyken.assembl_ar.camera.Phase789VideoReferences.DESCRIPTOR_VERSION);
+        return "scoped-library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+phase+":"+geometry+(Phase5DescriptorSampler.installed(spec)?":p5local"+Phase5DescriptorSampler.VERSION:"")+(Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath())==null?"":":p3manual"+Phase3ReferenceAnnotations.VERSION)+(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(spec.getJpegAssetPath())==null?"":":video789_"+dev.chyken.assembl_ar.camera.Phase789VideoReferences.DESCRIPTOR_VERSION)+(dev.chyken.assembl_ar.camera.Phase1011VideoReferences.annotation(spec.getJpegAssetPath())==null?"":":video1011_"+dev.chyken.assembl_ar.camera.Phase1011VideoReferences.VERSION);
     }
 
     public static void preloadLibrary(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory,ReferenceCacheIndex index,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException {
         prepareLibrary(assets,specs,config,directory,index,()->true,progress);
+    }
+    static void warmReferences(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory)throws IOException {
+        ORB orb=OpenCvVisionUtils.createOrb(config);CLAHE clahe=OpenCvVisionUtils.createClahe(config);
+        try{for(ComponentReferenceSpec spec:specs){PreparedReference ref=null;try{ref=prepareReference(assets,spec,orb,clahe,config,directory);}catch(IOException|RuntimeException unusable){Log.w("ReferenceLibrary","Warm window excludes unusable source: "+spec.getReferenceId());}finally{if(ref!=null)ref.release();}}}finally{orb.clear();clahe.clear();}
     }
     private static PreparedReference prepareReference(AssetManager assets,ComponentReferenceSpec spec,ORB orb,CLAHE clahe,VisionConfig config,File directory)throws IOException {
         VisionPreloadManager cache=VisionPreloadManager.active(assets);
         ReferenceCacheIndex provenance=ReferenceCacheIndex.active(assets,directory);
         String key=provenance==null?null:provenance.key(spec,config);
         PreparedReference hit=cache==null||key==null?null:cache.acquire(key);
-        if(hit!=null)return hit;
+        if(hit!=null){if(provenance.terminal(spec,config))return hit;hit.release();}
         PreparedReference result=prepareReferenceUncached(assets,spec,orb,clahe,config,directory);
         KeypointInventoryManager.INSTANCE.prepared(result);
         GlobalComponentRegistry.INSTANCE.prepared(result);
@@ -348,6 +353,9 @@ public final class ReferenceDatabase implements AutoCloseable {
             }
         }
 
+        VisionPreloadManager preload=VisionPreloadManager.active(assetManager);
+        if(preload!=null&&preload.isReady())throw new IOException("Prepared reference is unavailable; reopen startup preparation: "+spec.getReferenceId());
+
         byte[] imageBytes = readReferenceImageBytes(assetManager, spec);
         if (imageBytes == null) {
             throw new IllegalArgumentException(
@@ -360,7 +368,10 @@ public final class ReferenceDatabase implements AutoCloseable {
         spec=resolveGeometry(spec,imageBytes,cacheFile);
         if (cacheFile != null && cacheFile.isFile()) {
             try (InputStream input = new FileInputStream(cacheFile)) {
-                PreparedReference ready=preparedFromBlob(spec,readFully(input),config);if(index!=null)try{index.remember(registeredSpec,config,cacheFile);}catch(IOException ignored){}return ready;
+                PreparedReference ready=preparedFromBlob(spec,readFully(input),config);
+                try{rememberCompiled(index,registeredSpec,config,cacheFile);return ready;}catch(ReferenceCacheWriteException failure){ready.release();throw failure;}
+            } catch (ReferenceCacheWriteException storage) {
+                throw storage;
             } catch (IOException | IllegalArgumentException staleOrCorruptCache) {
                 // Rebuild below. The retained image remains the source of truth.
             }
@@ -418,7 +429,9 @@ public final class ReferenceDatabase implements AutoCloseable {
                     phase7Orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
                 dev.chyken.assembl_ar.camera.Phase789VideoReferences.Entry reviewed=dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(spec.getJpegAssetPath());
                 if(reviewed!=null&&reviewed.phase==7){if(phase7Orb!=null)phase7Orb.clear();phase7Orb=ORB.create(3200,1.2f,8,12,0,2,ORB.HARRIS_SCORE,31,7);}
-                variants = reviewed!=null&&(reviewed.phase==7||reviewed.phase==8)
+                variants = dev.chyken.assembl_ar.camera.Phase1011VideoReferences.annotation(spec.getJpegAssetPath())!=null
+                        ?Phase1011DescriptorSampler.compute(spec,grayscale,clahe)
+                        :reviewed!=null&&(reviewed.phase==7||reviewed.phase==8)
                         ?ReviewedHardwareDescriptorSampler.compute(spec,grayscale,mask,phase7Orb!=null?phase7Orb:orb,clahe)
                         :Phase5DescriptorSampler.installed(spec)
                         ?Phase5DescriptorSampler.compute(spec,grayscale,mask,orb,clahe)
@@ -428,7 +441,7 @@ public final class ReferenceDatabase implements AutoCloseable {
                         ?Phase9DescriptorSampler.compute(spec,grayscale,mask,clahe)
                         :ReferenceDescriptorPyramid.forReference(spec,grayscale,mask,phase7Orb!=null?phase7Orb:orb,clahe);
             }
-            if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX))Phase10DescriptorSampler.isolateProtectorMaterial(spec,grayscale,variants);
+            if(spec.getReferenceId().startsWith(dev.chyken.assembl_ar.camera.Phase10AssetCatalog.PREFIX)&&dev.chyken.assembl_ar.camera.Phase1011VideoReferences.annotation(spec.getJpegAssetPath())==null)Phase10DescriptorSampler.isolateProtectorMaterial(spec,grayscale,variants);
             validateTexturedVariants(spec, variants, config, "Reference image");
             if (cacheFile != null && !variants.isEmpty()) {
                 try {
@@ -436,11 +449,12 @@ public final class ReferenceDatabase implements AutoCloseable {
                             grayscale.cols(), grayscale.rows(), variants, config);
                     writeCacheAtomically(cacheFile, cacheBlob);
                 } catch (IOException | RuntimeException cacheFailure) {
-                    // Cache failure must never make the packaged offline catalog unavailable.
+                    if(index!=null)throw new ReferenceCacheWriteException(cacheFile,cacheFailure);
+                    Log.w("ReferenceLibrary","Optional descriptor cache write failed: "+cacheFile,cacheFailure);
                 }
             }
             PreparedReference ready=new PreparedReference(spec,grayscale.cols(),grayscale.rows(),variants);
-            if(index!=null)try{index.remember(registeredSpec,config,cacheFile);}catch(IOException ignored){}
+            try{rememberCompiled(index,registeredSpec,config,cacheFile);}catch(ReferenceCacheWriteException failure){ready.release();throw failure;}
             return ready;
         } finally {
             if(phase7Orb!=null)phase7Orb.clear();
@@ -564,7 +578,8 @@ public final class ReferenceDatabase implements AutoCloseable {
         if(Phase5DescriptorSampler.installed(spec))assetFingerprint+="_p5local"+Phase5DescriptorSampler.VERSION;
         if(Phase3ReferenceAnnotations.forPath(spec.getJpegAssetPath())!=null)assetFingerprint+="_manual"+Phase3ReferenceAnnotations.VERSION;
         if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(spec.getJpegAssetPath())!=null)assetFingerprint+="_video789_"+dev.chyken.assembl_ar.camera.Phase789VideoReferences.DESCRIPTOR_VERSION;
-        return new File(directory, safeId + "_" + assetFingerprint + ".asor");
+        if(dev.chyken.assembl_ar.camera.Phase1011VideoReferences.annotation(spec.getJpegAssetPath())!=null)assetFingerprint+="_video1011_"+dev.chyken.assembl_ar.camera.Phase1011VideoReferences.VERSION;
+        return new File(directory, ReferenceCacheFileName.bounded(safeId + "_" + assetFingerprint + ".asor"));
     }
 
     /**
@@ -732,17 +747,36 @@ public final class ReferenceDatabase implements AutoCloseable {
     }
 
     private static void writeCacheAtomically(File destination, byte[] data) throws IOException {
-        File temporary = new File(destination.getParentFile(), destination.getName() + ".tmp");
-        try (FileOutputStream output = new FileOutputStream(temporary, false)) {
-            output.write(data);
-            output.getFD().sync();
+        File temporary = File.createTempFile("descriptor-", ".tmp", destination.getParentFile());
+        try {
+            try (FileOutputStream output = new FileOutputStream(temporary, false)) {
+                output.write(data);
+                output.getFD().sync();
+            }
+            try {
+                java.nio.file.Files.move(temporary.toPath(),destination.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException fallback) {
+                java.nio.file.Files.move(temporary.toPath(),destination.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            temporary.delete();
         }
-        if (destination.exists() && !destination.delete()) {
-            throw new IOException("Unable to replace stale descriptor cache");
-        }
-        if (!temporary.renameTo(destination)) {
-            throw new IOException("Unable to publish descriptor cache");
-        }
+    }
+
+    private static void rememberCompiled(ReferenceCacheIndex index,ComponentReferenceSpec spec,
+            VisionConfig config,File file)throws ReferenceCacheWriteException {
+        if(index==null)return;
+        try {
+            if(file==null||!file.isFile())throw new IOException("Descriptor cache file was not published");
+            index.remember(spec,config,file);
+        } catch(IOException failure){throw new ReferenceCacheWriteException(file,failure);}
+    }
+
+    private static final class ReferenceCacheWriteException extends IOException {
+        ReferenceCacheWriteException(File file,Throwable cause){super("Cannot save compiled reference: "+file,cause);}
     }
 
     private static final class DescriptorExtractionRegion {

@@ -120,6 +120,31 @@ public final class ComponentReferenceSpec {
     public boolean isAutomaticBoardGeometry() { return automaticBoardGeometry; }
     public boolean isBottomFace() { return bottomFace; }
 
+    /** Restores prepared geometry in the small startup index; source provenance stays intact. */
+    ComponentReferenceSpec withPreparedGeometry(double width, double height, int step,
+            boolean verified, List<VisionPoint> corners, List<List<VisionPoint>> regions) {
+        Builder b = new Builder(referenceId, componentId, displayName, width, height);
+        b.jpegAssetPath=jpegAssetPath; b.localImageFilePath=localImageFilePath;
+        b.adminDescriptorBlob=adminDescriptorBlob; b.shapeHint=shapeHint;
+        b.minimumCircleRadiusRatio=minimumCircleRadiusRatio;
+        b.maximumCircleRadiusRatio=maximumCircleRadiusRatio;
+        b.planarCornersNormalized=corners; b.featureRegionsNormalized=regions;
+        b.maximumImageDimension=maximumImageDimension;
+        b.descriptorRegionNormalizationEnabled=descriptorRegionNormalizationEnabled;
+        b.polarityAnchorsVerified=verified; b.assemblyStepNumber=step;
+        b.installedBracketView=installedBracketView; b.fastAcquisitionView=fastAcquisitionView;
+        b.planarInlierPoseEnabled=planarInlierPoseEnabled;
+        b.automaticBoardGeometry=automaticBoardGeometry; b.bottomFace=bottomFace;
+        // Prepared opposite-face/cropped photos deliberately allow reflected/extrapolated quads.
+        b.extrapolatedPlanarCorners=true;
+        double winding=0;for(int i=0;i<corners.size();i++){
+            VisionPoint a=corners.get(i),c=corners.get((i+1)%corners.size());
+            winding+=a.getX()*c.getY()-c.getX()*a.getY();
+        }
+        b.mirroredPlanarCorners=winding<0;
+        return b.build();
+    }
+
     public boolean acceptsCircleRadiusRatio(double radiusRatio) {
         return shapeHint == ShapeHint.CIRCULAR_HARDWARE
                 && radiusRatio >= minimumCircleRadiusRatio

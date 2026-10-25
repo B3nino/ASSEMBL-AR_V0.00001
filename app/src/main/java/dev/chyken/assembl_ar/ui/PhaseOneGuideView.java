@@ -123,7 +123,8 @@ public final class PhaseOneGuideView extends FrameLayout {
         status.setVisibility(complete ? VISIBLE : GONE);
         status.setText(developer ? R.string.phase_one_dev_complete : R.string.phase_one_scan_success);
         next.setVisibility(complete ? VISIBLE : GONE);
-        rescan.setVisibility(complete&&!saving?VISIBLE:GONE);
+        rescan.setVisibility(complete&&!saving&&!developer?VISIBLE:GONE);
+        rescan.setEnabled(complete&&!saving&&!developer);
         next.setEnabled(complete && !saving);
         next.setAlpha(complete && !saving ? 1f : .45f);
         next.setText(saving ? R.string.phase_saving : complete

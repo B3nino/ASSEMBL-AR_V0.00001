@@ -4,6 +4,11 @@ import dev.chyken.assembl_ar.camera.UnifiedReferenceCatalog;
 import org.opencv.core.*;
 import org.opencv.calib3d.Calib3d;
 import java.util.*;
+import java.io.*;
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.zip.*;
 
 /** Process-owned descriptor index; published only after preparation, queried without file I/O.
  * Representative descriptors shortlist references. Only a spatially distributed RANSAC fit can veto.
@@ -14,6 +19,7 @@ public final class GlobalComponentRegistry {
     private Mat pooled; private List<Template> owners=Collections.emptyList();
     private volatile boolean ready;
     private static final int ROWS_PER_VARIANT=96;
+    private static final int COMPACT_VERSION=1;
     public static final class Match {
         public final String referenceId,componentId,name;public final int phase,good,total,inliers;public final boolean assembly,negative;public final double score;
         public final List<VisionPoint> targetCorners;
@@ -55,6 +61,85 @@ public final class GlobalComponentRegistry {
             int n=Math.min(16,count);byte[] sparse=new byte[n*32];for(int j=0;j<n;j++)System.arraycopy(bytes,(j*count/n)*32,sparse,j*32,32);
             representative.create(n,32,CvType.CV_8UC1);representative.put(0,0,sparse);
         }
+        Template(ComponentReferenceSpec s,int w,int h,List<Point> p,byte[] bytes){
+            spec=s;width=w;height=h;points.addAll(p);int count=p.size();
+            if(count==0)return;
+            descriptors.create(count,32,CvType.CV_8UC1);descriptors.put(0,0,bytes);
+            int n=Math.min(16,count);byte[] sparse=new byte[n*32];
+            for(int j=0;j<n;j++)System.arraycopy(bytes,(j*count/n)*32,sparse,j*32,32);
+            representative.create(n,32,CvType.CV_8UC1);representative.put(0,0,sparse);
+        }
+        void release(){descriptors.release();representative.release();}
+    }
+
+    /** Small, versioned shortlist plus exact inventory. Full recognition banks stay in ASOR.
+     * A warm process need not deserialize the entire full-descriptor library to rebuild this index. */
+    synchronized void saveCompact(File file,ReferenceCacheIndex index,List<ComponentReferenceSpec> sources,
+            VisionConfig config,KeypointInventoryManager inventory)throws IOException {
+        if(!ready)throw new IOException("Global reference index is not published");
+        Map<String,KeypointInventoryManager.Entry> counts=new HashMap<>();
+        for(KeypointInventoryManager.Entry e:inventory.snapshot())counts.put(e.referenceId,e);
+        File temp=File.createTempFile("global-index-",".tmp",file.getParentFile());
+        try{
+            try(DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(temp))))){
+                out.writeInt(COMPACT_VERSION);out.writeUTF(fingerprint(index,sources,config));out.writeInt(sources.size());
+                for(ComponentReferenceSpec source:sources){
+                    KeypointInventoryManager.Entry entry=counts.get(source.getReferenceId());
+                    if(!index.terminal(source,config)||entry==null||entry.variants.isEmpty())throw new IOException("Incomplete reference inventory: "+source.getReferenceId());
+                    out.writeUTF(source.getReferenceId());out.writeInt(entry.variants.size());
+                    for(Map.Entry<String,Integer> v:entry.variants.entrySet()){out.writeUTF(v.getKey());out.writeInt(v.getValue());}
+                    Template t=templates.get(source.getReferenceId());out.writeBoolean(t!=null);
+                    if(t==null)continue;
+                    out.writeInt(t.width);out.writeInt(t.height);out.writeDouble(t.spec.getPhysicalWidthMm());out.writeDouble(t.spec.getPhysicalHeightMm());
+                    out.writeInt(t.spec.getAssemblyStepNumber());out.writeBoolean(t.spec.hasVerifiedPolarityAnchors());
+                    writePolygon(out,t.spec.getPlanarCornersNormalized());out.writeInt(t.spec.getFeatureRegionsNormalized().size());
+                    for(List<VisionPoint> region:t.spec.getFeatureRegionsNormalized())writePolygon(out,region);
+                    out.writeInt(t.points.size());for(Point p:t.points){out.writeDouble(p.x);out.writeDouble(p.y);}
+                    byte[] bytes=new byte[t.points.size()*32];if(bytes.length>0)t.descriptors.get(0,0,bytes);out.write(bytes);
+                }
+            }
+            try{Files.move(temp.toPath(),file.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}
+            catch(AtomicMoveNotSupportedException fallback){Files.move(temp.toPath(),file.toPath(),StandardCopyOption.REPLACE_EXISTING);}
+        }finally{temp.delete();}
+    }
+
+    /** Decode and validate completely before publishing. Corruption never becomes partial evidence. */
+    synchronized boolean restoreCompact(File file,ReferenceCacheIndex index,List<ComponentReferenceSpec> sources,
+            VisionConfig config,KeypointInventoryManager inventory){
+        if(ready||!file.isFile()||file.length()>64L*1024*1024)return false;
+        Map<String,Template> restored=new LinkedHashMap<>();Map<String,Map<String,Integer>> counts=new LinkedHashMap<>();
+        boolean committed=false;
+        try(DataInputStream in=new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))))){
+            if(in.readInt()!=COMPACT_VERSION||!in.readUTF().equals(fingerprint(index,sources,config))||in.readInt()!=sources.size())return false;
+            for(ComponentReferenceSpec source:sources){
+                if(!index.terminal(source,config)||!in.readUTF().equals(source.getReferenceId()))return false;
+                int n=bounded(in.readInt(),1,8);Map<String,Integer> variants=new LinkedHashMap<>();
+                for(int j=0;j<n;j++){String variant=in.readUTF();if(!variant.equals("UNUSABLE"))ReferenceDatabase.PhotometricVariant.valueOf(variant);int count=bounded(in.readInt(),-1,1000000);if(variants.put(variant,count)!=null)return false;}
+                counts.put(source.getReferenceId(),variants);
+                if(!in.readBoolean())continue;
+                int width=bounded(in.readInt(),1,16384),height=bounded(in.readInt(),1,16384);
+                double physicalW=in.readDouble(),physicalH=in.readDouble();int step=bounded(in.readInt(),0,18);boolean verified=in.readBoolean();
+                List<VisionPoint> corners=readPolygon(in);if(corners.size()!=4)return false;
+                int regions=bounded(in.readInt(),0,128);List<List<VisionPoint>> polygons=new ArrayList<>();for(int j=0;j<regions;j++)polygons.add(readPolygon(in));
+                ComponentReferenceSpec spec=source.withPreparedGeometry(physicalW,physicalH,step,verified,corners,polygons);
+                int rows=bounded(in.readInt(),0,4096);List<Point> points=new ArrayList<>();
+                for(int j=0;j<rows;j++){double x=in.readDouble(),y=in.readDouble();if(!Double.isFinite(x+y)||x<0||y<0||x>width||y>height)return false;points.add(new Point(x,y));}
+                byte[] bytes=new byte[rows*32];in.readFully(bytes);restored.put(source.getReferenceId(),new Template(spec,width,height,points,bytes));
+            }
+            if(in.read()!=-1)return false; // also validates the gzip CRC/trailer
+            for(Template old:templates.values())old.release();templates.clear();templates.putAll(restored);
+            for(ComponentReferenceSpec s:sources)inventory.restore(s,counts.get(s.getReferenceId()));
+            for(Template t:templates.values())ComponentContourTemplates.register(t.spec);
+            publish();committed=true;return true;
+        }catch(IOException|IllegalArgumentException corrupt){return false;}
+        finally{if(!committed)for(Template t:restored.values())t.release();}
+    }
+    private static int bounded(int value,int min,int max)throws IOException{if(value<min||value>max)throw new IOException("Invalid compact index length");return value;}
+    private static void writePolygon(DataOutputStream out,List<VisionPoint> points)throws IOException{out.writeInt(points.size());for(VisionPoint p:points){out.writeDouble(p.getX());out.writeDouble(p.getY());}}
+    private static List<VisionPoint> readPolygon(DataInputStream in)throws IOException{int n=bounded(in.readInt(),3,128);List<VisionPoint> p=new ArrayList<>();for(int i=0;i<n;i++){double x=in.readDouble(),y=in.readDouble();if(!Double.isFinite(x+y)||x< -1||x>2||y< -1||y>2)throw new IOException("Invalid compact geometry");p.add(new VisionPoint(x,y));}return p;}
+    private static String fingerprint(ReferenceCacheIndex index,List<ComponentReferenceSpec> sources,VisionConfig config){
+        try{MessageDigest digest=MessageDigest.getInstance("SHA-256");for(ComponentReferenceSpec s:sources){digest.update(index.key(s,config).getBytes(StandardCharsets.UTF_8));digest.update((byte)0);}return Base64.getEncoder().encodeToString(digest.digest());}
+        catch(java.security.NoSuchAlgorithmException impossible){throw new AssertionError(impossible);}
     }
     private static boolean inBody(double x,double y,List<List<VisionPoint>> polygons){
         for(List<VisionPoint> polygon:polygons){boolean inside=false;for(int i=0,j=polygon.size()-1;i<polygon.size();j=i++){

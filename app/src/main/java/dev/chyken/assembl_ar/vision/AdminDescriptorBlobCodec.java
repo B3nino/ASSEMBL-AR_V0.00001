@@ -368,7 +368,7 @@ public final class AdminDescriptorBlobCodec {
         for (DescriptorVariant variant : variants) {
             if (variant.keypoints.length < minimumKeypoints) {
                 throw new IllegalArgumentException(
-                        variant.photometricVariant.name().toLowerCase()
+                        variant.photometricVariant.name().toLowerCase(java.util.Locale.ROOT)
                                 + " appearance has only " + variant.keypoints.length
                                 + " stable features; at least " + minimumKeypoints
                                 + " are required");

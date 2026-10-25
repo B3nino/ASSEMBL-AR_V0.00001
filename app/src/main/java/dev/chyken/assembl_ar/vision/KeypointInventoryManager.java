@@ -21,6 +21,9 @@ public final class KeypointInventoryManager {
         for(ReferenceDatabase.PreparedOrbVariant v:r.orbVariants)counts.put(v.photometricVariant.name(),v.keypoints.length);
         entries.put(r.spec.getReferenceId(),new Entry(r.spec,counts));
     }
+    void restore(ComponentReferenceSpec source,Map<String,Integer> counts){
+        entries.put(source.getReferenceId(),new Entry(source,new LinkedHashMap<>(counts)));
+    }
     public String name(String referenceId){Entry e=referenceId==null?null:entries.get(referenceId);return e==null?null:e.displayName;}
     public String status(String referenceId){Entry e=entries.get(referenceId);return e==null||e.variants.isEmpty()?"preparing":e.variants.containsKey("UNUSABLE")?"unusable source":e.primary()+" kp";}
     public int count(String referenceId){Entry e=referenceId==null?null:entries.get(referenceId);return e==null?-1:e.primary();}

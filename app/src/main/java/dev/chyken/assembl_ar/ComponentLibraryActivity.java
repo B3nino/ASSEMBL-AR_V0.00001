@@ -32,6 +32,9 @@ import dev.chyken.assembl_ar.ui.UiUtils;
 public final class ComponentLibraryActivity extends AppCompatActivity {
     private final List<ComponentCard> componentCards = new ArrayList<>();
     private View emptyState;
+    private dev.chyken.assembl_ar.ui.DeferredCardBinder<Component> cardBinder;
+    private String activeQuery="";
+    private final List<AssemblyStep> pinSteps=NeobotSeedData.getAssemblySteps();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,10 +51,12 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
     }
 
     private void populateComponents(List<Component> components) {
-        LinearLayout container = findViewById(R.id.componentsContainer);
-        emptyState = findViewById(R.id.componentsEmptyState);
-        LayoutInflater inflater = LayoutInflater.from(this);
-        for (Component component : components) {
+        LinearLayout container=findViewById(R.id.componentsContainer);emptyState=findViewById(R.id.componentsEmptyState);
+        if(cardBinder!=null)cardBinder.close();componentCards.clear();container.removeAllViews();
+        cardBinder=new dev.chyken.assembl_ar.ui.DeferredCardBinder<>(container,components,this::bindComponent,()->filterComponents(activeQuery));
+    }
+    private void bindComponent(Component component){
+        LinearLayout container=findViewById(R.id.componentsContainer);LayoutInflater inflater=LayoutInflater.from(this);
             View card = inflater.inflate(R.layout.item_component, container, false);
             ImageView image = card.findViewById(R.id.componentImage);
             TextView title = card.findViewById(R.id.componentTitle);
@@ -65,7 +70,7 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
                     + (component.getKitQuantity() > 0 ? " · Qty " + component.getKitQuantity() : " · Optional"));
             description.setText(component.getDescription() + "\n\nPurpose: " + component.getPurpose());
             usage.setText("Assembly usage · " + component.getAssemblyUsage());
-            String pinText = pinMappings(component.getId());
+            String pinText = pinMappings(component.getId(),pinSteps);
             if (!pinText.isEmpty()) {
                 pins.setText(pinText);
                 pins.setVisibility(View.VISIBLE);
@@ -86,9 +91,10 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
                     ManualReferenceDialog.show(this, component.getManualReference()));
             container.addView(card);
             componentCards.add(new ComponentCard(card, searchableText(component)));
-        }
-        emptyState.setVisibility(componentCards.isEmpty() ? View.VISIBLE : View.GONE);
+
+        filterComponents(activeQuery);
     }
+    @Override protected void onDestroy(){if(cardBinder!=null)cardBinder.close();super.onDestroy();}
 
     private void configureTabletCard(View card, ImageView image) {
         if (!UiUtils.isExpandedTablet(this)) {
@@ -136,6 +142,7 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
     }
 
     private void filterComponents(CharSequence query) {
+        activeQuery=query==null?"":query.toString();
         String normalizedQuery = normalize(query == null ? "" : query.toString()).trim();
         String[] terms = normalizedQuery.isEmpty() ? new String[0] : normalizedQuery.split("\\s+");
         int visibleCount = 0;
@@ -153,7 +160,7 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
                 visibleCount++;
             }
         }
-        emptyState.setVisibility(visibleCount == 0 ? View.VISIBLE : View.GONE);
+        emptyState.setVisibility(visibleCount==0&&(cardBinder==null||cardBinder.complete())?View.VISIBLE:View.GONE);
     }
 
     private static String searchableText(Component component) {
@@ -168,9 +175,9 @@ public final class ComponentLibraryActivity extends AppCompatActivity {
         return value.toLowerCase(Locale.ROOT);
     }
 
-    private static String pinMappings(String componentId) {
+    private static String pinMappings(String componentId,List<AssemblyStep> steps) {
         Set<String> mappings = new LinkedHashSet<>();
-        for (AssemblyStep step : NeobotSeedData.getAssemblySteps()) {
+        for (AssemblyStep step : steps) {
             for (PinConnection connection : step.getPinConnections()) {
                 if (componentId.equals(connection.getSourceComponentId())
                         || componentId.equals(connection.getTargetComponentId())) {

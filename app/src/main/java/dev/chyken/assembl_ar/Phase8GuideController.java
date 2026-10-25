@@ -56,7 +56,7 @@ final class Phase8GuideController implements AutoCloseable {
     }
     private String instruction(){switch(flow.screen()){
         case SENSOR_SCAN:return "Step 8.1: Scan the Distance Sensor.\n• Place the module flat with both sensor eyes visible.";
-        case HARDWARE_PREP:return "Step 8.1: Prepare jumper wires.\n• Gather 12 female-to-female jumpers: 10 for the connections and 2 spares.\n• Sensor power and ground already connect through the PCB.";
+        case HARDWARE_PREP:return "Step 8.1: Prepare jumper wires.\n• Gather 10 female-to-female jumper wires.\n• Sensor power and ground already connect through the PCB.";
         case MOUNT_DEMO:return "Step 8.2A: Watch the installation demo.\n• Both sensor eyes must face OUTWARD, away from the board.\n• Choose Ready to Scan after watching.";
         case MOUNT_SCAN:return "Step 8.2B: Verify Distance Sensor installation.\n• Point the camera straight down.\n• Match the recommended scanning frame.";
         case DISTANCE_PREP:return "Step 8.3: Prepare 2 female-to-female jumper wires.\n• These are for Trigger and Echo only.\n• VCC and GND need no additional jumpers.";
@@ -72,7 +72,7 @@ final class Phase8GuideController implements AutoCloseable {
     }}
     private static String spokenInstruction(Screen s){switch(s){
         case SENSOR_SCAN:return "Step 8 point 1. Scan your ultrasonic distance sensor with both sensor eyes visible.";
-        case HARDWARE_PREP:return "Prepare twelve female to female jumper wires. Ten are used and two are spares. The distance sensor power and ground connect through the board, so no extra wires are needed for those pins.";
+        case HARDWARE_PREP:return "Prepare ten female to female jumper wires. Ten are used and two are spares. The distance sensor power and ground connect through the board, so no extra wires are needed for those pins.";
         case MOUNT_DEMO:return "Watch the video to mount the distance sensor. Make sure the sensor eyes face outward away from the circuit board. Tap Ready to Scan when you are ready.";
         case MOUNT_SCAN:return "Step 8 point 2. Point your camera straight down to verify distance sensor orientation.";
         case DISTANCE_PREP:return "Prepare two female to female jumper wires for Trigger and Echo. No additional jumper wires are needed for sensor power and ground. Wire colors are optional personal visual guidance and do not affect the circuit.";
@@ -118,7 +118,7 @@ final class Phase8GuideController implements AutoCloseable {
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(checkQuestion(),"check:"+(++sequence));dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{String correction="Please check all female jumper headers and push each housing firmly onto the correct pin. Re-seat loose wires.";prompt.setText(correction+"\n\n"+checkQuestion());say(correction,"loose:"+(++sequence));});dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{flow.confirm();dialog.dismiss();modal=false;status("Connections secure · Next step unlocked");render();save();if(flow.canFinish(developer)){finishing=true;completionKey="complete:"+(++sequence);say("Phase 8 complete! All sensors and component wires verified successfully.",completionKey);AssemblyVoiceGuide.Status voice=activity.voiceGuide().getStatus();if(voice==AssemblyVoiceGuide.Status.MUTED||voice==AssemblyVoiceGuide.Status.UNAVAILABLE)advance();else main.postDelayed(this::advance,16000);}});});
         dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
-    private void rescan(){if(closed||paused||saving||!flow.screen().scan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
+    private void rescan(){if(closed||paused||saving||!flow.canRescan())return;dismiss();flow.pause();modal=true;render();dialog=RescanConfirmationDialog.show(activity,()->{reviewScan=reviewing;flow.rescan(now());flow.resume(now());changed();});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused){flow.resume(now());render();}});}
     private int videoIndex(){return flow.screen()==Screen.ROUTING_DEMO?1:0;}
     private void startVideo(){
         final Screen screen=flow.screen();final int index=videoIndex();List<String> clips=index==0?mountClips:routingClips;if(clips.isEmpty()){videoError=true;status("The required Phase 8 demo is missing.");main.post(this::render);return;}
@@ -136,7 +136,7 @@ final class Phase8GuideController implements AutoCloseable {
         if(closed)return;Screen s=flow.screen();plan=!paused&&!saving&&!modal&&(!reviewing||reviewScan)&&flow.scanning()?new Plan(s==Screen.SENSOR_SCAN?1:2,flow.tag()):null;
         boolean unlocked=flow.complete()&&(s!=Screen.TRACKER_WIRING||reviewing||flow.canFinish(developer));
         String details="Keep battery power disconnected while making connections. Sensor VCC/GND and LED/speaker grounds are already linked through the PCB. No additional jumpers are needed for those connections.\n\n"+JumperWirePreparationDialog.DISCLAIMER+"\n\nPhysical left/right are defined from above with the robot facing forward. When viewed underneath, screen-left is physical right (A3) and screen-right is physical left (A2).\n\nThe camera checks visible sensor installation only. The physical checklist checks wire seating and routing.";
-        card.render(800+flow.step(),"Phase 8 · "+s.label()+" · "+flow.step()+"/14",instruction(),details,message,unlocked,true,s.scan()&&flow.complete());
+        card.render(800+flow.step(),"Phase 8 · "+s.label()+" · "+flow.step()+"/14",instruction(),details,message,unlocked,true,flow.canRescan());
         card.next.setText(s==Screen.TRACKER_WIRING?reviewing?"Return to current phase":"Continue to Phase 9 →":"Next Step →");card.next.setEnabled(unlocked&&!saving);card.next.setVisibility(s.video()&&!flow.complete()?View.GONE:View.VISIBLE);
         boolean actionable=s.prep()||s.picker()||s.video()||s.wiring();card.action.setVisibility(s.wiring()||actionable&&!reviewing&&(!flow.complete()||s.picker()||s.video())?View.VISIBLE:View.GONE);
         card.action.setText(s.wiring()&&(reviewing||flow.complete())?"Review wiring diagram":s.prep()?s==Screen.HARDWARE_PREP?"I Have These":"Prepare wires":s.picker()?"Select wire colors":s.video()?videoError?"Retry demo":s==Screen.MOUNT_DEMO?"Ready to Scan":"Continue to wire preparation":"Check connections");card.action.setEnabled(!saving&&(!s.video()||watched[videoIndex()]||videoError));card.returnToCurrent.setVisibility(reviewing?View.VISIBLE:View.GONE);
@@ -146,6 +146,8 @@ final class Phase8GuideController implements AutoCloseable {
         else{workspace.hide();if(attached!=s){stopVideo();attached=s;if(s.video())startVideo();else if(s.picker()){TextView hint=PhysicalCheckUi.prompt(activity,"Choose your physical wire colors.\n\nColors are visual guidance only.");preview.showContent(hint,"Wire color assignments");}else preview.showComponent(NeobotSeedData.DISTANCE_SENSOR,"Ultrasonic distance sensor");}}
         preview.onHudState(flow.complete()?ArHudView.HudState.MATCHED:warning?ArHudView.HudState.WRONG_ORIENTATION:ArHudView.HudState.SEARCHING);
         activity.setBanner(flow.complete()?"Step complete · Next step unlocked":message.isEmpty()?s.label():message,plan!=null,warning?R.drawable.bg_camera_warning:flow.complete()?R.drawable.bg_success:R.drawable.bg_live_pill);
+
+        preview.setSkipPreviewAction(AssemblyStepNavigationManager.canSkipPreview(flow.screen().video(),paused,saving)?this::skipPreview:null);
     }
     String checkpointState(){if(video!=null)positions[videoIndex()]=video.position();if(picker!=null&&picker.isShowing()){draft=picker.draftColors();selected=picker.selectedWire();}return flow.snapshot()+"|"+watched[0]+"|"+positions[0]+"|"+watched[1]+"|"+positions[1]+(draft==null?"":"|"+draft.encode()+"|"+selected.ordinal());}
     private void save(){String state=checkpointState();if(!state.equals(savedState)){savedState=state;if(!developer&&!reviewing)PhaseProgressStore.saveSensorWiringState(activity,NeobotSeedData.PROJECT_ID,state);checkpointChanged.run();}}
@@ -162,4 +164,6 @@ final class Phase8GuideController implements AutoCloseable {
     void devComplete(){developer=true;flow.devComplete();changed();}
     void restart(){draft=null;Arrays.fill(watched,false);Arrays.fill(positions,0);flow.restart(now());changed();}
     @Override public void close(){if(closed)return;pause();closed=true;stopVideo();workspace.close();alignment.showGuide(null);((ArHudView)activity.findViewById(R.id.arHudView)).setScanningEnabled(false);}
+
+    private void skipPreview(){if(closed||!AssemblyStepNavigationManager.canSkipPreview(flow.screen().video(),paused,saving))return;watched[videoIndex()]=true;flow.confirm();if(flow.next(now()))changed();}
 }

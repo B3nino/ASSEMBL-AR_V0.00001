@@ -7,7 +7,6 @@
     <string name="part_test_pause">Pause test</string>
     <string name="part_test_reset">Reset part</string>
     <string name="part_test_results">Results</string>
-    <string name="part_test_export">Save CSV</string>
     <string name="part_test_capture">Save sample</string>
     <string name="part_test_replay">Replay sample</string>
     <string name="part_test_capture_first">Start the test before saving a sample.</string>

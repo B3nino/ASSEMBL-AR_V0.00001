@@ -19,15 +19,17 @@ public final class AssetImageLoader {
     private static final LruCache<String, Bitmap> CACHE = new LruCache<String, Bitmap>(12 * 1024) {
         @Override
         protected int sizeOf(String key, Bitmap value) {
-            return value.getByteCount() / 1024;
+            return Math.max(1,value.getByteCount() / 1024);
         }
     };
 
     private AssetImageLoader() {
     }
+    public static void trimMemory(){CACHE.evictAll();}
 
     public static void load(ImageView target, @Nullable String assetPath) {
-        loadBounded(target,assetPath,0);
+        // Card thumbnails must not retain full multi-megapixel reference photographs.
+        loadBounded(target,assetPath,768);
     }
     public static void loadBounded(ImageView target,@Nullable String assetPath,int maximumDimension) {
         loadBounded(target,assetPath,maximumDimension,null);

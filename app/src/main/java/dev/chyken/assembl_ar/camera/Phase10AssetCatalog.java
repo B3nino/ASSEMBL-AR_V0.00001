@@ -36,6 +36,7 @@ public final class Phase10AssetCatalog {
     private static String digest(AssetManager assets,String path){try(InputStream in=assets.open(path)){MessageDigest md=MessageDigest.getInstance("SHA-256");byte[] b=new byte[32768];for(int n;(n=in.read(b))!=-1;)md.update(b,0,n);return Base64.getEncoder().encodeToString(md.digest());}catch(IOException|NoSuchAlgorithmException failure){throw new IllegalStateException("Cannot validate Phase 10 photo: "+path,failure);}}
     public static List<ComponentReferenceSpec> referencesForPaths(List<String> paths){List<ComponentReferenceSpec> result=new ArrayList<>();Set<String> seen=new HashSet<>();
         for(String path:paths){if(!path.startsWith(ROOT+"/")||!Phase2AssetCatalog.image(path)||!seen.add(path))continue;String role=role(path.substring(ROOT.length()+1).split("/")[0]);if(role==null)continue;
+            ComponentReferenceSpec reviewed=Phase1011VideoReferences.find(path);if(reviewed!=null){result.add(reviewed);continue;}
             int stage=role.equals("cable")?1:role.startsWith("protector")?3:2;
             result.add(ComponentReferenceSpec.builder(PREFIX+role+"_"+path,target(stage),"Extension board installation",stage==1?150:stage==3?40:100,stage==1?20:stage==3?50:180).jpegAssetPath(path).assemblyStepNumber(10).maximumImageDimension(1280).polarityAnchorsVerified(false).build());
         }return Collections.unmodifiableList(result);
