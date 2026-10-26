@@ -1,0 +1,454 @@
+{
+  "distinct_groups": 86,
+  "passed": 86,
+  "runs": [
+    {
+      "file": "hygiene-native-all-results.json",
+      "runs": 83,
+      "passed": 82
+    },
+    {
+      "file": "hygiene-native-latency-results.json",
+      "runs": 7,
+      "passed": 7
+    },
+    {
+      "file": "nano-final-results.json",
+      "runs": 6,
+      "passed": 6
+    }
+  ],
+  "candidate_sha256": "859039fd79879d2578fdfe99ac10382b6b3d9080adc1ae3dc6de1b2fd1199047",
+  "groups": [
+    {
+      "case": "DynamicOutlinePipelineInstrumentedTest#completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#bothCamerasHaveAnIndependentFullSizeDynamicOverlay",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#phaseOneDeveloperCompletionShowsAnEnabledFooterWithoutCameraEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#welcomeFooterIsVisibleEnabledAndContrastingAtLargeFonts",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#bothToolbarsShareMutePreferenceWithoutWritingAssemblyProgress",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#checklistKeepsExplicitCallbacksCorrectionsAndReachableButtons",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#cubeRendersAndUsesRealCountsWithoutBypassingReferenceGate",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#graphicsStopSchedulingWhenHiddenPausedDetachedAndClosed",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#settingsTogglesChangeOnlyAdministratorAndAssemblyDeveloperVisibility",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#sharedLightShellKeepsOneMenuAndUsableTesterViewport",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.CameraPauseResumeInstrumentedTest#opticalBridgePauseReleasesLatestImageAndCanResumeTracking",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+      "passed": true,
+      "latest_run": "nano-final-results.json"
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#bothHudStatesKeepAllFifteenLinesAndColorOnlyTheFinalOutput",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#checkerboardTreIsThreeDimensionalAndUnavailableWithoutMetricIntrinsics",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#higherMatchCountOnAnotherReferenceCannotOwnCandidateTelemetry",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#realCasterAndSensorCandidatesOwnTheirRoiTelemetry",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#sharedAnalyzerPublishesOneVerifiedCandidateAndTruePoseResiduals",
+      "passed": true,
+      "latest_run": "nano-final-results.json"
+    },
+    {
+      "case": "vision.GlobalOutlineRegistryInstrumentedTest#ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.GlobalOutlineRegistryInstrumentedTest#bodyDescriptorsIdentifyTheWrongPartAndRejectItsEmptyBoardContext",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#fallbackPoseIsReportedAsCoarseWithoutFabricatingOrbOrBenchmarkOrientation",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#flatFramesCannotInventStructuralKeypointsAndRepeatedBuffersRelease",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#lostOptionalSidecarCannotBlockAWarmLuminanceScanner",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#migrationKeepsLuminanceBlobAndGeometryWhileOnlyAddingAnEdgeSidecar",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#phaseMatcherCanUseOnlyTheStructuralBankAndBlankCannotPass",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#realPhotoStructuralDescriptorsRetainConsensusAfterExposureShift",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#structuralCacheIsSeparateBoundedAndCopiedWithItsOwner",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#cyclicContourHierarchyTerminatesWithoutInventingRepeatedHoles",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#directReplayAndCloseShareTheSameNativeOwnershipGuard",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#failedDescriptorPublicationPreservesBorrowedInputsAndSuccessfulOutputOwnsItsRows",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#pauseFromOutlineCallbackDropsTheRemainingTrackingCallback",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence",
+      "passed": true,
+      "latest_run": "nano-final-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#rejectedCaptureWritesDoNotLeakAdmissionCounters",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#threeThousandFlowFramesReuseBuffersAndResetReleasesEveryOwner",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#allocationLightRatioProbeMatchesNativeDMatchValues",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#delayedRecognitionCatchesUpToLatestCameraFrame",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#mountedPairKeepsTwoSeparateMovingOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#multiSecondDetectorSeedIsRelocatedAgainstTheNewestMeasuredImage",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#photoOnlyOutlineFollowsMeasuredPanAndClearsWhenOccluded",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#resetAndCloseReleaseFrameBuffersAcrossRepeatedScans",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#sparseEightToElevenCornerTargetsCatchUpButCannotTrackABlankFrame",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions",
+      "passed": true,
+      "latest_run": "hygiene-native-latency-results.json"
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#individualToolShowsOutlinesBeforeSuccessForEveryNewLoosePart",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase10LoosePartsAndRealBoardBottomRequireCorrectOrientation",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11LooseOledBatteryAndBackFaceKeepTheirIdentity",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#boardOnlyCannotPassStackedAssembly",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#clippedCableCannotPassAsBothCompleteConnectors",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#looseCableRequiresBothConnectorHeadsAndVisibleOutline",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#protectorUnderGlareRequiresIndependentFrameAndBoardEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#blurredStandoffDoesNotInventACompletePose",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#clippedSensorCannotBecomeACompleteFrontFace",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPalmHasMeasuredOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPaperAndRotatedFrontHasMeasuredOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#phase8CameraAnalyzerPublishesTheOutlineBeforeConsecutiveSuccess",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#restoredLooseStandoffScanUsesFreshGeometricEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#shadowedBottomAssemblyRequiresBothTrackersAndCasterWithOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#standoffScanRejectsYellowWheelHubs",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#standaloneStandoffKeepsMeasuredIndividualToolOutlines",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines",
+      "passed": true,
+      "latest_run": "nano-final-results.json"
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#compactIndexPreservesEveryCountGeometryAndDescriptorWithoutFullBankReload",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#corruptOrDifferentCatalogCannotPublishPartialGlobalEvidence",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#previewSkipIsVisibleAccessibleAndCannotLeakIntoNonVideoContent",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.VerifiedTelemetryReplayInstrumentedTest#geometryHudIsGreenAndUnmeasuredValuesStayHonestInBothLayouts",
+      "passed": true,
+      "latest_run": "hygiene-native-all-results.json"
+    },
+    {
+      "case": "vision.VerifiedTelemetryReplayInstrumentedTest#roomStackedAssemblyPairsAndFreezesVerifiedMetricsWhileTrackingStaysLive",
+      "passed": true,
+      "latest_run": "nano-final-results.json"
+    }
+  ]
+}

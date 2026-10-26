@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "model": "models/arduinonano.onnx",
+  "output": "yolo_cxcywh",
+  "anchorKind": "chip",
+  "inputSize": 640,
+  "scale": 0.00392156862745098,
+  "meanRgb": [0, 0, 0],
+  "confidence": 0.8,
+  "labels": {"0": "arduino_nano_microcontroller"}
+}

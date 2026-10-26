@@ -4,7 +4,6 @@ import java.util.Locale;
 
 /** Immutable numeric snapshot. NaN/-1 explicitly mean unavailable, never perfect accuracy. */
 public final class DiagnosticScanTelemetry {
-    public static final float PASS_PERCENT=85;
     public static final class Point {
         public final double x,y;
         public Point(double x,double y){this.x=x;this.y=y;}
@@ -15,8 +14,9 @@ public final class DiagnosticScanTelemetry {
     public final float matchPercentage,treMm,pixelDistance,reprojectionRmsPx;
     public final long extractionTimeMs,matchingTimeMs,totalAnalyzedFrames;
     public final boolean isCorrectPose,candidateVerified,poseMeasured;
+    public final boolean coarsePose;
     public final Point projectedPoint,observedPoint;
-    /** Workflow verification is distinct from the academic ORB/3D-pose gates. */
+    /** Workflow verification is independent of descriptive ORB yield and measured 3D pose. */
     public final boolean workflowVerified;
     public final String verificationSource;
     public final double verificationConfidence;
@@ -24,25 +24,26 @@ public final class DiagnosticScanTelemetry {
             double extraction,double matching,boolean correct,boolean verified,boolean pose,String orientation,
             double tre,Point projected,Point observed,double rms,long frames){
         this(name,reference,active,live,good,total,extraction,matching,correct,verified,pose,orientation,
-                tre,projected,observed,rms,frames,false,null,Double.NaN);
+                tre,projected,observed,rms,frames,false,null,Double.NaN,false);
     }
     private DiagnosticScanTelemetry(String name,String reference,int active,int live,int good,int total,
             double extraction,double matching,boolean correct,boolean verified,boolean pose,String orientation,
             double tre,Point projected,Point observed,double rms,long frames,boolean workflow,
-            String source,double confidence){
+            String source,double confidence,boolean coarse){
         componentName=verified?name:"Unverified";referenceId=verified?reference:null;
         activeKeypoints=active;liveKeypoints=live;goodMatches=good;totalMatches=total;
         matchPercentage=total>0&&good>=0&&good<=total?100f*good/total:Float.NaN;
         extractionTimeMs=Double.isFinite(extraction)?Math.round(extraction):-1;
         matchingTimeMs=Double.isFinite(matching)?Math.round(matching):-1;
         candidateVerified=verified;poseMeasured=pose;isCorrectPose=verified&&pose&&correct;
+        coarsePose=coarse&&pose;
         orientationLabel=orientation==null?"Unmeasured":orientation;
         treMm=(float)tre;projectedPoint=projected;observedPoint=observed;
         pixelDistance=projected!=null&&observed!=null&&projected.measured()&&observed.measured()
                 ?(float)Math.hypot(projected.x-observed.x,projected.y-observed.y):Float.NaN;
         reprojectionRmsPx=(float)rms;totalAnalyzedFrames=frames;
         workflowVerified=workflow;verificationSource=source;verificationConfidence=confidence;
-        outputStatus=workflow?"Match (VERIFIED)":candidateVerified&&Float.isFinite(matchPercentage)&&matchPercentage>=PASS_PERCENT&&isCorrectPose?"Match":"Mismatch";
+        outputStatus=workflow?"Match (VERIFIED)":candidateVerified&&isCorrectPose?"Match":"Mismatch";
     }
     /** No confidence score is converted to an ORB match count, ratio, or measured pose. */
     public DiagnosticScanTelemetry withVerification(String name,String source,double confidence){
@@ -51,7 +52,15 @@ public final class DiagnosticScanTelemetry {
                 extractionTimeMs<0?Double.NaN:extractionTimeMs,matchingTimeMs<0?Double.NaN:matchingTimeMs,
                 isCorrectPose,true,poseMeasured,orientationLabel,treMm,projectedPoint,observedPoint,
                 reprojectionRmsPx,totalAnalyzedFrames,true,source,
-                Double.isFinite(confidence)&&confidence>=0&&confidence<=1?confidence:Double.NaN);
+                Double.isFinite(confidence)&&confidence>=0&&confidence<=1?confidence:Double.NaN,coarsePose);
+    }
+    /** Keep coarse geometry separate from measured inlier orientation and solver RMS. */
+    public DiagnosticScanTelemetry withCoarsePose(){
+        if(!poseMeasured)return this;
+        return new DiagnosticScanTelemetry(componentName,referenceId,activeKeypoints,liveKeypoints,goodMatches,totalMatches,
+                extractionTimeMs,matchingTimeMs,false,candidateVerified,poseMeasured,"Coarse PnP (orientation unverified)",
+                treMm,projectedPoint,observedPoint,reprojectionRmsPx,totalAnalyzedFrames,workflowVerified,
+                verificationSource,verificationConfidence,true);
     }
     public boolean outputMatches(){return workflowVerified||"Match".equals(outputStatus);}
     private static String n(double value){return Double.isFinite(value)?String.format(Locale.US,"%.2f",value):"Unmeasured";}
@@ -61,10 +70,10 @@ public final class DiagnosticScanTelemetry {
         +"\nActive keypoints: "+(workflowVerified&&activeKeypoints<0?"Unmeasured ("+verificationSource+")":count(activeKeypoints))
         +"\nLive keypoints: "+count(liveKeypoints)
         +"\nGood/Matches: "+count(goodMatches)+" / "+count(totalMatches)
-        +"\n%: "+n(matchPercentage)+(Float.isFinite(matchPercentage)?"%":"")+" ("+(Float.isFinite(matchPercentage)?(matchPercentage>=PASS_PERCENT?"PASS":"FAIL")+(workflowVerified?" · ORB gate":""):workflowVerified?"ORB unmeasured":"FAIL")+")"
+        +"\n%: "+n(matchPercentage)+(Float.isFinite(matchPercentage)?"%":"")
         +"\nExtraction time (ms) : "+count(extractionTimeMs)
         +"\nMatching time (ms) : "+count(matchingTimeMs)
-        +"\nCorrect Pose: "+(poseMeasured?(isCorrectPose?"Correct":"Incorrect"):"Unmeasured")
+        +"\nCorrect Pose: "+(coarsePose?"Coarse PnP":poseMeasured?(isCorrectPose?"Correct":"Incorrect"):"Unmeasured")
         +"\nOrientation: "+orientationLabel
         +"\n% TRE: "+n(treMm)+(Float.isFinite(treMm)?" mm":"")
         +"\nProjected point per frame: "+point(projectedPoint)

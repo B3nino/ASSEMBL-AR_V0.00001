@@ -20,7 +20,7 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
     Phase2ReferenceMatcher(ReferenceDatabase database,VisionConfig config) {
         this.database=database;orb=OpenCvVisionUtils.createOrb(config);clahe=OpenCvVisionUtils.createClahe(config);
         for(ReferenceDatabase.PreparedReference ref:database.preparedReferences())if(Phase2AssetCatalog.referenceRole(ref.spec.getReferenceId())!=null)
-            for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants)if(variant.hasOrbData()){
+            for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants())if(variant.hasOrbData()){
                 int n=Math.min(96,variant.descriptors.rows()),stride=variant.descriptors.cols()*(int)variant.descriptors.elemSize();
                 byte[] source=new byte[variant.descriptors.rows()*stride],rows=new byte[n*stride];variant.descriptors.get(0,0,source);
                 for(int i=0;i<n;i++)System.arraycopy(source,(i*variant.descriptors.rows()/n)*stride,rows,i*stride,stride);
@@ -37,7 +37,7 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
         try {
             if(scale<1) Imgproc.resize(gray,rawWork,new Size(),scale,scale,Imgproc.INTER_AREA); else gray.copyTo(rawWork);
             DiagnosticHammingMatcher.State extracted=DiagnosticHammingMatcher.snapshot();
-            boolean reuse=stage!=5&&extracted.live!=null&&scale==1;
+            boolean reuse=stage!=5&&extracted.live!=null&&scale==1&&extracted.liveStructural==extracted.structuralInput;
             if(reuse){rawWork.copyTo(work);extracted.live.copyTo(descriptors);points.fromArray(extracted.liveKeys);}
             else {
             DiagnosticHammingMatcher.normalize(clahe,rawWork,work);
@@ -63,14 +63,14 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
                 // Do not spend another full BF pass on evidence that cannot affect
                 // this verdict. Missing sides still fail their independent ROIs.
                 if(stage==5&&housingPossible&&role.equals("invalid"))continue;
-                for(ReferenceDatabase.PreparedOrbVariant variant:reference.orbVariants) {
+                for(ReferenceDatabase.PreparedOrbVariant variant:reference.recoveryVariants()) {
                     if(!variant.hasOrbData())continue;
                     // Room lighting changes contrast, not image polarity. Live
                     // installed-hardware checks use the normalized photo bank with
                     // automatic illumination recovery, rather than doubling every
                     // failed candidate with an artificial negative of the photo.
                     // Exhaustive diagnostic inspection retains both variants.
-                    if(requestedView!=null&&variant.photometricVariant!=ReferenceDatabase.PhotometricVariant.NORMALIZED)continue;
+                    if(requestedView!=null&&variant.photometricVariant!=(DiagnosticHammingMatcher.snapshot().structuralInput?ReferenceDatabase.PhotometricVariant.EDGE:ReferenceDatabase.PhotometricVariant.NORMALIZED))continue;
                     Evidence evidence=match(reference,variant,live,descriptors,scale,role,work.cols(),work.rows(),work,rawWork,rgb);
                     if(evidence==null)continue;
                     if(!role.equals("invalid")&&!evidence.bodies.isEmpty()&&(located==null||evidence.bodies.size()>located.bodies.size()||evidence.bodies.size()==located.bodies.size()&&evidence.score>located.score)){located=evidence;locatedId=reference.spec.getReferenceId();}

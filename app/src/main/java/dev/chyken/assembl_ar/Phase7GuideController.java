@@ -135,7 +135,7 @@ final class Phase7GuideController implements AutoCloseable {
     private void checklist(){
         if(closed||paused||saving||flow.step()<3||flow.viewingDemo()||!flow.checklistReady()||flow.complete()||dialog!=null&&dialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,question());
-        dialog=new AlertDialog.Builder(activity).setTitle(flow.step()==3?"Caster stability":"Line tracker stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Secure",null).create();
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle(flow.step()==3?"Caster stability":"Line tracker stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Secure",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);checkLabels();say(question(),"check:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{
                 if(flow.step()==3){if(flow.sandwiched())flow.confirmSwivels(false);else flow.confirmSandwiched(false);}else flow.confirmStable(false);

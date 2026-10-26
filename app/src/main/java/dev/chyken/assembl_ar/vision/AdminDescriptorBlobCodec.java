@@ -361,7 +361,8 @@ public final class AdminDescriptorBlobCodec {
     private static void validateRegistrationCapacity(
             List<DescriptorVariant> variants, VisionConfig config) {
         int minimumKeypoints = Math.max(4, config.getMinimumGoodMatches() * 2);
-        if (variants.size() != MAX_VARIANTS) {
+        if (variants.size() != 2 || variants.get(0).photometricVariant != ReferenceDatabase.PhotometricVariant.NORMALIZED
+                || variants.get(1).photometricVariant != ReferenceDatabase.PhotometricVariant.INVERTED) {
             throw new IllegalArgumentException(
                     "both normal and color-inverted feature sets are required");
         }

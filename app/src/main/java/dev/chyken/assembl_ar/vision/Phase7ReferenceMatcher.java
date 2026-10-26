@@ -69,7 +69,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
                 for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
                     String role=Phase7AssetCatalog.referenceRole(ref.spec.getReferenceId());if(!Phase7AssetCatalog.eligible(role,step))continue;
                     boolean bad=Phase7AssetCatalog.negative(role),installed=Phase7AssetCatalog.installed(role);if(pass>0&&bad)continue;
-                    for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+                    for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                         if(!variant.hasOrbData())continue;
                         List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
                         if(installed){
@@ -90,7 +90,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
                     try(ComponentDetailExtractor.Sample detail=casterDetail.extract(trackerGray,frame,extent)){
                         if(detail!=null)for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
                             if(!"caster".equals(Phase7AssetCatalog.referenceRole(ref.spec.getReferenceId())))continue;
-                            for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants)if(variant.hasOrbData())for(List<VisionPoint> region:ref.spec.getFeatureRegionsNormalized()){
+                            for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants())if(variant.hasOrbData())for(List<VisionPoint> region:ref.spec.getFeatureRegionsNormalized()){
                                 Match found=match(ref,variant,detail.keys,detail.descriptors,scale,Collections.singletonList(region),false,false,region);
                                 if(found!=null&&(best==null||found.score>best.score))best=found;
                             }
@@ -161,7 +161,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
                     List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
                     boolean installed="trackerwork".equals(Phase7AssetCatalog.referenceRole(ref.spec.getReferenceId()));
                     if(installed&&regions.size()<6)continue;
-                    for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+                    for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                         if(!variant.hasOrbData()||local.descriptors.empty())continue;
                         for(int i=0;i<Math.min(2,regions.size());i++){
                             List<VisionPoint> roi=regions.get(i);
@@ -220,7 +220,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
             if(inspectedContext>0&&System.nanoTime()>contextDeadline)break;
             inspectedContext++;
             List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();if(regions.size()<6)continue;
-            for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+            for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                 if(!variant.hasOrbData())continue;
                 List<Point>[] matched=correspondences(variant,live,descriptors);List<Point> allA=matched[0],allB=matched[1];
                 List<Point> a=new ArrayList<>(),b=new ArrayList<>();
@@ -280,10 +280,10 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         List<ReferenceDatabase.PreparedReference> refs=new ArrayList<>();if(preferredBoard!=null)refs.add(preferredBoard);
         for(ReferenceDatabase.PreparedReference ref:installedReferences)if(ref!=preferredBoard&&dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(ref.spec.getJpegAssetPath())!=null)refs.add(ref);
         Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
-        for(ReferenceDatabase.PreparedReference ref:refs){int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){Crop c=contextCrop(ref,v);if(!c.sparse.empty()&&descriptors.rows()>1){NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(c.sparse,descriptors);for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))score++;}break;}scores.put(ref,score);}
+        for(ReferenceDatabase.PreparedReference ref:refs){int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){Crop c=contextCrop(ref,v);if(!c.sparse.empty()&&descriptors.rows()>1){NearestDescriptorPairs pairs=NearestDescriptorPairs.compute(c.sparse,descriptors);for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))score++;}break;}scores.put(ref,score);}
         refs.sort((a,b)->Integer.compare(scores.get(b),scores.get(a)));
         int tried=0;for(ReferenceDatabase.PreparedReference ref:refs){if(tried++==3)break;List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
-            for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){Crop c=contextCrop(ref,v);if(c.descriptors==null)continue;
+            for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){Crop c=contextCrop(ref,v);if(c.descriptors==null)continue;
                 List<DMatch> good=ComponentRecognizer.uniqueFrameMatches(matcher.ratioMatches(c.descriptors,descriptors));if(good.size()<18)continue;
                 MatOfPoint2f a=new MatOfPoint2f(),b=new MatOfPoint2f();Mat mask=new Mat(),h=null;
                 try{List<Point> src=new ArrayList<>(),dst=new ArrayList<>();for(DMatch m:good){src.add(v.keypoints[c.ids.get(m.queryIdx)].pt);dst.add(live[m.trainIdx].pt);}a.fromList(src);b.fromList(dst);h=DiagnosticHammingMatcher.homography(a,b,Calib3d.RANSAC,3.5,mask,1200,.995);if(h.empty()||Core.countNonZero(mask)<18||Core.countNonZero(mask)<good.size()*.5)continue;
@@ -392,7 +392,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
         long started=android.os.SystemClock.elapsedRealtimeNanos();
         try{
             for(ReferenceDatabase.PreparedReference ref:ordered){int best=0;
-                for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){if(!v.hasOrbData())continue;
+                for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){if(!v.hasOrbData())continue;
                     List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
                     for(int i=0;i<Math.min(2,regions.size());i++){
                         Crop body=crop(ref,v,regions.get(i));if(body.sparse.empty()||live.rows()<2)continue;

@@ -20,8 +20,7 @@ public final class JumperWirePreparationDialog {
         TextView countText=PhysicalCheckUi.prompt(context,"Prepare "+count+(motorLeads?" motor wire leads.":" female-to-female jumper wires."));countText.setPadding(0,UiUtils.dp(context,10),0,0);countText.setMinHeight(0);body.addView(countText);
         TextView description=PhysicalCheckUi.prompt(context,extra);description.setTextSize(15);description.setMinHeight(0);description.setPadding(0,UiUtils.dp(context,12),0,UiUtils.dp(context,12));body.addView(description);
         TextView note=PhysicalCheckUi.prompt(context,DISCLAIMER);note.setTextSize(14);note.setMinHeight(0);note.setPadding(UiUtils.dp(context,12),UiUtils.dp(context,12),UiUtils.dp(context,12),UiUtils.dp(context,12));note.setBackgroundColor(0xFFE4EFE1);body.addView(note);
-        ScrollView scroll=new ScrollView(context);scroll.addView(body);
-        AlertDialog dialog=new AlertDialog.Builder(context).setTitle(motorLeads?"Prepare motor leads":"Prepare jumper wires").setView(scroll).setNegativeButton("Not yet",null).setPositiveButton(action,(d,w)->confirm.run()).create();
-        dialog.show();PhysicalCheckUi.style(dialog);int maximum=Math.round(context.getResources().getDisplayMetrics().heightPixels*.82f);dialog.getWindow().setLayout(Math.min(UiUtils.dp(context,560),context.getResources().getDisplayMetrics().widthPixels-UiUtils.dp(context,32)),Math.min(maximum,UiUtils.dp(context,620)));return dialog;
+        AlertDialog dialog=new PhysicalChecklistBottomSheetDialog.Builder(context).setTitle(motorLeads?"Prepare motor leads":"Prepare jumper wires").setView(body).setNegativeButton("Not yet",null).setPositiveButton(action,(d,w)->confirm.run()).create();
+        dialog.show();return dialog;
     }
 }

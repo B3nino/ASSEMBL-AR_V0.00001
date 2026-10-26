@@ -7,6 +7,14 @@ import org.opencv.imgproc.Imgproc;
 
 /** Values belonging to ONE selected RANSAC fit, never a shortlist/probe winner. */
 public final class VerifiedScanEvidence {
+    /** A located shape can own a coarse PnP solve without owning ORB inliers. This
+     * does not upgrade its synthetic rectangle corners into measured 3D landmarks. */
+    public static RecognitionResult.Pose coarsePose(RecognitionResult r){
+        if(r==null||!r.hasLocatedComponent()||r.getDetectionMethod()==RecognitionResult.DetectionMethod.NONE
+                ||r.getDetectionMethod()==RecognitionResult.DetectionMethod.ORB_DESCRIPTOR_ONLY)return null;
+        RecognitionResult.Pose p=r.getPose();
+        return p!=null&&p.getTranslationVector()[2]>0?p:null;
+    }
     /** Existing spatial/phase decisions only; never shortlist scores or a rendered outline. */
     public static boolean workflowAccepted(RecognitionResult r,RecognitionRequest request){
         if(r==null||request==null||!r.hasLocatedComponent()
@@ -40,7 +48,7 @@ public final class VerifiedScanEvidence {
     }
     public final ComponentReferenceSpec source;
     public final String componentName;
-    public final int good,total,inliers,liveKeypoints;
+    public final int good,total,inliers,liveKeypoints,activeKeypoints;
     public final RecognitionResult.Pose pose;
     public final PoseOrientation orientation;
     public final VisionPoint projectedOrigin,observedCentroid;
@@ -48,7 +56,7 @@ public final class VerifiedScanEvidence {
     VerifiedScanEvidence(DiagnosticHammingMatcher.Fit fit,DiagnosticHammingMatcher.State state,
             CameraCalibration calibration,DiagnosticHammingMatcher.Fit context,String name){
         source=fit.source;componentName=name==null?source.getDisplayName():name;good=fit.good;total=fit.total;inliers=fit.observed.size();
-        liveKeypoints=state.uniqueLive;extractionMs=state.featureNs/1e6;
+        activeKeypoints=fit.total;liveKeypoints=fit.liveCount;extractionMs=state.featureNs/1e6;
         long started=android.os.SystemClock.elapsedRealtimeNanos();
         PoseFit p=estimate(fit,calibration),expected=context==null?null:estimate(context,calibration);
         state.geometryNs+=android.os.SystemClock.elapsedRealtimeNanos()-started;

@@ -28,18 +28,25 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
             if(rgb!=null&&!rgb.empty()){Imgproc.resize(rgb,color,gray.size(),0,0,Imgproc.INTER_AREA);Imgproc.cvtColor(color,bgr,Imgproc.COLOR_RGB2BGR);}
             if(stage<=2){
                 List<Rect> windows=proposals(gray,bgr,stage);List<List<VisionPoint>> bodies=new ArrayList<>();
-                List<ReferenceDatabase.PreparedReference> refs=references(stage,false);
+                List<ReferenceDatabase.PreparedReference> refs=references(stage,false);boolean secondWheelGrace=false;
                 for(Rect window:windows){
-                    if(System.nanoTime()>deadline)break;Found best=null;ReferenceDatabase.PreparedReference selected=null;
+                    // A verified first wheel can consume the initial budget while native
+                    // pools warm. Give exactly one further crop its own bounded search,
+                    // otherwise every new frame repeatedly sees only that first wheel.
+                    // Both counts still require fresh, distinct photo geometry in THIS frame.
+                    boolean expired=System.nanoTime()>deadline;
+                    boolean grace=expired&&stage==2&&count==1&&!secondWheelGrace;
+                    if(expired&&!grace)break;if(grace)secondWheelGrace=true;
+                    Found best=null;ReferenceDatabase.PreparedReference selected=null;
                     // Native sampling comes first, then an independent detail pass. Both
                     // instances use fresh local descriptor pools, even for identical wheels.
                     for(int extent:new int[]{0,512}){
                         try(Live live=extract(gray,window,extent)){
                             List<ReferenceDatabase.PreparedReference> ordered=ranked(refs,live,false,preferredLoose,cursors[stage],stage);int visited=0;
-                            long slice=Math.min(deadline,System.nanoTime()+LOOSE_WINDOW_BUDGET_NS);
+                            long slice=grace?System.nanoTime()+LOOSE_WINDOW_BUDGET_NS:Math.min(deadline,System.nanoTime()+LOOSE_WINDOW_BUDGET_NS);
                             for(ReferenceDatabase.PreparedReference ref:ordered){
                                 if(visited>0&&System.nanoTime()>slice)break;visited++;
-                                for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants)for(int part=0;part<ref.spec.getFeatureRegionsNormalized().size();part++){
+                                for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants())for(int part=0;part<ref.spec.getFeatureRegionsNormalized().size();part++){
                                     Found f=match(ref,v,part,live,stage==1?8:10,false);
                                     if(f!=null){if(distinct(f.corners,bodies)&&(best==null||f.score>best.score)){if(best!=null)best.close();best=f;selected=ref;}else f.close();}
                                 }
@@ -59,7 +66,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                     for(ReferenceDatabase.PreparedReference ref:ranked(refs,whole,true,preferredScene,cursors[stage],stage)){
                         if(visited>0&&System.nanoTime()>deadline)break;visited++;
                         boolean bad="invalid".equals(Phase9AssetCatalog.referenceRole(ref.spec.getReferenceId()));
-                        for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){
+                        for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){
                             Found board=match(ref,v,-1,whole,20,true);if(board==null)continue;
                             context=true;List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
                             List<VisionPoint> predictedStand=project(regions.get(2),ref,board.h);
@@ -107,7 +114,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
                 if(shape!=null){stand=true;geometric=true;corners=shape.corners;score=shape.confidence;instances.add(new RecognitionResult.InstanceObservation("shape:loose-standoff-v1","center_standoff",RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK,corners,shape.confidence));}
             }
             Phase9Observation o=new Phase9Observation(stand,count,left,right,context,invalid,score);
-            if(!o.accepted(stage)){if(stage<=2)preferredLoose=null;else preferredScene=null;}
+            if(!o.accepted(stage)){if(stage<=2){if(count==0&&!stand)preferredLoose=null;}else preferredScene=null;}
             String component=stage==1?"center_standoff":stage==2?"drive_wheel":"main_board";
             return RecognitionResult.builder(timestamp).identity(geometric?"shape:loose-standoff-v1":"phase9:photo",component,stage==1?"Metal standoff":"Standoff and wheels")
                 .method(geometric?RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK:corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
@@ -136,7 +143,7 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         }
         Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
         for(ReferenceDatabase.PreparedReference ref:refs){int best=0;
-            for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){
+            for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){
                 if(board){best=sparseScore(pool(ref,v,-1),live);
                     if(stage==4){int left=sparseScore(pool(ref,v,0),live),right=sparseScore(pool(ref,v,1),live);best+=left+right+3*Math.min(left,right);}
                 }else for(int part=0;part<ref.spec.getFeatureRegionsNormalized().size();part++)best=Math.max(best,sparseScore(pool(ref,v,part),live));

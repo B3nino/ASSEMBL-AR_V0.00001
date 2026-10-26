@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_canvas_gradient"
+    android:background="@color/canvas"
     android:orientation="vertical">
 
+    <dev.chyken.assembl_ar.ui.ElectronParticleBackgroundView
+        android:id="@+id/electronBackground" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -34,6 +37,8 @@
                 <ImageView
                     android:layout_width="58dp"
                     android:layout_height="58dp"
+                    android:background="@drawable/bg_hero"
+                    android:padding="4dp"
                     android:contentDescription="@string/assembl_ar_logo"
                     android:scaleType="fitCenter"
                     android:src="@drawable/assembl_ar_brand_mark" />
@@ -51,7 +56,7 @@
                         android:layout_height="wrap_content"
                         android:breakStrategy="balanced"
                         android:text="@string/app_name"
-                        android:textColor="@color/brand_charcoal"
+                        android:textColor="@color/ink"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 
@@ -180,3 +185,4 @@
 
     <include layout="@layout/view_primary_navigation" />
 </LinearLayout>
+</FrameLayout>

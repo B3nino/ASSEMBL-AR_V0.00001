@@ -112,7 +112,7 @@ final class Phase5GuideController implements AutoCloseable {
     private void stability(){
         if(closed||paused||saving||reviewing||flow.step()!=4||flow.complete()||dialog!=null&&dialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,"");
-        dialog=new AlertDialog.Builder(activity).setTitle("Pin alignment & stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm",null).create();
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle("Pin alignment & stability").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;
             updateChecklist(prompt,false);
             say(SPOKEN[4]+" "+checklistQuestion(),"checklist-open:"+(++sequence));

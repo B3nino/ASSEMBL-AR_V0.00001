@@ -11,14 +11,14 @@ final class Phase1011ReferenceSearch implements AutoCloseable {
         List<ReferenceDatabase.PreparedReference> legacy=new ArrayList<>();for(ReferenceDatabase.PreparedReference ref:refs){if(Phase1011VideoReferences.annotation(ref.spec.getJpegAssetPath())!=null)window.add(ref);else legacy.add(ref);}
         for(int i=0;i<Math.min(4,legacy.size());i++)window.add(legacy.get(Math.floorMod(cursor*4+i,legacy.size())));
         List<ReferenceDatabase.PreparedReference> result=new ArrayList<>(window);Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();long start=android.os.SystemClock.elapsedRealtimeNanos();
-        try{for(ReferenceDatabase.PreparedReference ref:result){int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){if(!v.hasOrbData())continue;Mat sample=probes.computeIfAbsent(v,key->sample(ref,v));if(live.rows()>1){NearestDescriptorPairs p=NearestDescriptorPairs.compute(sample,live);for(int i=0;i<p.size();i++)if(p.hasTwo(i)&&OrbMatchPolicy.accepts(p.bestDistance(i),p.secondDistance(i)))score++;}break;}scores.put(ref,score);}}
+        try{for(ReferenceDatabase.PreparedReference ref:result){int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){if(!v.hasOrbData())continue;Mat sample=probes.computeIfAbsent(v,key->sample(ref,v));if(live.rows()>1){NearestDescriptorPairs p=NearestDescriptorPairs.compute(sample,live);for(int i=0;i<p.size();i++)if(p.hasTwo(i)&&OrbMatchPolicy.accepts(p.bestDistance(i),p.secondDistance(i)))score++;}break;}scores.put(ref,score);}}
         finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-start;}
         result.sort((a,b)->Integer.compare(scores.get(b),scores.get(a)));boolean retained=result.remove(preferred);if(retained)result.add(0,preferred);
         // A bounded frame often visits only the first candidate in each family.
         // Exploration in slot three can therefore starve forever. Alternate the
         // first slot while searching; a verified view remains first when locked.
         if(!retained&&!window.isEmpty()&&(cursor&1)==1){ReferenceDatabase.PreparedReference rotating=new ArrayList<>(window).get(Math.floorMod(cursor/2,window.size()));result.remove(rotating);result.add(0,rotating);}
-        return result.subList(0,Math.min(4,result.size()));
+        return result.subList(0,Math.min(DiagnosticHammingMatcher.snapshot().fastLive?2:4,result.size()));
     }
     private static Mat sample(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v){
         Mat rows=v.descriptors;int n=Math.min(32,rows.rows()),stride=rows.cols();LinkedHashSet<Integer> chosen=new LinkedHashSet<>();

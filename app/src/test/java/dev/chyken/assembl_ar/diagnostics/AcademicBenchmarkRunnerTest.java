@@ -14,10 +14,12 @@ public final class AcademicBenchmarkRunnerTest {
     @Test public void shapeFallbackCannotPassOrbRecognitionRate(){AcademicBenchmarkRunner r=new AcademicBenchmarkRunner();r.start(1,"Static");r.observe(sample(1,100,100,"Bright","COLOR_SHAPE_FALLBACK"));assertTrue(r.report().contains("Bright recognition (1/1 trials): 0.00 % · FAIL"));}
     @Test public void heldFramesDoNotInflatePoseCoverage(){AcademicBenchmarkRunner r=new AcademicBenchmarkRunner();r.start(30,"Pan");for(int i=0;i<10;i++)r.frame(false);r.computedFrame();assertTrue(r.report().contains("10.00 % · FAIL"));r.overlay(12,Double.NaN);r.overlay(32,Double.NaN);assertTrue(r.report().contains("22.00 px · FAIL"));assertTrue(r.report().contains("32.00 px · FAIL"));}
     @Test public void asynchronousAndDuplicatePoseCallbacksCannotExceedDeliveredCoverage(){AcademicBenchmarkRunner r=new AcademicBenchmarkRunner();r.start(30,"Pan");r.computedFrame(99);r.frame(1L);r.computedFrame(1L);r.computedFrame(1L);r.frame(2L);assertTrue(r.report().contains("50.00 % · FAIL"));}
-    @Test public void lowPairYieldIsNeverRelabeledAsAcademicPass(){
+    @Test public void lowPairYieldIsExportedWithoutAThresholdVerdict(){
         DiagnosticSample s=sample(1,183,7590,"Normal","ORB_HOMOGRAPHY");
-        assertEquals(2.411067,s.accuracy(),.00001);assertTrue(s.hudText().contains("85% gate FAIL"));
-        assertTrue(s.hudText().contains("Workflow: VERIFIED"));assertEquals("FAIL",s.csv().split(",",-1)[26]);
+        assertEquals(2.411067,s.accuracy(),.00001);assertTrue(s.hudText().contains("ORB pair yield: 2.41%"));assertFalse(s.hudText().contains("gate"));
+        assertTrue(s.hudText().contains("Workflow: VERIFIED"));assertFalse(DiagnosticSample.HEADER.contains("orb_85_percent_gate"));assertEquals("2.4111",s.csv().split(",",-1)[10]);
     }
-    @Test public void exportsRetainCsvBoundariesAndUnknownMeasurements(){DiagnosticSample s=sample(1,4,10,"Normal","ORB_HOMOGRAPHY");assertTrue(s.csv().contains("40.0000"));assertFalse(s.csv().contains("NaN"));assertEquals(39,DiagnosticSample.HEADER.split(",").length);assertEquals(39,s.csv().split(",",-1).length);}
+    @Test public void exportsRetainCsvBoundariesAndUnknownMeasurements(){DiagnosticSample s=sample(1,4,10,"Normal","ORB_HOMOGRAPHY");assertTrue(s.csv().contains("40.0000"));assertFalse(s.csv().contains("NaN"));assertEquals(38,DiagnosticSample.HEADER.split(",").length);assertEquals(38,s.csv().split(",",-1).length);}
+    @Test public void verifiedOrbTrialsCountRecognitionIndependentlyOfDescriptorYield(){AcademicBenchmarkRunner r=new AcademicBenchmarkRunner();r.start(1,"Static");r.observe(sample(1,71,2400,"Normal","ORB_HOMOGRAPHY"));assertTrue(r.report().contains("Mean deduplicated match yield: 2.96 %\n"));assertTrue(r.report().contains("Normal recognition (1/1 trials): 100.00 % · PASS"));}
+
 }

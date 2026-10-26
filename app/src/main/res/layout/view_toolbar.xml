@@ -26,4 +26,5 @@
         android:textColor="@color/ink"
         android:textSize="20sp"
         android:textStyle="bold" />
+    <ImageButton android:id="@+id/btnTtsMuteToggle" android:layout_width="48dp" android:layout_height="48dp" android:visibility="gone" android:padding="12dp" android:background="@drawable/bg_circle_dark" android:src="@drawable/ic_volume_up" android:contentDescription="@string/narration_mute" />
 </LinearLayout>

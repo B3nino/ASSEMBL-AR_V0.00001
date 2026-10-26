@@ -206,25 +206,7 @@ public final class LoosePartShapeRecognizer {
                 Mat bgr=new Mat();try{Imgproc.cvtColor(rgb,bgr,Imgproc.COLOR_RGB2BGR);StandoffGeometryVerifier.Detection stand=StandoffGeometryVerifier.find(grayscale,bgr);
                     candidate=stand==null?null:new ShapeCandidate("shape:loose-standoff-v1","Metal standoff",stand.confidence,stand.corners,5.0,40.0);
                 }finally{bgr.release();}
-            } else if (NeobotSeedData.MICROCONTROLLER.equals(componentId)) {
-                LooseNanoShapeRecognizer.Candidate nano = LooseNanoShapeRecognizer.find(
-                        rgb, minimumAreaRatio(request));
-                candidate = nano == null ? null : new ShapeCandidate("shape:loose-nano-v1",
-                        "Arduino Nano", nano.confidence, nano.corners, 45.0, 18.0);
-            } else if (NeobotSeedData.DISTANCE_SENSOR.equals(componentId)
-                    || NeobotSeedData.LINE_TRACKER.equals(componentId)) {
-                LooseSensorShapeRecognizer.Candidate sensor = NeobotSeedData.DISTANCE_SENSOR.equals(componentId)
-                        ? LooseSensorShapeRecognizer.findUltrasonic(rgb, minimumAreaRatio(request))
-                        : LooseSensorShapeRecognizer.findLineTracker(rgb, minimumAreaRatio(request));
-                candidate = sensor == null ? null : new ShapeCandidate(
-                        NeobotSeedData.DISTANCE_SENSOR.equals(componentId)
-                                ? "shape:loose-ultrasonic-v1" : "shape:loose-line-tracker-v1",
-                        NeobotSeedData.DISTANCE_SENSOR.equals(componentId)
-                                ? "Ultrasonic distance sensor" : "Line tracker",
-                        sensor.confidence, sensor.corners, sensor.widthMm, sensor.heightMm);
-            } else candidate = NeobotSeedData.GEAR_MOTOR.equals(componentId)
-                    ? findGearMotor(rgb, minimumAreaRatio(request))
-                    : findMotorDriver(rgb, minimumAreaRatio(request));
+            } else candidate=ModularShapeGeometryVerifier.find(componentId,grayscale,rgb,minimumAreaRatio(request));
         }
         if (candidate == null) {
             reset();
@@ -399,6 +381,7 @@ public final class LoosePartShapeRecognizer {
     private static ShapeCandidate findBracket(Mat source, Mat rgb, double minimumAreaRatio,
                                               Predicate<List<VisionPoint>> placement,
                                               RecognitionRequest request) {
+        if(placement==null)return ModularShapeGeometryVerifier.find(NeobotSeedData.MOTOR_BRACKET,source,rgb,minimumAreaRatio);
         MotorBracketShapeRecognizer.Candidate bracket = MotorBracketShapeRecognizer.find(
                 source, rgb, minimumAreaRatio, placement);
         if (bracket == null && placement != null && request.getGuidedBracketSlot() != 0) {
@@ -416,7 +399,7 @@ public final class LoosePartShapeRecognizer {
                         MotorBracketShapeRecognizer.WIDTH_MM,
                         MotorBracketShapeRecognizer.HEIGHT_MM);
     }
-    private static ShapeCandidate findGearMotor(Mat rgb, double minimumAreaRatio) {
+    static ShapeCandidate findGearMotor(Mat rgb, double minimumAreaRatio) {
         WorkingImage working = WorkingImage.rgb(rgb);
         Mat hsv = new Mat();
         Mat gray = new Mat();
@@ -528,7 +511,7 @@ public final class LoosePartShapeRecognizer {
      * other kit electronics use blue solder mask; the candidate must also contain a substantial
      * green terminal region and internal edge texture from screws, ICs, holes, and silk screen.
      */
-    private static ShapeCandidate findMotorDriver(Mat rgb, double minimumAreaRatio) {
+    static ShapeCandidate findMotorDriver(Mat rgb, double minimumAreaRatio) {
         WorkingImage working = WorkingImage.rgb(rgb);
         Mat hsv = new Mat();
         Mat gray = new Mat();
@@ -972,7 +955,7 @@ public final class LoosePartShapeRecognizer {
         }
     }
 
-    private static final class ShapeCandidate {
+    static final class ShapeCandidate {
         private final String referenceId;
         private final String displayName;
         private final double confidence;
@@ -980,7 +963,7 @@ public final class LoosePartShapeRecognizer {
         private final double physicalWidthMm;
         private final double physicalHeightMm;
 
-        private ShapeCandidate(String referenceId, String displayName, double confidence,
+        ShapeCandidate(String referenceId, String displayName, double confidence,
                                List<VisionPoint> corners, double physicalWidthMm,
                                double physicalHeightMm) {
             this.referenceId = referenceId;

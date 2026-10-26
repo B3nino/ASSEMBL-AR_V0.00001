@@ -182,6 +182,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         setContentView(R.layout.activity_part_recognition_test);
         UiUtils.applyStandardInsets(this);
         UiUtils.setupToolbar(this, getString(R.string.part_test_title));
+        muteControl=new dev.chyken.assembl_ar.ui.NarrationMuteControl(this,findViewById(R.id.btnTtsMuteToggle),muted->{if(outlineVoice!=null)outlineVoice.setMuted(muted);});
         RetainedState retained = (RetainedState) getLastCustomNonConfigurationInstance();
         session = retained == null ? new PartRecognitionTestSession() : retained.session;
         selectedIndex = retained == null ? initialIndex() : retained.selectedIndex;
@@ -509,7 +510,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                                 java.util.List<float[]> regions=new java.util.ArrayList<>();if(target!=null)for(java.util.List<VisionPoint> region:target.regions)regions.add(dev.chyken.assembl_ar.vision.PreviewOutlineCoordinates.normalize(region,frame.getAnalyzedWidth(),frame.getAnalyzedHeight(),preview.getWidth(),preview.getHeight()));
                                 ((dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView)findViewById(R.id.dynamicOutlineOverlay)).show(target,regions);
                                 if(target!=null&&!target.predicted&&target.state==dev.chyken.assembl_ar.vision.TargetBoundingTracker.State.WRONG&&!target.name.equals(target.expectedName)){
-                                    if(outlineVoice==null)outlineVoice=new dev.chyken.assembl_ar.ui.AssemblyVoiceGuide(PartRecognitionTestActivity.this,voiceStatus->{});
+                                    if(outlineVoice==null){outlineVoice=new dev.chyken.assembl_ar.ui.AssemblyVoiceGuide(PartRecognitionTestActivity.this,voiceStatus->{});outlineVoice.setMuted(dev.chyken.assembl_ar.diagnostics.PreferencesManager.ttsMuted(PartRecognitionTestActivity.this));}
                                     outlineVoice.speak("Incorrect item detected. You are scanning "+target.name+" instead of "+target.expectedName+".","outline-wrong:"+tag+":"+target.componentId);
                                 }
                             });}
@@ -1077,6 +1078,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         if(resumeRequested&&resumed&&catalogReady&&(testMode||cameraBound))startTest();
     }
 
+    private dev.chyken.assembl_ar.ui.NarrationMuteControl muteControl;
     private dev.chyken.assembl_ar.ui.AssemblyVoiceGuide outlineVoice;
     @Override protected void onPause() {
         boolean wasRunning=testing||resumeRequested;
@@ -1105,6 +1107,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     @Override protected void onDestroy() {
+        if(muteControl!=null)muteControl.close();
         if(outlineVoice!=null)outlineVoice.close();
         destroyed = true;
         testing = false;

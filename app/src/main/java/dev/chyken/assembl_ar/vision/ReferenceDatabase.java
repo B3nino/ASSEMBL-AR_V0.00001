@@ -7,6 +7,7 @@ import org.opencv.core.KeyPoint;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -104,7 +105,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         final AssetManager assets;final List<ComponentReferenceSpec> catalog;final VisionConfig config;final File directory;final java.util.function.BooleanSupplier active;
         final IndividualReferenceSearchWindow window=new IndividualReferenceSearchWindow();String component;int failures;
         IndividualBank(AssetManager a,List<ComponentReferenceSpec> specs,VisionConfig c,File d,java.util.function.BooleanSupplier active){assets=a;catalog=Collections.unmodifiableList(new ArrayList<>(specs));config=c;directory=d;this.active=active;}
-        List<ComponentReferenceSpec> next(String id){component=id;failures=0;Set<String> chosen=window.next(catalog,id);List<ComponentReferenceSpec> selected=new ArrayList<>();for(ComponentReferenceSpec spec:catalog)if(chosen.contains(spec.getReferenceId()))selected.add(spec);return selected;}
+        List<ComponentReferenceSpec> next(String id){component=id;failures=0;List<ComponentReferenceSpec> target=new ArrayList<>();for(ComponentReferenceSpec spec:catalog)if(id.equals(spec.getComponentId()))target.add(spec);Set<String> chosen=window.next(target,id);List<ComponentReferenceSpec> selected=new ArrayList<>();for(ComponentReferenceSpec spec:target)if(chosen.contains(spec.getReferenceId()))selected.add(spec);return selected;}
     }
 
     /** OpenCV must be initialized before this method is called. */
@@ -293,7 +294,7 @@ public final class ReferenceDatabase implements AutoCloseable {
     /** Stream a whole-build preparation pass without retaining a catalog's native matrices. */
     public static void prepareLibrary(AssetManager assets,List<ComponentReferenceSpec> specs,VisionConfig config,File directory,ReferenceCacheIndex index,java.util.function.BooleanSupplier active,java.util.function.BiConsumer<Integer,Integer> progress)throws IOException{
         ORB orb=OpenCvVisionUtils.createOrb(config);CLAHE clahe=OpenCvVisionUtils.createClahe(config);int done=0;
-        try{for(ComponentReferenceSpec spec:specs){checkLoadActive(active);if(index.isSkipped(spec,config)){KeypointInventoryManager.INSTANCE.skipped(spec);progress.accept(++done,specs.size());continue;}if(!index.terminal(spec,config)||!GlobalComponentRegistry.INSTANCE.isReady()){
+        try{for(ComponentReferenceSpec spec:specs){checkLoadActive(active);if(index.isSkipped(spec,config)){KeypointInventoryManager.INSTANCE.skipped(spec);progress.accept(++done,specs.size());continue;}if(!index.terminal(spec,config)||!GlobalComponentRegistry.INSTANCE.isReady()||!edgePrepared(spec,config,directory,index)){
             PreparedReference ready=null;
             try{ready=prepareReference(assets,spec,orb,clahe,config,directory);if(spec.getAdminDescriptorBlob()!=null)index.administrator(spec,config);}
             catch(ReferenceCacheWriteException storage){throw new IOException("Reference "+(done+1)+" / "+specs.size()+" could not be cached: "+spec.getJpegAssetPath(),storage);}
@@ -302,7 +303,7 @@ public final class ReferenceDatabase implements AutoCloseable {
             if(!index.terminal(spec,config))throw new IOException("Reference "+(done+1)+" / "+specs.size()+" has no durable cache entry: "+spec.getJpegAssetPath());
         }progress.accept(++done,specs.size());}checkLoadActive(active);}finally{orb.clear();clahe.clear();}
     }
-    public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":p3manual"+Phase3ReferenceAnnotations.VERSION+":"+Phase5PhotoGeometry.VERSION+":p5local"+Phase5DescriptorSampler.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION;}
+    public static String cacheRevision(){return "library1:"+REFERENCE_PREPARATION_VERSION+":"+ReferenceDescriptorPyramid.VERSION+":"+Phase2PhotoGeometry.CACHE_VERSION+":"+Phase3PhotoGeometry.VERSION+":p3manual"+Phase3ReferenceAnnotations.VERSION+":"+Phase5PhotoGeometry.VERSION+":p5local"+Phase5DescriptorSampler.VERSION+":"+Phase7PhotoGeometry.VERSION+":"+Phase8PhotoGeometry.VERSION+":"+Phase9PhotoGeometry.VERSION+":"+Phase10PhotoGeometry.VERSION+":"+Phase11PhotoGeometry.VERSION+":edge"+EdgeGradientDescriptorExtractor.VERSION;}
 
     /** A geometry edit only invalidates the affected phase, not the entire library. */
     static String cacheRevision(ComponentReferenceSpec spec){
@@ -325,6 +326,8 @@ public final class ReferenceDatabase implements AutoCloseable {
         PreparedReference hit=cache==null||key==null?null:cache.acquire(key);
         if(hit!=null){if(provenance.terminal(spec,config))return hit;hit.release();}
         PreparedReference result=prepareReferenceUncached(assets,spec,orb,clahe,config,directory);
+        try{PreparedReference enhanced=withEdgeBank(assets,spec,result,config,directory,provenance);if(enhanced!=result){result.release();result=enhanced;}}
+        catch(IOException|RuntimeException|Error failure){result.release();throw failure;}
         KeypointInventoryManager.INSTANCE.prepared(result);
         GlobalComponentRegistry.INSTANCE.prepared(result);
         if(cache!=null&&key!=null)cache.retain(key,result);
@@ -468,6 +471,70 @@ public final class ReferenceDatabase implements AutoCloseable {
             }
             encoded.release();
         }
+    }
+
+    private static File edgeFile(ComponentReferenceSpec spec,VisionConfig config,File directory,ReferenceCacheIndex index){
+        return directory==null||index==null?null:new File(directory,"edge"+EdgeGradientDescriptorExtractor.VERSION+"_"+index.key(spec,config)+".asor");
+    }
+    private static boolean edgePrepared(ComponentReferenceSpec spec,VisionConfig config,File directory,ReferenceCacheIndex index){
+        if(spec.getJpegAssetPath()==null&&spec.getLocalImageFilePath()==null)return true;
+        File file=edgeFile(spec,config,directory,index);return file!=null&&file.isFile();
+    }
+    /** Reuse the existing expensive luminance/geometry cache. Only the new small edge bank
+     * is compiled. Its independent provenance is coupled to the original source/config key. */
+    private static PreparedReference withEdgeBank(AssetManager assets,ComponentReferenceSpec registered,PreparedReference base,
+            VisionConfig config,File directory,ReferenceCacheIndex index)throws IOException{
+        if(!base.edgeVariants.isEmpty()||registered.getJpegAssetPath()==null&&registered.getLocalImageFilePath()==null)return base;
+        File file=edgeFile(registered,config,directory,index);
+        List<AdminDescriptorBlobCodec.DescriptorVariant> edge=new ArrayList<>(),joined=new ArrayList<>();
+        Mat gray=null,mask=null;DescriptorExtractionRegion region=null;
+        try{
+            if(file!=null&&file.isFile())try(InputStream in=new FileInputStream(file)){
+                byte[] data=readFully(in);
+                if(data.length==12){java.nio.ByteBuffer header=java.nio.ByteBuffer.wrap(data);if(header.getInt()==0x45444730&&header.getInt()==base.imageWidth&&header.getInt()==base.imageHeight)return base;}
+                try(AdminDescriptorBlobCodec.DecodedDescriptorBlob decoded=AdminDescriptorBlobCodec.decode(data,config)){
+                    if(decoded.imageWidth!=base.imageWidth||decoded.imageHeight!=base.imageHeight||decoded.variants.size()!=1||decoded.variants.get(0).photometricVariant!=PhotometricVariant.EDGE)throw new IllegalArgumentException("Structural cache provenance mismatch");
+                    AdminDescriptorBlobCodec.DescriptorVariant v=decoded.variants.get(0);edge.add(new AdminDescriptorBlobCodec.DescriptorVariant(v.photometricVariant,v.keypoints,v.descriptors,false));
+                }
+            }catch(IOException|IllegalArgumentException corrupt){releaseDescriptorVariants(edge);edge.clear();}
+            if(edge.isEmpty()){
+                VisionPreloadManager preload=VisionPreloadManager.active(assets);
+                // Optional recovery data must never block an already warm luminance scanner.
+                // Do not read photos or re-extract descriptors during a live bank load.
+                if(preload!=null&&preload.isReady())return base;
+                byte[] bytes=readReferenceImageBytes(assets,registered);MatOfByte encoded=new MatOfByte(bytes);
+                try{gray=Imgcodecs.imdecode(encoded,Imgcodecs.IMREAD_GRAYSCALE);}finally{encoded.release();}
+                if(gray.empty())throw new IOException("Unable to decode structural source: "+registered.getReferenceId());
+                if(gray.cols()!=base.imageWidth||gray.rows()!=base.imageHeight)Imgproc.resize(gray,gray,new Size(base.imageWidth,base.imageHeight),0,0,Imgproc.INTER_AREA);
+                mask=referenceMask(base.spec,gray.cols(),gray.rows());
+                if(base.spec.isDescriptorRegionNormalizationEnabled()){
+                    region=canonicalDescriptorRegion(gray,mask,base.spec);appendEdgeVariant(edge,region.grayscale,region.mask);
+                    remapKeypointsToSource(edge,region.sourceBounds,region.grayscale.cols(),region.grayscale.rows());
+                }else appendEdgeVariant(edge,gray,mask);
+                if(file!=null)try{
+                    byte[] data=edge.isEmpty()?java.nio.ByteBuffer.allocate(12).putInt(0x45444730).putInt(base.imageWidth).putInt(base.imageHeight).array()
+                            :AdminDescriptorBlobCodec.encode(base.imageWidth,base.imageHeight,edge,config);
+                    writeCacheAtomically(file,data);
+                }catch(IOException|RuntimeException storage){throw new ReferenceCacheWriteException(file,storage);}
+            }
+            if(edge.isEmpty())return base;
+            for(PreparedOrbVariant v:base.orbVariants)joined.add(new AdminDescriptorBlobCodec.DescriptorVariant(v.photometricVariant,v.keypoints,v.descriptors,false));
+            joined.addAll(edge);edge.clear();return new PreparedReference(base.spec,base.imageWidth,base.imageHeight,joined);
+        }finally{releaseDescriptorVariants(edge);releaseDescriptorVariants(joined);if(region!=null)region.release();if(mask!=null)mask.release();if(gray!=null)gray.release();}
+    }
+
+    /** One bounded structural bank, not another multi-scale pyramid. */
+    private static void appendEdgeVariant(List<AdminDescriptorBlobCodec.DescriptorVariant> variants,Mat gray,Mat mask){
+        ORB edgeOrb=EdgeGradientDescriptorExtractor.createOrb();Mat image=new Mat(),region=new Mat(),descriptors=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();
+        try{
+            double scale=Math.min(1,768.0/Math.max(gray.cols(),gray.rows()));
+            Imgproc.resize(gray,image,new Size(Math.round(gray.cols()*scale),Math.round(gray.rows()*scale)),0,0,Imgproc.INTER_AREA);
+            if(!mask.empty())Imgproc.resize(mask,region,image.size(),0,0,Imgproc.INTER_NEAREST);
+            EdgeGradientDescriptorExtractor.extract(image,region,edgeOrb,keys,descriptors);
+            double sx=gray.cols()/(double)image.cols(),sy=gray.rows()/(double)image.rows();
+            KeyPoint[] points=keys.toArray();for(KeyPoint k:points){k.pt.x*=sx;k.pt.y*=sy;k.size*=Math.sqrt(sx*sy);}
+            if(points.length>=4&&!descriptors.empty())variants.add(new AdminDescriptorBlobCodec.DescriptorVariant(PhotometricVariant.EDGE,points,descriptors.clone(),true));
+        }finally{edgeOrb.clear();image.release();region.release();descriptors.release();keys.release();}
     }
 
     private static PreparedReference preparedFromBlob(ComponentReferenceSpec spec,
@@ -802,7 +869,8 @@ public final class ReferenceDatabase implements AutoCloseable {
 
     enum PhotometricVariant {
         NORMALIZED(1, false),
-        INVERTED(2, true);
+        INVERTED(2, true),
+        EDGE(3, false);
 
         final int encodedValue;
         private final boolean inverted;
@@ -860,6 +928,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         final int imageWidth;
         final int imageHeight;
         final List<PreparedOrbVariant> orbVariants;
+        final List<PreparedOrbVariant> allVariants,edgeVariants;
         // Compatibility aliases for callers being migrated to explicit photometric alternatives.
         final KeyPoint[] keypoints;
         final Mat descriptors;
@@ -884,7 +953,8 @@ public final class ReferenceDatabase implements AutoCloseable {
                     }
                 }
             }
-            orbVariants = Collections.unmodifiableList(prepared);
+            allVariants = Collections.unmodifiableList(prepared);
+            orbVariants = selectVariants(prepared,false);edgeVariants=selectVariants(prepared,true);
             PreparedOrbVariant primary = null;
             for (PreparedOrbVariant variant : prepared) {
                 if (variant.photometricVariant == PhotometricVariant.NORMALIZED) {
@@ -905,14 +975,17 @@ public final class ReferenceDatabase implements AutoCloseable {
         private PreparedReference(PreparedReference source){
             spec=source.spec;imageWidth=source.imageWidth;imageHeight=source.imageHeight;
             List<PreparedOrbVariant> owned=new ArrayList<>();
-            try{for(PreparedOrbVariant v:source.orbVariants)owned.add(new PreparedOrbVariant(v.photometricVariant,v.keypoints,v.descriptors));}
+            try{for(PreparedOrbVariant v:source.allVariants)owned.add(new PreparedOrbVariant(v.photometricVariant,v.keypoints,v.descriptors));}
             catch(RuntimeException|Error failure){for(PreparedOrbVariant v:owned)v.release();throw failure;}
-            orbVariants=Collections.unmodifiableList(owned);PreparedOrbVariant primary=null;
+            allVariants=Collections.unmodifiableList(owned);orbVariants=selectVariants(owned,false);edgeVariants=selectVariants(owned,true);PreparedOrbVariant primary=null;
             for(PreparedOrbVariant v:owned)if(v.photometricVariant==PhotometricVariant.NORMALIZED){primary=v;break;}
             if(primary==null&&!owned.isEmpty())primary=owned.get(0);
             keypoints=primary==null?new KeyPoint[0]:primary.keypoints;descriptors=primary==null?null:primary.descriptors;
         }
-        long estimatedBytes(){long total=0;for(PreparedOrbVariant v:orbVariants)total+=(long)v.descriptors.total()*v.descriptors.elemSize()+v.keypoints.length*96L;return total;}
+        private static List<PreparedOrbVariant> selectVariants(List<PreparedOrbVariant> all,boolean edges){List<PreparedOrbVariant> out=new ArrayList<>();for(PreparedOrbVariant v:all)if((v.photometricVariant==PhotometricVariant.EDGE)==edges)out.add(v);return Collections.unmodifiableList(out);}
+        List<PreparedOrbVariant> variantsFor(PhotometricVariant variant){return variant==PhotometricVariant.EDGE?edgeVariants:orbVariants;}
+        List<PreparedOrbVariant> recoveryVariants(){return DiagnosticHammingMatcher.snapshot().structuralInput?edgeVariants:orbVariants;}
+        long estimatedBytes(){long total=0;for(PreparedOrbVariant v:allVariants)total+=(long)v.descriptors.total()*v.descriptors.elemSize()+v.keypoints.length*96L;return total;}
         List<PreparedOrbVariant> orbVariants() {
             return orbVariants;
         }
@@ -927,7 +1000,7 @@ public final class ReferenceDatabase implements AutoCloseable {
         }
 
         void release() {
-            for (PreparedOrbVariant variant : orbVariants) {
+            for (PreparedOrbVariant variant : allVariants) {
                 variant.release();
             }
         }

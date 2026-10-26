@@ -18,7 +18,7 @@ public final class KeypointInventoryManager {
     private final ConcurrentHashMap<String,Entry> entries=new ConcurrentHashMap<>();
     void prepared(ReferenceDatabase.PreparedReference r){
         Map<String,Integer> counts=new LinkedHashMap<>();
-        for(ReferenceDatabase.PreparedOrbVariant v:r.orbVariants)counts.put(v.photometricVariant.name(),v.keypoints.length);
+        for(ReferenceDatabase.PreparedOrbVariant v:r.allVariants)counts.put(v.photometricVariant.name(),v.keypoints.length);
         entries.put(r.spec.getReferenceId(),new Entry(r.spec,counts));
     }
     void restore(ComponentReferenceSpec source,Map<String,Integer> counts){

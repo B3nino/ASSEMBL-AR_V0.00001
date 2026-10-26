@@ -44,7 +44,7 @@ final class Phase11ReferenceMatcher implements AutoCloseable {
                 if(role==null||!Phase11AssetCatalog.eligible(role,step))continue;
                 String path=ref.spec.getJpegAssetPath();
                 if(!seen.add(role+":"+path))continue;
-                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+                for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                     if(!variant.hasOrbData())continue;
                     Match found=role.equals("assembly")?matchInstalled(ref,variant,live,descriptors,raw,scale):match(ref,variant,live,descriptors,scale,false);if(found==null)continue;
                     if((role.equals("front")||role.equals("battery"))&&found.score>front){front=found.score;corners=found.actual;preferred[step]=ref;}

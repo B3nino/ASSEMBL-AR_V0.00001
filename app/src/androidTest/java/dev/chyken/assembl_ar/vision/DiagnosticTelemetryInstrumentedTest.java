@@ -34,8 +34,8 @@ public final class DiagnosticTelemetryInstrumentedTest {
   InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
    dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView hud=new dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView(themed,null);
    for(boolean match:new boolean[]{false,true}){
-    DiagnosticScanTelemetry t=new DiagnosticScanTelemetry("Nano","nano",100,100,match?90:10,100,3,8,true,true,true,"Forward",Double.NaN,new DiagnosticScanTelemetry.Point(1,2),new DiagnosticScanTelemetry.Point(2,4),.2,match?2:1);hud.showTelemetry(t);
-    assertEquals(15,hud.getText().toString().split("\n").length);assertTrue(hud.getMaxLines()>=15);assertNull(hud.getEllipsize());
+    DiagnosticScanTelemetry t=new DiagnosticScanTelemetry("Nano","nano",100,100,match?90:10,100,3,8,match,true,true,"Forward",Double.NaN,new DiagnosticScanTelemetry.Point(1,2),new DiagnosticScanTelemetry.Point(2,4),.2,match?2:1);hud.showTelemetry(t);
+    assertEquals(15,hud.getText().toString().split("\n").length);assertEquals(match?"%: 90.00%":"%: 10.00%",hud.getText().toString().split("\n")[4]);assertTrue(hud.getMaxLines()>=15);assertNull(hud.getEllipsize());
     android.text.Spanned text=(android.text.Spanned)hud.getText();android.text.style.ForegroundColorSpan[] spans=text.getSpans(0,text.length(),android.text.style.ForegroundColorSpan.class);assertEquals(1,spans.length);assertEquals(match?0xFF00FF7F:0xFFFF3B30,spans[0].getForegroundColor());assertEquals(text.toString().lastIndexOf("Output: "),text.getSpanStart(spans[0]));
    }
   });

@@ -20,9 +20,9 @@ public final class ActiveReferenceScope {
         return "generic:"+r.getAssemblyStepNumber()+":"+r.getPhase2Stage()+":"+target+":"+r.getSpatialAnchorComponentId()+":"+r.getGuidedBracketSlot();
     }
     public static List<ComponentReferenceSpec> select(List<ComponentReferenceSpec> catalog,RecognitionRequest r){
-        if(r==null)return Collections.emptyList();List<ComponentReferenceSpec> result=new ArrayList<>();Map<String,Integer> competitors=new HashMap<>();
+        if(r==null)return Collections.emptyList();List<ComponentReferenceSpec> result=new ArrayList<>();
         String expected=r.getExpectation()==null?null:r.getExpectation().getComponentId();
-        Set<String> targets=new HashSet<>(Arrays.asList(expected,r.getSpatialAnchorComponentId(),MAIN_BOARD,EXTENSION_BOARD));
+        Set<String> targets=new HashSet<>(Arrays.asList(expected,r.getSpatialAnchorComponentId()));
         for(ComponentReferenceSpec s:catalog){
             String id=s.getReferenceId();boolean take;
             if(r.getPhase11Stage()>0){take=Phase11AssetCatalog.eligible(Phase11AssetCatalog.referenceRole(id),r.getPhase11Stage());}
@@ -40,7 +40,7 @@ public final class ActiveReferenceScope {
                 else if(s.getAssemblyStepNumber()!=0&&s.getAssemblyStepNumber()!=r.getAssemblyStepNumber())take=false;
                 else if(s.isInstalledBracketView()&&r.getGuidedBracketSlot()==0)take=false;
                 else if(targets.contains(s.getComponentId()))take=true;
-                else{int n=competitors.getOrDefault(s.getComponentId(),0);take=n<2;if(take)competitors.put(s.getComponentId(),n+1);}
+                else take=false;
             }
             if(take)result.add(s);
         }

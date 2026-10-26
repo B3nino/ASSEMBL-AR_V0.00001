@@ -1,10 +1,16 @@
-param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','all')][string]$Suite='quality')
+param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','latency','all')][string]$Suite='quality')
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskAdb=Join-Path $env:LOCALAPPDATA 'Android/Sdk/platform-tools/adb.exe'
 $taskLogs=Join-Path $taskRoot 'app/build/tmp/qa-overhaul'
 New-Item -ItemType Directory -Path $taskLogs -Force | Out-Null
 $taskQualityCases=@(
+ 'UiBeautificationInstrumentedTest#sharedLightShellKeepsOneMenuAndUsableTesterViewport',
+ 'UiBeautificationInstrumentedTest#settingsTogglesChangeOnlyAdministratorAndAssemblyDeveloperVisibility',
+ 'UiBeautificationInstrumentedTest#graphicsStopSchedulingWhenHiddenPausedDetachedAndClosed',
+ 'UiBeautificationInstrumentedTest#cubeRendersAndUsesRealCountsWithoutBypassingReferenceGate',
+ 'UiBeautificationInstrumentedTest#checklistKeepsExplicitCallbacksCorrectionsAndReachableButtons',
+ 'UiBeautificationInstrumentedTest#bothToolbarsShareMutePreferenceWithoutWritingAssemblyProgress',
  'vision.StartupQualityInstrumentedTest#compactIndexPreservesEveryCountGeometryAndDescriptorWithoutFullBankReload',
  'vision.StartupQualityInstrumentedTest#corruptOrDifferentCatalogCannotPublishPartialGlobalEvidence',
  'vision.StartupQualityInstrumentedTest#previewSkipIsVisibleAccessibleAndCannotLeakIntoNonVideoContent',
@@ -22,6 +28,13 @@ $taskQualityCases=@(
  'PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling'
 )
 $taskAuditCases=@(
+ 'vision.HybridVisionInstrumentedTest#structuralCacheIsSeparateBoundedAndCopiedWithItsOwner',
+ 'vision.HybridVisionInstrumentedTest#realPhotoStructuralDescriptorsRetainConsensusAfterExposureShift',
+ 'vision.HybridVisionInstrumentedTest#flatFramesCannotInventStructuralKeypointsAndRepeatedBuffersRelease',
+ 'vision.HybridVisionInstrumentedTest#fallbackPoseIsReportedAsCoarseWithoutFabricatingOrbOrBenchmarkOrientation',
+ 'vision.HybridVisionInstrumentedTest#phaseMatcherCanUseOnlyTheStructuralBankAndBlankCannotPass',
+ 'vision.HybridVisionInstrumentedTest#migrationKeepsLuminanceBlobAndGeometryWhileOnlyAddingAnEdgeSidecar',
+ 'vision.HybridVisionInstrumentedTest#lostOptionalSidecarCannotBlockAWarmLuminanceScanner',
  'vision.VerifiedTelemetryReplayInstrumentedTest#roomStackedAssemblyPairsAndFreezesVerifiedMetricsWhileTrackingStaysLive',
  'vision.VerifiedTelemetryReplayInstrumentedTest#geometryHudIsGreenAndUnmeasuredValuesStayHonestInBothLayouts',
  'vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission',
@@ -80,7 +93,16 @@ $taskPhase10FollowupCases=@(
  'vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess',
  'vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames'
 )
-$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases}}
+$taskLatencyCases=@(
+ 'vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions',
+ 'vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano',
+ 'vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress',
+ 'vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates',
+ 'vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows',
+ 'vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates',
+ 'vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines'
+)
+$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'latency'{$taskLatencyCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases+$taskLatencyCases}}
 $taskFailed=@()
 $taskResults=@()
 foreach($taskCase in $taskCases){

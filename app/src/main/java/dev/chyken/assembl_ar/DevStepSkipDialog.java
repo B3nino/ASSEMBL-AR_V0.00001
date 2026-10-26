@@ -17,6 +17,7 @@ final class DevStepSkipDialog {
 
     static void show(AssemblyActivity activity, @Nullable PhaseAssemblyController phases,
                      boolean diagnosticsVisible, Consumer<Boolean> setDiagnosticsVisible) {
+        if(!dev.chyken.assembl_ar.diagnostics.PreferencesManager.assemblyDeveloperVisible(activity))return;
         String[] actions = {
                 "Complete current phase · stay here",
                 "Jump to assembly phase (1–"+AssemblyPhaseCatalog.phases().size()+")",

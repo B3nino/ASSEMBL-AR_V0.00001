@@ -26,16 +26,20 @@ public final class CandidateCodeReplayInstrumentedTest {
         File archive=new File(path);assertTrue(archive.isFile());
         List<ByteBuffer> dex=new ArrayList<>();readDex(archive,dex);
         readDex(new File(InstrumentationRegistry.getInstrumentation().getContext().getApplicationInfo().sourceDir),dex);
+        String cases=InstrumentationRegistry.getArguments().getString("candidateCases",
+                "vision.Phase2PrecisionInstrumentedTest#boundedLiveSearchHandlesFullCatalogWithoutOneLongSweep");
+        // UI resource IDs change with the candidate APK. Keep its AppCompat/Material
+        // implementation with that resource table instead of the installed app's IDs.
+        boolean candidateUi=cases.startsWith("UiBeautificationInstrumentedTest#");
         ClassLoader parent=getClass().getClassLoader();
         ClassLoader platformParent=new ClassLoader(parent){
             @Override protected Class<?> loadClass(String name,boolean resolve)throws ClassNotFoundException{
-                if(name.startsWith("dev.chyken.assembl_ar."))throw new ClassNotFoundException(name);
+                if(name.startsWith("dev.chyken.assembl_ar.") || candidateUi &&
+                        (name.startsWith("androidx.appcompat.") || name.startsWith("com.google.android.material.")))throw new ClassNotFoundException(name);
                 return super.loadClass(name,resolve);
             }
         };
         ClassLoader candidate=new InMemoryDexClassLoader(dex.toArray(new ByteBuffer[0]),platformParent);
-        String cases=InstrumentationRegistry.getArguments().getString("candidateCases",
-                "vision.Phase2PrecisionInstrumentedTest#boundedLiveSearchHandlesFullCatalogWithoutOneLongSweep");
         assertTrue(org.opencv.android.OpenCVLoader.initLocal());
         org.opencv.core.Core.setNumThreads(2);
         for(String entry:cases.split(",")){

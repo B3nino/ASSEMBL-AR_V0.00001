@@ -22,6 +22,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     private byte[] guidanceBytes=new byte[0];
     private String preferred;
     private int cursor,bodyRecoveries,contextRecoveries,extracted;
+    private ComponentDetailExtractor.Sample neuralProposal;
     Phase5ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;clahe=OpenCvVisionUtils.createClahe(config);details=new ComponentDetailExtractor(config);local=new LocalPhotometricRefiner(config);}
     RecognitionResult inspect(Mat gray,long time,int step){
         long start=android.os.SystemClock.elapsedRealtimeNanos();Mat raw=new Mat(),work=new Mat(),rows=new Mat(),empty=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();
@@ -30,10 +31,15 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             bodyRecoveries=0;contextRecoveries=0;extracted=0;
             if(scale<1)Imgproc.resize(gray,raw,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(raw);
             DiagnosticHammingMatcher.normalize(clahe,raw,work);DiagnosticHammingMatcher.extract(orb,work,empty,keys,rows);KeyPoint[] live=keys.toArray();extracted+=live.length;DiagnosticHammingMatcher.captureLive(live,rows,scale);
+            Rect proposal=DiagnosticHammingMatcher.snapshot().proposedRoi;
+            if(proposal!=null){
+                List<VisionPoint> region=Arrays.asList(new VisionPoint(proposal.x*scale,proposal.y*scale),new VisionPoint((proposal.x+proposal.width)*scale,proposal.y*scale),new VisionPoint((proposal.x+proposal.width)*scale,(proposal.y+proposal.height)*scale),new VisionPoint(proposal.x*scale,(proposal.y+proposal.height)*scale));
+                neuralProposal=details.extract(raw,region,0);if(neuralProposal!=null)extracted+=neuralProposal.keys.length;
+            }
             if(!rows.empty())for(ReferenceDatabase.PreparedReference ref:window(rows,step)){
                 String role=Phase5AssetCatalog.referenceRole(ref.spec.getReferenceId());
                 if(role.equals("assembly")&&evidence.score(Phase5Observation.State.PLACED)>=20)continue;
-                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants)if(variant.hasOrbData()){
+                for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants())if(variant.hasOrbData()){
                     Match found=match(ref,variant,live,rows,raw,scale,step!=1);if(found!=null)evidence.add(role,found);
                 }
             }
@@ -51,14 +57,14 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
                 .validation(observation.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:state==Phase5Observation.State.FLIPPED||state==Phase5Observation.State.BACKWARD||state==Phase5Observation.State.MISALIGNED?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
                 .corners(corners).matches(extracted,0,0,0).confidence(observation.accepted(step)?.85:0)
                 .latency(new RecognitionResult.Latency(timing.featureNs/1e6,timing.matchingNs/1e6,timing.geometryNs/1e6,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase5Observation(observation);
-        }finally{database.releaseAfterRecognition();raw.release();work.release();rows.release();empty.release();keys.release();}
+        }finally{if(neuralProposal!=null){neuralProposal.close();neuralProposal=null;}database.releaseAfterRecognition();raw.release();work.release();rows.release();empty.release();keys.release();}
     }
     private PhotoFeaturePartition split(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v){PhotoFeaturePartition s=splits.get(v);if(s==null){s=new PhotoFeaturePartition(ref,v);splits.put(v,s);}return s;}
     private List<ReferenceDatabase.PreparedReference> window(Mat live,int step){
         List<ReferenceDatabase.PreparedReference> positive=new ArrayList<>(),negative=new ArrayList<>();Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
         for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
             String role=Phase5AssetCatalog.referenceRole(ref.spec.getReferenceId());if(role==null||((step==1)==Phase5AssetCatalog.installed(role)))continue;
-            int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants)if(v.hasOrbData()){
+            int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants())if(v.hasOrbData()){
                 PhotoFeaturePartition s=split(ref,v);long began=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
                 try{pairs=NearestDescriptorPairs.compute(s.probe,live);}finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-began;}
                 int n=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))n++;score=Math.max(score,n);
@@ -66,7 +72,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             scores.put(ref,score);((role.equals("back")||role.equals("invalid"))?negative:positive).add(ref);
         }
         Comparator<ReferenceDatabase.PreparedReference> order=Comparator.comparingInt(r->-scores.get(r));positive.sort(order);negative.sort(order);LinkedHashSet<ReferenceDatabase.PreparedReference> chosen=new LinkedHashSet<>();
-        for(List<ReferenceDatabase.PreparedReference> group:Arrays.asList(positive,negative)){chosen.addAll(group.subList(0,Math.min(2,group.size())));for(int i=0;i<group.size();i++)if(chosen.add(group.get(Math.floorMod(cursor+i,group.size()))))break;}
+        for(List<ReferenceDatabase.PreparedReference> group:Arrays.asList(positive,negative)){chosen.addAll(group.subList(0,Math.min(DiagnosticHammingMatcher.snapshot().fastLive?1:2,group.size())));for(int i=0;i<group.size();i++)if(chosen.add(group.get(Math.floorMod(cursor+i,group.size()))))break;}
         if(preferred!=null)for(ReferenceDatabase.PreparedReference r:positive)if(preferred.equals(r.spec.getReferenceId())){chosen.add(r);break;}
         cursor++;List<ReferenceDatabase.PreparedReference> result=new ArrayList<>(chosen);result.sort(order);return result;
     }
@@ -74,6 +80,7 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
         DiagnosticHammingMatcher.context(ref);PhotoFeaturePartition s=split(ref,v);double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
         List<Point> a=new ArrayList<>(),z=new ArrayList<>();collect(s.body,live,rows,a,z);Mat mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45)),bh=null;int contextInliers=Integer.MAX_VALUE;
         try{
+            if(mh==null&&neuralProposal!=null){a.clear();z.clear();collect(s.body,neuralProposal.keys,neuralProposal.descriptors,a,z);mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45));}
             if(mh==null&&a.size()>=6&&bodyRecoveries<2){bodyRecoveries++;Mat seed=proposal(a,z);
                 // A few full-frame matches only propose a crop. Fresh local inliers
                 // must still meet the original loose/installed identity thresholds.

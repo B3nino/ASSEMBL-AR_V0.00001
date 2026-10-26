@@ -105,7 +105,7 @@ final class Phase6GuideController implements AutoCloseable {
     private void check(){
         if(closed||paused||saving||reviewing||flow.complete()||dialog!=null&&dialog.isShowing()||(flow.step()!=2&&flow.step()!=4))return;
         TextView prompt=PhysicalCheckUi.prompt(activity,question());
-        dialog=new AlertDialog.Builder(activity).setTitle(flow.step()==2?"Power connection check":"Final connection check").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm & Secure",null).create();
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle(flow.step()==2?"Power connection check":"Final connection check").setView(prompt).setNeutralButton("Check later",null).setNegativeButton("Loose",null).setPositiveButton("Firm & Secure",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;
             PhysicalCheckUi.style(dialog);updateCheck(prompt);say(question(),"check:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{

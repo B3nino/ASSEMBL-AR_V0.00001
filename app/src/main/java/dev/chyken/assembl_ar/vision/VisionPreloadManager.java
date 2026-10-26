@@ -135,6 +135,7 @@ public final class VisionPreloadManager {
             throw new IllegalStateException("Reference banks must be opened on a background loader");
         ACTIVE.put(context.getAssets(), this);
         if(!isReady())throw new IOException("Complete startup preparation before opening a scanner");
+        if(dev.chyken.assembl_ar.diagnostics.PreferencesManager.nanoDetector(context)&&specs.stream().anyMatch(s->"arduino_nano_microcontroller".equals(s.getComponentId())))OpenCvDnnRoiLocator.INSTANCE.prepare(context.getAssets());
         return ReferenceDatabase.load(context.getAssets(), specs, config, directory, active,progress);
     }
 
@@ -142,8 +143,11 @@ public final class VisionPreloadManager {
         if(Looper.myLooper()==Looper.getMainLooper())throw new IllegalStateException("Reference banks must be opened on a background loader");
         if(!isReady())throw new IOException("Complete startup preparation before opening a scanner");
         ACTIVE.put(context.getAssets(),this);
+        if("arduino_nano_microcontroller".equals(component)&&dev.chyken.assembl_ar.diagnostics.PreferencesManager.nanoDetector(context))OpenCvDnnRoiLocator.INSTANCE.prepare(context.getAssets());
         return ReferenceDatabase.loadIndividualBank(context.getAssets(),specs,component,config,directory,active);
     }
+    /** Reuses the reference worker when the experimental control is enabled in a camera. */
+    public void prepareNanoDetector(){executor.execute(()->{if(dev.chyken.assembl_ar.diagnostics.PreferencesManager.nanoDetector(context))OpenCvDnnRoiLocator.INSTANCE.prepare(context.getAssets());});}
 
     static VisionPreloadManager active(AssetManager assets) { return ACTIVE.get(assets); }
 

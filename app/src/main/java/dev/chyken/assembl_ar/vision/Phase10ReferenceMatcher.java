@@ -43,7 +43,7 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
             if(!descriptors.empty())for(ReferenceDatabase.PreparedReference ref:candidates){
                 if(tried>=Math.min(negativeRefs.isEmpty()?1:2,candidates.size())&&System.nanoTime()>deadline)break;tried++;
                 String role=Phase10AssetCatalog.referenceRole(ref.spec.getReferenceId());
-                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){if(!variant.hasOrbData())continue;Match found=match(ref,variant,live,descriptors,scale,stage,gray);
+                for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){if(!variant.hasOrbData())continue;Match found=match(ref,variant,live,descriptors,scale,stage,gray);
                     if(found==null&&(stage==1||stage==3||stage>=4)&&detailBudget>0&&System.nanoTime()<deadline){
                         detailBudget--;
                         if(!sampled){sampled=true;List<List<VisionPoint>> proposals=stage>=4?Collections.singletonList(Arrays.asList(new VisionPoint(0,0),new VisionPoint(raw.cols(),0),new VisionPoint(raw.cols(),raw.rows()),new VisionPoint(0,raw.rows()))):ComponentDetailExtractor.proposals(raw);for(List<VisionPoint> proposal:proposals){ComponentDetailExtractor.Sample detail=details.extract(raw,proposal,stage>=4?960:512);if(detail!=null)samples.add(detail);}}

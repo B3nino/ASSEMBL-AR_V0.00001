@@ -1,4 +1,6 @@
 <resources>
+    <string name="narration_mute">Mute spoken guidance</string>
+    <string name="narration_unmute">Enable spoken guidance</string>
     <string name="diagnostic_control_guide">Diagnostic control guide</string>
     <string name="diagnostic_benchmark_logging">Benchmark &amp; logging</string>
     <string name="diagnostic_waiting">Waiting for current scan telemetry</string>

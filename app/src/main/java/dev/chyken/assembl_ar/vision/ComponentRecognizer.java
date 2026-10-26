@@ -56,6 +56,10 @@ public final class ComponentRecognizer implements AutoCloseable {
     private final VisionConfig config;
     private final ReferenceDatabase database;
     private final ORB orb;
+    private final ORB structuralOrb;
+    private final ScopedReferenceSelector liveSelector=new ScopedReferenceSelector();
+    private Set<String> liveFrameReferences;
+    private final Set<String> detailedScopes=new LinkedHashSet<>();
     private final CLAHE clahe;
     private final Phase2ReferenceMatcher phase2Matcher;
     private final Phase7ReferenceMatcher phase7Matcher;
@@ -93,6 +97,7 @@ public final class ComponentRecognizer implements AutoCloseable {
         this.config = Objects.requireNonNull(config, "config");
         this.database = Objects.requireNonNull(database, "database");
         orb = OpenCvVisionUtils.createOrb(config);
+        structuralOrb=EdgeGradientDescriptorExtractor.createOrb();
         clahe = OpenCvVisionUtils.createClahe(config);
         phase2Matcher=new Phase2ReferenceMatcher(database,config);
         phase3Matcher=new Phase3ReferenceMatcher(database,config);
@@ -100,22 +105,55 @@ public final class ComponentRecognizer implements AutoCloseable {
         phase9Matcher=new Phase9ReferenceMatcher(database,config);phase10Matcher=new Phase10ReferenceMatcher(database,config);phase11Matcher=new Phase11ReferenceMatcher(database,config);
         phase5Matcher=new Phase5ReferenceMatcher(database,config);
         phase7Matcher=new Phase7ReferenceMatcher(database,config);
+        liveSelector.prepare(database.preparedReferences());
     }
     synchronized RecognitionResult inspectPhase2(Mat gray,long timestamp,int stage,RecognitionResult primary) {
-        ensureOpen(); return phase2Matcher.inspect(gray,timestamp,stage,primary);
+        ensureOpen(); return inspectHybrid(()->phase2Matcher.inspect(gray,timestamp,stage,primary));
     }
-    synchronized RecognitionResult inspectPhase2(Mat gray,Mat rgb,long timestamp,int stage,RecognitionResult primary){ensureOpen();return phase2Matcher.inspect(gray,rgb,timestamp,stage,primary);}
-    synchronized RecognitionResult inspectPhase2(Mat gray,Mat rgb,long timestamp,int stage,RecognitionResult primary,String view){ensureOpen();return phase2Matcher.inspect(gray,rgb,timestamp,stage,primary,view);}
-    synchronized RecognitionResult inspectPhase7(Mat gray,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,timestamp,step);}
-    synchronized RecognitionResult inspectPhase7(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase7Matcher.inspect(gray,rgb,timestamp,step);}
-    synchronized RecognitionResult inspectPhase11(Mat gray,long timestamp,int stage){ensureOpen();return phase11Matcher.inspect(gray,timestamp,stage);}
-    synchronized RecognitionResult inspectPhase10(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return phase10Matcher.inspect(gray,rgb,timestamp,stage);}
-    synchronized RecognitionResult inspectPhase10(Mat gray,long timestamp,int stage){ensureOpen();return phase10Matcher.inspect(gray,timestamp,stage);}
-    synchronized RecognitionResult inspectPhase9(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return phase9Matcher.inspect(gray,rgb,timestamp,stage);}
-    synchronized RecognitionResult inspectPhase8(Mat gray,long timestamp,int step){ensureOpen();return phase8Matcher.inspect(gray,timestamp,step);}
-    synchronized RecognitionResult inspectPhase8(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return phase8Matcher.inspect(gray,rgb,timestamp,step);}
-    synchronized RecognitionResult inspectPhase5(Mat gray,long timestamp,int step){ensureOpen();return phase5Matcher.inspect(gray,timestamp,step);}
-    synchronized RecognitionResult inspectPhase3(Mat gray,long timestamp,int step){ensureOpen();return phase3Matcher.inspect(gray,timestamp,step);}
+    synchronized RecognitionResult inspectPhase2(Mat gray,Mat rgb,long timestamp,int stage,RecognitionResult primary){ensureOpen();return inspectHybrid(()->phase2Matcher.inspect(gray,rgb,timestamp,stage,primary));}
+    synchronized RecognitionResult inspectPhase2(Mat gray,Mat rgb,long timestamp,int stage,RecognitionResult primary,String view){ensureOpen();return inspectHybrid(()->phase2Matcher.inspect(gray,rgb,timestamp,stage,primary,view));}
+    synchronized RecognitionResult inspectPhase7(Mat gray,long timestamp,int step){ensureOpen();return inspectHybrid(()->phase7Matcher.inspect(gray,timestamp,step));}
+    synchronized RecognitionResult inspectPhase7(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return inspectHybrid(()->phase7Matcher.inspect(gray,rgb,timestamp,step));}
+    synchronized RecognitionResult inspectPhase11(Mat gray,long timestamp,int stage){ensureOpen();return inspectHybrid(()->phase11Matcher.inspect(gray,timestamp,stage));}
+    synchronized RecognitionResult inspectPhase10(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return inspectHybrid(()->phase10Matcher.inspect(gray,rgb,timestamp,stage));}
+    synchronized RecognitionResult inspectPhase10(Mat gray,long timestamp,int stage){ensureOpen();return inspectHybrid(()->phase10Matcher.inspect(gray,timestamp,stage));}
+    synchronized RecognitionResult inspectPhase9(Mat gray,Mat rgb,long timestamp,int stage){ensureOpen();return inspectHybrid(()->phase9Matcher.inspect(gray,rgb,timestamp,stage));}
+    synchronized RecognitionResult inspectPhase8(Mat gray,long timestamp,int step){ensureOpen();return inspectHybrid(()->phase8Matcher.inspect(gray,timestamp,step));}
+    synchronized RecognitionResult inspectPhase8(Mat gray,Mat rgb,long timestamp,int step){ensureOpen();return inspectHybrid(()->phase8Matcher.inspect(gray,rgb,timestamp,step));}
+    synchronized RecognitionResult inspectPhase5(Mat gray,long timestamp,int step){ensureOpen();return inspectHybrid(()->phase5Matcher.inspect(gray,timestamp,step));}
+    synchronized RecognitionResult inspectPhase3(Mat gray,long timestamp,int step){ensureOpen();return inspectHybrid(()->phase3Matcher.inspect(gray,timestamp,step));}
+
+    /** Both representations are eligible in this camera frame. A verified local result
+     * exits immediately; we never launch a second full-catalog detector or queue frames. */
+    private RecognitionResult inspectHybrid(java.util.function.Supplier<RecognitionResult> inspect){
+        DiagnosticHammingMatcher.State scan=DiagnosticHammingMatcher.snapshot();
+        if(!scan.fastLive)return inspect.get();
+        long start=SystemClock.elapsedRealtimeNanos();boolean first=scan.structuralFirst;
+        if(detailedScopes.contains(scan.scope)){
+            boolean fast=scan.fastLive;scan.fastLive=false;scan.structuralInput=false;
+            RecognitionResult detail;try{detail=inspect.get();}finally{scan.fastLive=fast;}
+            if(evidencePriority(detail)>=3){scan.edgeWinner=false;return detail;}
+            detailedScopes.remove(scan.scope);
+        }
+        scan.structuralInput=first;RecognitionResult primary=inspect.get();
+        if(primary.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT){scan.edgeWinner=first;return primary;}
+        // Preserve small mounted bodies before spending a second low-detail search.
+        // This is the approved adaptive exception; it never changes match thresholds.
+        if(scan.adaptiveDetail&&evidencePriority(primary)<3){
+            scan.fastLive=false;scan.structuralInput=false;
+            RecognitionResult detail;try{detail=inspect.get();}finally{scan.fastLive=true;}
+            if(evidencePriority(detail)>=3){scan.edgeWinner=false;if(detailedScopes.size()>=24)detailedScopes.clear();detailedScopes.add(scan.scope);return detail;}
+        }
+        scan.structuralInput=!first;RecognitionResult alternate=inspect.get();
+        int a=evidencePriority(primary),b=evidencePriority(alternate);
+        boolean useAlternate=b>a||b==a&&(alternate.getInstanceObservations().size()>primary.getInstanceObservations().size()
+                ||alternate.getInlierCount()>primary.getInlierCount());
+        scan.structuralInput=useAlternate?!first:first;scan.edgeWinner=scan.structuralInput;
+        RecognitionResult selected=useAlternate?alternate:primary;
+        return selected.withLatency(new RecognitionResult.Latency(scan.featureNs/1e6,(scan.matchingNs+scan.geometryNs)/1e6,
+                scan.geometryNs/1e6,selected.getLatency().getCircularFallbackMs(),(SystemClock.elapsedRealtimeNanos()-start)/1e6));
+    }
+    private static int evidencePriority(RecognitionResult r){return r.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT?4:r.getValidationState()==RecognitionResult.ValidationState.WRONG_ORIENTATION?3:r.hasLocatedComponent()?2:0;}
 
     /**
      * Runs the same board recognition for every assembly step on the original grayscale frame.
@@ -141,7 +179,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 logBoardConfiguration(grayscale);
             }
             RecognitionResult result;
-            if (currentStep == 1) {
+            if (currentStep == 1&&!DiagnosticHammingMatcher.snapshot().fastLive) {
                 quickBoardReferencePass = true;
                 result = recognize(grayscale, frameTimestampNanos, boardRequest);
                 quickBoardReferencePass = false;
@@ -225,14 +263,17 @@ public final class ComponentRecognizer implements AutoCloseable {
         RecognitionRequest safeRequest = request == null
                 ? RecognitionRequest.unconstrained(null)
                 : request;
+        DiagnosticHammingMatcher.snapshot().structuralInput=false;
+        DiagnosticHammingMatcher.snapshot().edgeWinner=false;
         long totalStart = SystemClock.elapsedRealtimeNanos();
         if(database.prepareIndividualBank(safeRequest)){
             // Cached pair batches own the old reference keys. Retire them on every
             // bank change so moving between parts cannot retain earlier photo banks.
-            frameCache.release();descriptorBatches.close();
+            frameCache.release();descriptorBatches.close();detailedScopes.clear();
+            liveSelector.close();liveSelector.prepare(database.preparedReferences());
         }
         individualFrameReferences=null;
-        if(!database.isIndividualBank()&&safeRequest.getAssemblyStepNumber()==0&&safeRequest.isDescriptorOnlyIdentityAllowed()&&safeRequest.getExpectation()!=null){
+        if(!DiagnosticHammingMatcher.snapshot().fastLive&&!database.isIndividualBank()&&safeRequest.getAssemblyStepNumber()==0&&safeRequest.isDescriptorOnlyIdentityAllowed()&&safeRequest.getExpectation()!=null){
             List<ComponentReferenceSpec> photos=new ArrayList<>();for(ReferenceDatabase.PreparedReference r:database.preparedReferences())photos.add(r.spec);
             individualFrameReferences=individualWindow.next(photos,safeRequest.getExpectation().getComponentId());
         }
@@ -272,8 +313,12 @@ public final class ComponentRecognizer implements AutoCloseable {
                         frameDescriptors, frameKeypoints);
             }
             DiagnosticHammingMatcher.captureLive(frameKeypoints,frameDescriptors,1);
-            activeFrameDescriptors = frameDescriptors;
             featureNanos = SystemClock.elapsedRealtimeNanos() - stageStart;
+            long rankStarted=SystemClock.elapsedRealtimeNanos();
+            liveFrameReferences=DiagnosticHammingMatcher.snapshot().fastLive&&LiveVisionPolicy.scoped(safeRequest)
+                    ?liveSelector.select(database.preparedReferences(),frameDescriptors,safeRequest,false):null;
+            matchingNanos+=SystemClock.elapsedRealtimeNanos()-rankStarted;
+            activeFrameDescriptors = frameDescriptors;
             rejectionTracker = ExpectedRejectionTracker.initialize(
                     database.preparedReferences(), safeRequest, frameKeypoints.length,
                     frameDescriptors.empty(), config);
@@ -306,7 +351,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                     : matchReferences(frameDescriptors, frameKeypoints, safeRequest, null,
                     ReferenceDatabase.PhotometricVariant.NORMALIZED, rejectionTracker);
             descriptorCandidates.addAll(rawCandidates);
-            matchingNanos = SystemClock.elapsedRealtimeNanos() - stageStart;
+            matchingNanos += SystemClock.elapsedRealtimeNanos() - stageStart;
 
             stageStart = SystemClock.elapsedRealtimeNanos();
             addSpatialCandidates(rawCandidates, spatialCandidates,
@@ -319,7 +364,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             // matching policy. Keep the inverted-reference retry enabled for the standalone
             // tester as well; otherwise that tester silently receives less lighting coverage
             // than the production assembly recognizer.
-            if (!frameDescriptors.empty()) {
+            if (!frameDescriptors.empty()&&!DiagnosticHammingMatcher.snapshot().fastLive) {
                 Set<String> invertedFallbackIds = missingPhotometricComponentIds(
                         spatialCandidates, safeRequest);
                 // A weak normal-light board homography must not suppress its inverted ORB
@@ -403,6 +448,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             if (recognizingBoard && !quickBoardReferencePass && !frameDescriptors.empty()
                     && !containsComponentCandidate(spatialCandidates, MAIN_BOARD_COMPONENT_ID)) {
                 for (ReferenceDatabase.PhotometricVariant variant : ReferenceDatabase.PhotometricVariant.values()) {
+                    if(variant==ReferenceDatabase.PhotometricVariant.EDGE)continue;
                     stageStart = SystemClock.elapsedRealtimeNanos();
                     List<RawCandidate> installed = matchReferences(frameDescriptors, frameKeypoints,
                             safeRequest, MAIN_BOARD_COMPONENT_ID, variant, true,
@@ -423,6 +469,35 @@ public final class ComponentRecognizer implements AutoCloseable {
                 featureNanos += retry.featureNanos;
                 matchingNanos += retry.matchingNanos;
                 spatialNanos += retry.spatialNanos;
+            }
+
+            // Separate structural recovery bank; never mix edge and luminance rows in Lowe's
+            // competition. Installed phase verifiers retain their independent body/context gates.
+            if(spatialCandidates.isEmpty()&&DiagnosticHammingMatcher.snapshot().edgeRecovery
+                    &&safeRequest.getExpectation()!=null&&safeRequest.getExpectedInstanceCount()==1
+                    &&safeRequest.getSpatialAnchorComponentId()==null){
+                Mat structural=new Mat();MatOfKeyPoint points=new MatOfKeyPoint();
+                try{
+                    stageStart=SystemClock.elapsedRealtimeNanos();
+                    DiagnosticHammingMatcher.State scan=DiagnosticHammingMatcher.snapshot();scan.structuralInput=true;
+                    if(scan.fastLive&&scan.workspace!=null){Mat edges=new Mat(),mask=new Mat();try{scan.workspace.normalize(grayscale,edges,clahe,true,false);scan.workspace.extract(edges,mask,structuralOrb,points,structural);}finally{edges.release();mask.release();}}
+                    else EdgeGradientDescriptorExtractor.extractRoi(grayscale,scan.proposedRoi,structuralOrb,points,structural);
+                    KeyPoint[] keys=points.toArray();long extraction=SystemClock.elapsedRealtimeNanos()-stageStart;
+                    featureNanos+=extraction;DiagnosticHammingMatcher.snapshot().featureNs+=extraction;
+                    DiagnosticHammingMatcher.snapshot().evidenceLiveCount=keys.length;
+                    DiagnosticHammingMatcher.captureLive(keys,structural,1);
+                    rankStarted=SystemClock.elapsedRealtimeNanos();
+                    if(scan.fastLive)liveFrameReferences=liveSelector.select(database.preparedReferences(),structural,safeRequest,true);
+                    matchingNanos+=SystemClock.elapsedRealtimeNanos()-rankStarted;
+                    stageStart=SystemClock.elapsedRealtimeNanos();
+                    List<RawCandidate> edges=structural.empty()?Collections.emptyList():matchReferences(structural,keys,safeRequest,
+                            null,ReferenceDatabase.PhotometricVariant.EDGE,rejectionTracker);
+                    matchingNanos+=SystemClock.elapsedRealtimeNanos()-stageStart;
+                    stageStart=SystemClock.elapsedRealtimeNanos();
+                    addSpatialCandidates(edges,spatialCandidates,grayscale.cols(),grayscale.rows(),rejectionTracker);
+                    DiagnosticHammingMatcher.snapshot().edgeWinner=!spatialCandidates.isEmpty();
+                    spatialNanos+=SystemClock.elapsedRealtimeNanos()-stageStart;
+                }finally{DiagnosticHammingMatcher.snapshot().evidenceLiveCount=-1;if(!DiagnosticHammingMatcher.snapshot().edgeWinner)DiagnosticHammingMatcher.snapshot().structuralInput=false;structural.release();points.release();}
             }
 
             stageStart = SystemClock.elapsedRealtimeNanos();
@@ -886,6 +961,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             clahe.collectGarbage();
             clahe.clear();
             orb.clear();
+            structuralOrb.clear();liveSelector.close();detailedScopes.clear();
         }
     }
 
@@ -927,6 +1003,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                     photometricVariant, assemblyReferencesOnly, installedBracketViewsOnly);
         }
         for (ReferenceDatabase.PreparedReference reference : database.preparedReferences()) {
+            if(DiagnosticHammingMatcher.snapshot().fastLive&&(!LiveVisionPolicy.acceptsIdentity(reference.spec,request)||liveFrameReferences!=null&&!liveFrameReferences.contains(reference.spec.getReferenceId())))continue;
             if(individualFrameReferences!=null&&!individualFrameReferences.contains(reference.spec.getReferenceId()))continue;
             if (quickBoardReferencePass && !reference.spec.isFastAcquisitionView()
                     && !"extension_circuit_board".equals(reference.spec.getComponentId())) continue;
@@ -942,7 +1019,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                     || !referenceEligible) {
                 continue;
             }
-            for (ReferenceDatabase.PreparedOrbVariant variant : reference.orbVariants) {
+            for (ReferenceDatabase.PreparedOrbVariant variant : reference.variantsFor(photometricVariant)) {
                 if (variant.photometricVariant != photometricVariant
                         || !variant.hasOrbData()) {
                     continue;
@@ -992,6 +1069,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             boolean assemblyReferencesOnly, boolean installedBracketViewsOnly) {
         List<ReferenceDatabase.PreparedOrbVariant> missing = new ArrayList<>();
         for (ReferenceDatabase.PreparedReference reference : database.preparedReferences()) {
+            if(DiagnosticHammingMatcher.snapshot().fastLive&&(!LiveVisionPolicy.acceptsIdentity(reference.spec,request)||liveFrameReferences!=null&&!liveFrameReferences.contains(reference.spec.getReferenceId())))continue;
             if(individualFrameReferences!=null&&!individualFrameReferences.contains(reference.spec.getReferenceId()))continue;
             if (quickBoardReferencePass && !reference.spec.isFastAcquisitionView()
                     && !"extension_circuit_board".equals(reference.spec.getComponentId())) continue;
@@ -1004,7 +1082,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                     && !requiredComponentId.equals(reference.spec.getComponentId()))) {
                 continue;
             }
-            for (ReferenceDatabase.PreparedOrbVariant variant : reference.orbVariants) {
+            for (ReferenceDatabase.PreparedOrbVariant variant : reference.variantsFor(photometricVariant)) {
                 if (variant.photometricVariant == photometricVariant && variant.hasOrbData()
                         && !frameCache.pairs.containsKey(variant)) {
                     missing.add(variant);
@@ -1091,10 +1169,11 @@ public final class ComponentRecognizer implements AutoCloseable {
                 pairs = new java.util.IdentityHashMap<>();
         KeyPoint[] keypoints = new KeyPoint[0];
         boolean valid;
-        boolean recovery;
+        boolean recovery,fast;
 
         boolean holds(Mat grayscale) {
             return valid && recovery == DiagnosticHammingMatcher.snapshot().recovery
+                    &&fast==DiagnosticHammingMatcher.snapshot().fastLive
                     && source.size().equals(grayscale.size()) && source.type() == grayscale.type()
                     && Core.norm(source, grayscale, Core.NORM_INF) == 0.0;
         }
@@ -1106,6 +1185,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             frameDescriptors.copyTo(descriptors);
             keypoints = frameKeypoints;
             recovery = DiagnosticHammingMatcher.snapshot().recovery;
+            fast = DiagnosticHammingMatcher.snapshot().fastLive;
             pairs.clear();
             valid = true;
         }
@@ -1389,6 +1469,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             // a clearly visible installed bracket ends the search after the cheaper pass.
             for (ReferenceDatabase.PhotometricVariant variant
                     : ReferenceDatabase.PhotometricVariant.values()) {
+                if(variant==ReferenceDatabase.PhotometricVariant.EDGE)continue;
                 for (int tileIndex = 0; tileIndex < tileDescriptorSets.size(); tileIndex++) {
                     long stageStart = SystemClock.elapsedRealtimeNanos();
                     // Only installed-view registrations can supply this retry's evidence.

@@ -37,6 +37,7 @@ public final class UiUtils {
 
     /** Keeps a standard screen's content clear of system bars and display cutouts. */
     public static void applyStandardInsets(Activity activity) {
+        AppShellController.install(activity);
         View content = activity.findViewById(android.R.id.content);
         if (content == null || !(content instanceof android.view.ViewGroup)
                 || ((android.view.ViewGroup) content).getChildCount() == 0) {
@@ -91,19 +92,22 @@ public final class UiUtils {
         ViewCompat.requestApplyInsets(window.getDecorView());
     }
 
-    public static void setupToolbar(AppCompatActivity activity, String title) {
+    public static void setupToolbar(Activity activity, String title) {
         View back = activity.findViewById(R.id.backButton);
         android.widget.TextView titleView = activity.findViewById(R.id.toolbarTitle);
         if (titleView != null) {
             titleView.setText(title);
         }
         if (back != null) {
-            back.setOnClickListener(view -> activity.getOnBackPressedDispatcher().onBackPressed());
+            back.setOnClickListener(view -> {
+                if(activity instanceof androidx.activity.ComponentActivity)((androidx.activity.ComponentActivity)activity).getOnBackPressedDispatcher().onBackPressed();
+                else activity.finish();
+            });
         }
     }
 
-    /** Wires the four persistent top-level destinations used on phone and tablet layouts. */
-    public static void setupPrimaryNavigation(AppCompatActivity activity, int selectedItemId) {
+    /** Shared destinations plus Settings; Administrator is an explicit visibility preference. */
+    public static void setupPrimaryNavigation(Activity activity, int selectedItemId) {
         int[] itemIds = {
                 R.id.navAssemblyButton,
                 R.id.navLearningButton,
@@ -111,7 +115,7 @@ public final class UiUtils {
                 R.id.navAdminButton
         };
         for (int itemId : itemIds) {
-            View item = activity.findViewById(itemId);
+            View item = activity.findViewById(android.R.id.content).findViewById(itemId);
             if (item != null) {
                 item.setSelected(itemId == selectedItemId);
             }
@@ -123,17 +127,21 @@ public final class UiUtils {
         wireDestination(activity, R.id.navLearningButton, LearningActivity.class);
         wireDestination(activity, R.id.navComponentsButton, ComponentLibraryActivity.class);
         wireDestination(activity, R.id.navAdminButton, AdminAccessActivity.class);
+        View settings=activity.findViewById(R.id.navSettingsButton);
+        if(settings!=null)settings.setOnClickListener(v->dev.chyken.assembl_ar.AppSettingsDialog.show(activity,v.getContext()));
+        AppShellController.refreshVisibility(activity);
     }
 
     private static void wireDestination(
-            AppCompatActivity activity,
+            Activity activity,
             int viewId,
             Class<? extends Activity> destination) {
-        View item = activity.findViewById(viewId);
+        View item = activity.findViewById(android.R.id.content).findViewById(viewId);
         if (item == null) {
             return;
         }
         item.setOnClickListener(view -> {
+            if(viewId==R.id.navAdminButton&&!dev.chyken.assembl_ar.diagnostics.PreferencesManager.administratorVisible(activity))return;
             if (destination.isInstance(activity)) {
                 return;
             }

@@ -105,7 +105,7 @@ final class Phase4GuideController implements AutoCloseable {
     private void pullTest(){
         if(closed||paused||saving||reviewing||flow.step()!=3||flow.complete()||pullDialog!=null&&pullDialog.isShowing())return;
         TextView prompt=PhysicalCheckUi.prompt(activity,"Gently tug each lead near its screw terminal. Are all four motor wires firmly screwed in?");
-        pullDialog=new AlertDialog.Builder(activity).setTitle("Wire pull test").setView(prompt)
+        pullDialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle("Wire pull test").setView(prompt)
                 .setNeutralButton("Check later",null).setNegativeButton("Wire is Loose",null).setPositiveButton("All Wires Secure",null).create();
         pullDialog.setOnShowListener(d->{if(pullDialog!=d||closed||paused)return;
             pullDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{flow.confirmPullTest(false);message=LOOSE;prompt.setText(LOOSE);render();save();say(LOOSE,"loose:"+(++speechSequence));});

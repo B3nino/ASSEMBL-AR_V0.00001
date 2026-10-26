@@ -21,16 +21,17 @@ public final class MainActivity extends AppCompatActivity {
     private HomeRobotSurfaceView robotModelView;
     private dev.chyken.assembl_ar.ui.BrandLaunchOverlay launch;
     private dev.chyken.assembl_ar.ui.StartupPreparationCoordinator startup;
+    private dev.chyken.assembl_ar.ui.ElectronParticleBackgroundView electrons;
+    private boolean menuRevealed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         UiUtils.configureStandardWindow(this);
         setContentView(R.layout.activity_main);
+        electrons=findViewById(R.id.electronBackground);
         UiUtils.applyStandardInsets(this);
         dev.chyken.assembl_ar.vision.VisionPreloadManager.get(this).start();
-        android.view.ViewGroup header=(android.view.ViewGroup)findViewById(R.id.headerWordmark).getParent().getParent();
-        com.google.android.material.button.MaterialButton settings=new com.google.android.material.button.MaterialButton(this);settings.setText("Settings");settings.setAllCaps(false);header.addView(settings);settings.setOnClickListener(v->DevDiagnosticsFragment.showControls(this));
         UiUtils.setupPrimaryNavigation(this, R.id.navAssemblyButton);
         robotModelView = findViewById(R.id.robotModelView);
         styleHeaderWordmark();
@@ -38,6 +39,7 @@ public final class MainActivity extends AppCompatActivity {
         android.view.ViewGroup content=findViewById(android.R.id.content);
         launch=new dev.chyken.assembl_ar.ui.BrandLaunchOverlay(this,content.getChildAt(0));
         content.addView(launch,new android.view.ViewGroup.LayoutParams(-1,-1));
+        launch.setOnRevealed(()->{menuRevealed=true;if(getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED))electrons.resumeAnimation();});
         startup=new dev.chyken.assembl_ar.ui.StartupPreparationCoordinator(this,launch);
         robotModelView.setOnModelReady(()->{if(launch!=null)launch.modelReady();});
 
@@ -47,18 +49,18 @@ public final class MainActivity extends AppCompatActivity {
                 robotModelView.resetView());
     }
 
-    @Override protected void onDestroy(){if(robotModelView!=null)robotModelView.setOnModelReady(null);if(startup!=null)startup.close();else if(launch!=null)launch.close();super.onDestroy();}
+    @Override protected void onDestroy(){if(electrons!=null)electrons.close();if(robotModelView!=null)robotModelView.setOnModelReady(null);if(startup!=null)startup.close();else if(launch!=null)launch.close();super.onDestroy();}
 
     private void styleHeaderWordmark() {
         TextView wordmark = findViewById(R.id.headerWordmark);
         SpannableString label = new SpannableString(getString(R.string.app_name));
         int accentStart = Math.max(0, label.length() - 2);
         label.setSpan(
-                new ForegroundColorSpan(ContextCompat.getColor(this, R.color.brand_green_dark)),
+                new ForegroundColorSpan(getColor(R.color.brand_green_dark)),
                 accentStart,
                 label.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        wordmark.setText(label);
+        wordmark.setTextColor(getColor(R.color.ink));wordmark.setText(label);
     }
 
     private void configureTabletHero() {
@@ -96,6 +98,7 @@ public final class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if(startup!=null)startup.resume();
+        if(electrons!=null&&menuRevealed)electrons.resumeAnimation();
         if (robotModelView != null) {
             robotModelView.onResume();
         }
@@ -104,6 +107,7 @@ public final class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         if(startup!=null)startup.pause();
+        if(electrons!=null)electrons.pauseAnimation();
         if (robotModelView != null) {
             robotModelView.onPause();
         }

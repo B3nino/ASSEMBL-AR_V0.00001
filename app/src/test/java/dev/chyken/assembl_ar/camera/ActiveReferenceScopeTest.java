@@ -24,10 +24,10 @@ public final class ActiveReferenceScopeTest {
         RecognitionRequest r=new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(MAIN_BOARD),null,null,null,1,7).withPhase7Stage(4);
         assertEquals(3,ActiveReferenceScope.select(all,r).size());
     }
-    @Test public void genericScopesKeepAllTargetAnglesBoardCompetitorsAndAdminRefsButNoFutureScenes(){
+    @Test public void genericScopesKeepTargetAnglesAndAdminRefsButExcludeUnrequestedBoards(){
         List<ComponentReferenceSpec> all=Arrays.asList(ref("board_a",MAIN_BOARD,0),ref("board_b",MAIN_BOARD,0),ref("bottom",MAIN_BOARD,0),ref("extension",EXTENSION_BOARD,0),ref("admin",MAIN_BOARD,0),ref("p9scene_assembly_x",MAIN_BOARD,9),ref("p8scene_assembly_x",MAIN_BOARD,8),ref("future",MAIN_BOARD,13));
         RecognitionRequest r=new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(MAIN_BOARD),null,null,null,1,1);
-        assertEquals(5,ActiveReferenceScope.select(all,r).size());assertTrue(ActiveReferenceScope.select(all,r).contains(all.get(4)));
+        assertEquals(4,ActiveReferenceScope.select(all,r).size());assertTrue(ActiveReferenceScope.select(all,r).contains(all.get(4)));
     }
     @Test public void inactiveScreensPrepareNothingAndFrameTagsDoNotReloadAnIdenticalScope(){
         assertNull(ActiveReferenceScope.key(null));assertTrue(ActiveReferenceScope.select(Collections.emptyList(),null).isEmpty());

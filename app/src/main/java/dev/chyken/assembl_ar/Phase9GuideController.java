@@ -96,7 +96,7 @@ final class Phase9GuideController implements AutoCloseable {
     private void hardware(){
         if(closed||paused||saving||modal||reviewing||!flow.screen().preparation())return;modal=true;render();boolean wheels=flow.screen()==Screen.WHEELS_READY;
         String text=wheels?"Are both robot wheels ready for installation? Either hub face may have been used for identification.":"Prepare one M3 nut and a Phillips screwdriver. Keep the standoff's top screw safe; it will be removed after installation and saved for the extension board.";
-        dialog=new AlertDialog.Builder(activity).setTitle(wheels?"Two robot wheels":"Standoff hardware").setView(PhysicalCheckUi.prompt(activity,text)).setNegativeButton("Inspect first",null).setPositiveButton("I Have These",(d,w)->{flow.confirm();status("Hardware ready · Next step unlocked");render();save();}).create();
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle(wheels?"Two robot wheels":"Standoff hardware").setView(PhysicalCheckUi.prompt(activity,text)).setNegativeButton("Inspect first",null).setPositiveButton("I Have These",(d,w)->{flow.confirm();status("Hardware ready · Next step unlocked");render();save();}).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(text,"hardware:"+(++sequence));});dialog.setOnDismissListener(d->{if(dialog!=d)return;modal=false;dialog=null;if(!closed&&!paused)render();});dialog.show();
     }
     private void check(){
@@ -104,7 +104,7 @@ final class Phase9GuideController implements AutoCloseable {
         String question=wheels?"Are both wheels pushed fully onto the motor shafts without slipping?":nut?"Is the standoff locked tightly underneath with an M3 nut?":"Have you REMOVED the top screw from the standoff and set it aside?";
         String correction=wheels?"Press firmly on the center wheel hub until it seats completely on the axle shaft.":nut?"Tighten the lower M3 nut until the center standoff is secure without wobbling.":"Please remove the top screw from the standoff and set it aside. You will need it to fasten the extension board later.";
         TextView prompt=PhysicalCheckUi.prompt(activity,question);
-        dialog=new AlertDialog.Builder(activity).setTitle(wheels?"Wheel stability":"Standoff check").setView(prompt).setNeutralButton("Check later",null)
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle(wheels?"Wheel stability":"Standoff check").setView(prompt).setNeutralButton("Check later",null)
             .setNegativeButton(wheels?"Wheel Loose":nut?"Loose":"Still Attached",null).setPositiveButton(wheels?"Both Wheels Locked":nut?"Locked Tight":"Top Screw Removed",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;PhysicalCheckUi.style(dialog);say(question,"question:"+(++sequence));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{if(wheels)flow.answerWheels(false);else if(nut)flow.answerNut(false);else flow.answerTopScrew(false);prompt.setText(correction+"\n\n"+question);say(correction,"correction:"+(++sequence));save();});

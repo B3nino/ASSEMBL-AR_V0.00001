@@ -19,7 +19,7 @@ public final class GlobalComponentRegistry {
     private Mat pooled; private List<Template> owners=Collections.emptyList();
     private volatile boolean ready;
     private static final int ROWS_PER_VARIANT=96;
-    private static final int COMPACT_VERSION=1;
+    private static final int COMPACT_VERSION=2;
     public static final class Match {
         public final String referenceId,componentId,name;public final int phase,good,total,inliers;public final boolean assembly,negative;public final double score;
         public final List<VisionPoint> targetCorners;
@@ -138,7 +138,7 @@ public final class GlobalComponentRegistry {
     private static void writePolygon(DataOutputStream out,List<VisionPoint> points)throws IOException{out.writeInt(points.size());for(VisionPoint p:points){out.writeDouble(p.getX());out.writeDouble(p.getY());}}
     private static List<VisionPoint> readPolygon(DataInputStream in)throws IOException{int n=bounded(in.readInt(),3,128);List<VisionPoint> p=new ArrayList<>();for(int i=0;i<n;i++){double x=in.readDouble(),y=in.readDouble();if(!Double.isFinite(x+y)||x< -1||x>2||y< -1||y>2)throw new IOException("Invalid compact geometry");p.add(new VisionPoint(x,y));}return p;}
     private static String fingerprint(ReferenceCacheIndex index,List<ComponentReferenceSpec> sources,VisionConfig config){
-        try{MessageDigest digest=MessageDigest.getInstance("SHA-256");for(ComponentReferenceSpec s:sources){digest.update(index.key(s,config).getBytes(StandardCharsets.UTF_8));digest.update((byte)0);}return Base64.getEncoder().encodeToString(digest.digest());}
+        try{MessageDigest digest=MessageDigest.getInstance("SHA-256");digest.update(("edge:"+EdgeGradientDescriptorExtractor.VERSION).getBytes(StandardCharsets.UTF_8));for(ComponentReferenceSpec s:sources){digest.update(index.key(s,config).getBytes(StandardCharsets.UTF_8));digest.update((byte)0);}return Base64.getEncoder().encodeToString(digest.digest());}
         catch(java.security.NoSuchAlgorithmException impossible){throw new AssertionError(impossible);}
     }
     private static boolean inBody(double x,double y,List<List<VisionPoint>> polygons){

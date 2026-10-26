@@ -20,6 +20,7 @@ with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DE
     names = sorted(n for n in apk.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n) or n in ('resources.arsc','AndroidManifest.xml') or n.startswith('res/') or n.startswith('assets/references/Phase3/STEP3_5ASSEMBLYSCAN/TABLET_DRIVER_PLACEMENT') or n.startswith('assets/references/Phase3/STEP3_1MOTORDRIVER_INVALID/') or '/var_light/VIDEO_' in n or '/var_light/VIDEO35_' in n or '/var_light/VIDEO789_' in n or '/var_light/VIDEO1011_' in n)
     if not names:
         raise SystemExit('No DEX in the built APK')
+    names.extend(n for n in apk.namelist() if n.startswith('assets/models/'))
     for name in names:
         output.writestr(name, apk.read(name))
     # The installed generic runner can replay the latest fixtures too. This avoids

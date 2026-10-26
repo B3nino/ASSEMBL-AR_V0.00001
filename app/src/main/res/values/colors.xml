@@ -7,9 +7,9 @@
     <color name="brand_charcoal">#303030</color>
 
     <!-- Accessible application surfaces and content colors. -->
-    <color name="ink">@color/brand_charcoal</color>
-    <color name="ink_soft">#606060</color>
-    <color name="canvas">#E5F1EB</color>
+    <color name="ink">#20382B</color>
+    <color name="ink_soft">#4B6357</color>
+    <color name="canvas">#EAF4EF</color>
     <color name="surface">#FFFFFFFF</color>
     <color name="surface_muted">#F0F5F1</color>
     <color name="line">#CDDCD2</color>

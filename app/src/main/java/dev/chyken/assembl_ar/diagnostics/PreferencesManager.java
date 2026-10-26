@@ -2,6 +2,24 @@ package dev.chyken.assembl_ar.diagnostics;
 import android.content.Context;
 public final class PreferencesManager {
     private PreferencesManager(){}
+    public static final String KEY_ADMIN_VISIBLE="administrator_visible";
+    public static final String KEY_ASSEMBLY_DEV_VISIBLE="assembly_dev_visible";
+    public static android.content.SharedPreferences visibilityPreferences(Context c){return c.getSharedPreferences("interface_settings",0);}
+    public static boolean administratorVisible(Context c){return visibilityPreferences(c).getBoolean(KEY_ADMIN_VISIBLE,false);}
+    public static void administratorVisible(Context c,boolean visible){visibilityPreferences(c).edit().putBoolean(KEY_ADMIN_VISIBLE,visible).apply();}
+    public static boolean assemblyDeveloperVisible(Context c){return visibilityPreferences(c).getBoolean(KEY_ASSEMBLY_DEV_VISIBLE,false);}
+    public static void assemblyDeveloperVisible(Context c,boolean visible){visibilityPreferences(c).edit().putBoolean(KEY_ASSEMBLY_DEV_VISIBLE,visible).apply();}
+    public static final String KEY_TTS_MUTED="tts_muted";
+    public static final String KEY_NANO_DETECTOR="nano_chip_detector";
+    public static boolean nanoDetector(Context c){return c.getSharedPreferences("diagnostic_settings",0).getBoolean(KEY_NANO_DETECTOR,true);}
+    public static void nanoDetector(Context c,boolean enabled){c.getSharedPreferences("diagnostic_settings",0).edit().putBoolean(KEY_NANO_DETECTOR,enabled).apply();}
+    public static android.content.SharedPreferences narrationPreferences(Context c){return c.getSharedPreferences("diagnostic_settings",0);}
+    public static boolean ttsMuted(Context c){
+        android.content.SharedPreferences p=narrationPreferences(c);
+        if(!p.contains(KEY_TTS_MUTED))p.edit().putBoolean(KEY_TTS_MUTED,c.getSharedPreferences("AssemblyActivity",0).getBoolean("voice_guide_muted",false)).apply();
+        return p.getBoolean(KEY_TTS_MUTED,false);
+    }
+    public static void ttsMuted(Context c,boolean muted){narrationPreferences(c).edit().putBoolean(KEY_TTS_MUTED,muted).apply();}
     public static boolean logging(Context c){return c.getSharedPreferences("diagnostic_settings",0).getBoolean("logging",false);}
     public static void logging(Context c,boolean enabled){c.getSharedPreferences("diagnostic_settings",0).edit().putBoolean("logging",enabled).apply();DiagnosticLogger.get(c).setEnabled(enabled);}
 }

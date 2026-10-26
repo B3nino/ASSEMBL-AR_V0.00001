@@ -32,33 +32,36 @@ public final class DiagnosticSession {
         // A global hint cannot own an accepted local shape/phase candidate's metrics.
         if(spatiallyVerified&&e!=null&&!java.util.Objects.equals(e.source.getComponentId(),r.getComponentId())
                 &&r.getPhase7Observation()==null)e=null;
-        boolean pose=e!=null&&e.pose!=null&&e.orientation!=null;
-        boolean correct=pose&&workflow&&e.orientation.frontFacing;
+        RecognitionResult.Pose coarse=e==null||e.pose==null?VerifiedScanEvidence.coarsePose(r):null;
+        boolean measuredInliers=e!=null&&e.pose!=null&&e.orientation!=null;
+        boolean pose=measuredInliers||coarse!=null;
+        boolean correct=measuredInliers&&workflow&&e.orientation.frontFacing;
         RecognitionRequest.AssemblyExpectation target=request==null?null:request.getExpectation();
         if(correct&&target!=null&&target.getOrientationDegrees()!=null){
             double expected=target.getOrientationDegrees(),delta=Math.abs(e.orientation.yaw-expected)%360;
             correct=Math.min(delta,360-delta)<=(target.getOrientationToleranceDegrees()==null?30:target.getOrientationToleranceDegrees());
         }
-        RecognitionResult.Pose fitted=pose?e.pose:null;
+        RecognitionResult.Pose fitted=measuredInliers?e.pose:coarse;
         CheckerboardGroundTruth gt=groundTruth;CheckerboardGroundTruth.Measurement measured=null;
         // Optional ground truth must not erase an otherwise valid scan's core telemetry.
         if(gt!=null&&fitted!=null)try{measured=gt.measure(gray,r.getProjectedCorners(),fitted,request==null?null:request.getCameraCalibration());}
         catch(RuntimeException unavailable){android.util.Log.w("DiagnosticSession","Checkerboard measurement unavailable",unavailable);}
         RecognitionResult.Latency latency=r.getLatency();
         DiagnosticScanTelemetry t=new DiagnosticScanTelemetry(e==null?"Unverified":e.componentName,e==null?null:e.source.getReferenceId(),
-            e==null?-1:KeypointInventoryManager.INSTANCE.count(e.source.getReferenceId()),
+            e==null?-1:e.activeKeypoints,
             e==null?Math.max(0,r.getFrameKeypointCount()):e.liveKeypoints,e==null?-1:e.good,e==null?-1:e.total,
-            latency.getFeatureExtractionMs(),latency.getMatchingMs(),correct,e!=null,pose,
-            pose?e.orientation.label:fallbackOrientation(r.getOrientationClassification()),measured==null?Double.NaN:measured.errorMm,
+            latency.getFeatureExtractionMs(),latency.getMatchingMs(),correct,e!=null||spatiallyVerified,pose,
+            measuredInliers?e.orientation.label:fallbackOrientation(r.getOrientationClassification()),measured==null?Double.NaN:measured.errorMm,
             e==null||e.projectedOrigin==null?null:new DiagnosticScanTelemetry.Point(e.projectedOrigin.getX(),e.projectedOrigin.getY()),
             e==null||e.observedCentroid==null?null:new DiagnosticScanTelemetry.Point(e.observedCentroid.getX(),e.observedCentroid.getY()),
             fitted==null?Double.NaN:fitted.getReprojectionErrorPx(),analyzed.get());
+        if(coarse!=null)t=t.withCoarsePose();
         if(spatiallyVerified)t=t.withVerification(r.getDisplayName()==null||r.getDisplayName().trim().isEmpty()?r.getComponentId():r.getDisplayName(),
                 VerifiedScanEvidence.verificationSource(r),r.getConfidence());
         RecognitionResult.RejectionEvidence rejected=r.getRejectionEvidence();
         String reason=m!=null&&m.mismatch!=null?m.mismatch:p!=null&&p.rejected?"MISSING_MOTOR_OR_BRACKET":workflow?"ACCEPTED":rejected==null?r.getValidationState().name():rejected.getReason().name();
         DiagnosticSample sample=new DiagnosticSample(System.currentTimeMillis(),r.getFrameTimestampNanos(),request==null?0:request.getAssemblyStepNumber(),String.valueOf(r.getRequestTag()),
-            t.componentName,t.referenceId,t.activeKeypoints,t.goodMatches,t.totalMatches,t.liveKeypoints,latency.getFeatureExtractionMs(),latency.getMatchingMs(),lighting(gray),workflow,reason,r.getDetectionMethod().name(),pose,pose?t.isCorrectPose:null,
+            t.componentName,t.referenceId,t.activeKeypoints,t.goodMatches,t.totalMatches,t.liveKeypoints,latency.getFeatureExtractionMs(),latency.getMatchingMs(),lighting(gray),workflow,reason,r.getDetectionMethod().name(),pose,measuredInliers?t.isCorrectPose:null,
             t.treMm,t.reprojectionRmsPx,measured!=null&&motion.equals("Static")?measured.errorMm:Double.NaN,
             target==null?"unscoped":request.getAssemblyStepNumber()+":"+target.getComponentId()+":"+dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request),
             latency.getSpatialValidationMs(),latency.getTotalMs(),m==null?"unspecified":m.preprocessing,t,measured==null?Double.NaN:measured.errorPx);

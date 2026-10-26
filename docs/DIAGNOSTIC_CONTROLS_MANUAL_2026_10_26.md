@@ -67,13 +67,13 @@ Both camera modes use one layout, one numeric formatter and one green/red output
 
 - **Scanned component:** the spatially verified candidate, rather than the highest-scoring unverified scheduling probe. `(VERIFIED)` identifies accepted spatial verification.
 - **Active keypoints / Live keypoints:** assigned template count for a bound reference versus the current frame's extracted features. Unknown counts stay Unmeasured. A geometry-only verifier has no invented reference count.
-- **Good/Matches and %:** real deduplicated Lowe/Hamming matches and attempted pairs for the bound candidate. The 85% academic ORB gate remains independent of workflow verification. Geometry confidence is never substituted for this percentage.
+- **Good/Matches and %:** real deduplicated Lowe/Hamming matches and attempted pairs for the bound candidate. The percentage is descriptive, with no 85% pass/fail cutoff. Geometry confidence is never substituted for this percentage.
 - **Extraction / Matching times:** measured preprocessing/extraction and matching/geometric-filtering durations. They are not a stopwatch for the whole human assembly step.
-- **Correct Pose / Orientation:** measured 3D status where available. An accepted 2D shape or board-relative placement does not manufacture a calibrated 3D pose. Unavailable pose values say Unmeasured; available 2D orientation labels remain a fallback.
+- **Correct Pose / Orientation:** measured 3D status where available. An accepted 2D shape or board-relative placement does not manufacture a calibrated 3D pose. Unavailable pose values say Unmeasured; a valid bounding-rectangle pose is labeled Coarse PnP, with its orientation explicitly unverified. Coarse estimates do not count as measured correct-pose classifications. Available 2D orientation labels remain a fallback.
 - **TRE:** 3D millimeter error against independently measured checkerboard ground truth, when available. It is not zero by default.
 - **Projected / Observed points and Pixel distance:** projected model center, observed inlier centroid and their Euclidean separation. Those centers are different point definitions; this distance is separate from solver RMS and checkerboard registration error.
 - **Total frames:** the cumulative analyzed-frame count when that snapshot was recorded. A frozen assembly HUD deliberately retains its winning count.
-- **Output: Match (VERIFIED):** the accepted spatial result, plus its verification source and available verifier confidence. This can coexist with an ORB gate FAIL or unmeasured 3D values without falsifying them.
+- **Output: Match (VERIFIED):** the accepted spatial result, plus its verification source and available verifier confidence. This can coexist with a low raw descriptor percentage or unmeasured 3D values; neither is rewritten to resemble perfect measurements.
 
 After the assembly controller actually confirms a scan, its diagnostic HUD freezes on that exact winning frame. Later frames cannot overwrite it with Unverified/Mismatch. Live outlines and raw diagnostic logging continue. Next, another substep, or explicit Rescan opens a fresh telemetry scope; pausing/resuming a completed scan retains its snapshot within the activity. The individual tester deliberately stays live because it is a continuous diagnostic camera.
 

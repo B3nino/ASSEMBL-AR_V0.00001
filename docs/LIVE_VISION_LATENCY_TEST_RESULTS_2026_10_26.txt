@@ -1,0 +1,105 @@
+ASSEMBL-AR — live latency and supplied Nano ONNX verification
+26 October 2026; tablet model 2603ARP14G, ADB serial 368e278b
+
+BUILD
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_tablet_debug.ps1
+BUILD SUCCESSFUL in 22s
+67 actionable tasks: 5 executed, 62 up-to-date
+Existing deprecation notes remain; no build error.
+
+HOST
+python -B tools/run_host_tests.py
+Discovered 137 host test classes
+Time: 2.336
+OK (737 tests)
+
+NATIVE VERIFICATION — FULL SWEEP FOLLOWED BY FOCUSED CORRECTIONS
+Initial full sweep: 82 / 83 groups passed.
+One failure: Phase 9 paired wheels at recorded timestamp 114.
+Cause: first wheel could consume the deadline before the next crop; its
+source preference was also discarded after a partial two-wheel result.
+Correction: retain only the source-photo scheduling preference and permit
+one extra bounded second-wheel crop. Never accumulate object counts/poses
+across frames; match/inlier/geometry thresholds remain unchanged.
+
+Focused model/latency suite: 7 / 7 groups passed.
+Final correction/lifecycle/telemetry runs: 6 / 6 passed, including two
+independent reruns of the entire wheel/standoff native regression group.
+Corrected paired-wheel 114 results: two distinct instances on attempt 0
+in both runs (404.25 ms and 631.29 ms).
+
+Consolidated coverage: 86 / 86 distinct native groups have passing results.
+This is a union of the full sweep and subsequent focused correction runs,
+not a claim that one invocation of -Suite all printed 86 successes.
+See LIVE_VISION_NATIVE_CASES_2026_10_26.json for case names and run provenance.
+
+Covered: phase recognition/rejection, independent tracker/wheel instances,
+optical flow/persistence, buffer cleanup, pause/resume epochs, frozen HUD,
+checkerboard TRE, actual pose residuals, source-specific unmeasured metrics,
+full-resolution coordinate restoration, 300-row fast crops, adaptive
+descriptor ownership, supplied model import/inference, false neural ROI
+proposals on reversed/missing Nano frames, and persistent detector toggle.
+
+SNAPSHOTS
+Full-sweep candidate SHA256:
+90fea77b8b60e4e4d30e813a4eef750cef86c1d6ac44565d5e0a4debe02b64ef
+Focused candidate SHA256:
+2e576370e6b7081b4f61d7268dc864ce645163ba999401ce5a5e1f8550d44b03
+Final correction/lifecycle candidate SHA256:
+859039fd79879d2578fdfe99ac10382b6b3d9080adc1ae3dc6de1b2fd1199047
+Final changes after the focused sweep: second-wheel scheduling, telemetry
+ownership cleanup, and dropping paused frames immediately after DNN work.
+Corresponding native regressions were run after these corrections.
+
+ACTUAL PERFORMANCE — DO NOT REPLACE WITH A UNIVERSAL 100 ms CLAIM
+Main Board, three different retained frames cycled through the analyzer:
+  First localization: frame 1
+  Latest warm median: 90.30 ms
+  Latest warm P95: 197.54 ms
+  Another warmed run: median 97.71 ms, P95 214.55 ms
+These are analyzer/callback times, not sensor-to-display latency. A former
+single-image/cache-heavy run was faster and is not used as the live claim.
+Mounted multi-component verification still takes hundreds of milliseconds
+to seconds when original high-detail body/context extraction is required.
+Consecutive-frame/checklist completion requirements were not shortened.
+
+SUPPLIED MODEL
+File: assets/models/arduinonano.onnx; 10,663,346 bytes
+SHA256: ddc02a2b627e7781bf12235b46da23827c85f855072afa773fe57cd2b091fbe5
+Input: float32 RGB [1,3,640,640]; letterbox 114; scale 1/255
+Output: [1,5,8400]; class 0 Mega328p (chip, confirmed by owner)
+OpenCV CPU import and inference passed; no new Gradle dependency.
+
+Mounted recorded frame: chip confidence 0.86082387, camera box
+{454,198,40x40}; proposed search {314,58,320x320}.
+Warm isolated inference: approximately 400 ms (another run 463 ms).
+Inference can take seconds under the combined reference-search workload.
+Sampled loose-front and reversed views did not exceed the configured 0.8
+proposal threshold. Missing-Nano and blank views returned no proposal.
+These are same-recording examples, not an independent accuracy study.
+Eight additional warm blank inferences grew the native allocated heap by
+629,088 bytes; the bounded-growth check passed.
+
+The chip box does NOT become the board outline. ORB/RANSAC geometry still
+provides the complete Nano outline and independent board context verifies
+placement/orientation. DNN confidence never becomes a fake ORB percentage.
+Network loading is Nano-only; inference is acquisition/loss-only, at most
+once per second, and stops when photo verification resolves orientation.
+Benchmark & logging contains a persistent Experimental Nano chip detector
+(ONNX) switch for comparison. Disabled mode keeps photo/geometry active.
+
+DATA PRESERVATION
+Learner APK was not installed/uninstalled or data-cleared by these checks.
+Only candidate replay code was staged for the authorized separate runner.
+Progress/database hashes match the pre-test values:
+5b0b803a407d591b90e3c7be16ebf5d107970f880996afdfa700436a3fd08e45  assembly_phase_progress.xml
+3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793  guided_assembly_steps.xml
+202902c6382a175ed8e60f7d73ac6597e5165c61868d4e80c1add02b9891a547  assembl_ar.db
+
+DEPLOYMENT / LIVE FOLLOW-UP
+Run the app from Android Studio without uninstalling or clearing app data.
+Use Individual part AR test -> Arduino Nano -> Start test, with the WHOLE
+Nano front visible (chip, USB and pin rows), then compare the ONNX switch.
+For installed placement, use Phase 5 Step 5.3 and Rescan this step when
+that specific scan is already completed. No live post-update camera timing
+or sustained camera-plus-model memory measurement is claimed here.

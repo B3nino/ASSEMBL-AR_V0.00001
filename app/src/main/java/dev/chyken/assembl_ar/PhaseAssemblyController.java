@@ -1212,7 +1212,7 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         }
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(content);
-        AlertDialog dialog = new AlertDialog.Builder(activity)
+        AlertDialog dialog = new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity)
                 .setTitle(activity.getString(R.string.phase_checklist_title, phase.getTitle()))
                 .setView(scroll)
                 .setNegativeButton(R.string.phase_checklist_later, null)

@@ -55,7 +55,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
                 String path=ref.spec.getJpegAssetPath(),name=path.substring(path.lastIndexOf('/')+1);
                 if(!seen.add(role+":"+name))continue;
                 boolean refineFirst=step!=1&&directRefinements++<2;
-                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+                for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                     if(!variant.hasOrbData())continue;
                     Match found=match(ref,variant,live,descriptors,raw,scale,Phase3AssetCatalog.installed(role),refineFirst,evidence.score(Phase3Observation.State.PLACED)<16);if(found==null)continue;
                     evidence.add(role,found);
@@ -207,7 +207,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
         for(ReferenceDatabase.PreparedReference ref:ordered){
             String role=Phase3AssetCatalog.referenceRole(ref.spec.getReferenceId());if(role==null||((step==1)==Phase3AssetCatalog.installed(role)))continue;
             int best=0;
-            for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+            for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                 if(!variant.hasOrbData())continue;Split split=splits.get(variant);if(split==null){split=new Split(ref,variant);splits.put(variant,split);}
                 if(split.probe.empty()||live.rows()<2)continue;
                 long started=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
@@ -219,11 +219,11 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
         }
         Comparator<ReferenceDatabase.PreparedReference> ranking=Comparator.comparingInt(r->-scores.get(r));positive.sort(ranking);negative.sort(ranking);
         LinkedHashSet<ReferenceDatabase.PreparedReference> selected=new LinkedHashSet<>();
-        selected.addAll(positive.subList(0,Math.min(4,positive.size())));selected.addAll(negative.subList(0,Math.min(2,negative.size())));
+        selected.addAll(positive.subList(0,Math.min(DiagnosticHammingMatcher.snapshot().fastLive?1:4,positive.size())));selected.addAll(negative.subList(0,Math.min(DiagnosticHammingMatcher.snapshot().fastLive?1:2,negative.size())));
         if(preferredReference!=null)for(ReferenceDatabase.PreparedReference ref:positive)if(preferredReference.equals(ref.spec.getReferenceId())){selected.add(ref);break;}
         // Rotating alternatives remain eligible even when a wire or shadow makes
         // their cheap probe weak. Counts never accumulate across camera frames.
-        appendRotating(selected,positive,2);appendRotating(selected,negative,1);viewpointCursor+=2;
+        appendRotating(selected,positive,DiagnosticHammingMatcher.snapshot().fastLive?1:2);appendRotating(selected,negative,1);viewpointCursor+=2;
         List<ReferenceDatabase.PreparedReference> result=new ArrayList<>(selected);
         // A clear negative must not wait behind four weak positive viewpoints.
         // Both families remain in the window and still require full geometry.

@@ -177,7 +177,7 @@ final class Phase2GuideController implements AutoCloseable {
     }
     private void tools(){
         if(dialog!=null)dialog.dismiss();
-        dialog=new AlertDialog.Builder(activity).setTitle("Fasteners and tools")
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle("Fasteners and tools")
                 .setMessage("4× 30mm long screws\n4× M3 nuts\nPhillips screwdriver")
                 .setNegativeButton(android.R.string.cancel,null).setPositiveButton("I Have These",(d,w)->{flow.confirmTools();render();save();}).show();
     }
@@ -191,7 +191,7 @@ final class Phase2GuideController implements AutoCloseable {
             answers[i]=PhysicalCheckUi.choices(activity,i==0?"Left motor joint":"Right motor joint");
             body.addView(answers[i]);
         }
-        dialog=new AlertDialog.Builder(activity).setTitle("Joint Stability Check").setView(body)
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle("Joint Stability Check").setView(body)
                 .setNegativeButton(android.R.string.cancel,null).setPositiveButton("Check joints",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
             if(answers[0].getCheckedRadioButtonId()==-1||answers[1].getCheckedRadioButtonId()==-1){Toast.makeText(activity,"Check both joints first",Toast.LENGTH_SHORT).show();return;}

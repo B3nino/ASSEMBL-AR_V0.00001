@@ -80,6 +80,8 @@
             android:textSize="@dimen/assembly_toolbar_text_size"
             android:textStyle="bold" />
 
+    <ImageButton android:id="@+id/btnAppSettings" android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp" android:background="@drawable/bg_circle_dark" android:src="@drawable/ic_settings" app:tint="@color/white" android:contentDescription="@string/app_settings" />
+    <ImageButton android:id="@+id/btnTtsMuteToggle" android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp" android:background="@drawable/bg_circle_dark" android:src="@drawable/ic_volume_up" android:contentDescription="@string/narration_mute" />
         <TextView
             android:id="@+id/livePill"
             android:layout_width="wrap_content"
@@ -113,6 +115,7 @@
 
         <TextView
             android:id="@+id/devButton"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"

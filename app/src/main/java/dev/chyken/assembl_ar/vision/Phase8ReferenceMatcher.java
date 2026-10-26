@@ -41,7 +41,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
                 if(visited++>=2&&System.nanoTime()>deadline)break;
                 String role=Phase8AssetCatalog.referenceRole(ref.spec.getReferenceId());
                 if(role==null||(step==1)==Phase8AssetCatalog.installed(role))continue;
-                for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+                for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                     if(!variant.hasOrbData())continue;
                     boolean reviewed=step==2&&dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(ref.spec.getJpegAssetPath())!=null;
                     Match local=reviewed?refine(ref,variant,live,descriptors,raw,scale):match(ref,variant,live,descriptors,scale,false);if(local!=null)candidates.add(new Candidate(ref,variant,role,local,reviewed));
@@ -58,7 +58,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
                 for(int i=0;i<count;i++){
                     if(i>0&&System.nanoTime()>deadline)break;
                     ReferenceDatabase.PreparedReference ref=refs.get(Math.floorMod(offset+i,refs.size()));
-                    for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+                    for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                         if(!variant.hasOrbData())continue;
                         Match refined=refine(ref,variant,live,descriptors,raw,scale);
                         if(refined!=null)candidates.add(new Candidate(ref,variant,Phase8AssetCatalog.referenceRole(ref.spec.getReferenceId()),refined,true));
@@ -109,7 +109,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
                         for(ReferenceDatabase.PreparedReference ref:ranked(detail.keys,detail.descriptors,1)){
                             if(tried++>=2&&System.nanoTime()>localDeadline)break;
                             String role=Phase8AssetCatalog.referenceRole(ref.spec.getReferenceId());
-                            for(ReferenceDatabase.PreparedOrbVariant v:ref.orbVariants){
+                            for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants()){
                                 if(!v.hasOrbData())continue;Match found=match(ref,v,detail.keys,detail.descriptors,scale,false);if(found==null)continue;
                                 preferred.put(role,ref);
                                 if("front".equals(role)&&found.score>front){front=found.score;corners=found.actual;}
@@ -166,11 +166,11 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
             LinkedHashSet<ReferenceDatabase.PreparedReference> selected=new LinkedHashSet<>();ReferenceDatabase.PreparedReference known=preferred.get(family.getKey());if(known!=null)selected.add(known);
             List<ReferenceDatabase.PreparedReference> reviewed=new ArrayList<>();for(ReferenceDatabase.PreparedReference r:family.getValue())if(dev.chyken.assembl_ar.camera.Phase789VideoReferences.annotation(r.spec.getJpegAssetPath())!=null)reviewed.add(r);
             for(int i=0;i<Math.min(3,reviewed.size());i++)selected.add(reviewed.get(Math.floorMod(searchCursor+i,reviewed.size())));
-            List<ReferenceDatabase.PreparedReference> all=family.getValue();for(int i=0;i<Math.min(4,all.size());i++)selected.add(all.get(Math.floorMod(searchCursor*4+i,all.size())));window.addAll(selected);
+            List<ReferenceDatabase.PreparedReference> all=family.getValue();for(int i=0;i<Math.min(DiagnosticHammingMatcher.snapshot().fastLive?2:4,all.size());i++)selected.add(all.get(Math.floorMod(searchCursor*4+i,all.size())));window.addAll(selected);
         }
         try{for(ReferenceDatabase.PreparedReference ref:window){
             String role=Phase8AssetCatalog.referenceRole(ref.spec.getReferenceId());if(role==null||(step==1)==Phase8AssetCatalog.installed(role))continue;
-            int score=0;for(ReferenceDatabase.PreparedOrbVariant variant:ref.orbVariants){
+            int score=0;for(ReferenceDatabase.PreparedOrbVariant variant:ref.recoveryVariants()){
                 if(!variant.hasOrbData())continue;Split split=splits.computeIfAbsent(variant,v->new Split(ref,v));
                 // Installed refinement starts from independent fixed-PCB pose.
                 // Shiny caps have very few stable descriptors; weighting those

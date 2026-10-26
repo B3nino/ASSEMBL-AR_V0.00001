@@ -102,7 +102,7 @@ final class Phase3GuideController implements AutoCloseable {
     }
     private void hardware(){
         if(dialog!=null)dialog.dismiss();say(SPOKEN[2],"hardware:"+flow.tag());
-        dialog=new AlertDialog.Builder(activity).setTitle("Fasteners").setMessage("2 × 10mm short screws\n2 × M3 nuts\nPhillips screwdriver")
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle("Fasteners").setMessage("2 × 10mm short screws\n2 × M3 nuts\nPhillips screwdriver")
                 .setNegativeButton(android.R.string.cancel,null).setPositiveButton("I Have These",(d,w)->{flow.confirmHardware();message="Hardware ready · Next unlocked";say(message,"hardware-ready:"+flow.tag());render();save();}).show();
     }
     private void stability(){
@@ -110,7 +110,7 @@ final class Phase3GuideController implements AutoCloseable {
         LinearLayout body=PhysicalCheckUi.body(activity);
         TextView prompt=PhysicalCheckUi.prompt(activity,"Lightly press and wiggle the motor driver. Is it firmly screwed in?");prompt.setPadding(0,0,0,UiUtils.dp(activity,16));body.addView(prompt);
         CheckBox hardware=new CheckBox(activity);hardware.setText("Both 10mm screws and both M3 nuts are installed");body.addView(hardware);
-        dialog=new AlertDialog.Builder(activity).setTitle("Fasteners & joint stability").setView(body).setNeutralButton("Check later",null)
+        dialog=new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(activity).setTitle("Fasteners & joint stability").setView(body).setNeutralButton("Check later",null)
                 .setNegativeButton("Still Jiggling",null).setPositiveButton("Firm & Secure",null).create();
         dialog.setOnShowListener(d->{if(dialog!=d||closed||paused)return;
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v->{message="Please tighten both 10 millimeter screws and nuts using your screwdriver.";prompt.setText(message);say(message,"tighten:"+now());});

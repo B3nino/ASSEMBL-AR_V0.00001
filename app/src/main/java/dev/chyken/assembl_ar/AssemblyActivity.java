@@ -287,6 +287,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     @Nullable private View.OnLayoutChangeListener cameraLayoutListener;
     private int cameraLayoutGeneration;
     private ImageAnalysis imageAnalysis;
+    private dev.chyken.assembl_ar.ui.NarrationMuteControl muteControl;
     private AssemblyVisionAnalyzer analyzer;
     private final dev.chyken.assembl_ar.diagnostics.DiagnosticTelemetryLocker diagnosticLocker=new dev.chyken.assembl_ar.diagnostics.DiagnosticTelemetryLocker();
     private dev.chyken.assembl_ar.diagnostics.DiagnosticSample pairedDiagnosticSample;
@@ -334,7 +335,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                 });
             }
         });
-        voiceGuide.setMuted(getPreferences(MODE_PRIVATE).getBoolean("voice_guide_muted", false));
+        voiceGuide.setMuted(dev.chyken.assembl_ar.diagnostics.PreferencesManager.ttsMuted(this));
         configureTabletPanels();
         UiUtils.configureCameraWindow(this, cameraToolbar, null);
         stepInfoPanel = new StepInfoPanelController(this, savedInstanceState);
@@ -430,6 +431,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
 
     private void wireActions() {
+        dev.chyken.assembl_ar.ui.AppShellController.bindAssemblyControls(this);
         previewView.setOnTouchListener((view, event) -> focusCamera(event));
         exposeAsAccessibilityButton(findViewById(R.id.toggleStepInfoButton));
         exposeAsAccessibilityButton(stepInstruction);
@@ -443,9 +445,10 @@ public final class AssemblyActivity extends AppCompatActivity {
             return true;
         });
         findViewById(R.id.wiringReviewButton).setOnClickListener(v->reviewWiringDiagrams());
-        findViewById(R.id.devButton).setOnClickListener(view ->
-                DevStepSkipDialog.show(this, phaseController,
-                        diagnosticsVisible, this::setDiagnosticsVisible));
+        findViewById(R.id.devButton).setOnClickListener(view -> {
+            if(dev.chyken.assembl_ar.diagnostics.PreferencesManager.assemblyDeveloperVisible(this))
+                DevStepSkipDialog.show(this, phaseController,diagnosticsVisible,this::setDiagnosticsVisible);
+        });
         recognitionBanner.setOnClickListener(v->{if(failedReferenceScope!=null){failedReferenceScope=null;refreshReferenceScope();}else if(!visionInitializationStarted)initializeVision();});
         findViewById(R.id.viewReferenceButton).setOnClickListener(view -> showManualReference());
         manualThumbnail.setOnClickListener(view -> showManualReference());
@@ -469,17 +472,11 @@ public final class AssemblyActivity extends AppCompatActivity {
             details.setVisibility(show ? View.VISIBLE : View.GONE);
             ((TextView) view).setText(show ? R.string.hide_action_details : R.string.show_action_details);
         });
-        voiceGuideButton.setOnClickListener(view -> {
-            boolean muted = !voiceGuide.isMuted();
-            getPreferences(MODE_PRIVATE).edit().putBoolean("voice_guide_muted", muted).apply();
-            voiceGuide.setMuted(muted);
-            PhaseAssemblyController phases = phaseController;
-            if (phases != null) {
-                phases.onVoiceStatusChanged();
-            } else if (!muted) {
-                speakCurrentInstruction();
-            }
+        muteControl=new dev.chyken.assembl_ar.ui.NarrationMuteControl(this,findViewById(R.id.btnTtsMuteToggle),muted->{
+            boolean changed=voiceGuide.isMuted()!=muted;voiceGuide.setMuted(muted);
+            if(changed&&phaseController!=null)phaseController.onVoiceStatusChanged();
         });
+        voiceGuideButton.setOnClickListener(view->findViewById(R.id.btnTtsMuteToggle).performClick());
         confirmPlacementButton.setOnClickListener(view -> showPhysicalValidation());
         findViewById(R.id.manualModeButton).setOnClickListener(view -> useManualReferenceMode());
         findViewById(R.id.grantCameraButton).setOnClickListener(view -> {
@@ -2755,7 +2752,7 @@ public final class AssemblyActivity extends AppCompatActivity {
             title.setText(R.string.visual_test_title);
             body.setText(getString(R.string.visual_test_body) + "\n\n" + currentStep.getValidationPrompt());
         }
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
+        AlertDialog dialog = new dev.chyken.assembl_ar.ui.PhysicalChecklistBottomSheetDialog.Builder(this).setTitle("Physical verification").setView(content).setNegativeButton("Check later",(d,w)->d.cancel()).create();
         if (voiceGuide != null) voiceGuide.stop();
         assemblyDemo.pause();
         physicalValidationDialog = dialog;
@@ -3168,6 +3165,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if(muteControl!=null)muteControl.close();
         destroyed = true;prefetchGeneration++;
         if(prefetchedBank!=null){prefetchedBank.close();prefetchedBank=null;}
         if(wiringReviewDialog!=null)wiringReviewDialog.dismiss();
