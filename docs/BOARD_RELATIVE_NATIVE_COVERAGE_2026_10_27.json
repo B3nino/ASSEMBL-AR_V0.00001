@@ -1,0 +1,669 @@
+{
+  "normal_groups": 94,
+  "all_passed": true,
+  "note": "Coverage across the broad sweep and final focused/related runs, not one final 94-group invocation.",
+  "cases": [
+    {
+      "case": "UiBeautificationInstrumentedTest#sharedLightShellKeepsOneMenuAndUsableTesterViewport",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#settingsTogglesChangeOnlyAdministratorAndAssemblyDeveloperVisibility",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#graphicsStopSchedulingWhenHiddenPausedDetachedAndClosed",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#cubeRendersAndUsesRealCountsWithoutBypassingReferenceGate",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#checklistKeepsExplicitCallbacksCorrectionsAndReachableButtons",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#bothToolbarsShareMutePreferenceWithoutWritingAssemblyProgress",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#compactIndexPreservesEveryCountGeometryAndDescriptorWithoutFullBankReload",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#corruptOrDifferentCatalogCannotPublishPartialGlobalEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#previewSkipIsVisibleAccessibleAndCannotLeakIntoNonVideoContent",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.CameraPauseResumeInstrumentedTest#opticalBridgePauseReleasesLatestImageAndCanResumeTracking",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#resetAndCloseReleaseFrameBuffersAcrossRepeatedScans",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "DynamicOutlinePipelineInstrumentedTest#completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#individualToolShowsOutlinesBeforeSuccessForEveryNewLoosePart",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#welcomeFooterIsVisibleEnabledAndContrastingAtLargeFonts",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#bothCamerasHaveAnIndependentFullSizeDynamicOverlay",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#phaseOneDeveloperCompletionShowsAnEnabledFooterWithoutCameraEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#structuralCacheIsSeparateBoundedAndCopiedWithItsOwner",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#realPhotoStructuralDescriptorsRetainConsensusAfterExposureShift",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#flatFramesCannotInventStructuralKeypointsAndRepeatedBuffersRelease",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#fallbackPoseIsReportedAsCoarseWithoutFabricatingOrbOrBenchmarkOrientation",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#phaseMatcherCanUseOnlyTheStructuralBankAndBlankCannotPass",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#migrationKeepsLuminanceBlobAndGeometryWhileOnlyAddingAnEdgeSidecar",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#lostOptionalSidecarCannotBlockAWarmLuminanceScanner",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.VerifiedTelemetryReplayInstrumentedTest#roomStackedAssemblyPairsAndFreezesVerifiedMetricsWhileTrackingStaysLive",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.VerifiedTelemetryReplayInstrumentedTest#geometryHudIsGreenAndUnmeasuredValuesStayHonestInBothLayouts",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#pauseFromOutlineCallbackDropsTheRemainingTrackingCallback",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#directReplayAndCloseShareTheSameNativeOwnershipGuard",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#threeThousandFlowFramesReuseBuffersAndResetReleasesEveryOwner",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#rejectedCaptureWritesDoNotLeakAdmissionCounters",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#cyclicContourHierarchyTerminatesWithoutInventingRepeatedHoles",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#failedDescriptorPublicationPreservesBorrowedInputsAndSuccessfulOutputOwnsItsRows",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#higherMatchCountOnAnotherReferenceCannotOwnCandidateTelemetry",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#sharedAnalyzerPublishesOneVerifiedCandidateAndTruePoseResiduals",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#checkerboardTreIsThreeDimensionalAndUnavailableWithoutMetricIntrinsics",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#bothHudStatesKeepAllFifteenLinesAndColorOnlyTheFinalOutput",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#realCasterAndSensorCandidatesOwnTheirRoiTelemetry",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#allocationLightRatioProbeMatchesNativeDMatchValues",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.GlobalOutlineRegistryInstrumentedTest#bodyDescriptorsIdentifyTheWrongPartAndRejectItsEmptyBoardContext",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.GlobalOutlineRegistryInstrumentedTest#ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#photoOnlyOutlineFollowsMeasuredPanAndClearsWhenOccluded",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#delayedRecognitionCatchesUpToLatestCameraFrame",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#sparseEightToElevenCornerTargetsCatchUpButCannotTrackABlankFrame",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#mountedPairKeepsTwoSeparateMovingOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#multiSecondDetectorSeedIsRelocatedAgainstTheNewestMeasuredImage",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase10LoosePartsAndRealBoardBottomRequireCorrectOrientation",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11LooseOledBatteryAndBackFaceKeepTheirIdentity",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#shadowedBottomAssemblyRequiresBothTrackersAndCasterWithOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPalmHasMeasuredOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPaperAndRotatedFrontHasMeasuredOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#clippedSensorCannotBecomeACompleteFrontFace",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#restoredLooseStandoffScanUsesFreshGeometricEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#blurredStandoffDoesNotInventACompletePose",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#standoffScanRejectsYellowWheelHubs",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#phase8CameraAnalyzerPublishesTheOutlineBeforeConsecutiveSuccess",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#standaloneStandoffKeepsMeasuredIndividualToolOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#looseCableRequiresBothConnectorHeadsAndVisibleOutline",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#protectorUnderGlareRequiresIndependentFrameAndBoardEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#boardOnlyCannotPassStackedAssembly",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#clippedCableCannotPassAsBothCompleteConnectors",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines",
+      "passed": true,
+      "runs": [
+        "broad_sweep"
+      ]
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers",
+      "passed": true,
+      "runs": [
+        "broad_sweep",
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels",
+      "passed": true,
+      "runs": [
+        "broad_sweep",
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates",
+      "passed": true,
+      "runs": [
+        "broad_sweep",
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget",
+      "passed": true,
+      "runs": [
+        "broad_sweep",
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire",
+      "passed": true,
+      "runs": [
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#pcbOnlyGlobalFeaturesProposeFreshNanoCropButCannotVerifyErasedBody",
+      "passed": true,
+      "runs": [
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression",
+      "passed": true,
+      "runs": [
+        "final_focused"
+      ]
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+      "passed": true,
+      "runs": [
+        "final_active_flow_and_shared_camera"
+      ]
+    }
+  ]
+}

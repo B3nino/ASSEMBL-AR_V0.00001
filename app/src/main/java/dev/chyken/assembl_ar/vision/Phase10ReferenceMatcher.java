@@ -13,6 +13,7 @@ final class Phase10ReferenceMatcher implements AutoCloseable {
     private final ORB cableOrb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);
     private final CLAHE clahe;private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     private final ComponentDetailExtractor details;
+    void releaseCameraBuffers(){details.releaseWorkspace();}
     private final Map<ReferenceDatabase.PreparedOrbVariant,List<PhotoFeaturePartition.Rows>> partRows=new IdentityHashMap<>();
     private final Phase1011ReferenceSearch search=new Phase1011ReferenceSearch();
     private final int[] cursors=new int[6];

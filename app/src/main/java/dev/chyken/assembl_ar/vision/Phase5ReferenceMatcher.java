@@ -20,15 +20,19 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     private final LocalPhotometricRefiner local;
     private final Mat guidanceMask=new Mat();
     private byte[] guidanceBytes=new byte[0];
-    private String preferred;
-    private int cursor,bodyRecoveries,contextRecoveries,extracted;
+    private final Map<String,ReferenceDatabase.PreparedReference> preferred=new HashMap<>();
+    private int cursor=-1,bodyRecoveries,boardProposals,contextRecoveries,extracted;
+    private long searchFrame=Long.MIN_VALUE;
+    private boolean frameBoardSeen,frameBodySeen;
     private ComponentDetailExtractor.Sample neuralProposal;
+    void releaseCameraBuffers(){details.releaseWorkspace();guidanceMask.release();guidanceBytes=new byte[0];}
     Phase5ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;clahe=OpenCvVisionUtils.createClahe(config);details=new ComponentDetailExtractor(config);local=new LocalPhotometricRefiner(config);}
     RecognitionResult inspect(Mat gray,long time,int step){
         long start=android.os.SystemClock.elapsedRealtimeNanos();Mat raw=new Mat(),work=new Mat(),rows=new Mat(),empty=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();
         double scale=Math.min(1,1280.0/Math.max(gray.cols(),gray.rows()));Evidence evidence=new Evidence();database.acquireForRecognition();
         try{
-            bodyRecoveries=0;contextRecoveries=0;extracted=0;
+            bodyRecoveries=0;boardProposals=0;contextRecoveries=0;extracted=0;frameBoardSeen=frameBodySeen=false;
+            if(DiagnosticHammingMatcher.snapshot().workspace==null||searchFrame!=time){searchFrame=time;cursor=cursor==Integer.MAX_VALUE?0:cursor+1;}
             if(scale<1)Imgproc.resize(gray,raw,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(raw);
             DiagnosticHammingMatcher.normalize(clahe,raw,work);DiagnosticHammingMatcher.extract(orb,work,empty,keys,rows);KeyPoint[] live=keys.toArray();extracted+=live.length;DiagnosticHammingMatcher.captureLive(live,rows,scale);
             Rect proposal=DiagnosticHammingMatcher.snapshot().proposedRoi;
@@ -50,8 +54,9 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             if(state==Phase5Observation.State.MISALIGNED&&!evidence.explicitInvalid)state=Phase5Observation.State.SEARCHING;
             Match selected=evidence.matches.get(state);if(selected==null)for(Match m:evidence.matches.values())if(selected==null||m.score>selected.score)selected=m;
             Phase5Observation observation=new Phase5Observation(state,selected==null?0:selected.score);List<VisionPoint> corners=selected==null?Collections.emptyList():selected.actual;
-            if(observation.accepted(step))preferred=selected.id;
+            if(observation.accepted(step)||state==Phase5Observation.State.FLIPPED||state==Phase5Observation.State.BACKWARD||state==Phase5Observation.State.MISALIGNED)for(ReferenceDatabase.PreparedReference ref:database.preparedReferences())if(ref.spec.getReferenceId().equals(selected.id)){preferred.put(Phase5AssetCatalog.referenceRole(selected.id),ref);break;}
             DiagnosticHammingMatcher.State timing=DiagnosticHammingMatcher.snapshot();
+            InstalledScanDiagnostics.log(5,step,gray,state.name(),corners,frameBoardSeen,frameBodySeen,start);
             return RecognitionResult.builder(time).identity(selected==null?"phase5:photo":selected.id,"arduino_nano_microcontroller","Arduino Nano")
                 .method(corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
                 .validation(observation.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:state==Phase5Observation.State.FLIPPED||state==Phase5Observation.State.BACKWARD||state==Phase5Observation.State.MISALIGNED?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
@@ -61,6 +66,40 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
     }
     private PhotoFeaturePartition split(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v){PhotoFeaturePartition s=splits.get(v);if(s==null){s=new PhotoFeaturePartition(ref,v);splits.put(v,s);}return s;}
     private List<ReferenceDatabase.PreparedReference> window(Mat live,int step){
+        if(!DiagnosticHammingMatcher.snapshot().fastLive)return detailedWindow(live,step);
+        Map<String,List<ReferenceDatabase.PreparedReference>> families=new LinkedHashMap<>();
+        for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
+            String role=Phase5AssetCatalog.referenceRole(ref.spec.getReferenceId());if(role==null||((step==1)==Phase5AssetCatalog.installed(role)))continue;
+            families.computeIfAbsent(role,k->new ArrayList<>()).add(ref);
+        }
+        List<List<ReferenceDatabase.PreparedReference>> ranked=new ArrayList<>();Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
+        for(Map.Entry<String,List<ReferenceDatabase.PreparedReference>> family:families.entrySet()){
+            List<ReferenceDatabase.PreparedReference> pool=InspectionReferenceSchedule.window(family.getValue(),preferred.get(family.getKey()),cursor);
+            for(ReferenceDatabase.PreparedReference ref:pool){
+            int score=0;for(ReferenceDatabase.PreparedOrbVariant v:ref.recoveryVariants())if(v.hasOrbData()){
+                PhotoFeaturePartition s=split(ref,v);long began=android.os.SystemClock.elapsedRealtimeNanos();NearestDescriptorPairs pairs;
+                try{pairs=NearestDescriptorPairs.compute(s.probe,live);}finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-began;}
+                int n=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))n++;score=Math.max(score,n);
+                if(step!=1&&!s.contextProbe.empty()){
+                    began=android.os.SystemClock.elapsedRealtimeNanos();try{pairs=NearestDescriptorPairs.compute(s.contextProbe,live);}finally{DiagnosticHammingMatcher.snapshot().matchingNs+=android.os.SystemClock.elapsedRealtimeNanos()-began;}
+                    n=0;for(int i=0;i<pairs.size();i++)if(pairs.hasTwo(i)&&OrbMatchPolicy.accepts(pairs.bestDistance(i),pairs.secondDistance(i)))n++;
+                    score=Math.max(score,n);
+                }
+            }
+            scores.put(ref,score);
+            }
+            pool.sort(Comparator.comparingInt(r->-scores.get(r)));
+            LinkedHashSet<ReferenceDatabase.PreparedReference> chosen=new LinkedHashSet<>(pool.subList(0,Math.min(DiagnosticHammingMatcher.snapshot().fastLive?1:2,pool.size())));
+            ReferenceDatabase.PreparedReference known=preferred.get(family.getKey());if(known!=null)chosen.add(known);
+            // Probe ambiguity never hides an entire positive or rejection family.
+            if(!pool.isEmpty())chosen.add(pool.get(Math.floorMod(cursor,pool.size())));
+            ranked.add(new ArrayList<>(chosen));
+        }
+        List<ReferenceDatabase.PreparedReference> result=new ArrayList<>();
+        for(int slot=0;slot<4;slot++)for(List<ReferenceDatabase.PreparedReference> group:ranked)if(slot<group.size())result.add(group.get(slot));return result;
+    }
+    /** Preserve the established high-detail search order and work count. */
+    private List<ReferenceDatabase.PreparedReference> detailedWindow(Mat live,int step){
         List<ReferenceDatabase.PreparedReference> positive=new ArrayList<>(),negative=new ArrayList<>();Map<ReferenceDatabase.PreparedReference,Integer> scores=new IdentityHashMap<>();
         for(ReferenceDatabase.PreparedReference ref:database.preparedReferences()){
             String role=Phase5AssetCatalog.referenceRole(ref.spec.getReferenceId());if(role==null||((step==1)==Phase5AssetCatalog.installed(role)))continue;
@@ -72,15 +111,27 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             scores.put(ref,score);((role.equals("back")||role.equals("invalid"))?negative:positive).add(ref);
         }
         Comparator<ReferenceDatabase.PreparedReference> order=Comparator.comparingInt(r->-scores.get(r));positive.sort(order);negative.sort(order);LinkedHashSet<ReferenceDatabase.PreparedReference> chosen=new LinkedHashSet<>();
-        for(List<ReferenceDatabase.PreparedReference> group:Arrays.asList(positive,negative)){chosen.addAll(group.subList(0,Math.min(DiagnosticHammingMatcher.snapshot().fastLive?1:2,group.size())));for(int i=0;i<group.size();i++)if(chosen.add(group.get(Math.floorMod(cursor+i,group.size()))))break;}
-        if(preferred!=null)for(ReferenceDatabase.PreparedReference r:positive)if(preferred.equals(r.spec.getReferenceId())){chosen.add(r);break;}
-        cursor++;List<ReferenceDatabase.PreparedReference> result=new ArrayList<>(chosen);result.sort(order);return result;
+        for(List<ReferenceDatabase.PreparedReference> group:Arrays.asList(positive,negative)){chosen.addAll(group.subList(0,Math.min(2,group.size())));for(int i=0;i<group.size();i++)if(chosen.add(group.get(Math.floorMod(cursor+i,group.size()))))break;}
+        ReferenceDatabase.PreparedReference known=preferred.get(step==1?"front":"assembly");if(known!=null&&positive.contains(known))chosen.add(known);
+        List<ReferenceDatabase.PreparedReference> result=new ArrayList<>(chosen);result.sort(order);return result;
     }
     private Match match(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v,KeyPoint[] live,Mat rows,Mat raw,double scale,boolean installed){
         DiagnosticHammingMatcher.context(ref);PhotoFeaturePartition s=split(ref,v);double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
         List<Point> a=new ArrayList<>(),z=new ArrayList<>();collect(s.body,live,rows,a,z);Mat mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45)),bh=null;int contextInliers=Integer.MAX_VALUE;
         try{
             if(mh==null&&neuralProposal!=null){a.clear();z.clear();collect(s.body,neuralProposal.keys,neuralProposal.descriptors,a,z);mh=homography(a,z,installed?10:12,Math.max(15,w*.45),Math.max(15,h*.45));}
+            if(DiagnosticHammingMatcher.snapshot().fastLive&&installed&&mh==null&&a.size()<6&&boardProposals<1){
+                // Register independent fixed PCB features BEFORE looking for a small Nano.
+                // The board only proposes a crop; ten distributed fresh body inliers and
+                // the unchanged relative-placement/orientation gates remain compulsory.
+                List<Point> ba=new ArrayList<>(),bz=new ArrayList<>();collect(s.context,live,rows,ba,bz);bh=homography(ba,bz,16,15,15);
+                if(bh!=null){
+                    boardProposals++;contextInliers=inliers(ba,bz,bh);
+                    try(ComponentDetailExtractor.Sample sample=details.extract(raw,project(ref,bh,1),480)){
+                        if(sample!=null){extracted+=sample.keys.length;a.clear();z.clear();collect(s.body,sample.keys,sample.descriptors,a,z);mh=homography(a,z,10,Math.max(15,w*.45),Math.max(15,h*.45));}
+                    }
+                }
+            }
             if(mh==null&&a.size()>=6&&bodyRecoveries<2){bodyRecoveries++;Mat seed=proposal(a,z);
                 // A few full-frame matches only propose a crop. Fresh local inliers
                 // must still meet the original loose/installed identity thresholds.
@@ -90,15 +141,18 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
                     }if(mh!=null)break;
                 }}finally{seed.release();}
             }
+            if(bh!=null)frameBoardSeen=true;
             if(mh==null)return null;
+            frameBodySeen=true;
             if(installed){
                 // Seed geometry proposes two local photometric windows. Fresh,
                 // independently matched PCB pixels still have to prove orientation.
-                if(contextRecoveries<4){contextRecoveries++;Context chosen=bestContext(ref,s.context,raw,mh);
+                if(bh==null&&contextRecoveries<4){contextRecoveries++;Context chosen=bestContext(ref,s.context,raw,mh);
                     if(chosen!=null){if(chosen.pose==null)return partial(ref,mh,scale,a,z);bh=chosen.pose;contextInliers=chosen.inliers;}
                 }
                 if(bh==null){List<Point> ba=new ArrayList<>(),bz=new ArrayList<>();collect(s.context,live,rows,ba,bz);bh=homography(ba,bz,16,15,15);if(bh!=null)contextInliers=inliers(ba,bz,bh);}
                 if(bh==null)return partial(ref,mh,scale,a,z);
+                frameBoardSeen=true;
             }
             List<VisionPoint> actual=project(ref,mh,scale);if(actual.size()!=4)return null;List<VisionPoint> expected=installed?project(ref,bh,scale):actual;if(expected.size()!=4)return null;
             // A large body cluster cannot overpower weak/contradictory PCB evidence.

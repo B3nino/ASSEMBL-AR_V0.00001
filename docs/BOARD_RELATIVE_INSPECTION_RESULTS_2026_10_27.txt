@@ -1,0 +1,115 @@
+ASSEMBL-AR — BOARD-RELATIVE INSPECTION / PERFORMANCE QA
+Date: 2026-10-27
+Tablet: 2603ARP14G; ADB serial 368e278b
+
+BUILD AND HOST TESTS
+ARM64 debug learner APK and test APK: BUILD SUCCESSFUL.
+Final production-code build completed in 24 seconds; subsequent test-only
+builds left compileDebugJavaWithJavac and the learner APK UP-TO-DATE.
+Host suite: 742 tests in 139 classes, all passing.
+Existing Android/deprecated-API compiler notes remain; no compilation errors.
+git diff --check: no whitespace errors (Windows CRLF conversion notices only).
+
+NATIVE COVERAGE AND PROVENANCE
+Broad sweep: all 90 then-configured native groups passed.
+After the final performance/lifecycle refinements: all seven focused groups
+passed, followed by related Nano orientation/missing-body and lifecycle runs.
+The additional active-LK time/memory fixture also passed.
+Consolidated normal-suite coverage: 94 distinct passing native groups.
+This is coverage across a broad sweep and final focused/related runs, NOT a
+claim that a single final 94-group invocation was executed.
+
+See BOARD_RELATIVE_FULL_SWEEP_2026_10_27.json,
+BOARD_RELATIVE_FOCUSED_SWEEP_2026_10_27.json, and
+BOARD_RELATIVE_NATIVE_COVERAGE_2026_10_27.json.
+
+Broad-sweep archive:
+1f790b19e398020a9d43ba2d3d24e5fb7220793fdde88b5c1d61e0779bc416cb
+Final focused archive:
+4d3d0190aba8849ed8eeebeace7430e690facbab7af65dc7f3e387b9b69908e9
+Optional comparison archive:
+2c64841272d85431fa33a77d5e8be6ebd9fa22faa8cf38530947ceca7b213984
+Final ordinary archive (comparison DEX excluded):
+b989ca589e9443e5bf4510754eda8baee2a7b134dc3c2020df3034a2a697d803
+
+Source-controlled matcher-only A/B comparison:
+Baseline commit: 9bb3ac557ba454d2d54891d6f24e3d3b4c1e43d3
+Original Phase5ReferenceMatcher source SHA256:
+825dbd38e3b2569bd71e8ef9c46a28b2055f8730e4a4f55ca7fa0c36bc898156
+Both matchers used identical real pixels, the same reference database, current
+shared helpers, aligned rotating alternatives and recovery profile, and two
+OpenCV threads. Execution order alternated; two warmup rounds were excluded.
+All baseline and candidate trials classified the backward installation correctly.
+Six retained timing samples per matcher:
+  committed median: 918.389166 ms
+  candidate median: 851.398489 ms
+  committed samples: 701.065938, 718.759895, 802.567917,
+                     918.389166, 978.602395, 1171.273906
+  candidate samples: 666.780729, 714.433854, 775.932916,
+                     851.398489, 880.727552, 1077.676770
+This compares detailed matcher work, not full camera-to-display latency or
+recognition accuracy across unseen environments.
+
+A direct attempt to invoke the older timing fixture in the installed test
+package was unavailable (class absent). It was not counted as a regression
+result. The source-controlled comparison above replaced that unavailable probe.
+
+PERFORMANCE MEASUREMENTS — LIMITED TO THE STATED FIXTURES
+Main Board, three distinct retained frames:
+  first localization: frame 1
+  warm median analyzer/callback time: 92.198646 ms
+  warm P95: 103.544271 ms
+This is not sensor-to-display latency or a universal under-100-ms guarantee.
+
+Physical Camera2 preview-plus-YUV stream comparison, same test conditions:
+  640x480 delivery: 13.947002 frames/s
+  1280x960 delivery: 13.983008 frames/s
+  idle buffer/copy/resize/latest-image path P95: 3.895938 / 7.029218 ms
+The stream test does not establish application-rendered UI FPS or active LK
+cost. It uses actual sensor buffers and concurrent PRIVATE preview output.
+The application requests a bounded preferred size; CameraX's actual size/crop
+can differ from this hardware benchmark.
+
+Separate ACTIVE LK test, using recorded board pixels and translated views:
+  640-wide input P95: 6.710209 ms
+  1280-wide input P95: 11.015938 ms
+  220 measured-flow frames per size; 20 warmup frames excluded.
+  No prediction-only frames substituted for measured tracking.
+  Native allocated-heap change after warmup:
+    640: -2,314,832 bytes
+    1280: -2,451,040 bytes
+  No positive native-heap growth in this fixture.
+The larger recorded image is resampled for coordinate/buffer-load testing;
+it is not synthetic training data or proof of new high-resolution accuracy.
+The independent 3,000-frame flow/release regression also passed.
+
+Installed recognition can still require hundreds of milliseconds to seconds
+when high-detail recovery is necessary. Camera delivery and active LK stayed
+within the measured budgets; unseen-campus recognition latency is NOT yet proven.
+A sustained camera + UI + model soak on the newly deployed learner build has
+not been performed. Test fixtures and application preview FPS are distinct.
+
+PRESERVATION
+No learner APK install/uninstall or data clear was performed. The installed
+menu was used only to keep hardware-camera benchmarking foreground.
+Before/after checksums are identical:
+c7e3751dd9a24c3f8be02740b3acadaa8c4f29f658d616071b039f0f93b69476  assembly_phase_progress.xml
+3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793  guided_assembly_steps.xml
+0fffa8e07fe2dfd46e909026c9cb9f2d3146106fec28d111af7bf26005280080  assembl_ar.db
+
+OrbMatchPolicy, VerifiedScanEvidence, DiagnosticTelemetryLocker,
+OpticalFlowTrackerBridge, TargetBoundingTracker, DynamicComponentOutlineOverlayView,
+StandoffGeometryVerifier, GlobalComponentRegistry, IlluminationNormalizer,
+phase-flow/checkpoint classes, database schema and production reference images
+were not changed.
+
+ARTIFACT
+app/build/intermediates/apk/debug/app-arm64-v8a-debug.apk
+Bytes: 2,706,104,481 (existing reference/media corpus retained).
+SHA256: 76322c4c11f88512cf5acb70709a42ab6e5043188f1eee0c51a5ae4836730c4f
+
+DEPLOYMENT
+Run the latest source through Android Studio without uninstalling/clearing data.
+Check Phase 5.3 and Phase 8.2B in both locations. Use the existing raw scan-frame
+capture and diagnostic export for any failing view; no manual lighting label
+is required. See BOARD_RELATIVE_INSPECTION_QA_2026_10_27.md.

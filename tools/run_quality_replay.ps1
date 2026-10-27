@@ -1,4 +1,4 @@
-param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','latency','all')][string]$Suite='quality')
+param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','latency','boardrelative','planf','all')][string]$Suite='quality')
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskAdb=Join-Path $env:LOCALAPPDATA 'Android/Sdk/platform-tools/adb.exe'
@@ -102,7 +102,22 @@ $taskLatencyCases=@(
  'vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates',
  'vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines'
 )
-$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'latency'{$taskLatencyCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases+$taskLatencyCases}}
+$taskBoardRelativeCases=@(
+ 'vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers',
+ 'vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels',
+ 'vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates',
+ 'vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire',
+ 'vision.BoardRelativeInspectionInstrumentedTest#pcbOnlyGlobalFeaturesProposeFreshNanoCropButCannotVerifyErasedBody',
+ 'vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded',
+ 'vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget',
+ 'vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression'
+)
+$taskPlanFCases=@(
+ 'UiBeautificationInstrumentedTest#planFOffersHelpOnceWithoutCompletingAnythingAndClosesOnSuccess',
+ 'UiBeautificationInstrumentedTest#planFSettingsPersistWithoutChangingExistingPreferencesAndLargeFontHelpIsReachable',
+ 'UiBeautificationInstrumentedTest#planFLoadsABoundedRealPhotoAndRendersItsHelpSurface'
+)
+$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'latency'{$taskLatencyCases};'boardrelative'{$taskBoardRelativeCases};'planf'{$taskPlanFCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases+$taskLatencyCases+$taskBoardRelativeCases+$taskPlanFCases}}
 $taskFailed=@()
 $taskResults=@()
 foreach($taskCase in $taskCases){

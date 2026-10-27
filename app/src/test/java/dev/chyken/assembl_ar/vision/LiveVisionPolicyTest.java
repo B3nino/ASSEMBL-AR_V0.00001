@@ -12,4 +12,8 @@ public class LiveVisionPolicyTest {
         assertEquals(640,LiveVisionPolicy.MAX_ANALYSIS_EDGE);assertEquals(300,LiveVisionPolicy.MAX_ROI_KEYPOINTS);
         assertTrue(LiveVisionPolicy.DETECTOR_INTERVAL_NS<=33_000_000L);assertEquals(.75,OrbMatchPolicy.LOWE_RATIO,0);assertEquals(64,OrbMatchPolicy.MAX_HAMMING);
     }
+    @Test public void completedTrackedStepsKeepFlowWithoutRepeatingVerification(){
+        assertFalse(LiveVisionPolicy.needsDetection(true,true));assertTrue(LiveVisionPolicy.needsDetection(true,false));
+        assertTrue(LiveVisionPolicy.needsDetection(false,true));assertTrue(LiveVisionPolicy.needsDetection(false,false));
+    }
 }

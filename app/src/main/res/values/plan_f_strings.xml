@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_plan_f">PlanF guided scanning help</string>
+    <string name="settings_plan_f_detail">After five seconds without verification, offers the current target’s reference photos and framing tips. Help never completes a scan or changes your progress.</string>
+    <string name="plan_f_button">Scan help</string>
+    <string name="plan_f_title">Having trouble scanning?</string>
+    <string name="plan_f_question">Is this what you are trying to scan? The camera keeps scanning while this help is open.</string>
+    <string name="plan_f_no_bypass">Confirming the target does not verify it. Camera verification is still required.</string>
+    <string name="plan_f_yes">Yes — help me scan</string>
+    <string name="plan_f_another_view">Another view</string>
+    <string name="plan_f_keep_scanning">Keep scanning</string>
+    <string name="plan_f_guidance_title">Match this reference view</string>
+    <string name="plan_f_reference_description">Reference photo of the current scan target. Green regions, when present, highlight existing reference features.</string>
+    <string name="plan_f_reference_number">Reference %1$d of %2$d · Green regions are photo features, not a live detection.</string>
+    <string name="plan_f_no_reference">No help photo is available for this target. Use the step instructions and recommended camera view.</string>
+    <item name="settingsPlanFSwitch" type="id" />
+    <item name="planFReferenceImage" type="id" />
+    <item name="planFReferenceLabel" type="id" />
+    <item name="planFInstructions" type="id" />
+</resources>

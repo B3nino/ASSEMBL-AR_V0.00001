@@ -6,7 +6,7 @@ import org.opencv.core.*;
 /** Cached, independently owned descriptor rows for body identity and board context. */
 final class PhotoFeaturePartition implements AutoCloseable {
     final Rows body,context;
-    final Mat probe;
+    final Mat probe,contextProbe;
     PhotoFeaturePartition(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant v){
         double[] b=LocalPhotometricRefiner.bounds(ref.spec,ref.imageWidth,ref.imageHeight);double w=b[2]-b[0],h=b[3]-b[1];
         dev.chyken.assembl_ar.camera.Phase35VideoReferences.Entry authored=dev.chyken.assembl_ar.camera.Phase35VideoReferences.annotation(ref.spec.getJpegAssetPath());
@@ -21,12 +21,14 @@ final class PhotoFeaturePartition implements AutoCloseable {
             if(p.x>=b[0]&&p.x<=b[2]&&p.y>=b[1]&&p.y<=b[3])own.add(i);
             else if(p.x<b[0]-.15*w||p.x>b[2]+.15*w||p.y<b[1]-.15*h||p.y>b[3]+.15*h)other.add(i);
         }
-        Rows loadedBody=null,loadedContext=null;Mat loadedProbe=new Mat();
+        Rows loadedBody=null,loadedContext=null;Mat loadedProbe=new Mat(),loadedContextProbe=new Mat();
         try{
             loadedBody=new Rows(v,own);loadedContext=new Rows(v,other);int count=Math.min(32,own.size());
             if(count>0){loadedProbe.create(count,32,CvType.CV_8UC1);byte[] all=new byte[own.size()*32],sample=new byte[count*32];loadedBody.rows.get(0,0,all);for(int i=0;i<count;i++)System.arraycopy(all,(i*own.size()/count)*32,sample,i*32,32);loadedProbe.put(0,0,sample);}
-            body=loadedBody;context=loadedContext;probe=loadedProbe;
-        }catch(RuntimeException|Error failure){if(loadedBody!=null)loadedBody.rows.release();if(loadedContext!=null)loadedContext.rows.release();loadedProbe.release();throw failure;}
+            int contextCount=Math.min(32,other.size());
+            if(contextCount>0){loadedContextProbe.create(contextCount,32,CvType.CV_8UC1);byte[] row=new byte[32];for(int i=0;i<contextCount;i++){loadedContext.rows.get(i*other.size()/contextCount,0,row);loadedContextProbe.put(i,0,row);}}
+            body=loadedBody;context=loadedContext;probe=loadedProbe;contextProbe=loadedContextProbe;
+        }catch(RuntimeException|Error failure){if(loadedBody!=null)loadedBody.rows.release();if(loadedContext!=null)loadedContext.rows.release();loadedProbe.release();loadedContextProbe.release();throw failure;}
 
     }
     static final class Rows {
@@ -39,5 +41,5 @@ final class PhotoFeaturePartition implements AutoCloseable {
             }catch(RuntimeException|Error failure){rows.release();throw failure;}
         }
     }
-    @Override public void close(){body.rows.release();context.rows.release();probe.release();}
+    @Override public void close(){body.rows.release();context.rows.release();probe.release();contextProbe.release();}
 }

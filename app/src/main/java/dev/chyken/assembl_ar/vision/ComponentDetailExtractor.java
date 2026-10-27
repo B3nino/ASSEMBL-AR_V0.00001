@@ -12,6 +12,10 @@ import org.opencv.imgproc.*;
 final class ComponentDetailExtractor implements AutoCloseable {
     private final ORB orb=ORB.create(1200,1.2f,8,12,0,2,ORB.HARRIS_SCORE,31,7);
     private final CLAHE clahe;
+    // One recognizer-owned sampler, serialized by ComponentRecognizer. Returned
+    // descriptor rows remain independently owned; only scratch pixels are reused.
+    private final Mat work=new Mat(),mask=new Mat();
+    private final MatOfKeyPoint keys=new MatOfKeyPoint();
     ComponentDetailExtractor(VisionConfig config){clahe=OpenCvVisionUtils.createClahe(config);}
     /** Brightness-relative proposals for black connectors/acrylic. Never identity evidence. */
     static List<List<VisionPoint>> proposals(Mat gray){
@@ -45,7 +49,7 @@ final class ComponentDetailExtractor implements AutoCloseable {
         int x=Math.max(0,(int)Math.floor(l-(r-l)*.30)),y=Math.max(0,(int)Math.floor(t-(b-t)*.30));
         int right=Math.min(gray.cols(),(int)Math.ceil(r+(r-l)*.30)),bottom=Math.min(gray.rows(),(int)Math.ceil(b+(b-t)*.30));
         if(right-x<16||bottom-y<16)return null;
-        Mat crop=gray.submat(y,bottom,x,right),work=new Mat(),rows=new Mat(),mask=new Mat();MatOfKeyPoint keys=new MatOfKeyPoint();
+        Mat crop=gray.submat(y,bottom,x,right),rows=new Mat();
         try{
             double scale=extent==0?1:Math.min(4,Math.max(1,extent/(double)Math.max(crop.cols(),crop.rows())));
             Imgproc.resize(crop,work,new Size(),scale,scale,Imgproc.INTER_LINEAR);
@@ -54,13 +58,13 @@ final class ComponentDetailExtractor implements AutoCloseable {
                 mask.create(work.size(),CvType.CV_8UC1);mask.setTo(new Scalar(0));
                 for(List<VisionPoint> region:regions){MatOfPoint polygon=new MatOfPoint();try{Point[] p=new Point[region.size()];for(int i=0;i<p.length;i++)p[i]=new Point((region.get(i).getX()-x)*scale,(region.get(i).getY()-y)*scale);polygon.fromArray(p);Imgproc.fillConvexPoly(mask,polygon,new Scalar(255));}finally{polygon.release();}}
                 closeMask(mask);
-            }
+            }else mask.release();
             DiagnosticHammingMatcher.extract(orb,work,mask,keys,rows);
             KeyPoint[] points=keys.toArray();double sx=crop.cols()/(double)work.cols(),sy=crop.rows()/(double)work.rows();
             for(KeyPoint k:points){k.pt.x=x+k.pt.x*sx;k.pt.y=y+k.pt.y*sy;k.size*=sx;}
             return new Sample(points,rows);
         }catch(RuntimeException|Error failure){rows.release();throw failure;}
-        finally{crop.release();work.release();mask.release();keys.release();}
+        finally{crop.release();}
     }
     static void closeMask(Mat mask){Mat kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(3,3));try{Imgproc.morphologyEx(mask,mask,Imgproc.MORPH_CLOSE,kernel);}finally{kernel.release();}}
     static final class Sample implements AutoCloseable {
@@ -68,5 +72,6 @@ final class ComponentDetailExtractor implements AutoCloseable {
         Sample(KeyPoint[] keys,Mat descriptors){this.keys=keys;this.descriptors=descriptors;}
         public void close(){descriptors.release();}
     }
-    public void close(){orb.clear();clahe.clear();}
+    void releaseWorkspace(){work.release();mask.release();keys.release();}
+    public void close(){releaseWorkspace();orb.clear();clahe.clear();}
 }

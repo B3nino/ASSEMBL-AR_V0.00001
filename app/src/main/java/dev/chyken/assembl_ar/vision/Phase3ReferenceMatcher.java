@@ -22,6 +22,7 @@ final class Phase3ReferenceMatcher implements AutoCloseable {
     private final ORB orb;
     private final CLAHE clahe;
     private final ComponentDetailExtractor details;
+    void releaseCameraBuffers(){details.releaseWorkspace();}
     private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     Phase3ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;details=new ComponentDetailExtractor(config);orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);clahe=OpenCvVisionUtils.createClahe(config);}
     RecognitionResult inspect(Mat gray,long time,int step){

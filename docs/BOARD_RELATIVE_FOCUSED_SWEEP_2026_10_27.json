@@ -1,0 +1,30 @@
+﻿[
+    {
+        "case":  "vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers",
+        "passed":  true
+    },
+    {
+        "case":  "vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels",
+        "passed":  true
+    },
+    {
+        "case":  "vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates",
+        "passed":  true
+    },
+    {
+        "case":  "vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire",
+        "passed":  true
+    },
+    {
+        "case":  "vision.BoardRelativeInspectionInstrumentedTest#pcbOnlyGlobalFeaturesProposeFreshNanoCropButCannotVerifyErasedBody",
+        "passed":  true
+    },
+    {
+        "case":  "vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget",
+        "passed":  true
+    },
+    {
+        "case":  "vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression",
+        "passed":  true
+    }
+]

@@ -23,6 +23,8 @@ public final class AppSettingsDialog {
         admin.setOnCheckedChangeListener((v,checked)->PreferencesManager.administratorVisible(activity,checked));
         SwitchCompat dev=toggle(body,R.id.settingsDeveloperSwitch,R.string.settings_dev,R.string.settings_dev_detail,PreferencesManager.assemblyDeveloperVisible(activity));
         dev.setOnCheckedChangeListener((v,checked)->PreferencesManager.assemblyDeveloperVisible(activity,checked));
+        SwitchCompat planF=toggle(body,R.id.settingsPlanFSwitch,R.string.settings_plan_f,R.string.settings_plan_f_detail,PreferencesManager.planFEnabled(activity));
+        planF.setOnCheckedChangeListener((v,checked)->PreferencesManager.planFEnabled(activity,checked));
         ScrollView scroll=new ScrollView(context);scroll.addView(body);
         AlertDialog dialog=new AlertDialog.Builder(context).setTitle(R.string.app_settings).setView(scroll)
             .setNeutralButton(R.string.settings_diagnostics,(d,w)->activity.startActivity(new Intent(activity,DevDiagnosticsActivity.class)))

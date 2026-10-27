@@ -336,6 +336,7 @@ public final class AssemblyActivity extends AppCompatActivity {
             }
         });
         voiceGuide.setMuted(dev.chyken.assembl_ar.diagnostics.PreferencesManager.ttsMuted(this));
+        planFHelp=new PlanFScanHelpController(this,findViewById(R.id.scanHelpButton),()->referenceCatalog);
         configureTabletPanels();
         UiUtils.configureCameraWindow(this, cameraToolbar, null);
         stepInfoPanel = new StepInfoPanelController(this, savedInstanceState);
@@ -606,6 +607,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         voiceGuide.speak("Wiring diagrams. Select a phase to revisit its schematic. Your assembly progress is preserved.","wiring-review:open");
     }
     private volatile List<ComponentReferenceSpec> referenceCatalog;
+    private PlanFScanHelpController planFHelp;
     private volatile String loadedReferenceScope,loadingReferenceScope;
     // Bank epochs change independently of the bound camera and reject stale native results.
     private volatile int referenceBankGeneration;
@@ -633,8 +635,28 @@ public final class AssemblyActivity extends AppCompatActivity {
         dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView outline=findViewById(R.id.dynamicOutlineOverlay);
         if(outline!=null)outline.setCameraActive(activityResumed&&!diagnosticsModal&&!libraryPreparing&&phaseController!=null&&phaseController.isCameraModeFocused());
         if(visionInitializationStarted&&referenceCatalog!=null&&activityResumed)refreshReferenceScope();
+        if(activityResumed&&boundCamera!=null&&!cameraBindingInProgress&&cameraCaptureEdge!=desiredCaptureEdge())startCamera(visionGeneration);
+        refreshPlanFHelp();
         if(recognitionText!=null)recognitionText.postDelayed(this,250);
     }};
+    private void refreshPlanFHelp(){
+        if(planFHelp==null)return;
+        boolean enabled=dev.chyken.assembl_ar.diagnostics.PreferencesManager.planFEnabled(this);
+        if(!enabled){planFHelp.suspend();return;}
+        PhaseAssemblyController phases=phaseController;
+        RecognitionRequest request=activeReferenceRequest();
+        boolean verified=phases!=null?phases.currentScanVerified():currentCheckpointComplete;
+        boolean scanning=activityResumed&&!destroyed&&!diagnosticsModal&&!libraryPreparing&&libraryFailure==null
+                &&analyzer!=null&&boundCamera!=null&&!cameraBindingInProgress
+                &&request!=null&&java.util.Objects.equals(loadedReferenceScope,dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(request))&&!physicalCheckInProgress
+                &&(phases!=null?!phases.isAnalysisSuspended()&&phases.isCameraModeFocused():awaitingPartScan||activeCheckpoint!=null&&activeCheckpoint.requiresCamera());
+        String scope=phases!=null?phases.diagnosticScope():currentStep==null?null:currentStep.getId()+":"+currentGuidedStepIndex;
+        Object attempt=phases!=null?phases.currentTag():request==null?null:request.getRequestTag();
+        String id=request==null||request.getExpectation()==null?null:request.getExpectation().getComponentId();
+        Component part=id==null?null:componentById.get(id);
+        planFHelp.update(scope,attempt,request,part==null?"Current target":part.getName(),
+                enabled,scanning,verified);
+    }
     private RecognitionRequest activeReferenceRequest(){
         if(diagnosticsModal||libraryPreparing||libraryFailure!=null||wiringReviewDialog!=null&&wiringReviewDialog.isShowing())return null;
         PhaseAssemblyController phases=phaseController;
@@ -659,7 +681,7 @@ public final class AssemblyActivity extends AppCompatActivity {
         });
         Toast.makeText(this,queued?"Capture queued · return to camera and frame the component":"A capture is already queued",Toast.LENGTH_LONG).show();
     }
-    void pauseForDiagnostics(){diagnosticsModal=true;assemblyVisibilityGeneration++;if(phaseController!=null)phaseController.onPause();voiceGuide.stop();}
+    void pauseForDiagnostics(){diagnosticsModal=true;if(planFHelp!=null)planFHelp.suspend();assemblyVisibilityGeneration++;if(phaseController!=null)phaseController.onPause();voiceGuide.stop();}
     void resumeAfterDiagnostics(){diagnosticsModal=false;if(!destroyed&&activityResumed){assemblyVisibilityGeneration++;if(phaseController!=null)phaseController.onResume();refreshReferenceScope();}}
     private void initializeVision() {
         if(visionInitializationStarted||destroyed)return;
@@ -782,9 +804,29 @@ public final class AssemblyActivity extends AppCompatActivity {
         }
     }
 
+    private int cameraCaptureEdge=640;
+    private boolean detailCaptureUnavailable;
+    private int desiredCaptureEdge(){
+        android.app.ActivityManager memory=(android.app.ActivityManager)getSystemService(ACTIVITY_SERVICE);
+        int phase=phaseController==null?0:phaseController.nativeDetailCapturePhase();
+        return dev.chyken.assembl_ar.vision.AssemblyCapturePolicy.longEdge(phase,memory!=null&&memory.isLowRamDevice(),detailCaptureUnavailable);
+    }
+    @androidx.annotation.OptIn(markerClass=androidx.camera.camera2.interop.ExperimentalCamera2Interop.class)
+    private void meterInstalledCapture(Camera camera){
+        if(!activityResumed||cameraCaptureEdge<=640)return;
+        try{
+            // Respect device capabilities and let AE adapt when the room changes.
+            int[] modes=androidx.camera.camera2.interop.Camera2CameraInfo.from(camera.getCameraInfo()).getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.CONTROL_AE_AVAILABLE_ANTIBANDING_MODES);
+            if(modes!=null)for(int mode:modes)if(mode==android.hardware.camera2.CaptureRequest.CONTROL_AE_ANTIBANDING_MODE_AUTO){
+                androidx.camera.camera2.interop.Camera2CameraControl.from(camera.getCameraControl()).setCaptureRequestOptions(new androidx.camera.camera2.interop.CaptureRequestOptions.Builder().setCaptureRequestOption(android.hardware.camera2.CaptureRequest.CONTROL_AE_ANTIBANDING_MODE,mode).build());break;
+            }
+            MeteringPoint center=previewView.getMeteringPointFactory().createPoint(previewView.getWidth()*.5f,previewView.getHeight()*.5f,.35f);
+            camera.getCameraControl().startFocusAndMetering(new FocusMeteringAction.Builder(center,FocusMeteringAction.FLAG_AF|FocusMeteringAction.FLAG_AE|FocusMeteringAction.FLAG_AWB).setAutoCancelDuration(4,TimeUnit.SECONDS).build());
+        }catch(RuntimeException unsupported){Log.w("AssemblyActivity","Optional target metering unavailable",unsupported);}
+    }
     private void startCamera(int generation) {
         if (!isVisionGenerationActive(generation) || !hasCameraPermission()) return;
-        if (boundCamera != null) {
+        if (boundCamera != null&&cameraCaptureEdge==desiredCaptureEdge()) {
             if(cameraPreviewUseCase!=null)cameraPreviewUseCase.setSurfaceProvider(previewView.getSurfaceProvider());
             attachVisionAnalyzer(generation);
             return;
@@ -812,15 +854,22 @@ public final class AssemblyActivity extends AppCompatActivity {
 
                 // Bind analysis with Preview from the outset to keep their crop/timebase shared.
                 // CameraX discards analysis frames until the asynchronously prepared analyzer exists.
+                int requestedEdge=desiredCaptureEdge();
                 ImageAnalysis analysis = new ImageAnalysis.Builder()
                         .setResolutionSelector(new androidx.camera.core.resolutionselector.ResolutionSelector.Builder()
                             .setResolutionStrategy(new androidx.camera.core.resolutionselector.ResolutionStrategy(
-                                new android.util.Size(640,480),androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build())
+                                new android.util.Size(requestedEdge,requestedEdge==640?480:720),androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
+                            // Never let a camera's fallback silently choose a 4K analyzer.
+                            .setResolutionFilter((sizes,rotation)->{java.util.List<android.util.Size> bounded=new java.util.ArrayList<>();for(android.util.Size size:sizes)if(Math.max(size.getWidth(),size.getHeight())<=requestedEdge)bounded.add(size);return bounded;}).build())
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                         .build();
 
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
+                // A resolution switch replaces the stream, not the workflow or bank.
+                // Reject detached frames from the old stream before attaching the new one.
+                if(imageAnalysis!=null)imageAnalysis.clearAnalyzer();
+                if(analyzer!=null)analyzer.pause();
                 provider.unbindAll();
                 boundCamera = null;
                 UseCaseGroup.Builder useCases = new UseCaseGroup.Builder()
@@ -832,12 +881,21 @@ public final class AssemblyActivity extends AppCompatActivity {
                 Camera camera = provider.bindToLifecycle(
                         this, CameraSelector.DEFAULT_BACK_CAMERA, useCases.build());
                 boundCamera = camera;
+                cameraCaptureEdge=requestedEdge;
                 cameraPreviewUseCase=preview;
                 imageAnalysis = analysis;
                 calibrationProvider = CameraCalibrationProvider.from(camera.getCameraInfo());
-                attachVisionAnalyzer(generation);
+                meterInstalledCapture(camera);
+                if(analyzer!=null){if(activityResumed)analyzer.resume();analysis.setAnalyzer(cameraExecutor,analyzer);}else attachVisionAnalyzer(generation);
                 if (recognizer != null) showCurrentGuidedStepBanner();
             } catch (Exception failure) {
+                boundCamera=null;
+                if(desiredCaptureEdge()>640){
+                    detailCaptureUnavailable=true;
+                    Log.w("AssemblyActivity","Native detail stream unsupported; keeping the 640px camera",failure);
+                    previewView.post(()->startCamera(visionGeneration));
+                    return;
+                }
                 boundCamera = null;
                 Log.e("AssemblyActivity", "Camera failed to start", failure);
                 if (isVisionGenerationActive(generation)) {
@@ -1108,6 +1166,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                     : phaseBoard.getDetection().getProjectedCorners()));
             if (phaseBoard != null && phaseBoard.isHeld()) return;
             phases.onResult(result, frameEvidenceNanos);
+            refreshPlanFHelp();
             if(phases.currentScanVerified()&&pairedDiagnosticSample!=null){
                 diagnosticLocker.freeze(result.getRequestTag(),pairedDiagnosticSample.telemetry);
                 showDiagnosticSnapshot(diagnosticLocker.snapshot());
@@ -3126,6 +3185,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        if(planFHelp!=null)planFHelp.suspend();
         outlineUpdates.clear();
         dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView outline=findViewById(R.id.dynamicOutlineOverlay);if(outline!=null)outline.setCameraActive(false);
         recognitionText.removeCallbacks(referenceScopeMonitor);
@@ -3158,6 +3218,13 @@ public final class AssemblyActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    @Override public void onTrimMemory(int level){
+        super.onTrimMemory(level);
+        if(level==android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW||level==android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL){
+            detailCaptureUnavailable=true;
+            if(activityResumed&&boundCamera!=null&&cameraCaptureEdge>640)startCamera(visionGeneration);
+        }
+    }
     @Override protected void onStop(){
         if(analyzer!=null)analyzer.pause();
         super.onStop();
@@ -3165,6 +3232,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if(planFHelp!=null)planFHelp.close();
         if(muteControl!=null)muteControl.close();
         destroyed = true;prefetchGeneration++;
         if(prefetchedBank!=null){prefetchedBank.close();prefetchedBank=null;}

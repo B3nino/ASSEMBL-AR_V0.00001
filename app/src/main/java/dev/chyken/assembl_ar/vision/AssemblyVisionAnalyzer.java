@@ -36,7 +36,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
     private static final String TAG = "AssemblArAnalyzer";
 
     private final OpticalFlowTrackerBridge flowBridge=new OpticalFlowTrackerBridge();
-    private final TargetBoundingTracker targetBounds=new TargetBoundingTracker();
+    private final BoundedOutlineTracker targetBounds=new BoundedOutlineTracker();
     private GlobalComponentRegistry.Match frameGlobalCandidate;
     private boolean visualOnlyFrame;
     private long lastOutlineFrame=Long.MIN_VALUE;
@@ -127,7 +127,11 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
             if(!currentFrame(frameEpoch)||suspended&&requestProvider.isTrackingSuspended())return;
             long capturedFrameNanos=CaptureTimebase.toElapsedRealtimeNanos(image.getImageInfo().getTimestamp());
             dev.chyken.assembl_ar.diagnostics.DiagnosticSession.INSTANCE.runner.frame(capturedFrameNanos);
-            boolean due=(lastQueuedDetection==Long.MIN_VALUE||capturedFrameNanos-lastQueuedDetection>=(suspended?500_000_000L:DETECTOR_INTERVAL_NANOS));
+            // A completed step needs moving outlines, not another heavyweight photo
+            // verification every half second. Loss of LK lock reopens localization;
+            // explicit sample capture also remains available without advancing state.
+            boolean due=(pendingFrameSnapshot.get()!=null||LiveVisionPolicy.needsDetection(suspended,targetBounds.hasTarget()))
+                    &&(lastQueuedDetection==Long.MIN_VALUE||capturedFrameNanos-lastQueuedDetection>=(suspended?500_000_000L:DETECTOR_INTERVAL_NANOS));
             if(due&&detectorBusy.compareAndSet(false,true)){
                 lastQueuedDetection=capturedFrameNanos;
                 DetachedCameraFrame owned=null;boolean submitted=false;
@@ -362,6 +366,7 @@ public final class AssemblyVisionAnalyzer implements ImageAnalysis.Analyzer, Aut
                         .withAssemblyInspection(5,null,false,null).withRequestTag(requestTag);
                 FrameSnapshotCallback snapshot=pendingFrameSnapshot.getAndSet(null);
                 if(snapshot!=null){if(rgb==null)rgb=YuvRgbFrame.from(image,crop,rotationDegrees,rotatePixelsToDisplay);captureRequestedFrame(snapshot,analyzed,rgb,metadata,inspected,request.getCameraCalibration());}
+                rgb=recordOptInPhotoFrame(image,crop,rotationDegrees,metadata,request,inspected,rgb,now);
                 if(!closed.get())deliverResult(inspected);return;
             }
             if(request!=null&&request.getPhase3Stage()>0){

@@ -18,6 +18,105 @@ import static org.junit.Assert.*;
 
 /** UI-only fixtures; no assembly activity, progress reset, image bank or real camera setup. */
 public final class UiBeautificationInstrumentedTest {
+    @Test public void planFLoadsABoundedRealPhotoAndRendersItsHelpSurface(){
+        PlanFScanHelpController[] controller={null};
+        try(ActivityScenario<Activity> host=ActivityScenario.launch(host())){
+            for(float scale:new float[]{1,2}){
+            try{
+                host.onActivity(a->{
+                    Context c=candidate(a,scale);TextView button=new TextView(c);
+                    java.util.List<dev.chyken.assembl_ar.vision.VisionPoint> body=java.util.Arrays.asList(
+                        new dev.chyken.assembl_ar.vision.VisionPoint(.1,.1),new dev.chyken.assembl_ar.vision.VisionPoint(.9,.1),
+                        new dev.chyken.assembl_ar.vision.VisionPoint(.9,.9),new dev.chyken.assembl_ar.vision.VisionPoint(.1,.9));
+                    dev.chyken.assembl_ar.vision.ComponentReferenceSpec photo=dev.chyken.assembl_ar.vision.ComponentReferenceSpec.builder("board-help","main_board","Main board",100,120)
+                        .jpegAssetPath("references/Phase1/MainboardFront/Mainboard_FRONTPOV8.jpg").featureRegionsNormalized(java.util.Collections.singletonList(body)).build();
+                    controller[0]=new PlanFScanHelpController(a,c,button,()->java.util.Collections.singletonList(photo),()->0L);
+                    dev.chyken.assembl_ar.vision.RecognitionRequest request=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component("main_board"),null,null,null,1,1);
+                    controller[0].update("phase1",1,request,"Main board",true,true,false);button.performClick();
+                });
+                boolean[] loaded={false};
+                for(int i=0;i<40&&!loaded[0];i++){
+                    host.onActivity(a->{ImageView image=(ImageView)field(controller[0],"image");loaded[0]=image!=null&&image.getDrawable()!=null&&image.isLaidOut()&&image.getHeight()>0;});
+                    if(!loaded[0])android.os.SystemClock.sleep(100);
+                }
+                assertTrue("Real reference thumbnail must load off the UI thread",loaded[0]);
+                host.onActivity(a->{
+                    ImageView image=(ImageView)field(controller[0],"image");Bitmap pixels=((android.graphics.drawable.BitmapDrawable)image.getDrawable()).getBitmap();
+                    assertTrue(Math.max(pixels.getWidth(),pixels.getHeight())<=768);
+                    androidx.appcompat.app.AlertDialog dialog=(androidx.appcompat.app.AlertDialog)field(controller[0],"dialog");
+                    View decor=dialog.getWindow().getDecorView();
+                    for(int which:new int[]{-1,-2,-3}){
+                        Button action=dialog.getButton(which);android.graphics.Rect visible=new android.graphics.Rect();
+                        assertTrue("Action is clipped at font scale "+scale,action.getGlobalVisibleRect(visible));
+                        assertTrue("Action is cut off at font scale "+scale,visible.height()>=action.getHeight()*.9);
+                    }
+                    render(a,decor,scale==1?"plan-f-reference-help.png":"plan-f-large-font.png");
+                });
+            }finally{host.onActivity(a->{if(controller[0]!=null)controller[0].close();});}
+            }
+        }
+    }
+    @Test public void planFOffersHelpOnceWithoutCompletingAnythingAndClosesOnSuccess(){
+        try(ActivityScenario<Activity> host=ActivityScenario.launch(host())){
+            host.onActivity(a->{
+                Context c=candidate(a,1);android.widget.TextView button=new android.widget.TextView(c);
+                dev.chyken.assembl_ar.vision.ComponentReferenceSpec photo=dev.chyken.assembl_ar.vision.ComponentReferenceSpec.builder("board-help","main_board","Main board",100,120)
+                    .jpegAssetPath("references/Phase1/MainboardFront/Mainboard_FRONTPOV8.jpg").build();
+                java.util.concurrent.atomic.AtomicLong time=new java.util.concurrent.atomic.AtomicLong();
+                PlanFScanHelpController controller=new PlanFScanHelpController(a,c,button,()->java.util.Collections.singletonList(photo),time::get);
+                dev.chyken.assembl_ar.vision.RecognitionRequest request=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component("main_board"),null,null,null,1,1);
+                try{
+                    controller.update("phase1",1,request,"Main board",true,true,false);
+                    assertEquals(View.VISIBLE,button.getVisibility());assertNull(field(controller,"dialog"));
+                    time.set(4_999);controller.update("phase1",1,request,"Main board",true,true,false);assertNull(field(controller,"dialog"));
+                    time.set(5_000);controller.update("phase1",1,request,"Main board",true,true,false);
+                    androidx.appcompat.app.AlertDialog dialog=(androidx.appcompat.app.AlertDialog)field(controller,"dialog");assertTrue(dialog.isShowing());
+                    assertNotNull(dialog.findViewById(R.id.planFReferenceImage));
+                    dialog.getButton(-1).performClick();
+                    assertTrue(((TextView)dialog.findViewById(R.id.planFInstructions)).getText().toString().contains("focus"));
+                    assertTrue("Help must not suspend readiness",(Boolean)field(controller,"ready"));
+                    dialog.getButton(-2).performClick();assertNull(field(controller,"dialog"));
+                    time.set(20_000);controller.update("phase1",1,request,"Main board",true,true,false);assertNull(field(controller,"dialog"));
+                    button.performClick();assertNotNull(field(controller,"dialog"));
+                    controller.update("phase1",1,request,"Main board",true,false,true);
+                    assertNull(field(controller,"dialog"));assertEquals(View.GONE,button.getVisibility());
+                    controller.update("phase1",2,request,"Main board",true,true,false);assertNull(field(controller,"dialog"));
+                    time.set(25_000);controller.update("phase1",2,request,"Main board",true,true,false);assertNotNull(field(controller,"dialog"));
+                    controller.suspend();assertNull(field(controller,"dialog"));
+                    time.set(90_000);controller.update("phase1",3,request,"Main board",true,true,false);assertNull(field(controller,"dialog"));
+                    time.set(95_000);controller.update("phase1",3,request,"Main board",true,true,false);assertNull(field(controller,"dialog"));
+                }finally{controller.close();}
+            });
+        }
+    }
+
+    @Test public void planFSettingsPersistWithoutChangingExistingPreferencesAndLargeFontHelpIsReachable(){
+        try(ActivityScenario<Activity> host=ActivityScenario.launch(host())){
+            host.onActivity(a->{
+                android.content.SharedPreferences prefs=PreferencesManager.visibilityPreferences(a);java.util.Map<String,?> before=new java.util.HashMap<>(prefs.getAll());
+                boolean old=PreferencesManager.planFEnabled(a),had=prefs.contains(PreferencesManager.KEY_PLAN_F_ENABLED);
+                androidx.appcompat.app.AlertDialog settings=null;PlanFScanHelpController controller=null;
+                try{
+                    Context c=candidate(a,2);
+                    settings=AppSettingsDialog.show(a,c);androidx.appcompat.widget.SwitchCompat toggle=settings.findViewById(R.id.settingsPlanFSwitch);assertNotNull(toggle);
+                    toggle.setChecked(!old);assertEquals(!old,PreferencesManager.planFEnabled(a));
+                    settings.dismiss();settings=null;
+                    android.widget.TextView button=new android.widget.TextView(c);
+                    controller=new PlanFScanHelpController(a,c,button,java.util.Collections::emptyList,()->0L);
+                    dev.chyken.assembl_ar.vision.RecognitionRequest request=new dev.chyken.assembl_ar.vision.RecognitionRequest(dev.chyken.assembl_ar.vision.RecognitionRequest.AssemblyExpectation.component("main_board"),null,null,null,1,1);
+                    controller.update("phase1",1,request,"Main board",true,true,false);button.performClick();
+                    androidx.appcompat.app.AlertDialog dialog=(androidx.appcompat.app.AlertDialog)field(controller,"dialog");
+                    for(int which:new int[]{-1,-2,-3}){Button action=dialog.getButton(which);assertEquals(View.VISIBLE,action.getVisibility());assertTrue(action.getMinimumHeight()>=UiUtils.dp(c,48));}
+                    assertFalse(dialog.getButton(-2).getCurrentTextColor()==0xFFFFFFFF);
+                    dialog.getButton(-2).performClick();assertNull(field(controller,"dialog"));
+                }finally{
+                    if(settings!=null)settings.dismiss();if(controller!=null)controller.close();
+                    if(had)PreferencesManager.planFEnabled(a,old);else prefs.edit().remove(PreferencesManager.KEY_PLAN_F_ENABLED).commit();
+                }
+                assertEquals(before,prefs.getAll());
+            });
+        }
+    }
     private Context candidate(Context source,float fontScale){
         Configuration config=new Configuration(source.getResources().getConfiguration());config.fontScale=fontScale;
         Context c=source.createConfigurationContext(config);String path=InstrumentationRegistry.getArguments().getString("candidateDex");

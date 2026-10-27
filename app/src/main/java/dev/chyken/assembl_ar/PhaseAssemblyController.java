@@ -470,6 +470,15 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
         return new dev.chyken.assembl_ar.workflow.phase.WiringDiagramState(wiringGuide==null?saved.motor:wiringGuide.flow.colors(),driverWiringGuide==null?saved.driver:driverWiringGuide.flow.colors(),sensorWiringGuide==null?saved.components:sensorWiringGuide.flow.colors());
     }
     int displayedPhaseNumber(){return phase==null?1:phase.getNumber();}
+    /** Read-only camera policy: pre-bind detail during the installation demo, keep
+     * it for that placement scan, and return to baseline for loose parts/wiring. */
+    int nativeDetailCapturePhase(){
+        if(microcontrollerGuide!=null&&(microcontrollerGuide.flow.step()==2||microcontrollerGuide.flow.step()==3))return 5;
+        if(sensorWiringGuide!=null){dev.chyken.assembl_ar.workflow.phase.Phase8SensorWiringFlow.Screen screen=sensorWiringGuide.flow.screen();
+            if(screen==dev.chyken.assembl_ar.workflow.phase.Phase8SensorWiringFlow.Screen.MOUNT_DEMO||screen==dev.chyken.assembl_ar.workflow.phase.Phase8SensorWiringFlow.Screen.MOUNT_SCAN)return 8;
+        }
+        return 0;
+    }
     /** A paused current phase must not expose its schematic while an earlier scan is reviewed. */
     int focusedSchematicPhase(){
         if(wiringGuide!=null&&wiringGuide.schematicFocused())return 4;

@@ -1,0 +1,200 @@
+--------- beginning of main
+10-27 01:35:45.776 27666 27694 I CandidateReplay: vision.VerifiedTelemetryReplayInstrumentedTest#geometryHudIsGreenAndUnmeasuredValuesStayHonestInBothLayouts PASS ms=1718
+10-27 01:35:52.084 27720 27747 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission PASS ms=1152
+10-27 01:35:57.574 27769 27786 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#pauseFromOutlineCallbackDropsTheRemainingTrackingCallback PASS ms=934
+10-27 01:36:03.664 27819 27837 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader PASS ms=401
+10-27 01:36:09.447 27861 27888 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#directReplayAndCloseShareTheSameNativeOwnershipGuard PASS ms=434
+10-27 01:36:13.510 27912 27930 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence PASS ms=561
+10-27 01:36:35.672 27963 27982 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#threeThousandFlowFramesReuseBuffersAndResetReleasesEveryOwner PASS ms=17309
+10-27 01:36:41.891 28038 28057 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#rejectedCaptureWritesDoNotLeakAdmissionCounters PASS ms=110
+10-27 01:36:47.253 28079 28106 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#cyclicContourHierarchyTerminatesWithoutInventingRepeatedHoles PASS ms=5
+10-27 01:36:51.575 28128 28146 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#failedDescriptorPublicationPreservesBorrowedInputsAndSuccessfulOutputOwnsItsRows PASS ms=8
+10-27 01:36:55.394 28167 28195 I CandidateReplay: vision.DiagnosticTelemetryInstrumentedTest#higherMatchCountOnAnotherReferenceCannotOwnCandidateTelemetry PASS ms=127
+10-27 01:37:00.457 28217 28235 I CandidateReplay: vision.DiagnosticTelemetryInstrumentedTest#sharedAnalyzerPublishesOneVerifiedCandidateAndTruePoseResiduals PASS ms=709
+10-27 01:37:05.177 28269 28288 I CandidateReplay: vision.DiagnosticTelemetryInstrumentedTest#checkerboardTreIsThreeDimensionalAndUnavailableWithoutMetricIntrinsics PASS ms=39
+10-27 01:37:10.329 28309 28334 I CandidateReplay: vision.DiagnosticTelemetryInstrumentedTest#bothHudStatesKeepAllFifteenLinesAndColorOnlyTheFinalOutput PASS ms=52
+10-27 01:37:24.135 28358 28375 I CandidateReplay: vision.DiagnosticTelemetryInstrumentedTest#realCasterAndSensorCandidatesOwnTheirRoiTelemetry PASS ms=9434
+10-27 01:37:30.892 28419 28438 I CandidateReplay: vision.ImageOutlineTrackerInstrumentedTest#allocationLightRatioProbeMatchesNativeDMatchValues PASS ms=50
+10-27 01:37:36.511 28470 28487 I CandidateReplay: vision.GlobalOutlineRegistryInstrumentedTest#bodyDescriptorsIdentifyTheWrongPartAndRejectItsEmptyBoardContext PASS ms=959
+10-27 01:37:42.297 28509 28527 I CandidateReplay: vision.GlobalOutlineRegistryInstrumentedTest#ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem PASS ms=712
+10-27 01:38:28.729 28561 28579 I CandidateReplay: vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines PASS ms=40242
+10-27 01:38:49.937 28666 28687 I CandidateReplay: vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart PASS ms=15678
+10-27 01:39:01.433 28739 28775 I CandidateReplay: vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline PASS ms=7641
+10-27 01:39:49.845 28825 28843 I CandidateReplay: vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines PASS ms=44800
+10-27 01:40:32.445 28932 28951 I CandidateReplay: vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence PASS ms=36803
+10-27 01:40:40.470 29050 29068 I CandidateReplay: vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult PASS ms=1761
+10-27 01:40:45.620 29100 29120 I CandidateReplay: vision.ImageOutlineTrackerInstrumentedTest#photoOnlyOutlineFollowsMeasuredPanAndClearsWhenOccluded PASS ms=344
+10-27 01:40:50.483 29143 29161 I CandidateReplay: vision.ImageOutlineTrackerInstrumentedTest#delayedRecognitionCatchesUpToLatestCameraFrame PASS ms=44
+10-27 01:40:55.618 29192 29210 I CandidateReplay: vision.ImageOutlineTrackerInstrumentedTest#sparseEightToElevenCornerTargetsCatchUpButCannotTrackABlankFrame PASS ms=160
+10-27 01:40:59.955 29232 29250 I CandidateReplay: vision.ImageOutlineTrackerInstrumentedTest#mountedPairKeepsTwoSeparateMovingOutlines PASS ms=248
+10-27 01:41:04.298 29283 29301 I CandidateReplay: vision.ImageOutlineTrackerInstrumentedTest#multiSecondDetectorSeedIsRelocatedAgainstTheNewestMeasuredImage PASS ms=67
+10-27 01:41:56.049 29323 29351 I CandidateReplay: vision.Phase1011VideoReplayInstrumentedTest#phase10LoosePartsAndRealBoardBottomRequireCorrectOrientation PASS ms=47568
+10-27 01:42:36.051 29442 29461 I CandidateReplay: vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard PASS ms=35058
+10-27 01:43:06.470 29539 29557 I CandidateReplay: vision.Phase1011VideoReplayInstrumentedTest#phase11LooseOledBatteryAndBackFaceKeepTheirIdentity PASS ms=25052
+10-27 01:43:41.527 29631 29653 I CandidateReplay: vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence PASS ms=29516
+10-27 01:43:53.255 29739 29782 I CandidateReplay: vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence PASS ms=6457
+10-27 01:44:30.213 29830 29854 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#shadowedBottomAssemblyRequiresBothTrackersAndCasterWithOutlines PASS ms=32819
+10-27 01:44:46.023 29940 29960 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPalmHasMeasuredOutlines PASS ms=11665
+10-27 01:45:00.243 30008 30027 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPaperAndRotatedFrontHasMeasuredOutlines PASS ms=7851
+10-27 01:45:14.805 30060 30088 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#clippedSensorCannotBecomeACompleteFrontFace PASS ms=10264
+10-27 01:45:27.573 30122 30139 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#restoredLooseStandoffScanUsesFreshGeometricEvidence PASS ms=8252
+10-27 01:45:48.497 30185 30203 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#blurredStandoffDoesNotInventACompletePose PASS ms=16016
+10-27 01:46:17.193 30251 30280 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#standoffScanRejectsYellowWheelHubs PASS ms=23759
+10-27 01:46:28.197 30336 30355 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#phase8CameraAnalyzerPublishesTheOutlineBeforeConsecutiveSuccess PASS ms=5754
+10-27 01:46:36.144 30399 30418 I CandidateReplay: vision.Phase789VideoReplayInstrumentedTest#standaloneStandoffKeepsMeasuredIndividualToolOutlines PASS ms=1706
+10-27 01:46:56.305 30453 30472 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#looseCableRequiresBothConnectorHeadsAndVisibleOutline PASS ms=15587
+10-27 01:47:14.395 30517 30536 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#protectorUnderGlareRequiresIndependentFrameAndBoardEvidence PASS ms=11833
+10-27 01:47:29.973 30581 30610 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence PASS ms=9985
+10-27 01:47:56.961 30643 30661 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#boardOnlyCannotPassStackedAssembly PASS ms=23687
+10-27 01:48:23.255 30728 30747 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#clippedCableCannotPassAsBothCompleteConnectors PASS ms=20768
+10-27 01:48:31.362 30803 30824 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess PASS ms=2190
+10-27 01:48:46.212 30855 30874 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames PASS ms=10193
+10-27 01:48:59.337 30922 30941 I CandidateReplay: vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions PASS ms=6891
+10-27 01:49:29.321 30986 31003 I CandidateReplay: vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano PASS ms=25109
+10-27 01:49:34.138 31068 31087 I CandidateReplay: vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress PASS ms=61
+10-27 01:49:42.286 31109 31142 I CandidateReplay: vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates PASS ms=2287
+10-27 01:49:46.802 31267 31300 I CandidateReplay: vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows PASS ms=11
+10-27 01:49:54.062 31340 31358 I LiveLatency: frame=1 located=true totalMs=137.226406 extractionMs=32.295728 matchingMs=43.661249 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.160 31340 31358 I LiveLatency: frame=2 located=true totalMs=96.86427 extractionMs=21.896771 matchingMs=39.770314 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.256 31340 31358 I LiveLatency: frame=3 located=true totalMs=94.4225 extractionMs=20.808073 matchingMs=34.266302 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.350 31340 31358 I LiveLatency: frame=4 located=true totalMs=93.100052 extractionMs=20.145573 matchingMs=35.855572 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.447 31340 31358 I LiveLatency: frame=5 located=true totalMs=95.890208 extractionMs=21.037865 matchingMs=36.131095 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.552 31340 31358 I LiveLatency: frame=6 located=true totalMs=103.544271 extractionMs=20.404583 matchingMs=44.719477 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.649 31340 31358 I LiveLatency: frame=7 located=true totalMs=96.17099 extractionMs=20.286042 matchingMs=30.504947 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.743 31340 31358 I LiveLatency: frame=8 located=true totalMs=91.951771 extractionMs=20.672656 matchingMs=31.541197 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.837 31340 31358 I LiveLatency: frame=9 located=true totalMs=93.420312 extractionMs=20.52953 matchingMs=31.581668 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:54.927 31340 31358 I LiveLatency: frame=10 located=true totalMs=88.253229 extractionMs=21.567239 matchingMs=27.247033 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.016 31340 31358 I LiveLatency: frame=11 located=true totalMs=87.233906 extractionMs=20.699999 matchingMs=28.374323 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.120 31340 31358 I LiveLatency: frame=12 located=true totalMs=102.675729 extractionMs=22.013176 matchingMs=39.297346 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.206 31340 31358 I LiveLatency: frame=13 located=true totalMs=84.059479 extractionMs=21.94146 matchingMs=26.974794 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.293 31340 31358 I LiveLatency: frame=14 located=true totalMs=86.456459 extractionMs=22.175157 matchingMs=30.288595 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.385 31340 31358 I LiveLatency: frame=15 located=true totalMs=90.209115 extractionMs=24.041197 matchingMs=30.279011 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.478 31340 31358 I LiveLatency: frame=16 located=true totalMs=92.198646 extractionMs=20.789791 matchingMs=29.364844 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.567 31340 31358 I LiveLatency: frame=17 located=true totalMs=87.154114 extractionMs=19.974635 matchingMs=30.051303 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.670 31340 31358 I LiveLatency: frame=18 located=true totalMs=102.139635 extractionMs=20.670832 matchingMs=37.675052 features=299 method=ORB_HOMOGRAPHY
+10-27 01:49:55.671 31340 31358 I LiveLatency: SUMMARY firstFrame=1 medianMs=92.198646 p95Ms=103.544271 under100=false
+10-27 01:49:55.676 31340 31358 I CandidateReplay: vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates PASS ms=4238
+10-27 01:50:18.333 31395 31415 I LiveLatency: phase=3 role=assembly frame=1 verified=true ms=2341.920677 features=3194 state=EXPECTED_COMPONENT p5=null
+10-27 01:50:19.759 31395 31415 I LiveLatency: phase=3 role=assembly frame=2 verified=true ms=1424.96578 features=3194 state=EXPECTED_COMPONENT p5=null
+10-27 01:50:41.625 31395 31415 I LiveLatency: phase=3 role=invalid frame=1 verified=false ms=1902.629582 features=3192 state=WRONG_ORIENTATION p5=null
+10-27 01:50:42.543 31395 31415 I LiveLatency: phase=3 role=invalid frame=2 verified=false ms=916.221406 features=3192 state=WRONG_ORIENTATION p5=null
+10-27 01:50:43.463 31395 31415 I LiveLatency: phase=3 role=invalid frame=3 verified=false ms=918.888437 features=3192 state=WRONG_ORIENTATION p5=null
+10-27 01:50:44.426 31395 31415 I LiveLatency: phase=3 role=invalid frame=4 verified=false ms=961.553072 features=3192 state=WRONG_ORIENTATION p5=null
+10-27 01:50:45.334 31395 31415 I LiveLatency: phase=3 role=invalid frame=5 verified=false ms=907.713385 features=3192 state=WRONG_ORIENTATION p5=null
+10-27 01:50:46.237 31395 31415 I LiveLatency: phase=3 role=invalid frame=6 verified=false ms=901.284844 features=3192 state=WRONG_ORIENTATION p5=null
+10-27 01:51:01.595 31395 31415 I LiveLatency: phase=5 role=assembly frame=1 verified=true ms=5207.909738 features=3190 state=EXPECTED_COMPONENT p5=PLACED
+10-27 01:51:03.356 31395 31415 I LiveLatency: phase=5 role=assembly frame=2 verified=true ms=1758.462291 features=3190 state=EXPECTED_COMPONENT p5=PLACED
+10-27 01:51:15.538 31395 31415 I LiveLatency: phase=5 role=invalid frame=1 verified=false ms=2086.771093 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:51:16.247 31395 31415 I LiveLatency: phase=5 role=invalid frame=2 verified=false ms=708.744531 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:51:17.333 31395 31415 I LiveLatency: phase=5 role=invalid frame=3 verified=false ms=1084.615521 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:51:18.423 31395 31415 I LiveLatency: phase=5 role=invalid frame=4 verified=false ms=1088.497813 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:51:19.537 31395 31415 I LiveLatency: phase=5 role=invalid frame=5 verified=false ms=1113.530833 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:51:20.692 31395 31415 I LiveLatency: phase=5 role=invalid frame=6 verified=false ms=1153.42901 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:52:01.433 31395 31415 I LiveLatency: phase=7 role=shadowtrackers frame=1 verified=false ms=4042.361301 features=925 state=NO_COMPONENT p5=null
+10-27 01:52:05.804 31395 31415 I LiveLatency: phase=7 role=shadowtrackers frame=2 verified=false ms=4369.431144 features=930 state=NO_COMPONENT p5=null
+10-27 01:52:06.808 31395 31415 I LiveLatency: phase=7 role=shadowtrackers frame=3 verified=true ms=1003.237292 features=925 state=EXPECTED_COMPONENT p5=null
+10-27 01:52:07.601 31395 31415 I LiveLatency: phase=7 role=shadowtrackers frame=4 verified=true ms=790.979895 features=925 state=EXPECTED_COMPONENT p5=null
+10-27 01:52:39.234 31395 31415 I LiveLatency: phase=8 role=assembly frame=1 verified=false ms=1500.717969 features=789 state=NO_COMPONENT p5=null
+10-27 01:52:41.233 31395 31415 I LiveLatency: phase=8 role=assembly frame=2 verified=false ms=1998.24802 features=789 state=NO_COMPONENT p5=null
+10-27 01:52:42.561 31395 31415 I LiveLatency: phase=8 role=assembly frame=3 verified=true ms=1326.036614 features=3163 state=EXPECTED_COMPONENT p5=null
+10-27 01:52:43.551 31395 31415 I LiveLatency: phase=8 role=assembly frame=4 verified=true ms=988.89927 features=3163 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:12.972 31395 31415 I LiveLatency: phase=8 role=invalid frame=1 verified=false ms=1738.566822 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:53:13.930 31395 31415 I LiveLatency: phase=8 role=invalid frame=2 verified=false ms=955.657135 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:53:14.902 31395 31415 I LiveLatency: phase=8 role=invalid frame=3 verified=false ms=970.894635 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:53:15.885 31395 31415 I LiveLatency: phase=8 role=invalid frame=4 verified=false ms=981.835885 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:53:16.856 31395 31415 I LiveLatency: phase=8 role=invalid frame=5 verified=false ms=970.311406 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:53:17.868 31395 31415 I LiveLatency: phase=8 role=invalid frame=6 verified=false ms=1010.613906 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:53:36.678 31395 31415 I LiveLatency: phase=9 role=assembly frame=1 verified=true ms=889.933333 features=1183 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:37.147 31395 31415 I LiveLatency: phase=9 role=assembly frame=2 verified=true ms=467.330677 features=1183 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:42.486 31395 31415 I LiveLatency: phase=10 role=roomprotected frame=1 verified=true ms=363.829687 features=1163 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:42.769 31395 31415 I LiveLatency: phase=10 role=roomprotected frame=2 verified=true ms=281.648177 features=1163 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:48.849 31395 31415 I LiveLatency: phase=10 role=roomstacked frame=1 verified=true ms=169.295261 features=1176 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:48.986 31395 31415 I LiveLatency: phase=10 role=roomstacked frame=2 verified=true ms=135.491093 features=1176 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:55.341 31395 31415 I LiveLatency: phase=11 role=assembly frame=1 verified=true ms=176.786197 features=1056 state=EXPECTED_COMPONENT p5=null
+10-27 01:53:55.502 31395 31415 I LiveLatency: phase=11 role=assembly frame=2 verified=true ms=158.733541 features=1056 state=EXPECTED_COMPONENT p5=null
+10-27 01:54:02.028 31395 31415 I LiveLatency: phase=11 role=missingoled frame=1 verified=false ms=846.881302 features=824 state=NO_COMPONENT p5=null
+10-27 01:54:04.819 31395 31415 I LiveLatency: phase=11 role=missingoled frame=2 verified=false ms=2790.003645 features=824 state=NO_COMPONENT p5=null
+10-27 01:54:06.548 31395 31415 I LiveLatency: phase=11 role=missingoled frame=3 verified=false ms=1727.378541 features=824 state=NO_COMPONENT p5=null
+10-27 01:54:09.139 31395 31415 I LiveLatency: phase=11 role=missingoled frame=4 verified=false ms=2589.010207 features=824 state=NO_COMPONENT p5=null
+10-27 01:54:10.515 31395 31415 I LiveLatency: phase=11 role=missingoled frame=5 verified=false ms=1372.441822 features=824 state=NO_COMPONENT p5=null
+10-27 01:54:13.327 31395 31415 I LiveLatency: phase=11 role=missingoled frame=6 verified=false ms=2811.42677 features=824 state=NO_COMPONENT p5=null
+10-27 01:54:13.333 31395 31415 I CandidateReplay: vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines PASS ms=252684
+10-27 01:54:21.664 31890 31911 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers PASS ms=107
+10-27 01:54:27.569 31937 31959 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels PASS ms=842
+10-27 01:54:44.113 31982 32002 I LiveLatency: phase=5 role=assembly frame=1 verified=true ms=3353.89729 features=3190 state=EXPECTED_COMPONENT p5=PLACED
+10-27 01:54:45.436 31982 32002 I LiveLatency: phase=5 role=assembly frame=2 verified=true ms=1321.87125 features=3190 state=EXPECTED_COMPONENT p5=PLACED
+10-27 01:54:56.192 31982 32002 I LiveLatency: phase=5 role=invalid frame=1 verified=false ms=2482.822811 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:54:57.230 31982 32002 I LiveLatency: phase=5 role=invalid frame=2 verified=false ms=1037.026094 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:54:58.991 31982 32002 I LiveLatency: phase=5 role=invalid frame=3 verified=false ms=1759.456197 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:55:00.974 31982 32002 I LiveLatency: phase=5 role=invalid frame=4 verified=false ms=1981.568905 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:55:02.998 31982 32002 I LiveLatency: phase=5 role=invalid frame=5 verified=false ms=2022.000468 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:55:05.098 31982 32002 I LiveLatency: phase=5 role=invalid frame=6 verified=false ms=2098.367395 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 01:55:34.910 31982 32002 I LiveLatency: phase=8 role=assembly frame=1 verified=false ms=1681.543697 features=789 state=NO_COMPONENT p5=null
+10-27 01:55:37.011 31982 32002 I LiveLatency: phase=8 role=assembly frame=2 verified=false ms=2098.892447 features=789 state=NO_COMPONENT p5=null
+10-27 01:55:38.322 31982 32002 I LiveLatency: phase=8 role=assembly frame=3 verified=true ms=1309.909947 features=3163 state=EXPECTED_COMPONENT p5=null
+10-27 01:55:39.264 31982 32002 I LiveLatency: phase=8 role=assembly frame=4 verified=true ms=941.038124 features=3163 state=EXPECTED_COMPONENT p5=null
+10-27 01:56:08.957 31982 32002 I LiveLatency: phase=8 role=invalid frame=1 verified=false ms=1732.759322 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:56:09.925 31982 32002 I LiveLatency: phase=8 role=invalid frame=2 verified=false ms=967.106041 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:56:10.885 31982 32002 I LiveLatency: phase=8 role=invalid frame=3 verified=false ms=958.842656 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:56:11.888 31982 32002 I LiveLatency: phase=8 role=invalid frame=4 verified=false ms=1001.044323 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:56:12.874 31982 32002 I LiveLatency: phase=8 role=invalid frame=5 verified=false ms=984.420469 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:56:13.881 31982 32002 I LiveLatency: phase=8 role=invalid frame=6 verified=false ms=1005.983854 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 01:56:13.887 31982 32002 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates PASS ms=102054
+10-27 01:56:38.216 32185 32203 I InstalledCapture: 640=640x480 fps=13.941633345837396 trackingP95Ms=3.685938 native=1280x960 fps=13.963344608499291 trackingP95Ms=8.024636
+10-27 01:56:39.617 32185 32203 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget PASS ms=20057
+10-27 02:02:41.231   549   568 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers PASS ms=112
+10-27 02:02:47.828   591   618 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels PASS ms=999
+10-27 02:03:04.851   651   678 I LiveLatency: phase=5 role=assembly frame=1 verified=true ms=2460.761979 features=3190 state=EXPECTED_COMPONENT p5=PLACED
+10-27 02:03:05.468   651   678 I LiveLatency: phase=5 role=assembly frame=2 verified=true ms=615.258073 features=3190 state=EXPECTED_COMPONENT p5=PLACED
+10-27 02:03:15.383   651   678 I LiveLatency: phase=5 role=invalid frame=1 verified=false ms=1920.345468 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 02:03:15.924   651   678 I LiveLatency: phase=5 role=invalid frame=2 verified=false ms=540.191875 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 02:03:16.724   651   678 I LiveLatency: phase=5 role=invalid frame=3 verified=false ms=797.801146 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 02:03:17.381   651   678 I LiveLatency: phase=5 role=invalid frame=4 verified=false ms=656.605729 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 02:03:17.987   651   678 I LiveLatency: phase=5 role=invalid frame=5 verified=false ms=603.933854 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 02:03:18.772   651   678 I LiveLatency: phase=5 role=invalid frame=6 verified=false ms=783.097552 features=3174 state=WRONG_ORIENTATION p5=BACKWARD
+10-27 02:03:48.812   651   678 I LiveLatency: phase=8 role=assembly frame=1 verified=false ms=1544.574791 features=789 state=NO_COMPONENT p5=null
+10-27 02:03:51.506   651   678 I LiveLatency: phase=8 role=assembly frame=2 verified=false ms=2693.066874 features=789 state=NO_COMPONENT p5=null
+10-27 02:03:52.884   651   678 I LiveLatency: phase=8 role=assembly frame=3 verified=true ms=1375.307031 features=3163 state=EXPECTED_COMPONENT p5=null
+10-27 02:03:53.874   651   678 I LiveLatency: phase=8 role=assembly frame=4 verified=true ms=989.023958 features=3163 state=EXPECTED_COMPONENT p5=null
+10-27 02:04:25.789   651   678 I LiveLatency: phase=8 role=invalid frame=1 verified=false ms=1727.489374 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 02:04:26.735   651   678 I LiveLatency: phase=8 role=invalid frame=2 verified=false ms=944.445781 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 02:04:27.688   651   678 I LiveLatency: phase=8 role=invalid frame=3 verified=false ms=952.354635 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 02:04:28.672   651   678 I LiveLatency: phase=8 role=invalid frame=4 verified=false ms=982.713698 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 02:04:29.655   651   678 I LiveLatency: phase=8 role=invalid frame=5 verified=false ms=981.65 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 02:04:30.660   651   678 I LiveLatency: phase=8 role=invalid frame=6 verified=false ms=1004.031197 features=3141 state=WRONG_ORIENTATION p5=null
+10-27 02:04:30.665   651   678 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates PASS ms=98421
+10-27 02:04:42.985  1093  1139 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire PASS ms=5365
+10-27 02:04:47.845  1200  1243 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#pcbOnlyGlobalFeaturesProposeFreshNanoCropButCannotVerifyErasedBody PASS ms=874
+10-27 02:05:11.223  1296  1394 I InstalledCapture: 640=640x480 fps=13.964726046586668 trackingP95Ms=2.109166 native=1280x960 fps=13.944852893494497 trackingP95Ms=9.44375
+10-27 02:05:12.415  1296  1394 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget PASS ms=19607
+10-27 02:05:32.670  1980  2110 I InstalledCapture: SHARED_PREVIEW 640=640x480 fps=13.95085311171447 trackingP95Ms=1.340677 native=1280x960 fps=13.96353966783364 trackingP95Ms=9.999427
+10-27 02:05:33.493  1980  2110 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression PASS ms=18980
+10-27 02:19:36.255  4360  4406 I Phase5Comparison: round=0 current=false ms=2118.093384
+10-27 02:19:37.601  4360  4406 I Phase5Comparison: round=0 current=true ms=1346.012708
+10-27 02:19:38.486  4360  4406 I Phase5Comparison: round=1 current=true ms=883.938801
+10-27 02:19:39.476  4360  4406 I Phase5Comparison: round=1 current=false ms=990.347135
+10-27 02:19:40.178  4360  4406 I Phase5Comparison: round=2 current=false ms=701.065938
+10-27 02:19:41.030  4360  4406 I Phase5Comparison: round=2 current=true ms=851.398489
+10-27 02:19:41.911  4360  4406 I Phase5Comparison: round=3 current=true ms=880.727552
+10-27 02:19:42.889  4360  4406 I Phase5Comparison: round=3 current=false ms=978.602395
+10-27 02:19:44.061  4360  4406 I Phase5Comparison: round=4 current=false ms=1171.273906
+10-27 02:19:45.140  4360  4406 I Phase5Comparison: round=4 current=true ms=1077.67677
+10-27 02:19:45.855  4360  4406 I Phase5Comparison: round=5 current=true ms=714.433854
+10-27 02:19:46.574  4360  4406 I Phase5Comparison: round=5 current=false ms=718.759895
+10-27 02:19:47.492  4360  4406 I Phase5Comparison: round=6 current=false ms=918.389166
+10-27 02:19:48.159  4360  4406 I Phase5Comparison: round=6 current=true ms=666.780729
+10-27 02:19:48.935  4360  4406 I Phase5Comparison: round=7 current=true ms=775.932916
+10-27 02:19:49.738  4360  4406 I Phase5Comparison: round=7 current=false ms=802.567917
+10-27 02:19:49.739  4360  4406 I Phase5Comparison: SUMMARY committedMedianMs=918.389166 candidateMedianMs=851.398489 committed=[701.065938, 718.759895, 802.567917, 918.389166, 978.602395, 1171.273906] candidate=[666.780729, 714.433854, 775.932916, 851.398489, 880.727552, 1077.67677]
+10-27 02:19:49.747  4360  4406 I CandidateReplay: vision.Phase5ComparisonInstrumentedTest#committedAndCandidateDetailedNanoMatchersUseIdenticalPixels PASS ms=33732
+10-27 02:20:41.386  4360  4406 I CandidateReplay: vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence PASS ms=51636
+10-27 02:20:43.828  4360  4406 I CandidateReplay: vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive PASS ms=2438
+10-27 02:20:44.235  4360  4406 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence PASS ms=404
+10-27 02:20:44.608  4360  4406 I CandidateReplay: DynamicOutlinePipelineInstrumentedTest#completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence PASS ms=370
+10-27 02:28:59.707  5453  5477 I InstalledCapture: ACTIVE_LK width=640 nativeHeapGrowthBytes=-2314832
+10-27 02:29:01.219  5453  5477 I InstalledCapture: ACTIVE_LK width=1280 nativeHeapGrowthBytes=-2451040
+10-27 02:29:01.219  5453  5477 I InstalledCapture: RECORDED_ACTIVE_LK baselineP95Ms=6.710209 nativeP95Ms=11.015938
+10-27 02:29:01.219  5453  5477 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded PASS ms=2928
+10-27 02:29:19.869  5453  5477 I InstalledCapture: SHARED_PREVIEW 640=640x480 fps=13.947002435818142 idleBufferPathP95Ms=3.895938 native=1280x960 fps=13.983007947865744 idleBufferPathP95Ms=7.029218
+10-27 02:29:21.082  5453  5477 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression PASS ms=19858
+10-27 02:29:38.377  5453  5477 I CandidateReplay: vision.HygieneSafetyInstrumentedTest#threeThousandFlowFramesReuseBuffersAndResetReleasesEveryOwner PASS ms=17224

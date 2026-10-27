@@ -5,7 +5,7 @@
     <string name="settings_admin_detail">Adds Administrator to the menu. The existing PIN and device-owner checks still apply.</string>
     <string name="settings_dev">Show assembly DEV button</string>
     <string name="settings_dev_detail">Shows phase and sub-step testing controls on the assembly camera. Turning this off does not reset your progress.</string>
-    <string name="settings_visibility">Menu and developer controls</string>
+    <string name="settings_visibility">Interface and scanning assistance</string>
     <string name="settings_done">Done</string>
     <string name="settings_diagnostics">Open diagnostic tools</string>
     <item name="appShell" type="id" />

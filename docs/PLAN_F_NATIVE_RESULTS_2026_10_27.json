@@ -1,0 +1,46 @@
+[
+  {
+    "case": "UiBeautificationInstrumentedTest#planFOffersHelpOnceWithoutCompletingAnythingAndClosesOnSuccess",
+    "passed": true
+  },
+  {
+    "case": "UiBeautificationInstrumentedTest#planFSettingsPersistWithoutChangingExistingPreferencesAndLargeFontHelpIsReachable",
+    "passed": true
+  },
+  {
+    "case": "UiBeautificationInstrumentedTest#planFLoadsABoundedRealPhotoAndRendersItsHelpSurface",
+    "passed": true
+  },
+  {
+    "case": "UiBeautificationInstrumentedTest#settingsTogglesChangeOnlyAdministratorAndAssemblyDeveloperVisibility",
+    "passed": true
+  },
+  {
+    "case": "UiBeautificationInstrumentedTest#checklistKeepsExplicitCallbacksCorrectionsAndReachableButtons",
+    "passed": true
+  },
+  {
+    "case": "UiBeautificationInstrumentedTest#sharedLightShellKeepsOneMenuAndUsableTesterViewport",
+    "passed": true
+  },
+  {
+    "case": "DynamicOutlineUiInstrumentedTest#welcomeFooterIsVisibleEnabledAndContrastingAtLargeFonts",
+    "passed": true
+  },
+  {
+    "case": "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+    "passed": true
+  },
+  {
+    "case": "DynamicOutlinePipelineInstrumentedTest#completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence",
+    "passed": true
+  },
+  {
+    "case": "vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire",
+    "passed": true
+  },
+  {
+    "case": "vision.VerifiedTelemetryReplayInstrumentedTest#roomStackedAssemblyPairsAndFreezesVerifiedMetricsWhileTrackingStaysLive",
+    "passed": true
+  }
+]

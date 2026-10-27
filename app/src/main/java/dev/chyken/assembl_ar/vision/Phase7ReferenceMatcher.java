@@ -13,6 +13,7 @@ final class Phase7ReferenceMatcher implements AutoCloseable {
     private final CLAHE clahe;private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
     private final Phase7TrackerSearch trackerSearch;
     private final ComponentDetailExtractor casterDetail;
+    void releaseCameraBuffers(){casterDetail.releaseWorkspace();}
     private final DetailSamplingSchedule samplingSchedule=new DetailSamplingSchedule();
     private final List<ReferenceDatabase.PreparedReference> trackerReferences = new ArrayList<>();
     private final List<ReferenceDatabase.PreparedReference> installedReferences = new ArrayList<>();

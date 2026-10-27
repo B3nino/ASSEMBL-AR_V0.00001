@@ -6,6 +6,7 @@ public final class LiveVisionPolicy {
     public static final int ADAPTIVE_DETAIL_KEYPOINTS=1200;
     public static final long DETECTOR_INTERVAL_NS=33_000_000L;
     private LiveVisionPolicy() { }
+    static boolean needsDetection(boolean verificationSuspended,boolean trackedTarget){return !verificationSuspended||!trackedTarget;}
     static boolean scoped(RecognitionRequest r){return r!=null&&r.getExpectation()!=null;}
     static boolean acceptsIdentity(ComponentReferenceSpec s,RecognitionRequest r){
         if(!scoped(r))return true;

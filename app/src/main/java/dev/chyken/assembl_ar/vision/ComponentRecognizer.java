@@ -1201,7 +1201,7 @@ public final class ComponentRecognizer implements AutoCloseable {
     }
 
     /** Release camera-owned images on the detector worker; reference banks stay warm. */
-    public synchronized void releaseCameraFrameCache(){frameCache.release();}
+    public synchronized void releaseCameraFrameCache(){frameCache.release();phase3Matcher.releaseCameraBuffers();phase5Matcher.releaseCameraBuffers();phase7Matcher.releaseCameraBuffers();phase8Matcher.releaseCameraBuffers();phase10Matcher.releaseCameraBuffers();}
 
     static List<DMatch> uniqueFrameMatches(List<DMatch> matches) {
         java.util.Map<Integer, DMatch> unique = new LinkedHashMap<>();

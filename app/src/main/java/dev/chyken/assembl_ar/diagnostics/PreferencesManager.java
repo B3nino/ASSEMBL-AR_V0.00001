@@ -4,6 +4,9 @@ public final class PreferencesManager {
     private PreferencesManager(){}
     public static final String KEY_ADMIN_VISIBLE="administrator_visible";
     public static final String KEY_ASSEMBLY_DEV_VISIBLE="assembly_dev_visible";
+    public static final String KEY_PLAN_F_ENABLED="plan_f_enabled";
+    public static boolean planFEnabled(Context c){return visibilityPreferences(c).getBoolean(KEY_PLAN_F_ENABLED,false);}
+    public static void planFEnabled(Context c,boolean enabled){visibilityPreferences(c).edit().putBoolean(KEY_PLAN_F_ENABLED,enabled).apply();}
     public static android.content.SharedPreferences visibilityPreferences(Context c){return c.getSharedPreferences("interface_settings",0);}
     public static boolean administratorVisible(Context c){return visibilityPreferences(c).getBoolean(KEY_ADMIN_VISIBLE,false);}
     public static void administratorVisible(Context c,boolean visible){visibilityPreferences(c).edit().putBoolean(KEY_ADMIN_VISIBLE,visible).apply();}

@@ -19,8 +19,13 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
     private int lastStage;
     private int refinementCursor;
     private int searchCursor;
+    private boolean frameBoardSeen,frameBodySeen;
     private final Map<String,ReferenceDatabase.PreparedReference> preferred=new HashMap<>();
     private final DiagnosticHammingMatcher matcher=new DiagnosticHammingMatcher();
+    // Same-frame work only: the two candidate passes must not re-extract the same
+    // sensor crop. Never retain a successful pose or failed score into another frame.
+    private final Map<ReferenceDatabase.PreparedOrbVariant,Match> frameRefinements=new IdentityHashMap<>();
+    void releaseCameraBuffers(){details.releaseWorkspace();}
     Phase8ReferenceMatcher(ReferenceDatabase database,VisionConfig config){this.database=database;details=new ComponentDetailExtractor(config);orb=ORB.create(3200,1.2f,8,31,0,2,ORB.HARRIS_SCORE,31,10);clahe=OpenCvVisionUtils.createClahe(config);}
     RecognitionResult inspect(Mat gray,long time,int step){return inspect(gray,null,time,step);}
     RecognitionResult inspect(Mat gray,Mat rgb,long time,int step){
@@ -31,6 +36,8 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         double front=0,back=0,placed=0,reversed=0,invalid=0,inward=0,missing=0;List<VisionPoint> corners=Collections.emptyList();
         database.acquireForRecognition();
         try{
+            frameRefinements.clear();
+            frameBoardSeen=frameBodySeen=false;
             DiagnosticHammingMatcher.recovery(recoverySchedule.recoveryFor(requestedRecovery));
             if(scale<1)Imgproc.resize(gray,work,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(work);
             work.copyTo(raw);DiagnosticHammingMatcher.normalize(clahe,work,work);DiagnosticHammingMatcher.extract(orb,work,empty,keypoints,descriptors);KeyPoint[] live=keypoints.toArray();DiagnosticHammingMatcher.captureLive(live,descriptors,scale);
@@ -125,12 +132,13 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
             double score=Math.max(Math.max(front,back),Math.max(invalid,Math.max(placed,reversed)));
             Phase8Observation result=new Phase8Observation(state,score);
             recoverySchedule.observe(result.accepted(step),DiagnosticHammingMatcher.snapshot().recovery);
+            InstalledScanDiagnostics.log(8,step,gray,state.name(),corners,frameBoardSeen,frameBodySeen,start);
             return RecognitionResult.builder(time).identity("phase8:photo","ultrasonic_distance_sensor","Distance sensor")
                     .method(corners.size()==4?RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY:RecognitionResult.DetectionMethod.NONE)
                     .validation(result.accepted(step)?RecognitionResult.ValidationState.EXPECTED_COMPONENT:state==Phase8Observation.State.FLIPPED||state==Phase8Observation.State.INVALID||state==Phase8Observation.State.INWARD?RecognitionResult.ValidationState.WRONG_ORIENTATION:RecognitionResult.ValidationState.NO_COMPONENT)
                     .corners(corners).matches(live.length,0,0,0).confidence(result.accepted(step)?.85:0)
                     .latency(new RecognitionResult.Latency(0,0,0,0,(android.os.SystemClock.elapsedRealtimeNanos()-start)/1e6)).build().withPhase8Observation(result);
-        }finally{DiagnosticHammingMatcher.recovery(requestedRecovery);database.releaseAfterRecognition();raw.release();work.release();descriptors.release();empty.release();keypoints.release();}
+        }finally{frameRefinements.clear();DiagnosticHammingMatcher.recovery(requestedRecovery);database.releaseAfterRecognition();raw.release();work.release();descriptors.release();empty.release();keypoints.release();}
     }
     private static List<List<VisionPoint>> looseSensorWindows(Mat gray){
         Mat mask=new Mat(),hierarchy=new Mat(),kernel=Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));
@@ -204,6 +212,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         if(installed)collect(split.context,live,descriptors,board,boardLive);
         Mat mh=homography(module,moduleLive,10,Math.max(15,(r-l)*.45),Math.max(12,(b-t)*(sensorCaps(ref)?.08:Phase8AssetCatalog.installed(Phase8AssetCatalog.referenceRole(ref.spec.getReferenceId()))?.20:.45))),bh=installed?homography(board,boardLive,14,15,15):null;
         try{
+            frameBodySeen|=mh!=null;frameBoardSeen|=bh!=null;
             if(mh==null||installed&&bh==null||!bothCaps(ref,module,moduleLive,mh))return null;
             List<VisionPoint> actual=project(c,ref.imageWidth,ref.imageHeight,mh,scale);
             if(actual.size()!=4)return null;
@@ -211,10 +220,16 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
         }finally{if(mh!=null)mh.release();if(bh!=null)bh.release();}
     }
     private Match refine(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat raw,double scale){
+        if(frameRefinements.containsKey(variant))return frameRefinements.get(variant);
+        Match result=refineFresh(ref,variant,live,descriptors,raw,scale);
+        frameRefinements.put(variant,result);return result;
+    }
+    private Match refineFresh(ReferenceDatabase.PreparedReference ref,ReferenceDatabase.PreparedOrbVariant variant,KeyPoint[] live,Mat descriptors,Mat raw,double scale){
         DiagnosticHammingMatcher.context(ref);
         Split split=splits.computeIfAbsent(variant,v->new Split(ref,v));
         List<Point> a=new ArrayList<>(),b=new ArrayList<>();collect(split.context,live,descriptors,a,b);
         Mat board=homography(a,b,14,15,15);if(board==null)return null;
+        frameBoardSeen=true;
         try{
             List<VisionPoint> c=ref.spec.getPlanarCornersNormalized(),search=project(c,ref.imageWidth,ref.imageHeight,board,1);
             double width=(c.get(2).getX()-c.get(0).getX())*ref.imageWidth,height=(c.get(2).getY()-c.get(0).getY())*ref.imageHeight;
@@ -246,7 +261,7 @@ final class Phase8ReferenceMatcher implements AutoCloseable {
                     if(module!=null)module.release();module=affine(a,b,10,minWidth,minHeight);
                 }
                 if(module==null)continue;
-                try{if(!bothCaps(ref,a,b,module))continue;List<VisionPoint> actual=project(c,ref.imageWidth,ref.imageHeight,module,scale);
+                try{if(!bothCaps(ref,a,b,module))continue;frameBodySeen=true;List<VisionPoint> actual=project(c,ref.imageWidth,ref.imageHeight,module,scale);
                     if(actual.size()==4)return new Match(inliers(a,b,module),actual,project(c,ref.imageWidth,ref.imageHeight,board,scale));
                 }finally{module.release();}
                 }
