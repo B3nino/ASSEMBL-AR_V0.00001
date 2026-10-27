@@ -117,6 +117,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     private volatile ComponentReferenceSpec selectedReference;
     private boolean testMode;
     private boolean catalogLoading;
+    private int recognitionRecoveryAttempts;
     private boolean catalogReady;
     private boolean resumed;
     private boolean cameraBound;
@@ -137,6 +138,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     @Nullable private ProcessCameraProvider cameraProvider;
     @Nullable private Camera boundCamera;
     @Nullable private View.OnLayoutChangeListener layoutListener;
+    private dev.chyken.assembl_ar.ui.PhonePartTesterLayout phoneLayout;
     private PreviewView preview;
     private final dev.chyken.assembl_ar.ui.LatestUiTask outlineUpdates=new dev.chyken.assembl_ar.ui.LatestUiTask(task->runOnUiThread(task));
     private ArGlSurfaceView arView;
@@ -234,6 +236,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
             catalogReady = true;
         }
         renderSelection();
+        View testerRoot=(View)findViewById(R.id.partTestPanes).getParent().getParent();
+        phoneLayout=new dev.chyken.assembl_ar.ui.PhonePartTesterLayout(this,testerRoot,findViewById(R.id.primaryNavigation),state);
     }
 
     private int initialIndex() {
@@ -334,6 +338,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         activeTest = new ActiveTest(generation, part.getId(), minimumAreaRatio);
         ((dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView)findViewById(R.id.devDiagnosticsOverlay)).clearTelemetry();
         testing = true;
+        if(phoneLayout!=null)phoneLayout.focusCamera();
         resumeRequested=false;
         if(analyzer!=null)analyzer.resume();
         hud.setScanningEnabled(true);
@@ -410,11 +415,12 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                     for(int i=0;i<components.size();i++)if(components.get(i).getId().equals(selected.componentId))selectedIndex=i;
                     targetSessions.putIfAbsent(selected.key,session);
                     referenceDatabase=readyDatabase;recognizer=readyRecognizer;readyPartIds.clear();for(Target target:available)readyPartIds.add(target.componentId);
-                    catalogLoading=false;catalogReady=true;renderSelection();if(resumed)bindCamera();
+                    catalogLoading=false;catalogReady=true;recognitionRecoveryAttempts=0;renderSelection();if(resumed)bindCamera();
                 });
             }catch(Exception failure){
                 if(loadedRecognizer!=null)loadedRecognizer.close();if(database!=null)database.close();
-                runOnUiThread(()->{if(destroyed||generation!=bankGeneration)return;catalogLoading=false;status.setText("Scanner unavailable · tap Start to retry");startButton.setEnabled(true);android.util.Log.e("PartRecognitionTest","Prepared bank could not be opened",failure);});
+                runOnUiThread(()->{if(destroyed||generation!=bankGeneration)return;catalogLoading=false;status.setText("Scanner recovering…");startButton.setEnabled(true);android.util.Log.e("PartRecognitionTest","Prepared bank could not be opened",failure);
+                    status.postDelayed(()->{if(!destroyed&&resumed&&generation==bankGeneration&&!catalogReady)initializeVision();},Math.min(30_000L,2_000L*++recognitionRecoveryAttempts));});
             }
         });
     }
@@ -465,6 +471,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 boundCamera = camera;
                 calibrationProvider = CameraCalibrationProvider.from(camera.getCameraInfo());
                 cameraBound = true;
+                recognitionRecoveryAttempts=0;
                 cameraPreviewUseCase=cameraPreview;
                 renderSelection();
                 resumeSavedTest();
@@ -474,8 +481,10 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 analyzer = null;
                 analysis = null;
                 boundCamera = null;
-                status.setText("Rear camera unavailable · tap Start to retry");
+                cameraBound=false;status.setText("Camera recovering…");
                 android.util.Log.e("PartRecognitionTest", "Camera binding failed", failure);
+                final int recoveryBank=bankGeneration;
+                status.postDelayed(()->{if(!destroyed&&resumed&&recoveryBank==bankGeneration&&!cameraBound)bindCamera();},Math.min(30_000L,2_000L*++recognitionRecoveryAttempts));
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -521,13 +530,15 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                                     ActiveTest active = activeTest;
                                     if (!destroyed && analyzerBank==bankGeneration && testing && frame != null && active != null
                                             && active.generation == frame.generation) {
-                                        pauseTest();
-                                        status.setText("Analysis error · test paused; tap Start to retry");
+                                        android.util.Log.w("PartRecognitionTest","Frame analysis failed; continuing with the next frame",failure);
+                                        contexts.remove(frame.timestamp);
+                                        status.setText("Retrying recognition… keep the component in view");
                                     }
                                 });
                             }
                         }, VisionConfig.defaults(), true);
         created.attachMotion(this);
+        if(activeTarget!=null)created.preloadTrainedComponent(activeTarget.componentId);
         return created;
     }
 
@@ -578,7 +589,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
         hud.update(!detected ? ArHudView.HudState.NOT_RECOGNIZED : !expected
                         ? ArHudView.HudState.MISMATCH : snapshot.isLocked()
                         ? ArHudView.HudState.MATCHED : ArHudView.HudState.TRACKING, detectedName, corners);
-        String method = result.getDetectionMethod() == RecognitionResult.DetectionMethod.CANNY_HOUGH_FALLBACK
+        String method = result.getDetectionMethod() == RecognitionResult.DetectionMethod.TRAINED_MODEL
+                ? "ONNX component identity (2D; pose unmeasured)" : result.getDetectionMethod() == RecognitionResult.DetectionMethod.CANNY_HOUGH_FALLBACK
                 ? "Circular fallback (shape only)" : result.getDetectionMethod() == RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY
                 ? "ORB image match + pose" : result.getDetectionMethod()
                 == RecognitionResult.DetectionMethod.ORB_DESCRIPTOR_ONLY
@@ -608,7 +620,8 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
                 ? "No detection · save a sample and try another angle"
                 : "No detection · " + rejectionLabel(rejection.getReason()));
         else if (!expected) status.setText("Wrong identity · detected " + detectedName);
-        else if (snapshot.isLocked()) status.setText("Part tracked · stable pose established");
+        else if (snapshot.isLocked()) status.setText(result.getDetectionMethod()==RecognitionResult.DetectionMethod.TRAINED_MODEL
+                ? "Part confirmed by ONNX · stable 2D detection" : "Part tracked · stable pose established");
         else if (result.getPose() == null) status.setText("Part identified · pose not established");
         else status.setText("Part identified · " + (snapshot.getLastObservation() == null
                 ? "hold steady" : snapshot.getLastObservation().getReason().name().replace('_', ' ').toLowerCase(Locale.ROOT)));
@@ -1097,6 +1110,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     @Override protected void onSaveInstanceState(Bundle state) {
+        if(phoneLayout!=null)phoneLayout.saveState(state);
         state.putBoolean("test_running",testing||resumeRequested);
         state.putString("target_key",activeTarget==null?pendingTargetKey:activeTarget.key);
         state.putInt("part_index", selectedIndex);
@@ -1107,6 +1121,7 @@ public final class PartRecognitionTestActivity extends AppCompatActivity {
     }
 
     @Override protected void onDestroy() {
+        if(phoneLayout!=null)phoneLayout.close();
         if(muteControl!=null)muteControl.close();
         if(outlineVoice!=null)outlineVoice.close();
         destroyed = true;

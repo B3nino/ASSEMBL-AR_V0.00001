@@ -1,0 +1,390 @@
+{
+  "scope": "Unfiltered max scores on selected retained photos from other phases; includes padding/unqualified boxes. Development probes, not calibrated accuracy.",
+  "rows": [
+    {
+      "model": 1,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.008702955208718777,
+      "class": "main_board_back"
+    },
+    {
+      "model": 1,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.02990630455315113,
+      "class": "main_board_back"
+    },
+    {
+      "model": 1,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.02069760300219059,
+      "class": "main_board_front"
+    },
+    {
+      "model": 1,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.09912366420030594,
+      "class": "main_board_back"
+    },
+    {
+      "model": 1,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.11091969907283783,
+      "class": "main_board_front"
+    },
+    {
+      "model": 1,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.013927279971539974,
+      "class": "main_board_front"
+    },
+    {
+      "model": 1,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.5748655200004578,
+      "class": "main_board_front"
+    },
+    {
+      "model": 2,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.7486398816108704,
+      "class": "motor_bracket"
+    },
+    {
+      "model": 2,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.8289614319801331,
+      "class": "motor_bracket"
+    },
+    {
+      "model": 2,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.08211071044206619,
+      "class": "gear_motor"
+    },
+    {
+      "model": 2,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.5147796869277954,
+      "class": "gear_motor"
+    },
+    {
+      "model": 2,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.5876075625419617,
+      "class": "motor_bracket"
+    },
+    {
+      "model": 2,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.19050957262516022,
+      "class": "motor_bracket"
+    },
+    {
+      "model": 3,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.6788297891616821,
+      "class": "motor_driver"
+    },
+    {
+      "model": 3,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.16857649385929108,
+      "class": "motor_driver"
+    },
+    {
+      "model": 3,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.0315387062728405,
+      "class": "motor_driver"
+    },
+    {
+      "model": 3,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.03899079188704491,
+      "class": "motor_driver"
+    },
+    {
+      "model": 3,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.8164182901382446,
+      "class": "motor_driver"
+    },
+    {
+      "model": 3,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.8411170244216919,
+      "class": "motor_driver"
+    },
+    {
+      "model": 5,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.033399634063243866,
+      "class": "arduino_nano"
+    },
+    {
+      "model": 5,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.07932987809181213,
+      "class": "arduino_nano"
+    },
+    {
+      "model": 5,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.05955340713262558,
+      "class": "arduino_nano"
+    },
+    {
+      "model": 5,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.0054904562421143055,
+      "class": "arduino_nano"
+    },
+    {
+      "model": 5,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.5515841245651245,
+      "class": "arduino_nano"
+    },
+    {
+      "model": 7,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.45910099148750305,
+      "class": "line_tracker"
+    },
+    {
+      "model": 7,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.8663142323493958,
+      "class": "line_tracker"
+    },
+    {
+      "model": 7,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.020121566951274872,
+      "class": "line_tracker"
+    },
+    {
+      "model": 7,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.054647862911224365,
+      "class": "line_tracker"
+    },
+    {
+      "model": 7,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.45750004053115845,
+      "class": "caster_wheel"
+    },
+    {
+      "model": 7,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.8782814145088196,
+      "class": "line_tracker"
+    },
+    {
+      "model": 8,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.9219434857368469,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 8,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.008809460327029228,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 8,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.880393385887146,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 8,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.00044605060247704387,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 8,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.0003580493212211877,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 8,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.6357084512710571,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 8,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.021257173269987106,
+      "class": "ultrasonic_distance_sensor"
+    },
+    {
+      "model": 9,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.19902674853801727,
+      "class": "center_standoff"
+    },
+    {
+      "model": 9,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.14706642925739288,
+      "class": "center_standoff"
+    },
+    {
+      "model": 9,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.6984458565711975,
+      "class": "center_standoff"
+    },
+    {
+      "model": 9,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.45553892850875854,
+      "class": "center_standoff"
+    },
+    {
+      "model": 9,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.870181143283844,
+      "class": "center_standoff"
+    },
+    {
+      "model": 9,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.15777529776096344,
+      "class": "center_standoff"
+    },
+    {
+      "model": 10,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.9761555194854736,
+      "class": "extension_board"
+    },
+    {
+      "model": 10,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.15043628215789795,
+      "class": "oled_protector"
+    },
+    {
+      "model": 10,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.0015229893615469337,
+      "class": "extension_board"
+    },
+    {
+      "model": 10,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.04466869309544563,
+      "class": "extension_board"
+    },
+    {
+      "model": 10,
+      "photo_phase": 11,
+      "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg",
+      "max_score": 0.8067081570625305,
+      "class": "extension_board"
+    },
+    {
+      "model": 10,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.6971034407615662,
+      "class": "extension_board"
+    },
+    {
+      "model": 11,
+      "photo_phase": 3,
+      "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg",
+      "max_score": 0.9342504739761353,
+      "class": "oled_display"
+    },
+    {
+      "model": 11,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg",
+      "max_score": 0.1105736568570137,
+      "class": "oled_display"
+    },
+    {
+      "model": 11,
+      "photo_phase": 7,
+      "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg",
+      "max_score": 0.003394335275515914,
+      "class": "battery_pack"
+    },
+    {
+      "model": 11,
+      "photo_phase": 9,
+      "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg",
+      "max_score": 0.02550535462796688,
+      "class": "battery_pack"
+    },
+    {
+      "model": 11,
+      "photo_phase": 10,
+      "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg",
+      "max_score": 0.0005204788176342845,
+      "class": "oled_display"
+    },
+    {
+      "model": 11,
+      "photo_phase": 5,
+      "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_4.jpg",
+      "max_score": 0.25160837173461914,
+      "class": "oled_display"
+    }
+  ]
+}

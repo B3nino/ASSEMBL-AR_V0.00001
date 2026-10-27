@@ -1,0 +1,72 @@
+{
+  "status": "pre-final native run; final tablet disconnected",
+  "candidate_archive_sha256": "a7f5cb96c95f3b1b41d812847c7c3ac1954d3dc394acfb60a1ba7630c0cc6b33",
+  "candidate_archive_bytes": 163026914,
+  "passed_groups": 10,
+  "total_groups": 11,
+  "results": [
+    {
+      "case": "allNinePackagedModelsLoadAndExecuteOnAndroid",
+      "passed": true,
+      "seconds": 10.836205099999999
+    },
+    {
+      "case": "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+      "passed": true,
+      "seconds": 4.6779576
+    },
+    {
+      "case": "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+      "passed": true,
+      "seconds": 4.062208099999999
+    },
+    {
+      "case": "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+      "passed": true,
+      "seconds": 4.8765972
+    },
+    {
+      "case": "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+      "passed": true,
+      "seconds": 6.0294763
+    },
+    {
+      "case": "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+      "passed": true,
+      "seconds": 4.3140529999999995
+    },
+    {
+      "case": "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+      "passed": true,
+      "seconds": 13.3088578
+    },
+    {
+      "case": "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+      "passed": false,
+      "seconds": 6.8832558
+    },
+    {
+      "case": "realLoosePhotosCompareProposalAndFullSearchTimings",
+      "passed": true,
+      "seconds": 136.9831498
+    },
+    {
+      "case": "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+      "passed": true,
+      "seconds": 93.6728833
+    },
+    {
+      "case": "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+      "passed": true,
+      "seconds": 54.2066361
+    }
+  ],
+  "camera_fixture_failure": "I420 replay image had odd dimensions; fixture now uses even sizes. Final rerun pending.",
+  "final_source_native_sweep": "Not performed after tablet disconnection",
+  "before_test_data_hashes": {
+    "assembly_phase_progress.xml": "50cebbcc1be456344ac727a90991699104f4b8779634e0ca00324222c3ce05ef",
+    "guided_assembly_steps.xml": "3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793",
+    "assembl_ar.db": "c0bb81dea05f917ec6748da3e476140703df7d9787aa9bbae8812b347502d61c"
+  },
+  "after_test_data_hashes": "Unavailable after disconnection"
+}

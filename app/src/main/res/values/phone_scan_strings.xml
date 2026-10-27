@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phone_scan_steps">Steps</string>
+    <string name="phone_scan_hide_steps">Hide steps</string>
+    <string name="phone_scan_tools">Scan tools</string>
+    <string name="phone_scan_reference">Reference photo</string>
+    <string name="phone_scan_preview">3D / preview</string>
+    <string name="phone_scan_settings">Settings</string>
+    <string name="phone_scan_title">Assembly</string>
+    <string name="phone_tester_tools">Tools &amp; results</string>
+    <string name="phone_tester_close_tools">Hide tools</string>
+    <item name="phoneScanSteps" type="id" />
+    <item name="phoneScanTools" type="id" />
+    <item name="phoneTesterTools" type="id" />
+    <item name="phoneTesterDock" type="id" />
+</resources>

@@ -18,6 +18,113 @@ import static org.junit.Assert.*;
 
 /** UI-only fixtures; no assembly activity, progress reset, image bank or real camera setup. */
 public final class UiBeautificationInstrumentedTest {
+    private Context screen(Context source,int width,int height,float font){
+        Configuration config=new Configuration(source.getResources().getConfiguration());config.screenWidthDp=width;config.screenHeightDp=height;config.smallestScreenWidthDp=Math.min(width,height);config.orientation=width>height?Configuration.ORIENTATION_LANDSCAPE:Configuration.ORIENTATION_PORTRAIT;
+        return candidate(source.createConfigurationContext(config),font);
+    }
+    private static void settleAssembly(PhoneAssemblyLayout ui,View root,int width,int height,boolean first){for(int i=0;i<8;i++){layout(root,width,height);ui.layout(androidx.core.graphics.Insets.NONE,first,!first);}layout(root,width,height);}
+    private static void settleTester(PhonePartTesterLayout ui,View root,int width,int height){for(int i=0;i<8;i++){layout(root,width,height);ui.refresh();}layout(root,width,height);}
+    private static android.graphics.Rect localBounds(ViewGroup root,View child){android.graphics.Rect rect=new android.graphics.Rect(0,0,child.getWidth(),child.getHeight());root.offsetDescendantRectToMyCoords(child,rect);return rect;}
+
+    @Test public void phoneAssemblyReservesCameraAndDoesNotAlterWorkflowButtons(){
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
+            Context source=InstrumentationRegistry.getInstrumentation().getTargetContext();
+            for(int[] size:new int[][]{{360,780},{780,360},{320,568}})for(float font:new float[]{1,2}){
+                Context c=screen(source,size[0],size[1],font);FrameLayout root=(FrameLayout)LayoutInflater.from(c).inflate(R.layout.activity_assembly,null);
+                int width=UiUtils.dp(c,size[0]),height=UiUtils.dp(c,size[1]);
+                CompactGuideCard card=root.findViewById(R.id.phaseTwoGuide);PhaseOneGuideView first=root.findViewById(R.id.phaseOneGuide);
+                root.findViewById(R.id.instructionPanel).setVisibility(View.GONE);first.setVisibility(View.GONE);card.setVisibility(View.VISIBLE);
+                card.render(34,"Phase 3 · Motor driver placement","Show the seated motor driver and nearby board markings.","Orientation and physical checks remain required.","",false,true,false);card.action.setVisibility(View.GONE);
+                ComponentPreviewWindow preview=root.findViewById(R.id.componentPreviewWindow);preview.showContent(new TextView(c),"Component preview");
+                TargetAlignmentBoxView reference=root.findViewById(R.id.targetAlignmentBox);reference.setVisibility(View.VISIBLE);
+                AtomicInteger settings=new AtomicInteger();root.findViewById(R.id.btnAppSettings).setOnClickListener(v->settings.incrementAndGet());
+                PhoneAssemblyLayout ui=new PhoneAssemblyLayout(c,root,null,()->{});
+                try{
+                    ui.setScanContext(true,"p3:4");settleAssembly(ui,root,width,height,false);
+                    ui.layout(androidx.core.graphics.Insets.NONE,false,true);assertFalse("Phone layout must settle without requesting endless layouts",root.isLayoutRequested());
+                    assertEquals(View.GONE,preview.getVisibility());assertEquals(View.GONE,reference.getVisibility());
+                    assertFalse("Layout cannot unlock a step",card.next.isEnabled());assertTrue(card.previous.isEnabled());
+                    assertEquals(View.VISIBLE,root.findViewById(R.id.phoneScanSteps).getVisibility());
+                    android.graphics.Rect bounds=localBounds(root,card.next);assertTrue(bounds.right<=width&&bounds.bottom<=height);
+                    if(size[0]>size[1])assertTrue("Landscape camera needs 60% width",card.getLeft()>=width*.58);
+                    else assertTrue("Portrait camera must stay clear",card.getTop()>=height*.65);
+                    assertEquals(View.GONE,((View)field(card,"scroll")).getVisibility());
+                    root.findViewById(R.id.phoneScanSteps).performClick();settleAssembly(ui,root,width,height,false);
+                    assertEquals(View.VISIBLE,((View)field(card,"scroll")).getVisibility());assertFalse(card.next.isEnabled());
+                    root.findViewById(R.id.phoneScanSteps).performClick();
+                    card.render(34,"Phase 3 · Placement verified","Continue or rescan.","Details","",true,true,true);card.action.setVisibility(View.GONE);
+                    settleAssembly(ui,root,width,height,false);assertTrue(card.next.isEnabled());assertTrue(card.rescan.getVisibility()==View.VISIBLE);
+                    AtomicInteger rescans=new AtomicInteger();card.rescan.setOnClickListener(v->rescans.incrementAndGet());card.rescan.performClick();assertEquals("Original rescan action stays available through Scan tools",1,rescans.get());
+                    root.findViewById(R.id.btnAppSettings).performClick();assertEquals(1,settings.get());
+                    render(c,root,"phone-assembly-"+size[0]+"x"+size[1]+"-font"+font+".png");
+                    card.setVisibility(View.GONE);first.setVisibility(View.VISIBLE);first.setScanned(true,false);
+                    ui.setScanContext(true,"p1");settleAssembly(ui,root,width,height,true);assertTrue(first.isNextEnabled());
+                    assertTrue(first.getBottom()<=height);assertEquals(View.GONE,((View)field(first,"scroll")).getVisibility());
+                    first.setVisibility(View.GONE);card.setVisibility(View.VISIBLE);ui.setScanContext(false,"p3:demo");settleAssembly(ui,root,width,height,false);
+                    assertEquals(View.VISIBLE,preview.getVisibility());
+                    assertFalse("Demo preview must not overlap instructions",android.graphics.Rect.intersects(localBounds(root,preview),localBounds(root,card)));
+                }finally{ui.close();preview.dispose();}
+            }
+        });
+    }
+
+    @Test public void phoneTesterKeepsCameraAndFullToolsWithoutFloatingMetrics(){
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
+            Context source=InstrumentationRegistry.getInstrumentation().getTargetContext();
+            for(int[] size:new int[][]{{360,780},{780,360},{320,568}})for(float font:new float[]{1,2}){
+                Context c=screen(source,size[0],size[1],font);FrameLayout root=(FrameLayout)LayoutInflater.from(c).inflate(R.layout.activity_part_recognition_test,null);
+                int width=UiUtils.dp(c,size[0]),height=UiUtils.dp(c,size[1]);
+                Button start=root.findViewById(R.id.partTestStartButton);TextView select=root.findViewById(R.id.partTestSelectButton);select.setText("5 / 32 · Motor driver on main board");start.setEnabled(false);
+                TextView navigation=new TextView(c);DevDiagnosticsOverlayView hud=root.findViewById(R.id.devDiagnosticsOverlay);hud.setText("Scanned component: Unverified\nLive keypoints: 300\nOutput: Mismatch");
+                PhonePartTesterLayout ui=new PhonePartTesterLayout(c,root,navigation,null);
+                try{
+                    settleTester(ui,root,width,height);View camera=root.findViewById(R.id.partTestCameraPane);
+                    ui.refresh();assertFalse("Tester layout must settle without a feedback loop",root.isLayoutRequested());
+                    assertEquals(width,camera.getWidth());assertTrue("Phone camera is cramped",camera.getHeight()>=height*.50);
+                    assertSame(start,root.findViewById(R.id.partTestStartButton));assertSame(select,root.findViewById(R.id.partTestSelectButton));assertFalse(start.isEnabled());
+                    assertEquals(View.GONE,root.findViewById(R.id.partTestControls).getVisibility());assertEquals(View.GONE,navigation.getVisibility());
+                    assertTrue((Boolean)field(hud,"inlinePresentation"));assertNotSame(root,hud.getParent());
+                    View tools=root.findViewById(R.id.phoneTesterTools);tools.performClick();settleTester(ui,root,width,height);
+                    assertEquals(View.VISIBLE,root.findViewById(R.id.partTestControls).getVisibility());assertTrue(camera.getHeight()>=height*.30);
+                    assertNotNull(root.findViewById(R.id.partTestCaptureButton));assertNotNull(root.findViewById(R.id.partTestExportButton));
+                    assertTrue(hud.getText().toString().contains("300"));
+                    tools.performClick();settleTester(ui,root,width,height);
+                    render(c,root,"phone-tester-"+size[0]+"x"+size[1]+"-font"+font+".png");
+                    assertTrue(localBounds(root,start).bottom<=height);
+                }finally{ui.close();}
+                assertFalse((Boolean)field(hud,"inlinePresentation"));assertSame(root,hud.getParent());assertEquals(View.VISIBLE,navigation.getVisibility());
+            }
+        });
+    }
+
+    @Test public void tabletScanningLayoutSurvivesPhoneReflowWithoutChangingControls(){
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
+            Context source=InstrumentationRegistry.getInstrumentation().getTargetContext();Context c=screen(source,1280,800,1);
+            FrameLayout assembly=(FrameLayout)LayoutInflater.from(c).inflate(R.layout.activity_assembly,null);LinearLayout toolbar=assembly.findViewById(R.id.cameraToolbar);
+            int children=toolbar.getChildCount();ComponentPreviewWindow preview=assembly.findViewById(R.id.componentPreviewWindow);View settings=assembly.findViewById(R.id.btnAppSettings);
+            FrameLayout.LayoutParams previewParams=new FrameLayout.LayoutParams((FrameLayout.LayoutParams)preview.getLayoutParams());
+            PhoneAssemblyLayout a=new PhoneAssemblyLayout(c,assembly,null,()->{});
+            try{
+                settleAssembly(a,assembly,UiUtils.dp(c,1280),UiUtils.dp(c,800),false);assertFalse(a.isActive());assertEquals(children,toolbar.getChildCount());assertSame(toolbar,settings.getParent());
+                for(int i=0;i<2;i++){
+                    a.setScanContext(true,"p5:3");settleAssembly(a,assembly,UiUtils.dp(c,390),UiUtils.dp(c,780),false);assertTrue(a.isActive());
+                    settleAssembly(a,assembly,UiUtils.dp(c,1280),UiUtils.dp(c,800),false);assertFalse(a.isActive());assertSame(toolbar,settings.getParent());assertEquals(children,toolbar.getChildCount());
+                    FrameLayout.LayoutParams restored=(FrameLayout.LayoutParams)preview.getLayoutParams();assertEquals(previewParams.gravity,restored.gravity);assertEquals(previewParams.width,restored.width);
+                }
+            }finally{a.close();preview.dispose();}
+            FrameLayout tester=(FrameLayout)LayoutInflater.from(c).inflate(R.layout.activity_part_recognition_test,null);LinearLayout panes=tester.findViewById(R.id.partTestPanes);int orientation=panes.getOrientation();
+            View camera=tester.findViewById(R.id.partTestCameraPane);LinearLayout.LayoutParams original=new LinearLayout.LayoutParams((LinearLayout.LayoutParams)camera.getLayoutParams());View select=tester.findViewById(R.id.partTestSelectButton);
+            PhonePartTesterLayout t=new PhonePartTesterLayout(c,tester,null,null);
+            try{
+                settleTester(t,tester,UiUtils.dp(c,1280),UiUtils.dp(c,800));assertNull(tester.findViewById(R.id.phoneTesterDock));
+                for(int i=0;i<2;i++){
+                    settleTester(t,tester,UiUtils.dp(c,390),UiUtils.dp(c,780));assertNotNull(tester.findViewById(R.id.phoneTesterDock));
+                    settleTester(t,tester,UiUtils.dp(c,1280),UiUtils.dp(c,800));assertNull(tester.findViewById(R.id.phoneTesterDock));assertSame(select,tester.findViewById(R.id.partTestSelectButton));
+                    assertEquals(orientation,panes.getOrientation());assertEquals(original.weight,((LinearLayout.LayoutParams)camera.getLayoutParams()).weight,0);assertEquals(original.width,camera.getLayoutParams().width);
+                }
+            }finally{t.close();}
+        });
+    }
     @Test public void planFLoadsABoundedRealPhotoAndRendersItsHelpSurface(){
         PlanFScanHelpController[] controller={null};
         try(ActivityScenario<Activity> host=ActivityScenario.launch(host())){

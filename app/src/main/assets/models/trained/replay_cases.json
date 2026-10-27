@@ -1,0 +1,26 @@
+[
+  {
+    "phase": 3,
+    "path": "references/Phase3/STEP3_1MOTORDRIVER/var_light/VIDEO35_k19nwhAO_driver_front_0.jpg"
+  },
+  {
+    "phase": 5,
+    "path": "references/Phase5/STEP5_1ARDUINONANO/var_light/VIDEO35_JlWZAbKu_nano_front_0.jpg"
+  },
+  {
+    "phase": 7,
+    "path": "references/Phase7/STEP7_1CASTERWHEEL/var_light/VIDEO789_pJxv8DuC_17_caster.jpg"
+  },
+  {
+    "phase": 9,
+    "path": "references/Phase9/STEP9_2DUALWHEELS/var_light/VIDEO789_Zi6cD-KG_110_pair.jpg"
+  },
+  {
+    "phase": 10,
+    "path": "references/Phase10/ISTEP10_1OLEDPROTECTORSCAN/var_light/VIDEO1011_j1H57AGW_10_protector.jpg"
+  },
+  {
+    "phase": 11,
+    "path": "references/Phase11/STEP11_1OLEDDISPLAYSCAN/var_light/VIDEO1011_FZcZdrAF_40_front.jpg"
+  }
+]

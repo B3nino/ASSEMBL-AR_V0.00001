@@ -1,0 +1,235 @@
+--------- beginning of main
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:1:0:main_board:null:0:null:main_board:1 modelPhase=1 enabled=true
+I/TrainedAssist(12834): loaded phase=1 sha256=2ef67141ff902e02cfa5bd3c25705f0aa7c99112b961f0a4f6dcb1d342937122 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=1 frame=1051253622909626 target=main_board source=trained inferenceMs=2003.968645 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:2:0:motor_bracket:null:0:null:motor_bracket:1 modelPhase=2 enabled=true
+I/TrainedAssist(12834): loaded phase=2 sha256=b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=2 frame=1051255637642802 target=motor_bracket source=trained inferenceMs=2211.50552 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:2:0:gear_motor_6v:null:0:null:gear_motor_6v:1 modelPhase=2 enabled=true
+I/TrainedAssist(12834): phase=2 frame=1051257876238791 target=gear_motor_6v source=trained inferenceMs=1186.150885 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:3:0:dual_motor_driver:null:0:null:dual_motor_driver:1 modelPhase=3 enabled=true
+I/TrainedAssist(12834): loaded phase=3 sha256=e40a60160fce84af535f4aaf2e38161669235f3ceebc45147ad9c17d71668a33 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=3 frame=1051259069492853 target=dual_motor_driver source=trained inferenceMs=841.16052 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:5:0:arduino_nano_microcontroller:null:0:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(12834): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=5 frame=1051259921281134 target=arduino_nano_microcontroller source=trained inferenceMs=831.36177 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:7:0:caster_wheel:null:0:null:caster_wheel:1 modelPhase=7 enabled=true
+I/TrainedAssist(12834): loaded phase=7 sha256=0b1f1091dbc3b896e7d629555adf894aa7310989b7437e4340e206d36299fb5c input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=7 frame=1051260763410665 target=caster_wheel source=trained inferenceMs=998.917344 proposals=1 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:7:0:line_tracker_module:null:0:null:line_tracker_module:1 modelPhase=7 enabled=true
+I/TrainedAssist(12834): phase=7 frame=1051261767761394 target=line_tracker_module source=trained inferenceMs=498.302552 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:8:0:ultrasonic_distance_sensor:null:0:null:ultrasonic_distance_sensor:1 modelPhase=8 enabled=true
+I/TrainedAssist(12834): loaded phase=8 sha256=27180981fffaa7f3e7011ffe7c4df8a656b7b7fd876f3dc39fc1c02c68e0d404 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=8 frame=1051262280311445 target=ultrasonic_distance_sensor source=trained inferenceMs=847.002708 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:9:0:center_standoff:null:0:null:center_standoff:1 modelPhase=9 enabled=true
+I/TrainedAssist(12834): loaded phase=9 sha256=c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=9 frame=1051263133460403 target=center_standoff source=trained inferenceMs=868.587448 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:9:0:drive_wheel:null:0:null:drive_wheel:1 modelPhase=9 enabled=true
+I/TrainedAssist(12834): phase=9 frame=1051264012811861 target=drive_wheel source=trained inferenceMs=504.771823 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:10:0:extension_data_cable:null:0:null:extension_data_cable:1 modelPhase=10 enabled=true
+I/TrainedAssist(12834): loaded phase=10 sha256=d840de4627d1b82599eb27fe89be96ef5ce28d10bfca6c0dede1511ca0eee48e input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=10 frame=1051264521767174 target=extension_data_cable source=trained inferenceMs=802.223125 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:10:0:extension_circuit_board:null:0:null:extension_circuit_board:1 modelPhase=10 enabled=true
+I/TrainedAssist(12834): phase=10 frame=1051265346223007 target=extension_circuit_board source=trained inferenceMs=530.703593 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:10:0:oled_protector:null:0:null:oled_protector:1 modelPhase=10 enabled=true
+I/TrainedAssist(12834): phase=10 frame=1051265887803007 target=oled_protector source=trained inferenceMs=376.658594 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:11:0:oled_096_i2c:null:0:null:oled_096_i2c:1 modelPhase=11 enabled=true
+I/TrainedAssist(12834): loaded phase=11 sha256=0b4c8dfa29c6c0729762285da8d6468cf9ead6d3a80f1f9b909911d50120fa89 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=11 frame=1051266287743527 target=oled_096_i2c source=trained inferenceMs=757.138229 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:11:0:battery_pack_7v_12v:null:0:null:battery_pack_7v_12v:1 modelPhase=11 enabled=true
+I/TrainedAssist(12834): phase=11 frame=1051267052374360 target=battery_pack_7v_12v source=trained inferenceMs=385.191979 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:main_board:null:0:null:main_board:1 modelPhase=1 enabled=true
+I/TrainedAssist(12834): loaded phase=1 sha256=2ef67141ff902e02cfa5bd3c25705f0aa7c99112b961f0a4f6dcb1d342937122 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=1 frame=1051267446622589 target=main_board source=trained inferenceMs=844.062499 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:motor_bracket:null:0:null:motor_bracket:1 modelPhase=2 enabled=true
+I/TrainedAssist(12834): loaded phase=2 sha256=b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=2 frame=1051268315496912 target=motor_bracket source=trained inferenceMs=812.140052 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:gear_motor_6v:null:0:null:gear_motor_6v:1 modelPhase=2 enabled=true
+I/TrainedAssist(12834): phase=2 frame=1051269134924672 target=gear_motor_6v source=trained inferenceMs=376.582136 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:dual_motor_driver:null:0:null:dual_motor_driver:1 modelPhase=3 enabled=true
+I/TrainedAssist(12834): loaded phase=3 sha256=e40a60160fce84af535f4aaf2e38161669235f3ceebc45147ad9c17d71668a33 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=3 frame=1051269533755141 target=dual_motor_driver source=trained inferenceMs=928.183333 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:arduino_nano_microcontroller:null:0:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(12834): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=5 frame=1051270466997328 target=arduino_nano_microcontroller source=trained inferenceMs=827.111875 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:caster_wheel:null:0:null:caster_wheel:1 modelPhase=7 enabled=true
+I/TrainedAssist(12834): loaded phase=7 sha256=0b1f1091dbc3b896e7d629555adf894aa7310989b7437e4340e206d36299fb5c input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=7 frame=1051271316626807 target=caster_wheel source=trained inferenceMs=862.402343 proposals=1 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:line_tracker_module:null:0:null:line_tracker_module:1 modelPhase=7 enabled=true
+I/TrainedAssist(12834): phase=7 frame=1051272185194827 target=line_tracker_module source=trained inferenceMs=430.140469 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:ultrasonic_distance_sensor:null:0:null:ultrasonic_distance_sensor:1 modelPhase=8 enabled=true
+I/TrainedAssist(12834): loaded phase=8 sha256=27180981fffaa7f3e7011ffe7c4df8a656b7b7fd876f3dc39fc1c02c68e0d404 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=8 frame=1051272638461025 target=ultrasonic_distance_sensor source=trained inferenceMs=731.030416 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:center_standoff:null:0:null:center_standoff:1 modelPhase=9 enabled=true
+I/TrainedAssist(12834): loaded phase=9 sha256=c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=9 frame=1051273392691181 target=center_standoff source=trained inferenceMs=1515.023228 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:drive_wheel:null:0:null:drive_wheel:1 modelPhase=9 enabled=true
+I/TrainedAssist(12834): phase=9 frame=1051274930205764 target=drive_wheel source=trained inferenceMs=640.001042 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:extension_data_cable:null:0:null:extension_data_cable:1 modelPhase=10 enabled=true
+I/TrainedAssist(12834): loaded phase=10 sha256=d840de4627d1b82599eb27fe89be96ef5ce28d10bfca6c0dede1511ca0eee48e input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=10 frame=1051275589666961 target=extension_data_cable source=trained inferenceMs=1293.817083 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:extension_circuit_board:null:0:null:extension_circuit_board:1 modelPhase=10 enabled=true
+I/TrainedAssist(12834): phase=10 frame=1051276892291961 target=extension_circuit_board source=trained inferenceMs=456.530312 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:oled_protector:null:0:null:oled_protector:1 modelPhase=10 enabled=true
+I/TrainedAssist(12834): phase=10 frame=1051277369478002 target=oled_protector source=trained inferenceMs=998.420364 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:oled_096_i2c:null:0:null:oled_096_i2c:1 modelPhase=11 enabled=true
+I/TrainedAssist(12834): loaded phase=11 sha256=0b4c8dfa29c6c0729762285da8d6468cf9ead6d3a80f1f9b909911d50120fa89 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=11 frame=1051278373014669 target=oled_096_i2c source=trained inferenceMs=1342.449219 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:0:0:battery_pack_7v_12v:null:0:null:battery_pack_7v_12v:1 modelPhase=11 enabled=true
+I/TrainedAssist(12834): phase=11 frame=1051279738418887 target=battery_pack_7v_12v source=trained inferenceMs=524.515312 proposals=0 verification=unmeasured
+I/TrainedAssist(12834): routing=full-components-v2 scope=generic:2:5:main_board:null:0:top:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(12834): loaded phase=2 sha256=b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(12834): phase=2 frame=1051280285717949 target=main_board source=trained inferenceMs=1168.313593 proposals=0 verification=unmeasured
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:1:0:main_board:null:0:null:main_board:1 modelPhase=1 enabled=true
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=board elapsedMs=664 nativeHeap=43268352
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:1:motor_bracket:null:0:null:motor_bracket:4 modelPhase=2 enabled=true
+I/TrainedAssist(13412): loaded phase=1 sha256=2ef67141ff902e02cfa5bd3c25705f0aa7c99112b961f0a4f6dcb1d342937122 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=brackets elapsedMs=488 nativeHeap=54021568
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:2:gear_motor_6v:null:0:null:gear_motor_6v:2 modelPhase=2 enabled=true
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=motors elapsedMs=387 nativeHeap=89539792
+I/TrainedAssist(13412): loaded phase=2 sha256=b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:5:main_board:null:0:top:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(13412): phase=2 frame=1051330070988711 target=gear_motor_6v source=trained inferenceMs=897.438333 proposals=2 verification=unmeasured
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=top elapsedMs=641 nativeHeap=107440080
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:5:main_board:null:0:left:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(13412): phase=2 frame=1051331139308398 target=main_board source=trained inferenceMs=363.784792 proposals=2 verification=unmeasured
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=left elapsedMs=502 nativeHeap=105698512
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:5:main_board:null:0:right:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(13412): phase=2 frame=1051331653677773 target=main_board source=trained inferenceMs=334.571146 proposals=2 verification=unmeasured
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=right elapsedMs=448 nativeHeap=105383488
+I/TrainedAssist(13412): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssistTest(13412): continuous cycle=0 checkpoint=nano elapsedMs=238 nativeHeap=141753312
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:1:0:main_board:null:0:null:main_board:1 modelPhase=1 enabled=true
+I/TrainedAssist(13412): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=board elapsedMs=107 nativeHeap=123628944
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:1:motor_bracket:null:0:null:motor_bracket:4 modelPhase=2 enabled=true
+I/TrainedAssist(13412): loaded phase=2 sha256=b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=brackets elapsedMs=599 nativeHeap=86830352
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:2:gear_motor_6v:null:0:null:gear_motor_6v:2 modelPhase=2 enabled=true
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=motors elapsedMs=258 nativeHeap=100256768
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:5:main_board:null:0:top:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(13412): phase=2 frame=1051332513738033 target=motor_bracket source=trained inferenceMs=878.397031 proposals=4 verification=unmeasured
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=top elapsedMs=355 nativeHeap=108203680
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:5:main_board:null:0:left:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(13412): phase=2 frame=1051333765648449 target=main_board source=trained inferenceMs=356.405938 proposals=2 verification=unmeasured
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=left elapsedMs=494 nativeHeap=107821488
+I/TrainedAssist(13412): routing=full-components-v2 scope=generic:2:5:main_board:null:0:right:main_board:1 modelPhase=2 enabled=true
+I/TrainedAssist(13412): phase=2 frame=1051334269797981 target=main_board source=trained inferenceMs=341.129167 proposals=2 verification=unmeasured
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=right elapsedMs=443 nativeHeap=107867440
+I/TrainedAssist(13412): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssistTest(13412): continuous cycle=1 checkpoint=nano elapsedMs=158 nativeHeap=143743504
+I/TrainedAssist(13505): loaded phase=1 sha256=2ef67141ff902e02cfa5bd3c25705f0aa7c99112b961f0a4f6dcb1d342937122 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=1 ms=835.12776
+I/TrainedAssist(13505): loaded phase=2 sha256=b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=2 ms=637.359479
+I/TrainedAssist(13505): loaded phase=3 sha256=e40a60160fce84af535f4aaf2e38161669235f3ceebc45147ad9c17d71668a33 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=3 ms=645.450052
+I/TrainedAssist(13505): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=5 ms=647.41875
+I/TrainedAssist(13505): loaded phase=7 sha256=0b1f1091dbc3b896e7d629555adf894aa7310989b7437e4340e206d36299fb5c input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=7 ms=634.700261
+I/TrainedAssist(13505): loaded phase=8 sha256=27180981fffaa7f3e7011ffe7c4df8a656b7b7fd876f3dc39fc1c02c68e0d404 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=8 ms=614.468697
+I/TrainedAssist(13505): loaded phase=9 sha256=c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=9 ms=646.263489
+I/TrainedAssist(13505): loaded phase=10 sha256=d840de4627d1b82599eb27fe89be96ef5ce28d10bfca6c0dede1511ca0eee48e input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=10 ms=653.677656
+I/TrainedAssist(13505): loaded phase=11 sha256=0b4c8dfa29c6c0729762285da8d6468cf9ead6d3a80f1f9b909911d50120fa89 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(13505): native_contract phase=11 ms=631.385364
+I/TrainedAssist(13559): phase=3 proposalVerifyMs=1.230052 inferenceMs=12.0 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssist(13657): routing=full-components-v2 scope=p3:1:null:dual_motor_driver:1 modelPhase=3 enabled=true
+I/TrainedAssist(13700): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(13700): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(13700): phase=5 frame=1051362518586616 target=arduino_nano_microcontroller source=trained inferenceMs=1682.304479 proposals=1 verification=unmeasured
+I/TrainedAssist(13700): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(13754): routing=full-components-v2 scope=p3:1:null:dual_motor_driver:1 modelPhase=3 enabled=true
+W/TrainedAssist(13754): Phase 3 assistance unavailable; original verification continues
+W/TrainedAssist(13754): java.io.FileNotFoundException: models/trained/phase3.json
+W/TrainedAssist(13754): 	at android.content.res.AssetManager.nativeOpenAsset(Native Method)
+W/TrainedAssist(13754): 	at android.content.res.AssetManager.open(AssetManager.java:1077)
+W/TrainedAssist(13754): 	at android.content.res.AssetManager.open(AssetManager.java:1054)
+W/TrainedAssist(13754): 	at dev.chyken.assembl_ar.vision.TrainedModelAssist.prepare(TrainedModelAssist.java:148)
+W/TrainedAssist(13754): 	at dev.chyken.assembl_ar.vision.TrainedModelAssist.lambda$submit$0$dev-chyken-assembl_ar-vision-TrainedModelAssist(TrainedModelAssist.java:122)
+W/TrainedAssist(13754): 	at dev.chyken.assembl_ar.vision.TrainedModelAssist$$ExternalSyntheticLambda2.run(D8$$SyntheticClass:0)
+W/TrainedAssist(13754): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+W/TrainedAssist(13754): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+W/TrainedAssist(13754): 	at dev.chyken.assembl_ar.vision.TrainedModelAssist.lambda$new$1(TrainedModelAssist.java:48)
+W/TrainedAssist(13754): 	at dev.chyken.assembl_ar.vision.TrainedModelAssist$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+W/TrainedAssist(13754): 	at java.lang.Thread.run(Thread.java:1119)
+I/TrainedAssist(13822): phase=3 proposalVerifyMs=362.446927 inferenceMs=20.0 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssist(14051): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(14051): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14051): phase=5 frame=1051392472905198 target=arduino_nano_microcontroller source=trained inferenceMs=1691.102655 proposals=0 verification=unmeasured
+I/TrainedAssist(14051): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(14051): phase=5 frame=1051394367396760 target=arduino_nano_microcontroller source=trained inferenceMs=311.073645 proposals=1 verification=unmeasured
+I/TrainedAssist(14051): phase=5 proposalVerifyMs=1112.43302 inferenceMs=311.073645 sourceFrame=1051394367396760 fallback=true authority=original-verifier
+I/TrainedAssist(14133): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(14201): loaded phase=3 sha256=e40a60160fce84af535f4aaf2e38161669235f3ceebc45147ad9c17d71668a33 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(14201): compare phase=3 assisted=false proposals=1 inferenceMs=487.828749 verifyMs=422.444791 accepted=true
+I/TrainedAssist(14201): phase=3 proposalVerifyMs=271.859999 inferenceMs=487.828749 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssistTest(14201): compare phase=3 assisted=true proposals=1 inferenceMs=487.828749 verifyMs=444.160833 accepted=true
+I/TrainedAssist(14201): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(14201): compare phase=5 assisted=false proposals=1 inferenceMs=657.448281 verifyMs=170.412917 accepted=true
+I/TrainedAssist(14201): phase=5 proposalVerifyMs=190.22677 inferenceMs=657.448281 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14201): compare phase=5 assisted=true proposals=1 inferenceMs=657.448281 verifyMs=190.726927 accepted=true
+I/TrainedAssist(14201): loaded phase=7 sha256=0b1f1091dbc3b896e7d629555adf894aa7310989b7437e4340e206d36299fb5c input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(14201): compare phase=7 assisted=false proposals=1 inferenceMs=529.108281 verifyMs=708.022188 accepted=true
+I/TrainedAssist(14201): phase=7 proposalVerifyMs=613.089427 inferenceMs=529.108281 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14201): compare phase=7 assisted=true proposals=1 inferenceMs=529.108281 verifyMs=613.307343 accepted=true
+I/TrainedAssist(14201): loaded phase=9 sha256=c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(14201): compare phase=9 assisted=false proposals=2 inferenceMs=344.48474 verifyMs=329.299166 accepted=true
+I/TrainedAssist(14201): phase=9 proposalVerifyMs=256.574114 inferenceMs=344.48474 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14201): compare phase=9 assisted=true proposals=2 inferenceMs=344.48474 verifyMs=256.918958 accepted=true
+I/TrainedAssist(14201): loaded phase=10 sha256=d840de4627d1b82599eb27fe89be96ef5ce28d10bfca6c0dede1511ca0eee48e input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(14201): compare phase=10 assisted=false proposals=1 inferenceMs=1864.65276 verifyMs=64.867968 accepted=true
+I/TrainedAssist(14201): phase=10 proposalVerifyMs=57.25625 inferenceMs=1864.65276 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14201): compare phase=10 assisted=true proposals=1 inferenceMs=1864.65276 verifyMs=57.475677 accepted=true
+I/TrainedAssist(14201): loaded phase=11 sha256=0b4c8dfa29c6c0729762285da8d6468cf9ead6d3a80f1f9b909911d50120fa89 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssistTest(14201): compare phase=11 assisted=false proposals=1 inferenceMs=840.99276 verifyMs=123.531302 accepted=true
+I/TrainedAssist(14201): phase=11 proposalVerifyMs=132.670365 inferenceMs=840.99276 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14201): compare phase=11 assisted=true proposals=1 inferenceMs=840.99276 verifyMs=133.311614 accepted=true
+I/TrainedAssist(14457): loaded phase=3 sha256=e40a60160fce84af535f4aaf2e38161669235f3ceebc45147ad9c17d71668a33 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14457): phase=3 proposalVerifyMs=592.079271 inferenceMs=1.0 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14457): negative phase=3 state=WRONG_ORIENTATION pass=false
+I/TrainedAssist(14457): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14457): phase=5 proposalVerifyMs=354.914479 inferenceMs=1.0 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14457): negative phase=5 state=WRONG_ORIENTATION pass=false
+I/TrainedAssist(14457): loaded phase=7 sha256=0b1f1091dbc3b896e7d629555adf894aa7310989b7437e4340e206d36299fb5c input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14457): phase=7 proposalVerifyMs=1565.483593 inferenceMs=1.0 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssistTest(14457): negative phase=7 state=NO_COMPONENT pass=false
+I/TrainedAssist(14457): loaded phase=10 sha256=d840de4627d1b82599eb27fe89be96ef5ce28d10bfca6c0dede1511ca0eee48e input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14457): phase=10 proposalVerifyMs=693.758281 inferenceMs=1.0 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14457): negative phase=10 state=WRONG_ORIENTATION pass=false
+I/TrainedAssist(14457): loaded phase=11 sha256=0b4c8dfa29c6c0729762285da8d6468cf9ead6d3a80f1f9b909911d50120fa89 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14457): phase=11 proposalVerifyMs=284.353958 inferenceMs=1.0 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14457): negative phase=11 state=WRONG_ORIENTATION pass=false
+I/TrainedAssist(14457): loaded phase=9 sha256=c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14457): phase=9 proposalVerifyMs=643.947031 inferenceMs=1.0 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssistTest(14457): negative phase=9 state=NO_COMPONENT pass=false
+I/TrainedAssist(14722): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14722): phase=5 proposalVerifyMs=174.200416 inferenceMs=294.6 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=5 proposalVerifyMs=146.717344 inferenceMs=541.158541 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=5 proposalVerifyMs=164.994948 inferenceMs=294.6 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=5 proposalVerifyMs=174.959844 inferenceMs=294.6 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=5 proposalVerifyMs=148.523959 inferenceMs=541.158541 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=5 proposalVerifyMs=157.106042 inferenceMs=294.6 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14722): varied phase=5 baselineMs=[102.128438, 121.394583, 97.639271, 77.69052, 97.794011, 79.561771] assistedMs=[146.920885, 111.914531, 165.225469, 148.749636, 107.664062, 157.380677] inferenceMs=[541.158541, 296.281615, 294.6] frames=3 rounds=2
+I/TrainedAssist(14722): loaded phase=9 sha256=c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=868.294219 inferenceMs=306.616979 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=344.062813 inferenceMs=696.621198 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=311.298385 inferenceMs=302.876562 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=293.549739 inferenceMs=306.616979 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=880.612916 inferenceMs=306.616979 sourceFrame=1 fallback=true authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=359.28849 inferenceMs=696.621198 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=265.04026 inferenceMs=302.876562 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssist(14722): phase=9 proposalVerifyMs=357.969531 inferenceMs=306.616979 sourceFrame=1 fallback=false authority=original-verifier
+I/TrainedAssistTest(14722): varied phase=9 baselineMs=[840.302239, 272.809687, 298.596354, 380.322344, 198.011823, 298.860885] assistedMs=[344.243958, 311.601197, 293.806614, 359.541563, 265.257813, 358.193959] inferenceMs=[696.621198, 302.876562, 306.616979] frames=3 rounds=2
+I/TrainedAssist(14949): routing=full-components-v2 scope=p5:1:null:arduino_nano_microcontroller:1 modelPhase=5 enabled=true
+I/TrainedAssist(14949): loaded phase=5 sha256=49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2 input=RGB/512/255 runtime=OpenCV-CPU
+I/TrainedAssist(14949): phase=5 frame=1051682310032171 target=arduino_nano_microcontroller source=trained inferenceMs=3425.817812 proposals=0 verification=unmeasured
+I/TrainedAssist(14949): phase=5 frame=1051692706716802 target=arduino_nano_microcontroller source=trained inferenceMs=1930.550728 proposals=0 verification=unmeasured
+I/TrainedAssist(14949): phase=5 frame=1051698743807998 target=arduino_nano_microcontroller source=trained inferenceMs=977.20776 proposals=0 verification=unmeasured
+I/TrainedAssist(14949): phase=5 frame=1051701887958726 target=arduino_nano_microcontroller source=trained inferenceMs=771.052656 proposals=0 verification=unmeasured
+I/TrainedAssist(14949): phase=5 frame=1051704329482839 target=arduino_nano_microcontroller source=trained inferenceMs=1129.977343 proposals=0 verification=unmeasured
+I/TrainedAssist(14949): phase=5 frame=1051707885790598 target=arduino_nano_microcontroller source=trained inferenceMs=1619.604426 proposals=0 verification=unmeasured
+I/InstalledCapture(14949): TRAINED_RECOVERY baseline=640x480 fps=29.084212042612283 bufferPathP95Ms=11.643333 recoveryRequests=0 lastInferenceMs=0.0 nativeGrowthBytes=0 assisted=640x480 fps=27.741245857417315 bufferPathP95Ms=16.738906 recoveryRequests=6 lastInferenceMs=1619.604426 nativeGrowthBytes=0

@@ -21,6 +21,18 @@ with zipfile.ZipFile(source) as apk, zipfile.ZipFile(target, 'w', zipfile.ZIP_DE
     if not names:
         raise SystemExit('No DEX in the built APK')
     names.extend(n for n in apk.namelist() if n.startswith('assets/models/'))
+    # The model fixtures must use the candidate's exact pixels even if the
+    # learner's installed reference library predates these reviewed captures.
+    model_fixture_paths=[]
+    for fixture_name in ['replay_cases.json','replay_negatives.json','replay_benchmark.json']:
+        fixture_asset='assets/models/trained/'+fixture_name
+        if fixture_asset not in apk.namelist():continue
+        fixture=json.loads(apk.read(fixture_asset))
+        if isinstance(fixture,list):model_fixture_paths.extend(row['path'] for row in fixture)
+        else:
+            for paths in fixture.values():model_fixture_paths.extend(paths)
+    names.extend('assets/'+path for path in model_fixture_paths if 'assets/'+path in apk.namelist())
+    names=sorted(set(names))
     for name in names:
         output.writestr(name, apk.read(name))
     # The installed generic runner can replay the latest fixtures too. This avoids

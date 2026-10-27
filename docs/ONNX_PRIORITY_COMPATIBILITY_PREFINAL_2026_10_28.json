@@ -1,0 +1,62 @@
+﻿[
+    {
+        "case":  "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+        "passed":  true,
+        "seconds":  38.4854067
+    },
+    {
+        "case":  "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+        "passed":  true,
+        "seconds":  10.2864167
+    },
+    {
+        "case":  "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+        "passed":  true,
+        "seconds":  7.3681446
+    },
+    {
+        "case":  "vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines",
+        "passed":  true,
+        "seconds":  40.9124629
+    },
+    {
+        "case":  "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+        "passed":  true,
+        "seconds":  27.1284538
+    },
+    {
+        "case":  "vision.Phase789VideoReplayInstrumentedTest#darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines",
+        "passed":  true,
+        "seconds":  75.7020053
+    },
+    {
+        "case":  "vision.Phase789VideoReplayInstrumentedTest#sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations",
+        "passed":  true,
+        "seconds":  76.4892017
+    },
+    {
+        "case":  "vision.Phase789VideoReplayInstrumentedTest#wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines",
+        "passed":  true,
+        "seconds":  54.954421399999994
+    },
+    {
+        "case":  "vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard",
+        "passed":  true,
+        "seconds":  34.4234935
+    },
+    {
+        "case":  "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+        "passed":  true,
+        "seconds":  13.6335106
+    },
+    {
+        "case":  "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+        "passed":  true,
+        "seconds":  3.9157841999999996
+    },
+    {
+        "case":  "vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence",
+        "passed":  true,
+        "seconds":  2.6457379999999997
+    }
+]

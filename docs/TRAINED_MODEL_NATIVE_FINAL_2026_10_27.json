@@ -1,0 +1,67 @@
+[
+  {
+    "case": "allNinePackagedModelsLoadAndExecuteOnAndroid",
+    "passed": true,
+    "seconds": 9.755807299999999
+  },
+  {
+    "case": "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+    "passed": true,
+    "seconds": 3.3006241
+  },
+  {
+    "case": "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+    "passed": true,
+    "seconds": 4.5593631
+  },
+  {
+    "case": "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+    "passed": true,
+    "seconds": 4.774744999999999
+  },
+  {
+    "case": "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+    "passed": true,
+    "seconds": 6.2600836
+  },
+  {
+    "case": "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+    "passed": true,
+    "seconds": 2.658492
+  },
+  {
+    "case": "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+    "passed": true,
+    "seconds": 17.6634058
+  },
+  {
+    "case": "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+    "passed": true,
+    "seconds": 16.687769
+  },
+  {
+    "case": "initialPhotoPassDoesNotWaitForTheBackgroundNanoMonitor",
+    "passed": true,
+    "seconds": 8.2303745
+  },
+  {
+    "case": "realLoosePhotosCompareProposalAndFullSearchTimings",
+    "passed": true,
+    "seconds": 123.2446655
+  },
+  {
+    "case": "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+    "passed": true,
+    "seconds": 97.53144789999999
+  },
+  {
+    "case": "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+    "passed": true,
+    "seconds": 41.1669108
+  },
+  {
+    "case": "capture:realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+    "passed": true,
+    "seconds": 48.918372899999994
+  }
+]

@@ -1,5 +1,8 @@
 package dev.chyken.assembl_ar.vision;
 import org.opencv.core.Rect;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /** Coordinate decoding only. Neural boxes never constitute assembly evidence. */
 final class DnnRoiDecoder {
@@ -24,6 +27,45 @@ final class DnnRoiDecoder {
         }
     }
     static final class Box {final Rect bounds;final float confidence;Box(Rect bounds,float score){this.bounds=bounds;confidence=score;}}
+    static final class Detection {
+        final int label; final Rect bounds; final float confidence,margin;
+        Detection(int label,Rect bounds,float confidence){this(label,bounds,confidence,confidence);}
+        Detection(int label,Rect bounds,float confidence,float margin){this.label=label;this.bounds=bounds;this.confidence=confidence;this.margin=margin;}
+    }
+    /** YOLO11 output has class scores, no objectness column. Keep separate physical instances. */
+    static List<Detection> detections(float[] output,int classes,int count,double threshold,double nms,Letterbox transform){
+        if(classes<1||classes>32||count<1||count>10000||output.length!=(4+classes)*count
+                ||!Double.isFinite(threshold)||threshold<0||threshold>1||!Double.isFinite(nms)||nms<=0||nms>=1)
+            throw new IllegalArgumentException("Invalid trained detector contract");
+        List<Detection> candidates=new ArrayList<>();
+        for(int i=0;i<count;i++){
+            int label=-1;float score=0,second=0;
+            for(int c=0;c<classes;c++){
+                float value=output[(4+c)*count+i];
+                if(!Float.isFinite(value)||value<0||value>1)continue;
+                if(value>score){second=score;score=value;label=c;}else if(value>second)second=value;
+            }
+            if(label<0||score<threshold)continue;
+            Rect bounds=transform.bounds(output[i],output[count+i],output[2*count+i],output[3*count+i]);
+            if(bounds!=null)candidates.add(new Detection(label,bounds,score,score-second));
+        }
+        candidates.sort(Comparator.comparingDouble(d->-d.confidence));
+        // Bound NMS even for a malformed/overconfident graph.
+        if(candidates.size()>256)candidates=new ArrayList<>(candidates.subList(0,256));
+        List<Detection> result=new ArrayList<>();
+        for(Detection candidate:candidates){
+            boolean duplicate=false;
+            for(Detection kept:result)if(kept.label==candidate.label&&overlap(kept.bounds,candidate.bounds)>nms){duplicate=true;break;}
+            if(!duplicate)result.add(candidate);
+            if(result.size()==16)break;
+        }
+        return result;
+    }
+    static double overlap(Rect a,Rect b){
+        double intersection=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x))
+                *(double)Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));
+        return intersection/Math.max(1,a.area()+b.area()-intersection);
+    }
     static Box yolo(float[] output,int channels,int count,int label,double threshold,Letterbox transform){
         if(channels<5||label<0||label>=channels-4||count<=0||output.length<channels*count)throw new IllegalArgumentException("Invalid YOLO output contract");
         Box best=null;double score=threshold;

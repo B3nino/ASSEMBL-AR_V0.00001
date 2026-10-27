@@ -4,6 +4,7 @@ import java.util.Locale;
 
 /** Immutable numeric snapshot. NaN/-1 explicitly mean unavailable, never perfect accuracy. */
 public final class DiagnosticScanTelemetry {
+    public final dev.chyken.assembl_ar.vision.TrainedRecognitionEvidence trainedEvidence;
     public static final class Point {
         public final double x,y;
         public Point(double x,double y){this.x=x;this.y=y;}
@@ -30,6 +31,13 @@ public final class DiagnosticScanTelemetry {
             double extraction,double matching,boolean correct,boolean verified,boolean pose,String orientation,
             double tre,Point projected,Point observed,double rms,long frames,boolean workflow,
             String source,double confidence,boolean coarse){
+        this(name,reference,active,live,good,total,extraction,matching,correct,verified,pose,orientation,tre,projected,observed,rms,frames,workflow,source,confidence,coarse,null);
+    }
+    private DiagnosticScanTelemetry(String name,String reference,int active,int live,int good,int total,
+            double extraction,double matching,boolean correct,boolean verified,boolean pose,String orientation,
+            double tre,Point projected,Point observed,double rms,long frames,boolean workflow,
+            String source,double confidence,boolean coarse,dev.chyken.assembl_ar.vision.TrainedRecognitionEvidence neural){
+        trainedEvidence=neural;
         componentName=verified?name:"Unverified";referenceId=verified?reference:null;
         activeKeypoints=active;liveKeypoints=live;goodMatches=good;totalMatches=total;
         matchPercentage=total>0&&good>=0&&good<=total?100f*good/total:Float.NaN;
@@ -63,6 +71,11 @@ public final class DiagnosticScanTelemetry {
                 verificationSource,verificationConfidence,true);
     }
     public boolean outputMatches(){return workflowVerified||"Match".equals(outputStatus);}
+    public DiagnosticScanTelemetry withTrainedEvidence(dev.chyken.assembl_ar.vision.TrainedRecognitionEvidence evidence){
+        return new DiagnosticScanTelemetry(componentName,referenceId,activeKeypoints,liveKeypoints,goodMatches,totalMatches,
+                extractionTimeMs<0?Double.NaN:extractionTimeMs,matchingTimeMs<0?Double.NaN:matchingTimeMs,isCorrectPose,candidateVerified,poseMeasured,orientationLabel,
+                treMm,projectedPoint,observedPoint,reprojectionRmsPx,totalAnalyzedFrames,workflowVerified,verificationSource,verificationConfidence,coarsePose,evidence);
+    }
     private static String n(double value){return Double.isFinite(value)?String.format(Locale.US,"%.2f",value):"Unmeasured";}
     private static String count(long value){return value>=0?Long.toString(value):"Unmeasured";}
     private static String point(Point p){return p!=null&&p.measured()?"("+n(p.x)+", "+n(p.y)+")":"Unmeasured";}
@@ -79,6 +92,7 @@ public final class DiagnosticScanTelemetry {
         +"\nProjected point per frame: "+point(projectedPoint)
         +"\nObserved point per frame: "+point(observedPoint)
         +"\nPixel distance: "+n(pixelDistance)+(Float.isFinite(pixelDistance)?" px":"")
+        +(trainedEvidence==null?"":"\nONNX: Phase "+trainedEvidence.modelPhase+" · "+n(trainedEvidence.inferenceMs)+" ms · "+trainedEvidence.confirmations+" predictions · "+trainedEvidence.instances+" objects")
         +"\nTotal frames: "+totalAnalyzedFrames
         +"\nOutput: "+outputStatus+(workflowVerified?" · "+verificationSource+(Double.isFinite(verificationConfidence)?" · verifier confidence "+n(verificationConfidence*100)+"%":""):"");}
 }

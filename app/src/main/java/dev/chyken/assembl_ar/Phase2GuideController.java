@@ -114,7 +114,8 @@ final class Phase2GuideController implements AutoCloseable {
             boolean valid=component.equals(result.getComponentId())
                     && result.getValidationState()==RecognitionResult.ValidationState.EXPECTED_COMPONENT
                     && (result.getDetectionMethod()==RecognitionResult.DetectionMethod.COLOR_SHAPE_FALLBACK
-                    || result.getDetectionMethod()==RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY);
+                    || result.getDetectionMethod()==RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY
+                    || result.getDetectionMethod()==RecognitionResult.DetectionMethod.TRAINED_MODEL);
             int count=valid?result.getDetectedInstanceCount(component):0;
             flow.observeCount(count,valid);
             message=flow.complete()?"Scan successful · Next step unlocked"

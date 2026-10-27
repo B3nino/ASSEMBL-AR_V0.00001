@@ -956,6 +956,7 @@ public final class LoosePartShapeRecognizer {
     }
 
     static final class ShapeCandidate {
+        List<VisionPoint> corners(){return corners;}
         private final String referenceId;
         private final String displayName;
         private final double confidence;

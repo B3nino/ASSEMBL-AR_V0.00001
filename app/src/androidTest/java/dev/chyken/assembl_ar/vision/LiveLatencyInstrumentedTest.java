@@ -86,7 +86,7 @@ public class LiveLatencyInstrumentedTest {
         assertTrue("Live-path regressions: "+failed,failed.isEmpty());
     }
     private void replayTarget(int phase,int stage,Class<?> fixture,String role,int second,boolean expected,List<String> failed)throws Exception{
-        Context c=context();if(phase==5)OpenCvDnnRoiLocator.INSTANCE.prepare(c.getAssets());
+        Context c=context();
         List<ComponentReferenceSpec> catalog=phase==3?Phase3AssetCatalog.references(c.getAssets()):phase==5?Phase5AssetCatalog.references(c.getAssets()):phase==7?Phase7AssetCatalog.references(c.getAssets()):phase==8?Phase8AssetCatalog.references(c.getAssets()):phase==9?Phase9AssetCatalog.references(c.getAssets()):phase==10?Phase10AssetCatalog.references(c.getAssets()):Phase11AssetCatalog.references(c.getAssets());
         String id=phase==3?"dual_motor_driver":phase==5?"arduino_nano_microcontroller":phase==7?"main_board":phase==8?"ultrasonic_distance_sensor":phase==9?"main_board":phase==10?Phase10AssetCatalog.target(stage):Phase11AssetCatalog.target(stage);
         RecognitionRequest base=new RecognitionRequest(RecognitionRequest.AssemblyExpectation.component(id),CameraCalibration.pinhole(700,700,320,200),null,null,1,phase);

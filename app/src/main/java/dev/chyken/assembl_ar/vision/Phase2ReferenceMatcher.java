@@ -37,7 +37,7 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
         try {
             if(scale<1) Imgproc.resize(gray,rawWork,new Size(),scale,scale,Imgproc.INTER_AREA); else gray.copyTo(rawWork);
             DiagnosticHammingMatcher.State extracted=DiagnosticHammingMatcher.snapshot();
-            boolean reuse=stage!=5&&extracted.live!=null&&scale==1&&extracted.liveStructural==extracted.structuralInput;
+            boolean reuse=!extracted.trainedPass&&stage!=5&&extracted.live!=null&&scale==1&&extracted.liveStructural==extracted.structuralInput;
             if(reuse){rawWork.copyTo(work);extracted.live.copyTo(descriptors);points.fromArray(extracted.liveKeys);}
             else {
             DiagnosticHammingMatcher.normalize(clahe,rawWork,work);
@@ -99,6 +99,11 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
                     .corners(corners).instances(instances).confidence(observation.referenceSupported?.8:0)
                     .validation(observation.referenceSupported?RecognitionResult.ValidationState.EXPECTED_COMPONENT:RecognitionResult.ValidationState.NO_COMPONENT)
                     .build();
+            if(verifiedEvidence!=null&&verifiedEvidence.neuralIdentity){
+                TrainedModelAssist.Hints hints=DiagnosticHammingMatcher.snapshot().trainedHints;
+                primary=primary.withTrainedEvidence(new TrainedRecognitionEvidence(2,2,verifiedEvidence.bodies.size(),hints.sourceNanos,
+                        verifiedEvidence.neuralConfidence,hints.inferenceMs,true));
+            }
             RecognitionResult.Latency base=primary.getLatency();
             double featureMs=(featuresDone-started)/1_000_000.0;
             double matchingMs=(android.os.SystemClock.elapsedRealtimeNanos()-featuresDone)/1_000_000.0;
@@ -158,7 +163,9 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
             List<List<VisionPoint>> regions=ref.spec.getFeatureRegionsNormalized();
             // Confirm the photographed board/view; object counts are separate inventory checkpoints.
             if("top".equals(role)&&regions.size()!=6)return null;
-            int roiIndex=0;int[] roiCounts=new int[6];boolean complete=!"top".equals(role)||topViewTransformSupported(homography,regions,ref.imageWidth,ref.imageHeight);List<List<VisionPoint>> bodies=new ArrayList<>();
+            int roiIndex=0;int[] roiCounts=new int[6];boolean[] neuralMotors=new boolean[6];boolean neuralIdentity=false;double neuralConfidence=1;
+            Set<TrainedDetection> usedNeural=Collections.newSetFromMap(new IdentityHashMap<>());
+            boolean complete=!"top".equals(role)||topViewTransformSupported(homography,regions,ref.imageWidth,ref.imageHeight);List<List<VisionPoint>> bodies=new ArrayList<>();
             for(List<VisionPoint> r:regions) {
                 int hits=0;double minX=1,minY=1,maxX=0,maxY=0;
                 for(int i=0;i<source.size();i++) if(accepted[i]!=0) {
@@ -178,8 +185,14 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
                             ||!darkBracket(raw,homography,r,regions.get(index/3*3),ref.imageWidth,ref.imageHeight))complete=false;
                     continue;
                 }
-                boolean supported=material&&hits>=minimumHits&&maxX-minX>=(r.get(2).getX()-r.get(0).getX())*minimumSpread
+                boolean orbSupported=hits>=minimumHits&&maxX-minX>=(r.get(2).getX()-r.get(0).getX())*minimumSpread
                         &&maxY-minY>=(r.get(2).getY()-r.get(0).getY())*minimumSpread;
+                TrainedModelAssist.Hints hints=DiagnosticHammingMatcher.snapshot().trainedHints;
+                TrainedDetection neural=motor?TrainedRecognitionAuthority.support(hints,"gear_motor_6v",projectRegion(ref,homography,r,scale,width,height)):null;
+                boolean neuralMotor=neural!=null&&usedNeural.add(neural);
+                boolean supported=material&&(orbSupported||neuralMotor);
+                if(neuralMotor){if(index<neuralMotors.length)neuralMotors[index]=true;if(!orbSupported){neuralIdentity=true;
+                    neuralConfidence=Math.min(neuralConfidence,neural.confidence);}}
                 if(android.util.Log.isLoggable("AssemblArPhase2Roi",android.util.Log.DEBUG))android.util.Log.d("AssemblArPhase2Roi",ref.spec.getReferenceId()+" roi="+index+" hits="+hits+" min="+minimumHits+" spread="+((maxX-minX)/(r.get(2).getX()-r.get(0).getX()))+","+((maxY-minY)/(r.get(2).getY()-r.get(0).getY()))+" material="+material+" supported="+supported);
                 if(!supported)complete=false;
                 if(supported&&(motor||"brackets".equals(role)||"motors".equals(role))){
@@ -189,7 +202,8 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
                     List<VisionPoint> body=projectRegion(ref,homography,outline,scale,width,height);if(body.size()==4)bodies.add(body);else complete=false;
                 }
             }
-            if("top".equals(role)&&!dev.chyken.assembl_ar.workflow.phase.Phase2MotorBracketFlow.acceptsTop(roiCounts[0],roiCounts[3],roiCounts[1]+roiCounts[2],roiCounts[4]+roiCounts[5]))complete=false;
+            if("top".equals(role)&&!((roiCounts[0]>=6||neuralMotors[0])&&(roiCounts[3]>=6||neuralMotors[3])
+                    &&roiCounts[1]+roiCounts[2]>=4&&roiCounts[4]+roiCounts[5]>=4))complete=false;
             if(!complete&&bodies.isEmpty())return null;
             double left=1,top=1,right=0,bottom=0;
             for(List<VisionPoint> region:regions)for(VisionPoint p:region){left=Math.min(left,p.getX());top=Math.min(top,p.getY());right=Math.max(right,p.getX());bottom=Math.max(bottom,p.getY());}
@@ -206,7 +220,7 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
                 for(Point p:polygon) {if(!Double.isFinite(p.x+p.y)||p.x< -width||p.x>width*2||p.y< -height||p.y>height*2)return null;corners.add(new VisionPoint(p.x/scale,p.y/scale));}
                 MatOfPoint convex=new MatOfPoint(polygon);
                 try{if(!Imgproc.isContourConvex(convex))return null;}finally{convex.release();}
-                return new Evidence(inliers*(inliers/(double)source.size()),corners,complete,bodies);
+                return new Evidence(inliers*(inliers/(double)source.size()),corners,complete,bodies,neuralIdentity,neuralConfidence);
             } finally {rectangle.release();projected.release();}
         } finally {src.release();dst.release();mask.release();if(homography!=null)homography.release();}
     }
@@ -309,7 +323,8 @@ final class Phase2ReferenceMatcher implements AutoCloseable {
     }
     private static final class Evidence {
         final double score;final List<VisionPoint> corners;final boolean complete;final List<List<VisionPoint>> bodies;
-        Evidence(double score,List<VisionPoint> corners,boolean complete,List<List<VisionPoint>> bodies) {this.score=score;this.corners=corners;this.complete=complete;this.bodies=bodies;}
+        final boolean neuralIdentity;final double neuralConfidence;
+        Evidence(double score,List<VisionPoint> corners,boolean complete,List<List<VisionPoint>> bodies,boolean neuralIdentity,double confidence) {this.score=score;this.corners=corners;this.complete=complete;this.bodies=bodies;this.neuralIdentity=neuralIdentity;neuralConfidence=confidence;}
     }
     @Override public void close(){for(Mat rows:shortlist.values())rows.release();shortlist.clear();preferred.clear();orb.clear();hardwareOrb.clear();clahe.clear();}
 }

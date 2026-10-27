@@ -1,0 +1,599 @@
+{
+  "device": {
+    "model": "2603ARP14G",
+    "serial": "368e278b"
+  },
+  "date": "2026-10-27",
+  "timezone": "Asia/Manila",
+  "final_candidate_sha256": "96762197815a05c9dda2b2c2744d36d41751d4e180d4a4b368043f86b27cc569",
+  "broad_sweep_candidate_sha256": "c5e7b71a41b338c9657032c286d223f087d4b47bf017834c36d430cb28e63770",
+  "source_change_between_sweep_and_final_groups": "Skip the synchronized legacy Nano readiness query before the supported photo path; validated by monitor isolation and final Nano rechecks.",
+  "model_groups": [
+    {
+      "case": "allNinePackagedModelsLoadAndExecuteOnAndroid",
+      "passed": true,
+      "seconds": 9.755807299999999
+    },
+    {
+      "case": "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+      "passed": true,
+      "seconds": 3.3006241
+    },
+    {
+      "case": "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+      "passed": true,
+      "seconds": 4.5593631
+    },
+    {
+      "case": "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+      "passed": true,
+      "seconds": 4.774744999999999
+    },
+    {
+      "case": "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+      "passed": true,
+      "seconds": 6.2600836
+    },
+    {
+      "case": "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+      "passed": true,
+      "seconds": 2.658492
+    },
+    {
+      "case": "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+      "passed": true,
+      "seconds": 17.6634058
+    },
+    {
+      "case": "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+      "passed": true,
+      "seconds": 16.687769
+    },
+    {
+      "case": "initialPhotoPassDoesNotWaitForTheBackgroundNanoMonitor",
+      "passed": true,
+      "seconds": 8.2303745
+    },
+    {
+      "case": "realLoosePhotosCompareProposalAndFullSearchTimings",
+      "passed": true,
+      "seconds": 123.2446655
+    },
+    {
+      "case": "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+      "passed": true,
+      "seconds": 97.53144789999999
+    },
+    {
+      "case": "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+      "passed": true,
+      "seconds": 41.1669108
+    },
+    {
+      "case": "capture:realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+      "passed": true,
+      "seconds": 48.918372899999994
+    }
+  ],
+  "broad_sweep": [
+    {
+      "case": "UiBeautificationInstrumentedTest#sharedLightShellKeepsOneMenuAndUsableTesterViewport",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#settingsTogglesChangeOnlyAdministratorAndAssemblyDeveloperVisibility",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#graphicsStopSchedulingWhenHiddenPausedDetachedAndClosed",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#cubeRendersAndUsesRealCountsWithoutBypassingReferenceGate",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#checklistKeepsExplicitCallbacksCorrectionsAndReachableButtons",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#bothToolbarsShareMutePreferenceWithoutWritingAssemblyProgress",
+      "passed": true
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#compactIndexPreservesEveryCountGeometryAndDescriptorWithoutFullBankReload",
+      "passed": true
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#corruptOrDifferentCatalogCannotPublishPartialGlobalEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.StartupQualityInstrumentedTest#previewSkipIsVisibleAccessibleAndCannotLeakIntoNonVideoContent",
+      "passed": true
+    },
+    {
+      "case": "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+      "passed": true
+    },
+    {
+      "case": "vision.CameraPauseResumeInstrumentedTest#opticalBridgePauseReleasesLatestImageAndCanResumeTracking",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#resetAndCloseReleaseFrameBuffersAcrossRepeatedScans",
+      "passed": true
+    },
+    {
+      "case": "DynamicOutlinePipelineInstrumentedTest#completionChangesTheTokenButKeepsVisualLocalizationWithoutNewWorkflowEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#individualToolShowsOutlinesBeforeSuccessForEveryNewLoosePart",
+      "passed": true
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#welcomeFooterIsVisibleEnabledAndContrastingAtLargeFonts",
+      "passed": true
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#bothCamerasHaveAnIndependentFullSizeDynamicOverlay",
+      "passed": true
+    },
+    {
+      "case": "DynamicOutlineUiInstrumentedTest#phaseOneDeveloperCompletionShowsAnEnabledFooterWithoutCameraEvidence",
+      "passed": true
+    },
+    {
+      "case": "PhysicalValidationLayoutInstrumentedTest#longInstructionsAndLargeFontsKeepAllControlsReachableByScrolling",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#structuralCacheIsSeparateBoundedAndCopiedWithItsOwner",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#realPhotoStructuralDescriptorsRetainConsensusAfterExposureShift",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#flatFramesCannotInventStructuralKeypointsAndRepeatedBuffersRelease",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#fallbackPoseIsReportedAsCoarseWithoutFabricatingOrbOrBenchmarkOrientation",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#phaseMatcherCanUseOnlyTheStructuralBankAndBlankCannotPass",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#migrationKeepsLuminanceBlobAndGeometryWhileOnlyAddingAnEdgeSidecar",
+      "passed": true
+    },
+    {
+      "case": "vision.HybridVisionInstrumentedTest#lostOptionalSidecarCannotBlockAWarmLuminanceScanner",
+      "passed": true
+    },
+    {
+      "case": "vision.VerifiedTelemetryReplayInstrumentedTest#roomStackedAssemblyPairsAndFreezesVerifiedMetricsWhileTrackingStaysLive",
+      "passed": true
+    },
+    {
+      "case": "vision.VerifiedTelemetryReplayInstrumentedTest#geometryHudIsGreenAndUnmeasuredValuesStayHonestInBothLayouts",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#pauseFromOutlineCallbackDropsTheRemainingTrackingCallback",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#directReplayAndCloseShareTheSameNativeOwnershipGuard",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#threeThousandFlowFramesReuseBuffersAndResetReleasesEveryOwner",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#rejectedCaptureWritesDoNotLeakAdmissionCounters",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#cyclicContourHierarchyTerminatesWithoutInventingRepeatedHoles",
+      "passed": true
+    },
+    {
+      "case": "vision.HygieneSafetyInstrumentedTest#failedDescriptorPublicationPreservesBorrowedInputsAndSuccessfulOutputOwnsItsRows",
+      "passed": true
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#higherMatchCountOnAnotherReferenceCannotOwnCandidateTelemetry",
+      "passed": true
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#sharedAnalyzerPublishesOneVerifiedCandidateAndTruePoseResiduals",
+      "passed": true
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#checkerboardTreIsThreeDimensionalAndUnavailableWithoutMetricIntrinsics",
+      "passed": true
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#bothHudStatesKeepAllFifteenLinesAndColorOnlyTheFinalOutput",
+      "passed": true
+    },
+    {
+      "case": "vision.DiagnosticTelemetryInstrumentedTest#realCasterAndSensorCandidatesOwnTheirRoiTelemetry",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#allocationLightRatioProbeMatchesNativeDMatchValues",
+      "passed": true
+    },
+    {
+      "case": "vision.GlobalOutlineRegistryInstrumentedTest#bodyDescriptorsIdentifyTheWrongPartAndRejectItsEmptyBoardContext",
+      "passed": true
+    },
+    {
+      "case": "vision.GlobalOutlineRegistryInstrumentedTest#ambiguousBodyIdentityStaysAcquiringInsteadOfNamingAWrongItem",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#photoOnlyOutlineFollowsMeasuredPanAndClearsWhenOccluded",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#delayedRecognitionCatchesUpToLatestCameraFrame",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#sparseEightToElevenCornerTargetsCatchUpButCannotTrackABlankFrame",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#mountedPairKeepsTwoSeparateMovingOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.ImageOutlineTrackerInstrumentedTest#multiSecondDetectorSeedIsRelocatedAgainstTheNewestMeasuredImage",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase10LoosePartsAndRealBoardBottomRequireCorrectOrientation",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11LooseOledBatteryAndBackFaceKeepTheirIdentity",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+      "passed": false
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#shadowedBottomAssemblyRequiresBothTrackersAndCasterWithOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPalmHasMeasuredOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPaperAndRotatedFrontHasMeasuredOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#clippedSensorCannotBecomeACompleteFrontFace",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#restoredLooseStandoffScanUsesFreshGeometricEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#blurredStandoffDoesNotInventACompletePose",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#standoffScanRejectsYellowWheelHubs",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789FollowupReplayInstrumentedTest#phase8CameraAnalyzerPublishesTheOutlineBeforeConsecutiveSuccess",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase789VideoReplayInstrumentedTest#standaloneStandoffKeepsMeasuredIndividualToolOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#looseCableRequiresBothConnectorHeadsAndVisibleOutline",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#protectorUnderGlareRequiresIndependentFrameAndBoardEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#boardOnlyCannotPassStackedAssembly",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#clippedCableCannotPassAsBothCompleteConnectors",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames",
+      "passed": true
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions",
+      "passed": true
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano",
+      "passed": true
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress",
+      "passed": true
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates",
+      "passed": true
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows",
+      "passed": true
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates",
+      "passed": true
+    },
+    {
+      "case": "vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#pcbOnlyGlobalFeaturesProposeFreshNanoCropButCannotVerifyErasedBody",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+      "passed": false
+    },
+    {
+      "case": "vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget",
+      "passed": true
+    },
+    {
+      "case": "vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#planFOffersHelpOnceWithoutCompletingAnythingAndClosesOnSuccess",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#planFSettingsPersistWithoutChangingExistingPreferencesAndLargeFontHelpIsReachable",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#planFLoadsABoundedRealPhotoAndRendersItsHelpSurface",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#phoneAssemblyReservesCameraAndDoesNotAlterWorkflowButtons",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#phoneTesterKeepsCameraAndFullToolsWithoutFloatingMetrics",
+      "passed": true
+    },
+    {
+      "case": "UiBeautificationInstrumentedTest#tabletScanningLayoutSurvivesPhoneReflowWithoutChangingControls",
+      "passed": true
+    }
+  ],
+  "focused_rechecks": [
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+      "passed": true
+    },
+    {
+      "case": "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+      "passed": true
+    }
+  ],
+  "initial_sweep_passed": 98,
+  "covered_compatibility_groups": 100,
+  "single_clean_100_group_sweep": false,
+  "verification_timings": {
+    "5": {
+      "baseline_verification_ms": [
+        103.958697,
+        128.246927,
+        99.542813,
+        74.92526,
+        109.748489,
+        85.983646
+      ],
+      "assisted_verification_ms": [
+        89.673385,
+        108.841875,
+        84.015885,
+        76.651458,
+        98.226667,
+        81.42474
+      ],
+      "separate_inference_ms": [
+        528.931719,
+        260.522344,
+        257.937865
+      ],
+      "baseline_median_ms": 101.750755,
+      "assisted_median_ms": 86.844635,
+      "verification_median_reduction_percent": 14.64964068325586
+    },
+    "9": {
+      "baseline_verification_ms": [
+        516.756823,
+        198.551511,
+        1600.47552,
+        544.840833,
+        205.987968,
+        292.300313
+      ],
+      "assisted_verification_ms": [
+        323.262812,
+        231.295104,
+        246.201563,
+        300.099323,
+        227.457135,
+        256.914271
+      ],
+      "separate_inference_ms": [
+        1137.626405,
+        290.593593,
+        288.096458
+      ],
+      "baseline_median_ms": 404.52856800000006,
+      "assisted_median_ms": 251.55791699999997,
+      "verification_median_reduction_percent": 37.814548365840025
+    }
+  },
+  "camera": {
+    "baseline": {
+      "size": "640x480",
+      "fps": 29.555904304783265,
+      "bufferPathP95Ms": 15.374011,
+      "recoveryRequests": 0.0,
+      "lastInferenceMs": 0.0,
+      "nativeGrowthBytes": 0.0
+    },
+    "assisted": {
+      "size": "640x480",
+      "fps": 29.06425884347584,
+      "bufferPathP95Ms": 6.126094,
+      "recoveryRequests": 15.0,
+      "lastInferenceMs": 461.133645,
+      "nativeGrowthBytes": 2955136.0
+    },
+    "assisted_duration_seconds": 30,
+    "scope": "Actual sensor and private preview stream; camera callback/tracker work plus trained inference. Not displayed UI FPS or recognition accuracy.",
+    "delivered_fps_retained_percent": 98.33655754113448
+  },
+  "saved_data": {
+    "before": {
+      "shared_prefs/assembly_phase_progress.xml": "c7e3751dd9a24c3f8be02740b3acadaa8c4f29f658d616071b039f0f93b69476",
+      "shared_prefs/guided_assembly_steps.xml": "3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793",
+      "databases/assembl_ar.db": "d76b286e0316b22fb2c4c564dac58cb4fd39fd428cdf54130406bc6bb84e97dd"
+    },
+    "after": {
+      "shared_prefs/assembly_phase_progress.xml": "c7e3751dd9a24c3f8be02740b3acadaa8c4f29f658d616071b039f0f93b69476",
+      "shared_prefs/guided_assembly_steps.xml": "3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793",
+      "databases/assembl_ar.db": "d76b286e0316b22fb2c4c564dac58cb4fd39fd428cdf54130406bc6bb84e97dd"
+    },
+    "unchanged": true
+  },
+  "limitations": [
+    "No independent new-room recognition accuracy study was performed.",
+    "Verification timings exclude inference and do not prove a universal end-to-end recognition speedup.",
+    "The first sweep had two failures; each passed two isolated reruns without relaxed limits.",
+    "Release assistance remains opt-in; learner APK was not replaced or cleared."
+  ]
+}

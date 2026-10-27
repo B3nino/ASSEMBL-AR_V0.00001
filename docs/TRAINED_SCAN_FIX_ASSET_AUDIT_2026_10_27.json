@@ -1,0 +1,99 @@
+{
+  "models": [
+    {
+      "phase": 1,
+      "sha256": "2ef67141ff902e02cfa5bd3c25705f0aa7c99112b961f0a4f6dcb1d342937122",
+      "bytes": 10603960,
+      "classes": [
+        "main_board_front",
+        "main_board_back"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 2,
+      "sha256": "b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286",
+      "bytes": 10603952,
+      "classes": [
+        "motor_bracket",
+        "gear_motor"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 3,
+      "sha256": "e40a60160fce84af535f4aaf2e38161669235f3ceebc45147ad9c17d71668a33",
+      "bytes": 10602965,
+      "classes": [
+        "motor_driver"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 5,
+      "sha256": "49d88b541c48a378174a6b8d51c4320ac4533f1db276dbf676b71e6898c044d2",
+      "bytes": 10602965,
+      "classes": [
+        "arduino_nano"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 7,
+      "sha256": "0b1f1091dbc3b896e7d629555adf894aa7310989b7437e4340e206d36299fb5c",
+      "bytes": 10603956,
+      "classes": [
+        "caster_wheel",
+        "line_tracker"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 8,
+      "sha256": "27180981fffaa7f3e7011ffe7c4df8a656b7b7fd876f3dc39fc1c02c68e0d404",
+      "bytes": 10602979,
+      "classes": [
+        "ultrasonic_distance_sensor"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 9,
+      "sha256": "c03a6fc70ab0d8a6462f622c245100958f5e7048d55e599a1a9d5b859bb3bae4",
+      "bytes": 10603958,
+      "classes": [
+        "center_standoff",
+        "drive_wheel"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 10,
+      "sha256": "d840de4627d1b82599eb27fe89be96ef5ce28d10bfca6c0dede1511ca0eee48e",
+      "bytes": 10604961,
+      "classes": [
+        "extension_data_cable",
+        "extension_board",
+        "oled_protector"
+      ],
+      "apk_bytes_match": true
+    },
+    {
+      "phase": 11,
+      "sha256": "0b4c8dfa29c6c0729762285da8d6468cf9ead6d3a80f1f9b909911d50120fa89",
+      "bytes": 10603957,
+      "classes": [
+        "oled_display",
+        "battery_pack"
+      ],
+      "apk_bytes_match": true
+    }
+  ],
+  "total_model_bytes": 95433653,
+  "onnx_checker": true,
+  "full_component_routing_marker": true,
+  "retired_chip_removed": true,
+  "apk": "app\\build\\intermediates\\apk\\debug\\app-arm64-v8a-debug.apk",
+  "apk_bytes": 2788026775,
+  "apk_sha256": "7690a50f3bb6d363497d677d8d70e633fbeaaf94b922b550ba9365df0b38db93"
+}

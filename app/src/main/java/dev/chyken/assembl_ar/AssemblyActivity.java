@@ -612,6 +612,8 @@ public final class AssemblyActivity extends AppCompatActivity {
     // Bank epochs change independently of the bound camera and reject stale native results.
     private volatile int referenceBankGeneration;
     private String failedReferenceScope,referencePreparationMessage;
+    private long referenceRetryAt;
+    private int referenceLoadFailures;
     private volatile boolean libraryPreparing;
     private final ActivityResultLauncher<Intent> startupPreparation=registerForActivityResult(
         new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),result->{
@@ -632,6 +634,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     private final Runnable referenceScopeMonitor=new Runnable(){public void run(){
         if(destroyed)return;
         refreshSchematicControl();
+        if(stepInfoPanel!=null)stepInfoPanel.setCameraFocused(phaseController!=null&&phaseController.isCameraModeFocused(),phaseController==null?null:phaseController.diagnosticScope());
         dev.chyken.assembl_ar.ui.DynamicComponentOutlineOverlayView outline=findViewById(R.id.dynamicOutlineOverlay);
         if(outline!=null)outline.setCameraActive(activityResumed&&!diagnosticsModal&&!libraryPreparing&&phaseController!=null&&phaseController.isCameraModeFocused());
         if(visionInitializationStarted&&referenceCatalog!=null&&activityResumed)refreshReferenceScope();
@@ -719,6 +722,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     }
     private void installReferenceBank(ReferenceBank bank){
         detachReferenceBank();referenceBankGeneration++;
+        referenceLoadFailures=0;referenceRetryAt=0;
         referenceDatabase=bank.database;recognizer=bank.worker;loadedReferenceScope=bank.scope;loadingReferenceScope=null;referencePreparationMessage=null;failedReferenceScope=null;
         if(phaseController!=null)phaseController.onRecognitionReady();showCurrentGuidedStepBanner();attachVisionAnalyzer(visionGeneration);
     }
@@ -754,7 +758,8 @@ public final class AssemblyActivity extends AppCompatActivity {
         if(scope.equals(loadedReferenceScope)){prefetchNext(request);return;}
         if(prefetchedBank!=null&&scope.equals(prefetchedBank.scope)){ReferenceBank ready=prefetchedBank;prefetchedBank=null;installReferenceBank(ready);prefetchNext(request);return;}
         if(scope.equals(prefetchingScope))return;
-        if(scope.equals(loadingReferenceScope)||scope.equals(failedReferenceScope))return;
+        if(scope.equals(loadingReferenceScope))return;
+        if(scope.equals(failedReferenceScope)&&SystemClock.elapsedRealtime()<referenceRetryAt)return;
         prefetchGeneration++;prefetchingScope=null;
         if(prefetchedBank!=null){ReferenceBank old=prefetchedBank;prefetchedBank=null;visionLoaderExecutor.execute(old::close);}
         int bank=++referenceBankGeneration;int cameraGeneration=visionGeneration;loadingReferenceScope=scope;failedReferenceScope=null;
@@ -771,13 +776,16 @@ public final class AssemblyActivity extends AppCompatActivity {
                 runOnUiThread(()->{
                     if(destroyed||bank!=referenceBankGeneration){closeVisionResources(readyWorker,readyDb);return;}
                     referenceDatabase=readyDb;recognizer=readyWorker;loadedReferenceScope=scope;loadingReferenceScope=null;referencePreparationMessage=null;
+                    referenceLoadFailures=0;referenceRetryAt=0;
                     PhaseAssemblyController phases=phaseController;if(phases!=null)phases.onRecognitionReady();showCurrentGuidedStepBanner();attachVisionAnalyzer(cameraGeneration);prefetchNext(request);
                 });
             }catch(Throwable failure){
                 closeVisionResources(worker,db);
                 if(destroyed||bank!=referenceBankGeneration)return;
                 Log.e("AssemblyActivity","Active scan preparation failed: "+scope,failure);
-                runOnUiThread(()->{if(!destroyed&&bank==referenceBankGeneration){loadingReferenceScope=null;referencePreparationMessage=null;failedReferenceScope=scope;setBanner("Recognition preparation failed · tap to retry",false,R.drawable.bg_camera_warning);}});
+                runOnUiThread(()->{if(!destroyed&&bank==referenceBankGeneration){loadingReferenceScope=null;referencePreparationMessage=null;failedReferenceScope=scope;
+                    referenceRetryAt=SystemClock.elapsedRealtime()+Math.min(30_000L,2_000L*++referenceLoadFailures);
+                    setBanner("Recognition preparation recovering…",true,R.drawable.bg_live_pill);}});
             }
         });
     }
@@ -995,6 +1003,7 @@ public final class AssemblyActivity extends AppCompatActivity {
                     }
                 }, visionConfig, true, modelPartRecognizer);
         analyzer.attachMotion(this);
+        if(currentStep!=null)analyzer.preloadTrainedPhase(currentStep.getStepNumber());
         imageAnalysis.setAnalyzer(cameraExecutor, analyzer);
     }
 
@@ -2959,7 +2968,7 @@ public final class AssemblyActivity extends AppCompatActivity {
     void setBanner(String text, boolean spinning, int backgroundResource) {
         if(libraryFailure!=null){text=libraryFailure;spinning=false;backgroundResource=R.drawable.bg_camera_warning;}
         else if(referencePreparationMessage!=null&&loadingReferenceScope!=null&&activeReferenceRequest()!=null){text=referencePreparationMessage;spinning=true;backgroundResource=R.drawable.bg_live_pill;}
-        else if(failedReferenceScope!=null&&failedReferenceScope.equals(dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(activeReferenceRequest()))){text="Recognition preparation failed · tap to retry";spinning=false;backgroundResource=R.drawable.bg_camera_warning;}
+        else if(failedReferenceScope!=null&&failedReferenceScope.equals(dev.chyken.assembl_ar.camera.ActiveReferenceScope.key(activeReferenceRequest()))){text="Recognition preparation recovering…";spinning=true;backgroundResource=R.drawable.bg_live_pill;}
 
         if (!text.contentEquals(recognitionText.getText())) {
             recognitionText.setText(text);
@@ -3102,6 +3111,7 @@ public final class AssemblyActivity extends AppCompatActivity {
 
     private void syncDiagnosticScope(){
         PhaseAssemblyController phases=phaseController;if(phases==null)return;
+        if(analyzer!=null&&phases.getPhase()!=null)analyzer.preloadTrainedPhase(phases.getPhase().getNumber());
         if(diagnosticLocker.enter(phases.diagnosticScope(),phases.currentTag(),phases.currentScanVerified())){
             dev.chyken.assembl_ar.ui.DevDiagnosticsOverlayView view=findViewById(R.id.devDiagnosticsOverlay);
             if(view!=null)view.clearTelemetry();

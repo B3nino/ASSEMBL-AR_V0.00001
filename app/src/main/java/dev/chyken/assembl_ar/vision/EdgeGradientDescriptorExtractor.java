@@ -83,6 +83,30 @@ public final class EdgeGradientDescriptorExtractor {
             if(r-l<16||b-t<16){extract(src,empty,orb,keys,descriptors);return;}
             Mat crop=src.submat(t,b,l,r);try{extract(crop,empty,orb,keys,descriptors);KeyPoint[] points=keys.toArray();for(KeyPoint p:points){p.pt.x+=l;p.pt.y+=t;}keys.fromArray(points);}finally{crop.release();}
         }
+        /** Separate physical parts each receive local sampling. Keep a small whole-scene
+         * sample for independent board/context checks; overlapping windows add no duplicate points. */
+        public void extractProposals(Mat src,java.util.List<Rect> windows,ORB orb,MatOfKeyPoint keys,Mat descriptors){
+            extractProposals(src,windows,orb,keys,descriptors,true);
+        }
+        public void extractProposals(Mat src,java.util.List<Rect> windows,ORB orb,MatOfKeyPoint keys,Mat descriptors,boolean includeContext){
+            int count=0,limit=Math.min(6,windows.size()),regions=limit+(includeContext?1:0),capacity=regions*LiveVisionPolicy.MAX_ROI_KEYPOINTS;
+            KeyPoint[] combined=new KeyPoint[capacity];byte[] bytes=new byte[capacity*32];
+            java.util.Set<Long> seen=new java.util.HashSet<>();MatOfKeyPoint localKeys=new MatOfKeyPoint();Mat localRows=new Mat();
+            try{
+                for(int region=0;region<regions;region++){
+                    if(region==limit)extract(src,empty,orb,localKeys,localRows);
+                    else extractProposal(src,windows.get(region),orb,localKeys,localRows);
+                    KeyPoint[] points=localKeys.toArray();if(localRows.empty())continue;
+                    byte[] values=new byte[localRows.rows()*32];localRows.get(0,0,values);
+                    for(int i=0;i<points.length&&count<capacity;i++){
+                        KeyPoint p=points[i];long id=((long)Math.round(p.pt.x*4)<<32)|(Math.round(p.pt.y*4)&0xffffffffL);
+                        if(!seen.add(id))continue;combined[count]=p;System.arraycopy(values,i*32,bytes,count*32,32);count++;
+                    }
+                }
+                keys.fromArray(java.util.Arrays.copyOf(combined,count));
+                if(count==0)descriptors.release();else{descriptors.create(count,32,CvType.CV_8UC1);descriptors.put(0,0,bytes);}
+            }finally{localKeys.release();localRows.release();}
+        }
         /** Mounted scenes contain several independent small bodies. Distribute the budget
          * across four spatial crops instead of allowing one textured PCB corner to consume
          * it all. Each ROI retains the 300-row limit; duplicate physical points are removed. */

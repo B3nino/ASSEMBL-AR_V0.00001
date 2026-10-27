@@ -123,7 +123,7 @@ public final class PartRecognitionTestSession {
             if (result.getPose() != null) stats.poseFrames++;
             stats.lastObservation = gate.observe(stats.componentId, normalizedCorners,
                     result.getPose() == null ? null : result.getPose().getTranslationVector(),
-                    true, stats.minimumProjectedArea, timestamp);
+                    result.getDetectionMethod()!=RecognitionResult.DetectionMethod.TRAINED_MODEL, stats.minimumProjectedArea, timestamp);
         } else {
             if (detected) {
                 stats.wrongComponentFrames++;

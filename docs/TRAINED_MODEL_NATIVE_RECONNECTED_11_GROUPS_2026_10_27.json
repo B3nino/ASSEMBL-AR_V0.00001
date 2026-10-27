@@ -1,0 +1,57 @@
+﻿[
+    {
+        "case":  "allNinePackagedModelsLoadAndExecuteOnAndroid",
+        "passed":  true,
+        "seconds":  10.3210029
+    },
+    {
+        "case":  "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+        "passed":  true,
+        "seconds":  4.6589121
+    },
+    {
+        "case":  "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+        "passed":  true,
+        "seconds":  3.8573491
+    },
+    {
+        "case":  "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+        "passed":  true,
+        "seconds":  2.9710585
+    },
+    {
+        "case":  "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+        "passed":  true,
+        "seconds":  6.3081220999999994
+    },
+    {
+        "case":  "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+        "passed":  true,
+        "seconds":  4.3046238
+    },
+    {
+        "case":  "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+        "passed":  true,
+        "seconds":  14.944523799999999
+    },
+    {
+        "case":  "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+        "passed":  true,
+        "seconds":  20.2879951
+    },
+    {
+        "case":  "realLoosePhotosCompareProposalAndFullSearchTimings",
+        "passed":  true,
+        "seconds":  110.52472829999999
+    },
+    {
+        "case":  "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+        "passed":  true,
+        "seconds":  91.6114949
+    },
+    {
+        "case":  "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+        "passed":  true,
+        "seconds":  37.558192399999996
+    }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "case": "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+    "passed": true,
+    "seconds": 38.1828328
+  },
+  {
+    "case": "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+    "passed": true,
+    "seconds": 10.714215699999999
+  },
+  {
+    "case": "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+    "passed": true,
+    "seconds": 7.445256799999999
+  },
+  {
+    "case": "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+    "passed": true,
+    "seconds": 3.8716857
+  },
+  {
+    "case": "vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence",
+    "passed": true,
+    "seconds": 2.6833863
+  }
+]

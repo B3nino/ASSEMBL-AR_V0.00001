@@ -1,0 +1,84 @@
+{
+  "scope": "Final tablet retained-frame photo verification; separate inference times",
+  "phases": {
+    "5": {
+      "baseline_verification_ms": [
+        103.958697,
+        128.246927,
+        99.542813,
+        74.92526,
+        109.748489,
+        85.983646
+      ],
+      "assisted_verification_ms": [
+        89.673385,
+        108.841875,
+        84.015885,
+        76.651458,
+        98.226667,
+        81.42474
+      ],
+      "separate_inference_ms": [
+        528.931719,
+        260.522344,
+        257.937865
+      ],
+      "baseline_median_ms": 101.750755,
+      "assisted_median_ms": 86.844635,
+      "verification_median_reduction_percent": 14.64964068325586
+    },
+    "9": {
+      "baseline_verification_ms": [
+        516.756823,
+        198.551511,
+        1600.47552,
+        544.840833,
+        205.987968,
+        292.300313
+      ],
+      "assisted_verification_ms": [
+        323.262812,
+        231.295104,
+        246.201563,
+        300.099323,
+        227.457135,
+        256.914271
+      ],
+      "separate_inference_ms": [
+        1137.626405,
+        290.593593,
+        288.096458
+      ],
+      "baseline_median_ms": 404.52856800000006,
+      "assisted_median_ms": 251.55791699999997,
+      "verification_median_reduction_percent": 37.814548365840025
+    }
+  },
+  "camera": {
+    "baseline": {
+      "size": "640x480",
+      "fps": 29.555904304783265,
+      "bufferPathP95Ms": 15.374011,
+      "recoveryRequests": 0.0,
+      "lastInferenceMs": 0.0,
+      "nativeGrowthBytes": 0.0
+    },
+    "assisted": {
+      "size": "640x480",
+      "fps": 29.06425884347584,
+      "bufferPathP95Ms": 6.126094,
+      "recoveryRequests": 15.0,
+      "lastInferenceMs": 461.133645,
+      "nativeGrowthBytes": 2955136.0
+    },
+    "assisted_duration_seconds": 30,
+    "scope": "Actual sensor and private preview stream; camera callback/tracker work plus trained inference. Not displayed UI FPS or recognition accuracy.",
+    "delivered_fps_retained_percent": 98.33655754113448
+  },
+  "limits": [
+    "No independent new-room recognition accuracy study was performed.",
+    "Verification timings exclude inference and do not prove a universal end-to-end recognition speedup.",
+    "The first sweep had two failures; each passed two isolated reruns without relaxed limits.",
+    "Release assistance remains opt-in; learner APK was not replaced or cleared."
+  ]
+}

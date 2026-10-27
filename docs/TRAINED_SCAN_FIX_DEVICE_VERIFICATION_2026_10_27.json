@@ -1,0 +1,333 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Asia/Manila",
+  "device": {
+    "model": "2603ARP14G",
+    "serial": "368e278b"
+  },
+  "apk_sha256": "7690a50f3bb6d363497d677d8d70e633fbeaaf94b922b550ba9365df0b38db93",
+  "candidate_sha256": "13d5ac5fc2af11be931a83982d04797079fa85c9c5cd87479bfd3794e0758cee",
+  "model_checks": [
+    {
+      "case": "guidedAndIndividualRoutesExecuteTheirActualModelWithoutRestart",
+      "passed": true,
+      "seconds": 24.400825599999997
+    },
+    {
+      "case": "proposalExtractionKeepsBothPhysicalPartsAndWholeSceneContext",
+      "passed": true,
+      "seconds": 3.3443329
+    },
+    {
+      "case": "proposalDescriptorsCannotPoisonTheFollowingFullFrameSearch",
+      "passed": true,
+      "seconds": 22.620685299999998
+    },
+    {
+      "case": "boardInventoryHardwareAndNanoRecoverInOneContinuousAnalyzer",
+      "passed": true,
+      "seconds": 31.6580284
+    },
+    {
+      "case": "allNinePackagedModelsLoadAndExecuteOnAndroid",
+      "passed": true,
+      "seconds": 11.6075208
+    },
+    {
+      "case": "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+      "passed": true,
+      "seconds": 3.8150190999999998
+    },
+    {
+      "case": "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+      "passed": true,
+      "seconds": 3.3829773999999997
+    },
+    {
+      "case": "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+      "passed": true,
+      "seconds": 4.1349762
+    },
+    {
+      "case": "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+      "passed": true,
+      "seconds": 5.6797175
+    },
+    {
+      "case": "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+      "passed": true,
+      "seconds": 3.0206587
+    },
+    {
+      "case": "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+      "passed": true,
+      "seconds": 14.5009701
+    },
+    {
+      "case": "fastVerifiedNanoSkipsNeuralQuery",
+      "passed": true,
+      "seconds": 9.6416335
+    },
+    {
+      "case": "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+      "passed": true,
+      "seconds": 17.845931999999998
+    },
+    {
+      "case": "expiredColdResultRetriesCurrentPixelsWithoutManualReset",
+      "passed": true,
+      "seconds": 5.8416165
+    },
+    {
+      "case": "initialPhotoPassDoesNotWaitForTheTrainedWorker",
+      "passed": true,
+      "seconds": 11.8415807
+    },
+    {
+      "case": "realLoosePhotosCompareProposalAndFullSearchTimings",
+      "passed": true,
+      "seconds": 114.1087424
+    },
+    {
+      "case": "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+      "passed": true,
+      "seconds": 88.9785627
+    },
+    {
+      "case": "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+      "passed": true,
+      "seconds": 42.5120115
+    },
+    {
+      "case": "capture:realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+      "passed": true,
+      "seconds": 52.3903275
+    }
+  ],
+  "focused_checks": [
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+      "passed": true,
+      "seconds": 42.600410499999995
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+      "passed": true,
+      "seconds": 14.497509599999999
+    },
+    {
+      "case": "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+      "passed": true,
+      "seconds": 10.6567794
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#trainedBoardModelLoadsOnCpuAndProposesNanoRegions",
+      "passed": true,
+      "seconds": 8.7647208
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#trainedProposalCannotPassReversedOrMissingNano",
+      "passed": true,
+      "seconds": 27.4223619
+    },
+    {
+      "case": "vision.NanoDnnInstrumentedTest#trainedTogglePersistsWithoutChangingAssemblyProgress",
+      "passed": true,
+      "seconds": 4.6147062
+    }
+  ],
+  "compatibility_scenarios_with_passing_results": 20,
+  "compatibility_note": "19 passed before the final performance/cold-expiry adjustment; one missing-file fixture was repaired. Six final rechecks cover Phase 2 and Nano, including that fixture. All original acceptance gates remain unchanged.",
+  "continuous_session": [
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "board",
+      "elapsed_ms": 237,
+      "native_heap_bytes": 41716608
+    },
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "brackets",
+      "elapsed_ms": 782,
+      "native_heap_bytes": 42113808
+    },
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "motors",
+      "elapsed_ms": 359,
+      "native_heap_bytes": 41991264
+    },
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "top",
+      "elapsed_ms": 646,
+      "native_heap_bytes": 42008880
+    },
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "left",
+      "elapsed_ms": 363,
+      "native_heap_bytes": 40126016
+    },
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "right",
+      "elapsed_ms": 415,
+      "native_heap_bytes": 40877552
+    },
+    {
+      "pid": 21617,
+      "cycle": 0,
+      "checkpoint": "nano",
+      "elapsed_ms": 219,
+      "native_heap_bytes": 42948544
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "board",
+      "elapsed_ms": 115,
+      "native_heap_bytes": 46548000
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "brackets",
+      "elapsed_ms": 376,
+      "native_heap_bytes": 47475232
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "motors",
+      "elapsed_ms": 269,
+      "native_heap_bytes": 46268128
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "top",
+      "elapsed_ms": 519,
+      "native_heap_bytes": 43409536
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "left",
+      "elapsed_ms": 450,
+      "native_heap_bytes": 42651760
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "right",
+      "elapsed_ms": 399,
+      "native_heap_bytes": 43036368
+    },
+    {
+      "pid": 21617,
+      "cycle": 1,
+      "checkpoint": "nano",
+      "elapsed_ms": 183,
+      "native_heap_bytes": 44077552
+    }
+  ],
+  "continuous_cycle_end_growth_bytes": 1129008,
+  "warm_verification_timings": {
+    "5": {
+      "baseline_verify_ms": [
+        104.373334,
+        114.698802,
+        114.751927,
+        84.93073,
+        100.235937,
+        79.970989
+      ],
+      "assisted_verify_ms": [
+        102.513438,
+        105.448177,
+        84.779896,
+        72.902135,
+        105.678542,
+        80.428646
+      ],
+      "inference_ms": [
+        752.2375,
+        295.963281,
+        291.43375
+      ],
+      "baseline_verify_median_ms": 102.3046355,
+      "assisted_verify_median_ms": 93.646667,
+      "verify_median_reduction_percent": 8.46292883766739,
+      "frames": 3,
+      "rounds": 2
+    },
+    "9": {
+      "baseline_verify_ms": [
+        538.151041,
+        216.826458,
+        291.081458,
+        544.617344,
+        170.159375,
+        1026.78052
+      ],
+      "assisted_verify_ms": [
+        339.789323,
+        248.135469,
+        283.838438,
+        320.653698,
+        257.541302,
+        270.936042
+      ],
+      "inference_ms": [
+        626.159167,
+        298.259375,
+        300.468281
+      ],
+      "baseline_verify_median_ms": 414.6162495,
+      "assisted_verify_median_ms": 277.38724,
+      "verify_median_reduction_percent": 33.097836774484634,
+      "frames": 3,
+      "rounds": 2
+    }
+  },
+  "camera_soak": {
+    "baseline": {
+      "width": 640,
+      "height": 480,
+      "sensor_delivery_fps": 29.62115001198985,
+      "buffer_tracker_p95_ms": 14.637136,
+      "recovery_requests": 0,
+      "last_forward_ms": 0.0,
+      "native_growth_bytes": 0
+    },
+    "assisted": {
+      "width": 640,
+      "height": 480,
+      "sensor_delivery_fps": 28.652144555210356,
+      "buffer_tracker_p95_ms": 12.88724,
+      "recovery_requests": 11,
+      "last_forward_ms": 749.213072,
+      "native_growth_bytes": 0
+    }
+  },
+  "progress_and_database_hashes": {
+    "shared_prefs/assembly_phase_progress.xml": "390c4508d133bb76cdbfb948c33c12f7f0e0530fbfaa3a459fd9a59ff8cf78fb",
+    "shared_prefs/guided_assembly_steps.xml": "3325d2a819fdd8062c2cdc48a09b995c9b012915bcdf88b1cf9742a7f057c793",
+    "databases/assembl_ar.db": "f8540c308cb46ff4f36f626b2bcea862870a055619e089d50cd811245a3b956b"
+  },
+  "data_hashes_identical_after_tests_and_update": true,
+  "updated_in_place": true,
+  "uninstalled_or_cleared_data": false,
+  "limits": [
+    "Retained-camera replay is not independent-room accuracy or a live physical 11-phase assembly session.",
+    "Verification timing excludes separate inference time; no universal end-to-end speedup is claimed.",
+    "Camera sensor delivery/buffer tracking measurements are not displayed UI frame rate or a long thermal study."
+  ]
+}

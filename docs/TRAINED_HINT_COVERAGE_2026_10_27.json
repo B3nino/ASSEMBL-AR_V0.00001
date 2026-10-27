@@ -1,0 +1,202 @@
+{
+  "runtime": "4.12.0",
+  "scope": "Existing held-out test photos, resized like the 640px camera replay. Proposal coverage only; no assembly verdict.",
+  "phases": [
+    {
+      "phase": 1,
+      "test_images": 20,
+      "classes": {
+        "0": "main_board_front",
+        "1": "main_board_back"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 3,
+          "localized_at_iou_025": 2,
+          "proposals": 6,
+          "unmatched_proposals": 4
+        },
+        "0.75": {
+          "truth": 3,
+          "localized_at_iou_025": 0,
+          "proposals": 0,
+          "unmatched_proposals": 0
+        }
+      }
+    },
+    {
+      "phase": 2,
+      "test_images": 27,
+      "classes": {
+        "0": "motor_bracket",
+        "1": "gear_motor"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 52,
+          "localized_at_iou_025": 31,
+          "proposals": 33,
+          "unmatched_proposals": 2
+        },
+        "0.75": {
+          "truth": 52,
+          "localized_at_iou_025": 25,
+          "proposals": 26,
+          "unmatched_proposals": 1
+        }
+      }
+    },
+    {
+      "phase": 3,
+      "test_images": 13,
+      "classes": {
+        "0": "motor_driver"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 13,
+          "localized_at_iou_025": 12,
+          "proposals": 18,
+          "unmatched_proposals": 6
+        },
+        "0.75": {
+          "truth": 13,
+          "localized_at_iou_025": 7,
+          "proposals": 7,
+          "unmatched_proposals": 0
+        }
+      }
+    },
+    {
+      "phase": 5,
+      "test_images": 15,
+      "classes": {
+        "0": "arduino_nano"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 15,
+          "localized_at_iou_025": 11,
+          "proposals": 12,
+          "unmatched_proposals": 1
+        },
+        "0.75": {
+          "truth": 15,
+          "localized_at_iou_025": 9,
+          "proposals": 9,
+          "unmatched_proposals": 0
+        }
+      }
+    },
+    {
+      "phase": 7,
+      "test_images": 26,
+      "classes": {
+        "0": "caster_wheel",
+        "1": "line_tracker"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 59,
+          "localized_at_iou_025": 48,
+          "proposals": 57,
+          "unmatched_proposals": 9
+        },
+        "0.75": {
+          "truth": 59,
+          "localized_at_iou_025": 39,
+          "proposals": 41,
+          "unmatched_proposals": 2
+        }
+      }
+    },
+    {
+      "phase": 8,
+      "test_images": 20,
+      "classes": {
+        "0": "ultrasonic_distance_sensor"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 20,
+          "localized_at_iou_025": 6,
+          "proposals": 7,
+          "unmatched_proposals": 1
+        },
+        "0.75": {
+          "truth": 20,
+          "localized_at_iou_025": 6,
+          "proposals": 6,
+          "unmatched_proposals": 0
+        }
+      }
+    },
+    {
+      "phase": 9,
+      "test_images": 12,
+      "classes": {
+        "0": "center_standoff",
+        "1": "drive_wheel"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 22,
+          "localized_at_iou_025": 16,
+          "proposals": 17,
+          "unmatched_proposals": 1
+        },
+        "0.75": {
+          "truth": 22,
+          "localized_at_iou_025": 13,
+          "proposals": 14,
+          "unmatched_proposals": 1
+        }
+      }
+    },
+    {
+      "phase": 10,
+      "test_images": 37,
+      "classes": {
+        "0": "extension_data_cable",
+        "1": "extension_board",
+        "2": "oled_protector"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 52,
+          "localized_at_iou_025": 34,
+          "proposals": 60,
+          "unmatched_proposals": 26
+        },
+        "0.75": {
+          "truth": 52,
+          "localized_at_iou_025": 15,
+          "proposals": 18,
+          "unmatched_proposals": 3
+        }
+      }
+    },
+    {
+      "phase": 11,
+      "test_images": 15,
+      "classes": {
+        "0": "oled_display",
+        "1": "battery_pack"
+      },
+      "thresholds": {
+        "0.35": {
+          "truth": 17,
+          "localized_at_iou_025": 14,
+          "proposals": 19,
+          "unmatched_proposals": 5
+        },
+        "0.75": {
+          "truth": 17,
+          "localized_at_iou_025": 12,
+          "proposals": 12,
+          "unmatched_proposals": 0
+        }
+      }
+    }
+  ]
+}

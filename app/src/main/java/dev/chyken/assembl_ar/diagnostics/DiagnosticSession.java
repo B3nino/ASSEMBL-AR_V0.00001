@@ -59,6 +59,7 @@ public final class DiagnosticSession {
         if(spatiallyVerified)t=t.withVerification(r.getDisplayName()==null||r.getDisplayName().trim().isEmpty()?r.getComponentId():r.getDisplayName(),
                 VerifiedScanEvidence.verificationSource(r),r.getConfidence());
         RecognitionResult.RejectionEvidence rejected=r.getRejectionEvidence();
+        if(r.getTrainedEvidence()!=null)t=t.withTrainedEvidence(r.getTrainedEvidence());
         String reason=m!=null&&m.mismatch!=null?m.mismatch:p!=null&&p.rejected?"MISSING_MOTOR_OR_BRACKET":workflow?"ACCEPTED":rejected==null?r.getValidationState().name():rejected.getReason().name();
         DiagnosticSample sample=new DiagnosticSample(System.currentTimeMillis(),r.getFrameTimestampNanos(),request==null?0:request.getAssemblyStepNumber(),String.valueOf(r.getRequestTag()),
             t.componentName,t.referenceId,t.activeKeypoints,t.goodMatches,t.totalMatches,t.liveKeypoints,latency.getFeatureExtractionMs(),latency.getMatchingMs(),lighting(gray),workflow,reason,r.getDetectionMethod().name(),pose,measuredInliers?t.isCorrectPose:null,

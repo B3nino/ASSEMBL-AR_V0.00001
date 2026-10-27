@@ -1,0 +1,234 @@
+{
+  "scope": "Audit the stricter identity threshold with brightness changes; no weights/labels changed.\n\nExisting test captures are development evidence, not independent-session calibration.\nUnmatched detections include annotation omissions and localization/class mistakes.\n",
+  "threshold": 0.85,
+  "class_margin": 0.15,
+  "phases": [
+    {
+      "phase": 1,
+      "variants": {
+        "original": {
+          "truth": 3,
+          "matched_iou_025": 0,
+          "predictions": 0,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 3,
+          "matched_iou_025": 0,
+          "predictions": 0,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 3,
+          "matched_iou_025": 0,
+          "predictions": 0,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 2,
+      "variants": {
+        "original": {
+          "truth": 52,
+          "matched_iou_025": 19,
+          "predictions": 19,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 52,
+          "matched_iou_025": 19,
+          "predictions": 19,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 52,
+          "matched_iou_025": 19,
+          "predictions": 19,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 3,
+      "variants": {
+        "original": {
+          "truth": 13,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 13,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 13,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 5,
+      "variants": {
+        "original": {
+          "truth": 15,
+          "matched_iou_025": 6,
+          "predictions": 6,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 15,
+          "matched_iou_025": 6,
+          "predictions": 6,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 15,
+          "matched_iou_025": 5,
+          "predictions": 5,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 7,
+      "variants": {
+        "original": {
+          "truth": 59,
+          "matched_iou_025": 17,
+          "predictions": 17,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 59,
+          "matched_iou_025": 15,
+          "predictions": 16,
+          "unmatched": 1
+        },
+        "brighter": {
+          "truth": 59,
+          "matched_iou_025": 17,
+          "predictions": 17,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": [
+        {
+          "image": "p07_177.jpg",
+          "variant": "dimmer",
+          "predictions": [
+            {
+              "label": 1,
+              "score": 0.8551502823829651
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 8,
+      "variants": {
+        "original": {
+          "truth": 20,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 20,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 20,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 9,
+      "variants": {
+        "original": {
+          "truth": 22,
+          "matched_iou_025": 9,
+          "predictions": 9,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 22,
+          "matched_iou_025": 9,
+          "predictions": 9,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 22,
+          "matched_iou_025": 10,
+          "predictions": 10,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 10,
+      "variants": {
+        "original": {
+          "truth": 52,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 52,
+          "matched_iou_025": 1,
+          "predictions": 1,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 52,
+          "matched_iou_025": 2,
+          "predictions": 2,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    },
+    {
+      "phase": 11,
+      "variants": {
+        "original": {
+          "truth": 17,
+          "matched_iou_025": 7,
+          "predictions": 7,
+          "unmatched": 0
+        },
+        "dimmer": {
+          "truth": 17,
+          "matched_iou_025": 8,
+          "predictions": 8,
+          "unmatched": 0
+        },
+        "brighter": {
+          "truth": 17,
+          "matched_iou_025": 7,
+          "predictions": 7,
+          "unmatched": 0
+        }
+      },
+      "unmatched_examples": []
+    }
+  ]
+}

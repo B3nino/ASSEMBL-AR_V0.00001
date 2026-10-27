@@ -9,15 +9,16 @@ public class HybridRecoveryPolicyTest {
         for(int i=0;i<10000;i++){p.observe(false);assertTrue(p.edgeRecovery());}
         p.observe(true);assertTrue(p.edgeRecovery());p.reset();assertTrue(p.edgeRecovery());
     }
-    @Test public void detectorBoundsAreClampedPaddedAndCannotAcceptInvalidNumbers(){
-        org.opencv.core.Rect r=OpenCvDnnRoiLocator.decodeBounds(.2,.3,.5,.6,640,400);
-        assertNotNull(r);assertTrue(r.x<128);assertTrue(r.y<120);assertTrue(r.x+r.width>=320);
-        assertNull(OpenCvDnnRoiLocator.decodeBounds(Double.NaN,0,1,1,640,400));
-        assertNull(OpenCvDnnRoiLocator.decodeBounds(-.1,0,1,1,640,400));
-        assertNull(OpenCvDnnRoiLocator.decodeBounds(.5,0,.4,1,640,400));
-        assertNull(OpenCvDnnRoiLocator.decodeBounds(0,0,.001,.001,640,400));
+    @Test public void trainedBoundsAreClampedAndCannotAcceptInvalidNumbers(){
+        DnnRoiDecoder.Letterbox transform=new DnnRoiDecoder.Letterbox(640,400,512);
+        org.opencv.core.Rect r=transform.bounds(256,256,200,100);
+        assertNotNull(r);assertTrue(r.x>=0&&r.y>=0&&r.x+r.width<=640&&r.y+r.height<=400);
+        assertNull(transform.bounds(Double.NaN,0,1,1));
+        assertNull(transform.bounds(200,200,-1,20));
+        assertNull(transform.bounds(200,200,.001,.001));
+        assertNull(transform.bounds(900,900,20,20));
     }
-    @Test public void optionalDetectorHasNoImplicitModelOrAcceptance(){assertFalse(OpenCvDnnRoiLocator.INSTANCE.available());}
+    @Test public void optionalDetectorCannotManufactureAcceptance(){assertFalse(VerifiedScanEvidence.workflowAccepted(null,null));assertFalse(TrainedModelPolicy.assisted(null));}
     @Test public void structuralWinnerPersistsAcrossTheConsecutiveScanGate(){
         AdaptiveIlluminationPolicy p=new AdaptiveIlluminationPolicy();p.observe(false);p.observe(false);assertTrue(p.edgeRecovery());
         for(int i=0;i<5;i++){p.observe(true,true);assertTrue(p.edgeRecovery());}

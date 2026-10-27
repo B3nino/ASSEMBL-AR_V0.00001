@@ -13,7 +13,8 @@ public final class RecognitionResult {
         ORB_DESCRIPTOR_ONLY,
         COLOR_SHAPE_FALLBACK,
         MODEL_EDGE_MATCH,
-        CANNY_HOUGH_FALLBACK
+        CANNY_HOUGH_FALLBACK,
+        TRAINED_MODEL
     }
 
     public enum ValidationState {
@@ -68,6 +69,9 @@ public final class RecognitionResult {
         }
     }
     private final DiagnosticMetrics diagnosticMetrics;
+    private final TrainedRecognitionEvidence trainedEvidence;
+    public TrainedRecognitionEvidence getTrainedEvidence(){return trainedEvidence;}
+    RecognitionResult withTrainedEvidence(TrainedRecognitionEvidence evidence){Builder b=copyBuilder();b.trainedEvidence=evidence;return b.build();}
     public DiagnosticMetrics getDiagnosticMetrics(){return diagnosticMetrics;}
     public RecognitionResult withDiagnosticMetrics(DiagnosticMetrics m){Builder b=copyBuilder();b.diagnosticMetrics=m;return b.build();}
     RecognitionResult withVerifiedScanEvidence(VerifiedScanEvidence e,String mismatch,String preprocessing){
@@ -135,6 +139,7 @@ public final class RecognitionResult {
         orientationClassification = builder.orientationClassification;
         orientationDegrees = builder.orientationDegrees;
         polarityState = builder.polarityState;
+        trainedEvidence=builder.trainedEvidence;
         frameKeypointCount = builder.frameKeypointCount;
         goodMatchCount = builder.goodMatchCount;
         inlierCount = builder.inlierCount;
@@ -381,6 +386,7 @@ public final class RecognitionResult {
         copy.rejectionEvidence = rejectionEvidence;
         copy.requestTag = requestTag;
         copy.diagnosticMetrics=diagnosticMetrics;
+        copy.trainedEvidence=trainedEvidence;
         copy.phase2Observation=phase2Observation;
         copy.phase3Observation=phase3Observation;
         copy.phase7Observation=phase7Observation;
@@ -430,6 +436,7 @@ public final class RecognitionResult {
     }
 
     static final class Builder {
+        private TrainedRecognitionEvidence trainedEvidence;
         private DiagnosticMetrics diagnosticMetrics;
         private Phase2Observation phase2Observation;
         private Phase7Observation phase7Observation;

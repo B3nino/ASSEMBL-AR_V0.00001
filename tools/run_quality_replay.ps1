@@ -1,4 +1,4 @@
-param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','latency','boardrelative','planf','all')][string]$Suite='quality')
+param([string]$Serial='368e278b', [ValidateSet('quality','audit','phase1011','phase789followup','phase10followup','latency','boardrelative','planf','phoneui','all')][string]$Suite='quality')
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskAdb=Join-Path $env:LOCALAPPDATA 'Android/Sdk/platform-tools/adb.exe'
@@ -94,9 +94,9 @@ $taskPhase10FollowupCases=@(
  'vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames'
 )
 $taskLatencyCases=@(
- 'vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions',
- 'vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano',
- 'vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress',
+ 'vision.NanoDnnInstrumentedTest#trainedBoardModelLoadsOnCpuAndProposesNanoRegions',
+ 'vision.NanoDnnInstrumentedTest#trainedProposalCannotPassReversedOrMissingNano',
+ 'vision.NanoDnnInstrumentedTest#trainedTogglePersistsWithoutChangingAssemblyProgress',
  'vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates',
  'vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows',
  'vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates',
@@ -117,7 +117,12 @@ $taskPlanFCases=@(
  'UiBeautificationInstrumentedTest#planFSettingsPersistWithoutChangingExistingPreferencesAndLargeFontHelpIsReachable',
  'UiBeautificationInstrumentedTest#planFLoadsABoundedRealPhotoAndRendersItsHelpSurface'
 )
-$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'latency'{$taskLatencyCases};'boardrelative'{$taskBoardRelativeCases};'planf'{$taskPlanFCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases+$taskLatencyCases+$taskBoardRelativeCases+$taskPlanFCases}}
+$taskPhoneCases=@(
+ 'UiBeautificationInstrumentedTest#phoneAssemblyReservesCameraAndDoesNotAlterWorkflowButtons',
+ 'UiBeautificationInstrumentedTest#phoneTesterKeepsCameraAndFullToolsWithoutFloatingMetrics',
+ 'UiBeautificationInstrumentedTest#tabletScanningLayoutSurvivesPhoneReflowWithoutChangingControls'
+)
+$taskCases=switch($Suite){'quality'{$taskQualityCases};'audit'{$taskAuditCases};'phase1011'{$taskPhase1011Cases};'phase789followup'{$taskPhase789FollowupCases};'phase10followup'{$taskPhase10FollowupCases};'latency'{$taskLatencyCases};'boardrelative'{$taskBoardRelativeCases};'planf'{$taskPlanFCases};'phoneui'{$taskPhoneCases};'all'{$taskQualityCases+$taskAuditCases+$taskPhase1011Cases+$taskPhase789FollowupCases+$taskPhase10FollowupCases+$taskLatencyCases+$taskBoardRelativeCases+$taskPlanFCases+$taskPhoneCases}}
 $taskFailed=@()
 $taskResults=@()
 foreach($taskCase in $taskCases){

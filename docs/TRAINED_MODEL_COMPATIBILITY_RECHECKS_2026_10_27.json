@@ -1,0 +1,22 @@
+[
+  {
+    "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+    "passed": true
+  },
+  {
+    "case": "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+    "passed": true
+  },
+  {
+    "case": "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+    "passed": true
+  },
+  {
+    "case": "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+    "passed": true
+  },
+  {
+    "case": "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+    "passed": true
+  }
+]

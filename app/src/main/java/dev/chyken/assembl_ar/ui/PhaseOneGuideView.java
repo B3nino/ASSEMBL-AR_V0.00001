@@ -92,6 +92,7 @@ public final class PhaseOneGuideView extends FrameLayout {
     }
 
     public View getDragHandle() { return dragHandle; }
+    public void setCameraBodyVisible(boolean visible){scroll.setVisibility(visible?VISIBLE:GONE);}
     public void setNextAction(Runnable action) { next.setOnClickListener(v -> action.run()); }
     public void setRescanAction(Runnable action){rescan.setOnClickListener(v->action.run());}
     public boolean isNextEnabled() { return next.isEnabled(); }
@@ -153,12 +154,13 @@ public final class PhaseOneGuideView extends FrameLayout {
         if (maximumHeight == height) return;
         maximumHeight = Math.max(1, height); requestLayout();
     }
+    public int getMaximumHeight(){return maximumHeight;}
 
     @Override protected void onMeasure(int width, int height) {
         int limit = Math.min(maximumHeight, MeasureSpec.getSize(height));
         footer.measure(width,MeasureSpec.makeMeasureSpec(limit,MeasureSpec.AT_MOST));
-        scroll.measure(width,MeasureSpec.makeMeasureSpec(Math.max(0,limit-footer.getMeasuredHeight()),MeasureSpec.AT_MOST));
-        setMeasuredDimension(MeasureSpec.getSize(width),footer.getMeasuredHeight()+scroll.getMeasuredHeight());
+        if(scroll.getVisibility()!=GONE)scroll.measure(width,MeasureSpec.makeMeasureSpec(Math.max(0,limit-footer.getMeasuredHeight()),MeasureSpec.AT_MOST));
+        setMeasuredDimension(MeasureSpec.getSize(width),footer.getMeasuredHeight()+(scroll.getVisibility()==GONE?0:scroll.getMeasuredHeight()));
     }
 
     @Override protected void onDetachedFromWindow() {

@@ -1,0 +1,87 @@
+﻿[
+    {
+        "case":  "guidedAndIndividualRoutesExecuteTheirActualModelWithoutRestart",
+        "passed":  true,
+        "seconds":  41.0848808
+    },
+    {
+        "case":  "proposalExtractionKeepsBothPhysicalPartsAndWholeSceneContext",
+        "passed":  true,
+        "seconds":  6.0609782999999995
+    },
+    {
+        "case":  "proposalDescriptorsCannotPoisonTheFollowingFullFrameSearch",
+        "passed":  true,
+        "seconds":  15.157502299999999
+    },
+    {
+        "case":  "boardInventoryHardwareAndNanoRecoverInOneContinuousAnalyzer",
+        "passed":  true,
+        "seconds":  31.160686199999997
+    },
+    {
+        "case":  "allNinePackagedModelsLoadAndExecuteOnAndroid",
+        "passed":  true,
+        "seconds":  11.88762
+    },
+    {
+        "case":  "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+        "passed":  true,
+        "seconds":  3.6070298
+    },
+    {
+        "case":  "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+        "passed":  true,
+        "seconds":  3.8962881
+    },
+    {
+        "case":  "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+        "passed":  true,
+        "seconds":  4.5529858
+    },
+    {
+        "case":  "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+        "passed":  true,
+        "seconds":  5.3490367
+    },
+    {
+        "case":  "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+        "passed":  true,
+        "seconds":  3.9537601999999996
+    },
+    {
+        "case":  "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+        "passed":  true,
+        "seconds":  12.0905553
+    },
+    {
+        "case":  "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+        "passed":  true,
+        "seconds":  17.1199258
+    },
+    {
+        "case":  "initialPhotoPassDoesNotWaitForTheTrainedWorker",
+        "passed":  true,
+        "seconds":  13.9033579
+    },
+    {
+        "case":  "realLoosePhotosCompareProposalAndFullSearchTimings",
+        "passed":  true,
+        "seconds":  120.4282449
+    },
+    {
+        "case":  "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+        "passed":  true,
+        "seconds":  83.389867099999989
+    },
+    {
+        "case":  "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+        "passed":  true,
+        "seconds":  50.2850995
+    },
+    {
+        "case":  "capture:realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+        "passed":  true,
+        "seconds":  49.1998819
+    }
+]

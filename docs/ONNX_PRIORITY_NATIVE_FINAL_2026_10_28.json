@@ -1,0 +1,97 @@
+[
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#priorityModelIdentityOwnsRealNanoAndWheelsDespiteBrightnessChange",
+    "passed": true,
+    "seconds": 5.1030093999999995
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#priorityAuthorityRejectsRealBackFacesWrongBoardsAndIncompleteSets",
+    "passed": true,
+    "seconds": 17.8559383
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#sharedAnalyzerCanConfirmNanoWithoutMatchingOrbReferences",
+    "passed": true,
+    "seconds": 4.5152733
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#fastVerifiedNanoReceivesPriorityQueryAndAutomaticFallback",
+    "passed": true,
+    "seconds": 7.4178698
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#guidedAndIndividualRoutesExecuteTheirActualModelWithoutRestart",
+    "passed": true,
+    "seconds": 18.2984688
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#boardInventoryHardwareAndNanoRecoverInOneContinuousAnalyzer",
+    "passed": true,
+    "seconds": 20.4005296
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#proposalDescriptorsCannotPoisonTheFollowingFullFrameSearch",
+    "passed": true,
+    "seconds": 12.6680724
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#proposalExtractionKeepsBothPhysicalPartsAndWholeSceneContext",
+    "passed": true,
+    "seconds": 2.1357162
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#allNinePackagedModelsLoadAndExecuteOnAndroid",
+    "passed": true,
+    "seconds": 8.0949218
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+    "passed": true,
+    "seconds": 2.1954990999999997
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+    "passed": true,
+    "seconds": 2.0559979
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+    "passed": true,
+    "seconds": 2.1153383999999997
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+    "passed": true,
+    "seconds": 2.847507
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+    "passed": true,
+    "seconds": 2.1471318
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+    "passed": true,
+    "seconds": 10.8973379
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#expiredColdResultRetriesCurrentPixelsWithoutManualReset",
+    "passed": true,
+    "seconds": 3.1834417
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#initialPhotoPassDoesNotWaitForTheTrainedWorker",
+    "passed": true,
+    "seconds": 6.0446743
+  },
+  {
+    "case": "vision.TrainedModelAssistInstrumentedTest#cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+    "passed": true,
+    "seconds": 12.8873058
+  },
+  {
+    "case": "vision.InstalledCapturePerformanceInstrumentedTest#realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+    "passed": true,
+    "seconds": 49.4578148
+  }
+]

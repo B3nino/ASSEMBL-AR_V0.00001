@@ -1,0 +1,97 @@
+[
+  {
+    "case": "guidedAndIndividualRoutesExecuteTheirActualModelWithoutRestart",
+    "passed": true,
+    "seconds": 24.400825599999997
+  },
+  {
+    "case": "proposalExtractionKeepsBothPhysicalPartsAndWholeSceneContext",
+    "passed": true,
+    "seconds": 3.3443329
+  },
+  {
+    "case": "proposalDescriptorsCannotPoisonTheFollowingFullFrameSearch",
+    "passed": true,
+    "seconds": 22.620685299999998
+  },
+  {
+    "case": "boardInventoryHardwareAndNanoRecoverInOneContinuousAnalyzer",
+    "passed": true,
+    "seconds": 31.6580284
+  },
+  {
+    "case": "allNinePackagedModelsLoadAndExecuteOnAndroid",
+    "passed": true,
+    "seconds": 11.6075208
+  },
+  {
+    "case": "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+    "passed": true,
+    "seconds": 3.8150190999999998
+  },
+  {
+    "case": "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+    "passed": true,
+    "seconds": 3.3829773999999997
+  },
+  {
+    "case": "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+    "passed": true,
+    "seconds": 4.1349762
+  },
+  {
+    "case": "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+    "passed": true,
+    "seconds": 5.6797175
+  },
+  {
+    "case": "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+    "passed": true,
+    "seconds": 3.0206587
+  },
+  {
+    "case": "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+    "passed": true,
+    "seconds": 14.5009701
+  },
+  {
+    "case": "fastVerifiedNanoSkipsNeuralQuery",
+    "passed": true,
+    "seconds": 9.6416335
+  },
+  {
+    "case": "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+    "passed": true,
+    "seconds": 17.845931999999998
+  },
+  {
+    "case": "expiredColdResultRetriesCurrentPixelsWithoutManualReset",
+    "passed": true,
+    "seconds": 5.8416165
+  },
+  {
+    "case": "initialPhotoPassDoesNotWaitForTheTrainedWorker",
+    "passed": true,
+    "seconds": 11.8415807
+  },
+  {
+    "case": "realLoosePhotosCompareProposalAndFullSearchTimings",
+    "passed": true,
+    "seconds": 114.1087424
+  },
+  {
+    "case": "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+    "passed": true,
+    "seconds": 88.9785627
+  },
+  {
+    "case": "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+    "passed": true,
+    "seconds": 42.5120115
+  },
+  {
+    "case": "capture:realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+    "passed": true,
+    "seconds": 52.3903275
+  }
+]

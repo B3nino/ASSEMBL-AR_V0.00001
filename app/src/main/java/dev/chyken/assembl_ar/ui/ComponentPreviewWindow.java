@@ -30,6 +30,17 @@ public final class ComponentPreviewWindow extends FrameLayout {
     private android.widget.PopupMenu modelChoices;
     private String componentId;
     private boolean resumed;
+    private boolean presentationSuppressed;
+    private boolean compactControls;
+    public void setCompactControls(boolean value){if(compactControls==value)return;compactControls=value;setLegendMode(outline.legend);}
+    private int requestedVisibility=VISIBLE;
+    /** Phone layout may hide this aid without losing the flow's requested content state. */
+    public void setPresentationSuppressed(boolean value){
+        if(presentationSuppressed==value)return;presentationSuppressed=value;
+        super.setVisibility(value?GONE:requestedVisibility);
+        if(surface!=null){if(resumed&&!value&&requestedVisibility==VISIBLE)surface.onResume();else surface.onPause();}
+    }
+    @Override public void setVisibility(int value){requestedVisibility=value;super.setVisibility(presentationSuppressed?GONE:value);}
     @Nullable private ResizeListener resizeListener;
     private float resizeStartX, resizeStartY;
     private int resizeStartWidth, resizeStartHeight;
@@ -106,8 +117,8 @@ public final class ComponentPreviewWindow extends FrameLayout {
     public void showInteractionHint(){hint.animate().cancel();hint.setAlpha(1);removeCallbacks(fadeHint);postDelayed(fadeHint,3_000);}
     public void setLegendMode(boolean value){
         outline.legend=value;outline.invalidate();
-        resizeHandle.setVisibility(value?GONE:VISIBLE);resizeCaption.setVisibility(value?GONE:VISIBLE);hint.setVisibility(value?GONE:VISIBLE);
-        LayoutParams p=(LayoutParams)viewport.getLayoutParams();p.topMargin=UiUtils.dp(getContext(),value?36:58);p.bottomMargin=UiUtils.dp(getContext(),value?6:38);viewport.setLayoutParams(p);
+        resizeHandle.setVisibility(value||compactControls?GONE:VISIBLE);resizeCaption.setVisibility(value||compactControls?GONE:VISIBLE);hint.setVisibility(value?GONE:VISIBLE);
+        LayoutParams p=(LayoutParams)viewport.getLayoutParams();p.topMargin=UiUtils.dp(getContext(),value?36:58);p.bottomMargin=UiUtils.dp(getContext(),value||compactControls?6:38);viewport.setLayoutParams(p);
     }
     public void showContent(View content,String name){
         setSkipPreviewAction(null);
@@ -135,7 +146,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         surface.setZOrderMediaOverlay(true);
         surface.setContentDescription(getContext().getString(R.string.model_accessibility,name));
         viewport.addView(surface,new LayoutParams(-1,-1));
-        if (resumed) surface.onResume();
+        if (resumed&&!presentationSuppressed) surface.onResume();
         outline.state=ArHudView.HudState.SEARCHING;
         showInteractionHint();
     }
@@ -174,7 +185,7 @@ public final class ComponentPreviewWindow extends FrameLayout {
         outline.state=state; outline.invalidate();
     }
 
-    public void resume() { resumed=true; if(surface!=null) surface.onResume(); }
+    public void resume() { resumed=true; if(surface!=null&&!presentationSuppressed) surface.onResume(); }
     public void pause() { resumed=false; if(surface!=null) surface.onPause(); }
     public void dispose() { hideModelChoices(); removeCallbacks(fadeHint); hint.animate().cancel(); pause(); viewport.removeAllViews(); surface=null; }
 

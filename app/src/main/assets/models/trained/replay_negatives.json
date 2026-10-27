@@ -1,0 +1,26 @@
+[
+  {
+    "phase": 3,
+    "path": "references/Phase3/MOTORDRIVER_BACK_INVALID/IMG_20261020_005502_726@336231261.jpg"
+  },
+  {
+    "phase": 5,
+    "path": "references/Phase5/MICROCONTROLLER_BOTTOMINVALID/IMG_20261020_014457_700@217992218.jpg"
+  },
+  {
+    "phase": 7,
+    "path": "references/Phase7/STEP7_1CASTERWHEELSCANS_INVALID/IMG_20261021_123518_064@-1486060297.jpg"
+  },
+  {
+    "phase": 10,
+    "path": "references/Phase10/STEP10_1EXTENSIONBOARDSCAN_INVALID/var_light/VIDEO1011_j1H57AGW_118_extensionbad.jpg"
+  },
+  {
+    "phase": 11,
+    "path": "references/Phase11/STEP11_1OLEDSCANINVALID/OLEDSCANBOTTOMSIDE (1).jpg"
+  },
+  {
+    "phase": 9,
+    "path": "references/Phase9/WHEELSREF/var_light/VIDEO789_Zi6cD-KG_64_wheel.jpg"
+  }
+]

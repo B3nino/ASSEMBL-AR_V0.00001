@@ -1,0 +1,44 @@
+{
+  "model": "phase2.onnx",
+  "task": "object_detection",
+  "architecture": "YOLO11n",
+  "classes": {
+    "0": "motor_bracket",
+    "1": "gear_motor"
+  },
+  "input": {
+    "name": "images",
+    "shape": [
+      1,
+      3,
+      512,
+      512
+    ],
+    "dtype": "float32",
+    "color": "RGB",
+    "resize": "aspect-preserving centered letterbox to 512x512, padding value 114",
+    "normalization": "divide pixels by 255; no CLAHE or ImageNet normalization"
+  },
+  "output": {
+    "name": "output0",
+    "shape": [
+      1,
+      6,
+      5376
+    ],
+    "layout": "[batch,4+classes,anchors]; channels 0..3 are cx,cy,w,h in letterboxed input pixels; channels 4.. are class scores",
+    "objectness": "no separate objectness channel",
+    "postprocessing": "class-aware NMS, suggested initial confidence .25 and IoU .45; undo letterbox for source coordinates"
+  },
+  "opset": 12,
+  "precision": "float32",
+  "dynamic": false,
+  "embedded_nms": false,
+  "limitations": [
+    "experimental, small dataset and limited capture sessions",
+    "does not estimate 3D pose or verify full assembly correctness",
+    "host runtime compatibility is not an on-tablet performance measurement"
+  ],
+  "license": "Ultralytics AGPL-3.0: https://ultralytics.com/license",
+  "sha256": "b4a11ef9e2d1d9b023363cf0898520d1704649631cff6b5b8204aa5199496286"
+}

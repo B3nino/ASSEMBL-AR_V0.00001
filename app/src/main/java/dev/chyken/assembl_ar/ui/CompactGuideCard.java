@@ -53,6 +53,8 @@ public final class CompactGuideCard extends FrameLayout {
     private MaterialButton button(Context c,String text){MaterialButton b=new MaterialButton(c);b.setText(text);b.setTextSize(13);b.setMinHeight(dp(48));return b;}
     private void secondary(MaterialButton button){button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0x00000000));button.setStrokeWidth(dp(1));button.setStrokeColor(android.content.res.ColorStateList.valueOf(0xFF526057));button.setTextColor(0xFFE1E8E0);}
     public View dragHandle(){return handle;}
+    /** Presentation only: footer actions retain the workflow's visibility/enabled state. */
+    public void setCameraBodyVisible(boolean visible){scroll.setVisibility(visible?VISIBLE:GONE);}
     public void render(int step,String title,String summary,String more,String message,boolean completed,boolean canPrevious,boolean canRescan){
         String key=Integer.toString(step);boolean changed=!key.equals(stepKey);
         if(changed){stepKey=key;setExpanded(false);removeCallbacks(hideNudge);nudge.animate().cancel();nudge.setVisibility(GONE);}
@@ -69,11 +71,12 @@ public final class CompactGuideCard extends FrameLayout {
     private void setExpanded(boolean value){boolean changed=expanded!=value;expanded=value;details.setVisibility(value?VISIBLE:GONE);learn.setText(value?"Show less ⌃":"Expand to learn more ⌄");if(value)nudge.setVisibility(GONE);if(changed&&detailsChanged!=null)detailsChanged.accept(value?details.getText().toString():"");}
     private void fadeNudge(){nudge.animate().alpha(0).setDuration(400).withEndAction(()->nudge.setVisibility(GONE)).start();}
     public void setMaximumHeight(int value){value=Math.max(1,value);if(value!=maximumHeight){maximumHeight=value;requestLayout();}}
+    public int getMaximumHeight(){return maximumHeight;}
     @Override protected void onMeasure(int width,int height){
         int limit=Math.min(maximumHeight,MeasureSpec.getSize(height));
         footer.measure(width,MeasureSpec.makeMeasureSpec(limit,MeasureSpec.AT_MOST));
-        scroll.measure(width,MeasureSpec.makeMeasureSpec(Math.max(0,limit-footer.getMeasuredHeight()),MeasureSpec.AT_MOST));
-        setMeasuredDimension(MeasureSpec.getSize(width),footer.getMeasuredHeight()+scroll.getMeasuredHeight());
+        if(scroll.getVisibility()!=GONE)scroll.measure(width,MeasureSpec.makeMeasureSpec(Math.max(0,limit-footer.getMeasuredHeight()),MeasureSpec.AT_MOST));
+        setMeasuredDimension(MeasureSpec.getSize(width),footer.getMeasuredHeight()+(scroll.getVisibility()==GONE?0:scroll.getMeasuredHeight()));
     }
     @Override protected void onDetachedFromWindow(){removeCallbacks(hideNudge);nudge.animate().cancel();super.onDetachedFromWindow();}
     private int dp(int v){return UiUtils.dp(getContext(),v);}

@@ -13,9 +13,9 @@ public final class PreferencesManager {
     public static boolean assemblyDeveloperVisible(Context c){return visibilityPreferences(c).getBoolean(KEY_ASSEMBLY_DEV_VISIBLE,false);}
     public static void assemblyDeveloperVisible(Context c,boolean visible){visibilityPreferences(c).edit().putBoolean(KEY_ASSEMBLY_DEV_VISIBLE,visible).apply();}
     public static final String KEY_TTS_MUTED="tts_muted";
-    public static final String KEY_NANO_DETECTOR="nano_chip_detector";
-    public static boolean nanoDetector(Context c){return c.getSharedPreferences("diagnostic_settings",0).getBoolean(KEY_NANO_DETECTOR,true);}
-    public static void nanoDetector(Context c,boolean enabled){c.getSharedPreferences("diagnostic_settings",0).edit().putBoolean(KEY_NANO_DETECTOR,enabled).apply();}
+    public static final String KEY_TRAINED_MODELS="trained_component_assistance";
+    public static boolean trainedModels(Context c){return c.getSharedPreferences("diagnostic_settings",0).getBoolean(KEY_TRAINED_MODELS,true);}
+    public static void trainedModels(Context c,boolean enabled){c.getSharedPreferences("diagnostic_settings",0).edit().putBoolean(KEY_TRAINED_MODELS,enabled).apply();}
     public static android.content.SharedPreferences narrationPreferences(Context c){return c.getSharedPreferences("diagnostic_settings",0);}
     public static boolean ttsMuted(Context c){
         android.content.SharedPreferences p=narrationPreferences(c);

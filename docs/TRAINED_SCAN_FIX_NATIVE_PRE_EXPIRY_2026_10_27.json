@@ -1,0 +1,92 @@
+﻿[
+    {
+        "case":  "guidedAndIndividualRoutesExecuteTheirActualModelWithoutRestart",
+        "passed":  true,
+        "seconds":  22.051541099999998
+    },
+    {
+        "case":  "proposalExtractionKeepsBothPhysicalPartsAndWholeSceneContext",
+        "passed":  true,
+        "seconds":  4.9290009999999995
+    },
+    {
+        "case":  "proposalDescriptorsCannotPoisonTheFollowingFullFrameSearch",
+        "passed":  true,
+        "seconds":  10.634208899999999
+    },
+    {
+        "case":  "boardInventoryHardwareAndNanoRecoverInOneContinuousAnalyzer",
+        "passed":  true,
+        "seconds":  30.2655069
+    },
+    {
+        "case":  "allNinePackagedModelsLoadAndExecuteOnAndroid",
+        "passed":  true,
+        "seconds":  11.685165999999999
+    },
+    {
+        "case":  "proposalCannotPublishIdentityAndFailureRetriesOriginalSearch",
+        "passed":  true,
+        "seconds":  4.4118265
+    },
+    {
+        "case":  "expiryAndMotionChecksNeverReuseAnOldPhysicalLocation",
+        "passed":  true,
+        "seconds":  3.7067791999999997
+    },
+    {
+        "case":  "queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose",
+        "passed":  true,
+        "seconds":  3.7712415
+    },
+    {
+        "case":  "backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce",
+        "passed":  true,
+        "seconds":  5.7556639
+    },
+    {
+        "case":  "missingModelDisablesOnlyAssistanceAndReleasesItsFrame",
+        "passed":  true,
+        "seconds":  3.7424193
+    },
+    {
+        "case":  "realDriverBadHintFallsBackToVerifiedPhotoGeometry",
+        "passed":  true,
+        "seconds":  14.725754799999999
+    },
+    {
+        "case":  "fastVerifiedNanoSkipsNeuralQuery",
+        "passed":  true,
+        "seconds":  9.1269247
+    },
+    {
+        "case":  "cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier",
+        "passed":  false,
+        "seconds":  15.4566769
+    },
+    {
+        "case":  "initialPhotoPassDoesNotWaitForTheTrainedWorker",
+        "passed":  true,
+        "seconds":  15.198397499999999
+    },
+    {
+        "case":  "realLoosePhotosCompareProposalAndFullSearchTimings",
+        "passed":  true,
+        "seconds":  125.508679
+    },
+    {
+        "case":  "reversedFacesWrongBoardsAndOneWheelCannotPassFromHints",
+        "passed":  true,
+        "seconds":  85.87838769999999
+    },
+    {
+        "case":  "variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage",
+        "passed":  true,
+        "seconds":  34.5141062
+    },
+    {
+        "case":  "capture:realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory",
+        "passed":  true,
+        "seconds":  51.4927533
+    }
+]

@@ -1,0 +1,102 @@
+﻿[
+    {
+        "case":  "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+        "passed":  true,
+        "seconds":  44.176561
+    },
+    {
+        "case":  "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+        "passed":  true,
+        "seconds":  16.0335707
+    },
+    {
+        "case":  "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+        "passed":  true,
+        "seconds":  10.3344644
+    },
+    {
+        "case":  "vision.Phase35VideoReplayInstrumentedTest#driverHeldOutFrontBackAndMountedOrientationsKeepOutlines",
+        "passed":  true,
+        "seconds":  57.4252537
+    },
+    {
+        "case":  "vision.Phase35VideoReplayInstrumentedTest#nanoHeldOutFrontInstalledReversedAndMissingRequireBodyEvidence",
+        "passed":  true,
+        "seconds":  37.124349699999996
+    },
+    {
+        "case":  "vision.Phase35VideoReplayInstrumentedTest#isolatedCropsUseIndividualToolRequestsAndPublishOutlineBeforeResult",
+        "passed":  true,
+        "seconds":  5.5629868999999994
+    },
+    {
+        "case":  "vision.NanoDnnInstrumentedTest#trainedBoardModelLoadsOnCpuAndProposesNanoRegions",
+        "passed":  false,
+        "seconds":  3.3339908
+    },
+    {
+        "case":  "vision.NanoDnnInstrumentedTest#trainedProposalCannotPassReversedOrMissingNano",
+        "passed":  true,
+        "seconds":  19.7048405
+    },
+    {
+        "case":  "vision.NanoDnnInstrumentedTest#trainedTogglePersistsWithoutChangingAssemblyProgress",
+        "passed":  true,
+        "seconds":  5.0714957
+    },
+    {
+        "case":  "vision.Phase789VideoReplayInstrumentedTest#darkTrackersRequireBothBodiesAndCasterAndKeepMeasuredOutlines",
+        "passed":  true,
+        "seconds":  91.1096108
+    },
+    {
+        "case":  "vision.Phase789VideoReplayInstrumentedTest#sensorRequiresBothEyesAndRejectsRealInwardAndMissingInstallations",
+        "passed":  true,
+        "seconds":  87.6907478
+    },
+    {
+        "case":  "vision.Phase789VideoReplayInstrumentedTest#wheelsNeedTwoDistinctInstancesAndInstalledStandWithOutlines",
+        "passed":  true,
+        "seconds":  49.4405812
+    },
+    {
+        "case":  "vision.Phase1011VideoReplayInstrumentedTest#phase10ProtectorAssemblyRejectsMissingProtectorAndMissingTopBoard",
+        "passed":  true,
+        "seconds":  40.4019355
+    },
+    {
+        "case":  "vision.Phase1011VideoReplayInstrumentedTest#phase11MountedOledRequiresIndependentModuleAndBoardEvidence",
+        "passed":  true,
+        "seconds":  36.579130299999996
+    },
+    {
+        "case":  "vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence",
+        "passed":  true,
+        "seconds":  14.034660899999999
+    },
+    {
+        "case":  "vision.CameraPauseResumeInstrumentedTest#pauseDropsInflightEvidenceAndReleasesFramesWhileReferencesSurvive",
+        "passed":  true,
+        "seconds":  4.5157657
+    },
+    {
+        "case":  "vision.HygieneSafetyInstrumentedTest#providerAndPlaneFailuresCloseFramesAndReleaseAdmission",
+        "passed":  true,
+        "seconds":  5.5564034
+    },
+    {
+        "case":  "vision.HygieneSafetyInstrumentedTest#closeQueuesNativeCleanupAfterTheInflightReader",
+        "passed":  true,
+        "seconds":  11.3297321
+    },
+    {
+        "case":  "vision.HygieneSafetyInstrumentedTest#rapidPauseResumeKeepsOnlyCurrentEpochEvidence",
+        "passed":  true,
+        "seconds":  5.5825222
+    },
+    {
+        "case":  "vision.BoardRelativeInspectionInstrumentedTest#activeLockedFlowAtNativeSizeKeepsTimeAndMemoryBounded",
+        "passed":  true,
+        "seconds":  17.8930839
+    }
+]

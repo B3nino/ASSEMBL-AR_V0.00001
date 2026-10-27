@@ -1578,6 +1578,8 @@ final class PhaseAssemblyController implements PhaseDemoPlayer.Listener {
                 || result.getValidationState() == RecognitionResult.ValidationState.RECOGNIZED)
                 && !ambiguous
                 && (!MAIN_BOARD.equals(expectedId)
+                || result.getDetectionMethod()==RecognitionResult.DetectionMethod.TRAINED_MODEL
+                &&result.getTrainedEvidence()!=null&&result.getTrainedEvidence().identityAccepted
                 || result.getDetectionMethod() == RecognitionResult.DetectionMethod.ORB_HOMOGRAPHY
                 && result.getOrientationClassification()
                 != RecognitionResult.OrientationClassification.UNKNOWN

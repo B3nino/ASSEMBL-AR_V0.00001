@@ -167,6 +167,8 @@ final class Phase9ReferenceMatcher implements AutoCloseable {
         return matcher.ratioMatches(f.sparse,live.rows).size();
     }
     private List<Rect> proposals(Mat gray,Mat bgr,int stage){
+        DiagnosticHammingMatcher.State scan=DiagnosticHammingMatcher.snapshot();
+        if(scan.trainedPass&&scan.trainedHints!=null)return scan.trainedHints.windows(gray.cols(),gray.rows());
         List<Rect> result=new ArrayList<>();if(!bgr.empty())for(Rect r:Phase9PhotoGeometry.colored(bgr,new Scalar(12,stage==1?40:80,45),new Scalar(42,255,255),5)){
             double aspect=Math.max(r.width,r.height)/(double)Math.max(1,Math.min(r.width,r.height));
             if(r.area()<gray.total()*(stage==1?.0005:.006)||stage==1&&aspect<2.2||stage==2&&aspect>2.1)continue;

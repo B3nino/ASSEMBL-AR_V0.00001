@@ -13,6 +13,7 @@ final class DiagnosticHammingMatcher {
         Mat live;KeyPoint[] liveKeys;boolean recovery,edgeRecovery;int attempted=-1,evidenceLiveCount=-1;
         Rect proposedRoi;String scope;boolean structuralInput,edgeWinner,fastLive,structuralFirst,liveStructural,liveFast,sceneFeatures,adaptiveDetail;
         EdgeGradientDescriptorExtractor.Workspace workspace;
+        TrainedModelAssist.Hints trainedHints;TrainedModelAssist trainedOwner;boolean trainedPass;
         final List<Fit> fits=new ArrayList<>();
     }
     static final class Fit {
@@ -39,7 +40,9 @@ final class DiagnosticHammingMatcher {
     }
     static void recovery(boolean enabled){STATE.get().recovery=enabled;}
     static void begin(){end();STATE.set(new State());}
-    static void end(){State s=STATE.get();if(s.live!=null)s.live.release();s.live=null;s.liveKeys=null;s.fits.clear();s.current=null;s.workspace=null;s.fastLive=false;s.structuralInput=false;s.edgeWinner=false;}
+    static void end(){State s=STATE.get();discardCandidateEvidence();s.workspace=null;s.fastLive=false;s.structuralInput=false;s.edgeWinner=false;s.trainedHints=null;s.trainedOwner=null;s.trainedPass=false;}
+    /** An unsuccessful proposal cannot own a later full-frame fit or telemetry. */
+    static void discardCandidateEvidence(){State s=STATE.get();if(s.live!=null)s.live.release();s.live=null;s.liveKeys=null;s.fits.clear();s.current=null;s.uniqueLive=-1;s.evidenceLiveCount=-1;s.attempted=-1;}
     static State snapshot(){return STATE.get();}
     static void captureLive(KeyPoint[] keys,Mat descriptors,double scale){
         State s=STATE.get();s.scale=scale;if(descriptors.empty()||s.live!=null&&s.liveStructural==s.structuralInput&&s.liveFast==s.fastLive)return;
@@ -47,8 +50,12 @@ final class DiagnosticHammingMatcher {
         Set<Long> unique=new HashSet<>();for(KeyPoint k:keys)unique.add(((long)Float.floatToIntBits((float)k.pt.x)<<32)|(Float.floatToIntBits((float)k.pt.y)&0xffffffffL));s.uniqueLive=unique.size();
         if(scale!=1){s.liveKeys=new KeyPoint[keys.length];for(int i=0;i<keys.length;i++){KeyPoint k=keys[i];s.liveKeys[i]=new KeyPoint((float)(k.pt.x/scale),(float)(k.pt.y/scale),k.size,k.angle,k.response,k.octave,k.class_id);}}
     }
-    static void normalize(org.opencv.imgproc.CLAHE clahe,Mat src,Mat dst){long t=android.os.SystemClock.elapsedRealtimeNanos();Mat balanced=null;try{if(STATE.get().fastLive&&STATE.get().workspace!=null){STATE.get().workspace.normalize(src,dst,clahe,STATE.get().structuralInput,STATE.get().recovery);}else if(STATE.get().structuralInput){EdgeGradientDescriptorExtractor.normalize(src,dst);}else if(STATE.get().recovery){balanced=new Mat();IlluminationRecovery.balance(src,balanced);clahe.apply(balanced,dst);}else clahe.apply(src,dst);}finally{if(balanced!=null)balanced.release();STATE.get().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
-    static void extract(org.opencv.features2d.ORB orb,Mat src,Mat mask,MatOfKeyPoint keys,Mat descriptors){long t=android.os.SystemClock.elapsedRealtimeNanos();try{State s=STATE.get();if(s.fastLive&&s.workspace!=null){boolean first=s.live==null||s.liveStructural!=s.structuralInput;if(s.sceneFeatures&&(mask==null||mask.empty())&&first)s.workspace.extractScene(src,orb,keys,descriptors);else if(first&&s.proposedRoi!=null&&(mask==null||mask.empty()))s.workspace.extractProposal(src,s.proposedRoi,orb,keys,descriptors);else s.workspace.extract(src,mask,orb,keys,descriptors,s.adaptiveDetail&&!first?LiveVisionPolicy.ADAPTIVE_DETAIL_KEYPOINTS:LiveVisionPolicy.MAX_ROI_KEYPOINTS);}else orb.detectAndCompute(src,mask,keys,descriptors);}finally{STATE.get().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
+    static void normalize(org.opencv.imgproc.CLAHE clahe,Mat src,Mat dst){long t=android.os.SystemClock.elapsedRealtimeNanos();Mat balanced=null;try{if(STATE.get().fastLive&&STATE.get().workspace!=null&&!STATE.get().trainedPass){STATE.get().workspace.normalize(src,dst,clahe,STATE.get().structuralInput,STATE.get().recovery);}else if(STATE.get().structuralInput){EdgeGradientDescriptorExtractor.normalize(src,dst);}else if(STATE.get().recovery){balanced=new Mat();IlluminationRecovery.balance(src,balanced);clahe.apply(balanced,dst);}else clahe.apply(src,dst);}finally{if(balanced!=null)balanced.release();STATE.get().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
+    static void extract(org.opencv.features2d.ORB orb,Mat src,Mat mask,MatOfKeyPoint keys,Mat descriptors){long t=android.os.SystemClock.elapsedRealtimeNanos();try{State s=STATE.get();if(s.fastLive&&s.workspace!=null){boolean first=s.live==null||s.liveStructural!=s.structuralInput;
+        if(first&&s.trainedPass&&s.trainedHints!=null){
+            List<Rect> windows=s.trainedHints.windows(src.cols(),src.rows());
+            if(!windows.isEmpty())s.workspace.extractProposals(src,windows,orb,keys,descriptors,s.sceneFeatures);else s.workspace.extract(src,mask,orb,keys,descriptors);
+        }else if(s.sceneFeatures&&(mask==null||mask.empty())&&first)s.workspace.extractScene(src,orb,keys,descriptors);else if(first&&s.proposedRoi!=null&&(mask==null||mask.empty()))s.workspace.extractProposal(src,s.proposedRoi,orb,keys,descriptors);else s.workspace.extract(src,mask,orb,keys,descriptors,s.adaptiveDetail&&!first?LiveVisionPolicy.ADAPTIVE_DETAIL_KEYPOINTS:LiveVisionPolicy.MAX_ROI_KEYPOINTS);}else orb.detectAndCompute(src,mask,keys,descriptors);}finally{STATE.get().featureNs+=android.os.SystemClock.elapsedRealtimeNanos()-t;}}
     static void context(ReferenceDatabase.PreparedReference ref){State s=STATE.get();s.current=ref.spec;s.width=ref.imageWidth;s.height=ref.imageHeight;}
     static void context(ComponentReferenceSpec spec){State s=STATE.get();s.current=spec;s.width=s.height=0;s.attempted=-1;}
     static void context(ComponentReferenceSpec spec,int width,int height){State s=STATE.get();s.current=spec;s.width=width;s.height=height;s.scale=1;s.attempted=-1;}

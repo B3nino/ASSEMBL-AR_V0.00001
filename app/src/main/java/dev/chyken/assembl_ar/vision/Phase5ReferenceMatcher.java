@@ -36,6 +36,8 @@ final class Phase5ReferenceMatcher implements AutoCloseable {
             if(scale<1)Imgproc.resize(gray,raw,new Size(),scale,scale,Imgproc.INTER_AREA);else gray.copyTo(raw);
             DiagnosticHammingMatcher.normalize(clahe,raw,work);DiagnosticHammingMatcher.extract(orb,work,empty,keys,rows);KeyPoint[] live=keys.toArray();extracted+=live.length;DiagnosticHammingMatcher.captureLive(live,rows,scale);
             Rect proposal=DiagnosticHammingMatcher.snapshot().proposedRoi;
+            DiagnosticHammingMatcher.State scan=DiagnosticHammingMatcher.snapshot();
+            if(step!=1&&scan.trainedPass&&scan.trainedHints!=null){List<Rect> windows=scan.trainedHints.windows(gray.cols(),gray.rows());if(!windows.isEmpty())proposal=windows.get(0);}
             if(proposal!=null){
                 List<VisionPoint> region=Arrays.asList(new VisionPoint(proposal.x*scale,proposal.y*scale),new VisionPoint((proposal.x+proposal.width)*scale,proposal.y*scale),new VisionPoint((proposal.x+proposal.width)*scale,(proposal.y+proposal.height)*scale),new VisionPoint(proposal.x*scale,(proposal.y+proposal.height)*scale));
                 neuralProposal=details.extract(raw,region,0);if(neuralProposal!=null)extracted+=neuralProposal.keys.length;

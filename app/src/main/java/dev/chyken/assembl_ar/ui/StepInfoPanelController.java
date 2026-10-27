@@ -51,6 +51,7 @@ public final class StepInfoPanelController {
     private int previewWidth, previewHeight;
     private int guideWidth,guideHeight;
     private final TargetAlignmentBoxView guide;
+    private final PhoneAssemblyLayout phone;
 
     public StepInfoPanelController(Activity activity, @Nullable Bundle state) {
         this.activity = activity;
@@ -67,6 +68,7 @@ public final class StepInfoPanelController {
         phaseOneGuide = activity.findViewById(R.id.phaseOneGuide);
         phaseTwoGuide=activity.findViewById(R.id.phaseTwoGuide);
         guide=activity.findViewById(R.id.targetAlignmentBox);
+        phone=new PhoneAssemblyLayout(activity,(FrameLayout)root,state,this::updateLayout);
         guideWidth=state==null?0:state.getInt("guide_width",0);guideHeight=state==null?0:state.getInt("guide_height",0);
         guide.setTranslationX(state==null?0:state.getFloat("guide_x",0));guide.setTranslationY(state==null?0:state.getFloat("guide_y",0));
         guide.setResizeListener((width,height)->{guideWidth=width;guideHeight=height;updateLayout();});
@@ -104,6 +106,7 @@ public final class StepInfoPanelController {
     }
 
     private boolean drag(View target,View view,MotionEvent event) {
+            if(phone.isActive())return false;
             switch(event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     dragStartX=event.getRawX(); dragStartY=event.getRawY();
@@ -139,6 +142,7 @@ public final class StepInfoPanelController {
     }
 
     public void saveState(Bundle state) {
+        phone.saveState(state);
         state.putInt("guide_width",guideWidth);state.putInt("guide_height",guideHeight);state.putFloat("guide_x",guide.getTranslationX());state.putFloat("guide_y",guide.getTranslationY());
         state.putFloat("info_window_x",panel.getTranslationX());
         state.putFloat("info_window_y",panel.getTranslationY());
@@ -146,8 +150,8 @@ public final class StepInfoPanelController {
         state.putFloat("phase_one_window_y",phaseOneGuide.getTranslationY());
         state.putFloat("phase_two_window_x",phaseTwoGuide.getTranslationX());
         state.putFloat("phase_two_window_y",phaseTwoGuide.getTranslationY());
-        state.putInt(STATE_PREVIEW_WIDTH, preview.getWidth());
-        state.putInt(STATE_PREVIEW_HEIGHT, preview.getHeight());
+        state.putInt(STATE_PREVIEW_WIDTH, phone.isActive()?previewWidth:preview.getWidth());
+        state.putInt(STATE_PREVIEW_HEIGHT, phone.isActive()?previewHeight:preview.getHeight());
         state.putBoolean(STATE_EXPANDED, expanded);
         state.putString(STATE_STEP, stepId);
         state.putInt(STATE_SCROLL,
@@ -155,6 +159,7 @@ public final class StepInfoPanelController {
     }
 
     public void dispose() {
+        phone.close();
         root.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
     }
 
@@ -179,6 +184,7 @@ public final class StepInfoPanelController {
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
         int safeWidth = root.getWidth() - bars.left - bars.right;
         int safeHeight = root.getHeight() - bars.top - bars.bottom;
+        if(phone.layout(bars,phaseOneActive,phaseTwoActive))return;
         View alignment=activity.findViewById(R.id.targetAlignmentBox);
         FrameLayout.LayoutParams alignmentParams=(FrameLayout.LayoutParams)alignment.getLayoutParams();
         boolean rtl = ViewCompat.getLayoutDirection(root) == ViewCompat.LAYOUT_DIRECTION_RTL;
@@ -296,6 +302,7 @@ public final class StepInfoPanelController {
     private int dp(int value) {
         return UiUtils.dp(activity, value);
     }
+    public void setCameraFocused(boolean focused,String scope){phone.setScanContext(focused,scope);}
 
     private void clampPanel() {
         View panel=phaseTwoActive?phaseTwoGuide:phaseOneActive ? phaseOneGuide : this.panel;

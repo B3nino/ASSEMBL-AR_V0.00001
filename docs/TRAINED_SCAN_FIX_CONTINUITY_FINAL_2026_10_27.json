@@ -1,0 +1,32 @@
+[
+  {
+    "case": "vision.Phase12VideoReplayInstrumentedTest#rawInstalledTopLeftRightRequireHardwareAndKeepOutlines",
+    "passed": true,
+    "seconds": 42.600410499999995
+  },
+  {
+    "case": "vision.Phase12VideoReplayInstrumentedTest#reviewedBracketPhotosCannotCreateAMissingFourthPart",
+    "passed": true,
+    "seconds": 14.497509599999999
+  },
+  {
+    "case": "vision.Phase12VideoReplayInstrumentedTest#rawBoardBracketsAndMotorsUseTheSharedCameraPipeline",
+    "passed": true,
+    "seconds": 10.6567794
+  },
+  {
+    "case": "vision.NanoDnnInstrumentedTest#trainedBoardModelLoadsOnCpuAndProposesNanoRegions",
+    "passed": true,
+    "seconds": 8.7647208
+  },
+  {
+    "case": "vision.NanoDnnInstrumentedTest#trainedProposalCannotPassReversedOrMissingNano",
+    "passed": true,
+    "seconds": 27.4223619
+  },
+  {
+    "case": "vision.NanoDnnInstrumentedTest#trainedTogglePersistsWithoutChangingAssemblyProgress",
+    "passed": true,
+    "seconds": 4.6147062
+  }
+]

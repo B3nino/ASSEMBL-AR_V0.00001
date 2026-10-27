@@ -1,0 +1,85 @@
+--------- beginning of main
+10-27 19:40:37.236 13280 13309 I CandidateReplay: vision.Phase1011VideoReplayInstrumentedTest#motionBlurredBatteryKeepsHonestConfidence PASS ms=7141
+10-27 19:41:07.093 13347 13364 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#shadowedBottomAssemblyRequiresBothTrackersAndCasterWithOutlines PASS ms=26640
+10-27 19:41:22.178 13451 13469 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPalmHasMeasuredOutlines PASS ms=11498
+10-27 19:41:33.317 13514 13533 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#looseSensorOnPaperAndRotatedFrontHasMeasuredOutlines PASS ms=7144
+10-27 19:41:47.590 13569 13587 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#clippedSensorCannotBecomeACompleteFrontFace PASS ms=9386
+10-27 19:41:59.497 13657 13675 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#restoredLooseStandoffScanUsesFreshGeometricEvidence PASS ms=8052
+10-27 19:42:21.470 13709 13737 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#blurredStandoffDoesNotInventACompletePose PASS ms=16731
+10-27 19:42:48.193 13782 13801 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#standoffScanRejectsYellowWheelHubs PASS ms=22520
+10-27 19:42:57.651 14243 14261 I CandidateReplay: vision.Phase789FollowupReplayInstrumentedTest#phase8CameraAnalyzerPublishesTheOutlineBeforeConsecutiveSuccess PASS ms=4843
+10-27 19:43:01.806 14330 14347 I CandidateReplay: vision.Phase789VideoReplayInstrumentedTest#standaloneStandoffKeepsMeasuredIndividualToolOutlines PASS ms=1104
+10-27 19:43:18.907 14372 14389 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#looseCableRequiresBothConnectorHeadsAndVisibleOutline PASS ms=13586
+10-27 19:43:33.869 14440 14470 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#protectorUnderGlareRequiresIndependentFrameAndBoardEvidence PASS ms=11155
+10-27 19:43:47.609 14525 14542 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#stackedTopBoardRequiresLowerChassisEvidence PASS ms=9844
+10-27 19:44:24.732 14606 14624 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#boardOnlyCannotPassStackedAssembly PASS ms=31889
+10-27 19:44:51.148 14716 14736 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#clippedCableCannotPassAsBothCompleteConnectors PASS ms=19743
+10-27 19:44:57.848 14816 14834 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#individualCableUsesTheCameraAnalyzerAndPublishesAnOutlineBeforeSuccess PASS ms=3008
+10-27 19:45:10.696 14885 14903 I CandidateReplay: vision.Phase10FollowupReplayInstrumentedTest#assemblyCableCameraCarriesRgbAndCompletesTwoFreshFrames PASS ms=10321
+10-27 19:45:21.453 14951 14971 I CandidateReplay: vision.NanoDnnInstrumentedTest#suppliedChipModelLoadsOnCpuAndProposesOnlyNanoRegions PASS ms=6517
+10-27 19:45:48.898 15022 15039 I CandidateReplay: vision.NanoDnnInstrumentedTest#chipProposalCannotPassReversedOrMissingNano PASS ms=22576
+10-27 19:45:53.969 15116 15143 I CandidateReplay: vision.NanoDnnInstrumentedTest#detectorTogglePersistsWithoutChangingAssemblyProgress PASS ms=61
+10-27 19:46:00.858 15165 15183 I CandidateReplay: vision.LiveLatencyInstrumentedTest#pooled640AnalysisCaps300AndRestoresFullResolutionCoordinates PASS ms=2348
+10-27 19:46:05.417 15229 15246 I CandidateReplay: vision.LiveLatencyInstrumentedTest#adaptivePassReplacesFastDescriptorOwnershipAndReleasesTheOldRows PASS ms=6
+10-27 19:46:12.003 15273 15291 I CandidateReplay: vision.LiveLatencyInstrumentedTest#mainBoardFirstFrameAndWarmTimingsAreMeasuredWithoutChangingGates PASS ms=4371
+10-27 19:50:24.095 15327 15351 I CandidateReplay: vision.LiveLatencyInstrumentedTest#scopedMountedTargetsKeepBodyContextRejectionAndOutlines PASS ms=247869
+10-27 19:50:30.067 16180 16208 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#nativeCaptureOutlineCoordinatesFollowPanWithBoundedLkBuffers PASS ms=109
+10-27 19:50:35.117 16233 16253 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#pooledDetailRowsSurviveReuseAndPauseReleasesScratchPixels PASS ms=862
+10-27 19:52:15.244 16289 16308 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#installedPilotsKeepFreshBodyBoardAndInvalidOrientationGates PASS ms=96418
+10-27 19:52:25.925 16525 16543 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#completedStepKeepsMovingOutlineWithoutHeavyVerificationAndCanReacquire PASS ms=4546
+10-27 19:52:30.799 16584 16601 I CandidateReplay: vision.BoardRelativeInspectionInstrumentedTest#pcbOnlyGlobalFeaturesProposeFreshNanoCropButCannotVerifyErasedBody PASS ms=421
+10-27 19:52:36.086 16622 16640 I InstalledCapture: ACTIVE_LK width=640 nativeHeapGrowthBytes=-6131120
+10-27 19:52:37.540 16622 16640 I InstalledCapture: ACTIVE_LK width=1280 nativeHeapGrowthBytes=10292128
+10-27 19:53:01.156 16677 16695 I InstalledCapture: 640=640x480 fps=29.79865925723602 bufferPathP95Ms=2.055886 recoveryRequests=0 lastInferenceMs=0.0 nativeGrowthBytes=0 native=1280x960 fps=29.764394235421992 bufferPathP95Ms=6.431354 recoveryRequests=0 lastInferenceMs=0.0 nativeGrowthBytes=0
+10-27 19:53:02.382 16677 16695 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#actualTabletDetailStreamKeepsDeliveryAndTrackingBudget PASS ms=20515
+10-27 19:53:23.720 17142 17177 I InstalledCapture: SHARED_PREVIEW 640=640x480 fps=29.83717507113073 bufferPathP95Ms=2.85276 recoveryRequests=0 lastInferenceMs=0.0 nativeGrowthBytes=0 native=1280x960 fps=29.77682793566553 bufferPathP95Ms=5.48302 recoveryRequests=0 lastInferenceMs=0.0 nativeGrowthBytes=0
+10-27 19:53:25.047 17142 17177 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#previewAndDetailStreamsShareTheCameraWithoutDeliveryRegression PASS ms=19599
+10-27 19:53:36.436 17611 17649 I CandidateReplay: UiBeautificationInstrumentedTest#planFOffersHelpOnceWithoutCompletingAnythingAndClosesOnSuccess PASS ms=8523
+10-27 19:53:46.250 17866 17887 I CandidateReplay: UiBeautificationInstrumentedTest#planFSettingsPersistWithoutChangingExistingPreferencesAndLargeFontHelpIsReachable PASS ms=7655
+10-27 19:53:56.077 18011 18029 I CandidateReplay: UiBeautificationInstrumentedTest#planFLoadsABoundedRealPhotoAndRendersItsHelpSurface PASS ms=7758
+10-27 19:54:00.575 18149 18167 I CandidateReplay: UiBeautificationInstrumentedTest#phoneAssemblyReservesCameraAndDoesNotAlterWorkflowButtons PASS ms=2446
+10-27 19:54:05.040 18210 18229 I CandidateReplay: UiBeautificationInstrumentedTest#phoneTesterKeepsCameraAndFullToolsWithoutFloatingMetrics PASS ms=1869
+10-27 19:54:10.606 18256 18274 I CandidateReplay: UiBeautificationInstrumentedTest#tabletScanningLayoutSurvivesPhoneReflowWithoutChangingControls PASS ms=907
+10-27 19:55:34.571 18442 18465 I TrainedAssistTest: native_contract phase=1 ms=670.595261
+10-27 19:55:35.128 18442 18465 I TrainedAssistTest: native_contract phase=2 ms=557.015156
+10-27 19:55:35.697 18442 18465 I TrainedAssistTest: native_contract phase=3 ms=568.368386
+10-27 19:55:36.238 18442 18465 I TrainedAssistTest: native_contract phase=5 ms=541.097812
+10-27 19:55:36.802 18442 18465 I TrainedAssistTest: native_contract phase=7 ms=563.490938
+10-27 19:55:37.335 18442 18465 I TrainedAssistTest: native_contract phase=8 ms=533.357343
+10-27 19:55:37.869 18442 18465 I TrainedAssistTest: native_contract phase=9 ms=533.37927
+10-27 19:55:38.417 18442 18465 I TrainedAssistTest: native_contract phase=10 ms=548.29625
+10-27 19:55:38.962 18442 18465 I TrainedAssistTest: native_contract phase=11 ms=544.25875
+10-27 19:55:38.962 18442 18465 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#allNinePackagedModelsLoadAndExecuteOnAndroid PASS ms=5086
+10-27 19:55:42.218 18521 18539 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#proposalCannotPublishIdentityAndFailureRetriesOriginalSearch PASS ms=6
+10-27 19:55:46.786 18571 18589 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#expiryAndMotionChecksNeverReuseAnOldPhysicalLocation PASS ms=1
+10-27 19:55:51.563 18609 18626 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#queuedFrameIsReleasedAndCannotPublishAfterPauseOrClose PASS ms=37
+10-27 19:55:57.830 18659 18679 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#backgroundResultBelongsToOneRunAndIsConsumedOnlyOnce PASS ms=2429
+10-27 19:56:00.520 18723 18751 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#missingModelDisablesOnlyAssistanceAndReleasesItsFrame PASS ms=48
+10-27 19:56:18.128 18773 18790 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#realDriverBadHintFallsBackToVerifiedPhotoGeometry PASS ms=13659
+10-27 19:56:34.857 18835 18868 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#cameraRecoveryUsesFreshPixelsAndPreservesTheVerifier PASS ms=12332
+10-27 19:56:43.103 18931 18952 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#initialPhotoPassDoesNotWaitForTheBackgroundNanoMonitor PASS ms=4389
+10-27 19:56:59.759 18991 19022 I TrainedAssistTest: compare phase=3 assisted=false proposals=1 inferenceMs=384.942812 verifyMs=372.68901 accepted=true
+10-27 19:57:10.731 18991 19022 I TrainedAssistTest: compare phase=3 assisted=true proposals=1 inferenceMs=384.942812 verifyMs=405.136093 accepted=true
+10-27 19:57:20.117 18991 19022 I TrainedAssistTest: compare phase=5 assisted=false proposals=0 inferenceMs=576.249688 verifyMs=165.31276 accepted=true
+10-27 19:57:27.882 18991 19022 I TrainedAssistTest: compare phase=5 assisted=true proposals=0 inferenceMs=576.249688 verifyMs=83.407396 accepted=true
+10-27 19:57:36.755 18991 19022 I TrainedAssistTest: compare phase=7 assisted=false proposals=1 inferenceMs=334.480417 verifyMs=717.374375 accepted=true
+10-27 19:57:44.096 18991 19022 I TrainedAssistTest: compare phase=7 assisted=true proposals=1 inferenceMs=334.480417 verifyMs=740.997292 accepted=true
+10-27 19:58:00.257 18991 19022 I TrainedAssistTest: compare phase=9 assisted=false proposals=2 inferenceMs=711.728437 verifyMs=319.634063 accepted=true
+10-27 19:58:14.832 18991 19022 I TrainedAssistTest: compare phase=9 assisted=true proposals=2 inferenceMs=711.728437 verifyMs=221.482864 accepted=true
+10-27 19:58:25.327 18991 19022 I TrainedAssistTest: compare phase=10 assisted=false proposals=0 inferenceMs=2144.652759 verifyMs=47.827343 accepted=true
+10-27 19:58:28.273 18991 19022 I TrainedAssistTest: compare phase=10 assisted=true proposals=0 inferenceMs=2144.652759 verifyMs=42.190781 accepted=true
+10-27 19:58:40.414 18991 19022 I TrainedAssistTest: compare phase=11 assisted=false proposals=1 inferenceMs=2155.742343 verifyMs=110.947656 accepted=true
+10-27 19:58:46.165 18991 19022 I TrainedAssistTest: compare phase=11 assisted=true proposals=1 inferenceMs=2155.742343 verifyMs=110.491302 accepted=true
+10-27 19:58:46.166 18991 19022 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#realLoosePhotosCompareProposalAndFullSearchTimings PASS ms=117903
+10-27 19:59:07.078 19454 19474 I TrainedAssistTest: negative phase=3 state=WRONG_ORIENTATION pass=false
+10-27 19:59:19.713 19454 19474 I TrainedAssistTest: negative phase=5 state=WRONG_ORIENTATION pass=false
+10-27 19:59:38.338 19454 19474 I TrainedAssistTest: negative phase=7 state=NO_COMPONENT pass=false
+10-27 19:59:52.253 19454 19474 I TrainedAssistTest: negative phase=10 state=WRONG_ORIENTATION pass=false
+10-27 20:00:01.982 19454 19474 I TrainedAssistTest: negative phase=11 state=WRONG_ORIENTATION pass=false
+10-27 20:00:23.753 19454 19474 I TrainedAssistTest: negative phase=9 state=NO_COMPONENT pass=false
+10-27 20:00:23.760 19454 19474 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#reversedFacesWrongBoardsAndOneWheelCannotPassFromHints PASS ms=91584
+10-27 20:00:40.121 19922 19943 I TrainedAssistTest: varied phase=5 baselineMs=[103.958697, 128.246927, 99.542813, 74.92526, 109.748489, 85.983646] assistedMs=[89.673385, 108.841875, 84.015885, 76.651458, 98.226667, 81.42474] inferenceMs=[528.931719, 260.522344, 257.937865] frames=3 rounds=2
+10-27 20:01:05.026 19922 19943 I TrainedAssistTest: varied phase=9 baselineMs=[516.756823, 198.551511, 1600.47552, 544.840833, 205.987968, 292.300313] assistedMs=[323.262812, 231.295104, 246.201563, 300.099323, 227.457135, 256.914271] inferenceMs=[1137.626405, 290.593593, 288.096458] frames=3 rounds=2
+10-27 20:01:05.028 19922 19943 I CandidateReplay: vision.TrainedModelAssistInstrumentedTest#variedFramesMeasureWarmVerificationWithoutRepeatingOneCachedImage PASS ms=36459
+10-27 20:01:51.952 20111 20130 I InstalledCapture: TRAINED_RECOVERY baseline=640x480 fps=29.555904304783265 bufferPathP95Ms=15.374011 recoveryRequests=0 lastInferenceMs=0.0 nativeGrowthBytes=0 assisted=640x480 fps=29.06425884347584 bufferPathP95Ms=6.126094 recoveryRequests=15 lastInferenceMs=461.133645 nativeGrowthBytes=2955136
+10-27 20:01:53.522 20111 20130 I CandidateReplay: vision.InstalledCapturePerformanceInstrumentedTest#realCameraRecoveryWorkerKeepsDeliveryAndBoundedMemory PASS ms=43198

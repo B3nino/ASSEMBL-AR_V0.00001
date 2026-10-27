@@ -41,9 +41,11 @@ public final class DevDiagnosticsFragment extends Fragment {
         DiagnosticSession session=DiagnosticSession.INSTANCE;session.attach(a);LinearLayout b=column(a);ScrollView scroll=new ScrollView(a);scroll.addView(b);
         androidx.appcompat.widget.SwitchCompat logging=new androidx.appcompat.widget.SwitchCompat(a);logging.setText("Developer Diagnostic Logging");logging.setChecked(PreferencesManager.logging(a));logging.setOnCheckedChangeListener((v,enabled)->PreferencesManager.logging(a,enabled));b.addView(logging);
         logging.setTextColor(a.getColor(R.color.ink));
-        androidx.appcompat.widget.SwitchCompat nanoDetector=new androidx.appcompat.widget.SwitchCompat(a);nanoDetector.setText("Experimental Nano chip detector (ONNX)");nanoDetector.setTextColor(a.getColor(R.color.ink));nanoDetector.setMinHeight(Math.round(52*a.getResources().getDisplayMetrics().density));nanoDetector.setChecked(PreferencesManager.nanoDetector(a));
-        nanoDetector.setOnCheckedChangeListener((v,enabled)->{PreferencesManager.nanoDetector(a,enabled);if(enabled)VisionPreloadManager.get(a).prepareNanoDetector();});b.addView(nanoDetector);
-        text(b,"Uses the ATmega chip to guide a Nano search. May add CPU latency. Photo matching still verifies the full board and orientation. Turn off to compare photo-only recognition; progress is retained.",13);
+        androidx.appcompat.widget.SwitchCompat trained=new androidx.appcompat.widget.SwitchCompat(a);
+        trained.setText("Trained component recognition (ONNX first)");trained.setTextColor(a.getColor(R.color.ink));
+        trained.setMinHeight(Math.round(52*a.getResources().getDisplayMetrics().density));trained.setChecked(PreferencesManager.trainedModels(a));
+        trained.setOnCheckedChangeListener((v,enabled)->PreferencesManager.trainedModels(a,enabled));b.addView(trained);
+        text(b,"Uses the trained component models in guided scans and the individual tester, including installed-part searches. Photo and geometry checks verify orientation and mounting. Progress is retained.",13);
         button(b,"Diagnostic control guide",()->dev.chyken.assembl_ar.ui.DiagnosticControlsHelp.show(a));
         text(b,"Logging saves future scan measurements. Export shares recorded data; it does not start collection. Opening these controls pauses camera analysis until you return.",13);
         text(b,"Lighting is estimated automatically from the camera. Run 30 fresh scans in the room you are testing; no lighting selection is needed. These image-based categories are estimates, not lux measurements. The ORB benchmark and assembly verification have separate outcomes.",14);

@@ -27,6 +27,8 @@ public final class VerifiedScanEvidence {
                 &&r.getPhase7Observation().accepted(4)&&target!=null&&"main_board".equals(target.getComponentId())
                 &&"line_tracker_module".equals(r.getComponentId());
         if(target!=null&&!Objects.equals(target.getComponentId(),r.getComponentId())&&!trackerAssembly)return false;
+        if((request.getPhase2Stage()==1||request.getPhase2Stage()==2)&&target!=null
+                &&r.getDetectedInstanceCount(target.getComponentId())<request.getExpectedInstanceCount())return false;
         if(r.getPhase2Observation()!=null&&request.getPhase2Stage()==5)return r.getPhase2Observation().referenceSupported;
         if(r.getPhase3Observation()!=null)return r.getPhase3Observation().accepted(request.getPhase3Stage());
         if(r.getPhase5Observation()!=null)return r.getPhase5Observation().accepted(request.getPhase5Stage());
@@ -38,7 +40,10 @@ public final class VerifiedScanEvidence {
         return state==RecognitionResult.ValidationState.EXPECTED_COMPONENT;
     }
     public static String verificationSource(RecognitionResult r){
+        if(r.getTrainedEvidence()!=null&&r.getDetectionMethod()!=RecognitionResult.DetectionMethod.TRAINED_MODEL)
+            return r.getTrainedEvidence().identityAccepted?"ONNX identity + placement/orientation verifier":"ONNX search + ORB/geometry verifier";
         switch(r.getDetectionMethod()){
+            case TRAINED_MODEL:return "ONNX (two fresh predictions)"+(r.getPhase3Observation()!=null||r.getPhase5Observation()!=null||r.getPhase8Observation()!=null?" + front-surface geometry":"");
             case COLOR_SHAPE_FALLBACK:return r.getReferenceId()!=null&&r.getReferenceId().startsWith("phase")?"Photo + geometry":"Geometry/shape";
             case MODEL_EDGE_MATCH:return "Model edges";
             case CANNY_HOUGH_FALLBACK:return "Edge/circle geometry";

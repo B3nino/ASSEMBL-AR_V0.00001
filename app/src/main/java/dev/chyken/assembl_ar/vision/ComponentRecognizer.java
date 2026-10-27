@@ -127,6 +127,10 @@ public final class ComponentRecognizer implements AutoCloseable {
      * exits immediately; we never launch a second full-catalog detector or queue frames. */
     private RecognitionResult inspectHybrid(java.util.function.Supplier<RecognitionResult> inspect){
         DiagnosticHammingMatcher.State scan=DiagnosticHammingMatcher.snapshot();
+        // A proposed window gets one cheap original-verifier attempt. Its miss
+        // must not trigger/carry the persistent full-detail sampling profile;
+        // TrainedRoiSearch retries the unchanged hybrid search on the full frame.
+        if(scan.trainedPass)return inspect.get();
         if(!scan.fastLive)return inspect.get();
         long start=SystemClock.elapsedRealtimeNanos();boolean first=scan.structuralFirst;
         if(detailedScopes.contains(scan.scope)){
@@ -265,6 +269,9 @@ public final class ComponentRecognizer implements AutoCloseable {
                 : request;
         DiagnosticHammingMatcher.snapshot().structuralInput=false;
         DiagnosticHammingMatcher.snapshot().edgeWinner=false;
+        // Nearest-neighbour indices refer to the descriptor rows of this exact
+        // extraction. Proposal rows must never read or populate the full-frame cache.
+        if(DiagnosticHammingMatcher.snapshot().trainedPass)frameCache.pairs.clear();
         long totalStart = SystemClock.elapsedRealtimeNanos();
         if(database.prepareIndividualBank(safeRequest)){
             // Cached pair batches own the old reference keys. Retire them on every
@@ -298,7 +305,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             validateRequest(safeRequest);
             long stageStart = SystemClock.elapsedRealtimeNanos();
             KeyPoint[] frameKeypoints;
-            if (frameCache.holds(grayscale)) {
+            if (!DiagnosticHammingMatcher.snapshot().trainedPass&&frameCache.holds(grayscale)) {
                 // Board/component passes and repeated camera frames can have identical pixels
                 // despite different capture timestamps. Identity evidence then remains exact.
                 frameCache.normalized.copyTo(normalizedFrame);
@@ -309,7 +316,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 DiagnosticHammingMatcher.extract(orb,
                         normalizedFrame, emptyMask, frameKeypointMat, frameDescriptors);
                 frameKeypoints = frameKeypointMat.toArray();
-                frameCache.store(grayscale, normalizedFrame,
+                if(!DiagnosticHammingMatcher.snapshot().trainedPass)frameCache.store(grayscale, normalizedFrame,
                         frameDescriptors, frameKeypoints);
             }
             DiagnosticHammingMatcher.captureLive(frameKeypoints,frameDescriptors,1);
@@ -629,7 +636,7 @@ public final class ComponentRecognizer implements AutoCloseable {
                 }
             }
             DiagnosticHammingMatcher.snapshot().matchingNs += matchingNanos;
-            database.observeIndividualBank(result);
+            if(!DiagnosticHammingMatcher.snapshot().trainedPass||result.hasLocatedComponent())database.observeIndividualBank(result);
             if(individualFrameReferences!=null&&result.hasLocatedComponent()&&safeRequest.getExpectation().getComponentId().equals(result.getComponentId()))individualWindow.matched(result.getReferenceId());
             logLatency(result);
             return result;
@@ -641,6 +648,7 @@ public final class ComponentRecognizer implements AutoCloseable {
             }
             throw failure;
         } finally {
+            if(DiagnosticHammingMatcher.snapshot().trainedPass)frameCache.pairs.clear();
             activeFrameDescriptors = null;
             expectedDiagnosticPrefix = null;
             expectedDiagnosticComponentId = null;
